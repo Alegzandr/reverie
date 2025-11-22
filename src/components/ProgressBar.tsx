@@ -11,21 +11,23 @@ export function ProgressBar({ progress, isProcessing, message }: ProgressBarProp
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
-        <div className="flex items-center gap-4 mb-4">
-          <Loader2 className="w-6 h-6 text-purple-500 animate-spin" />
-          <span className="text-sm font-medium text-gray-700">
-            {message || 'Processing audio...'}
+      <div className="cassette-tape rounded-2xl p-6 border-2 border-white/30">
+        <div className="flex items-center gap-4 mb-5">
+          <Loader2 className="w-7 h-7 text-[#4de8ff] animate-spin drop-shadow-lg" />
+          <span className="text-sm font-black text-white/90 uppercase tracking-wider drop-shadow">
+            {message || 'Processing...'}
           </span>
-          <span className="ml-auto text-sm font-bold text-purple-500">
+          <span className="ml-auto text-lg font-black text-[#4de8ff] drop-shadow-lg">
             {Math.round(progress)}%
           </span>
         </div>
-        <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+        <div className="w-full h-4 bg-white/20 rounded-full overflow-hidden backdrop-blur border border-white/30">
           <div
-            className="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-300 ease-out rounded-full"
+            className="h-full bg-gradient-to-r from-[#ff6ec7] via-[#b06aff] to-[#4de8ff] transition-all duration-300 ease-out rounded-full relative"
             style={{ width: `${progress}%` }}
-          />
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse"></div>
+          </div>
         </div>
       </div>
     </div>

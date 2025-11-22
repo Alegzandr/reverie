@@ -12,3 +12,37 @@
     @apply m-0 min-h-screen;
   }
 }
+
+@layer utilities {
+  .glass {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .cassette-tape {
+    position: relative;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
+    backdrop-filter: blur(20px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow:
+      0 8px 32px 0 rgba(31, 38, 135, 0.37),
+      inset 0 0 20px rgba(255, 255, 255, 0.1);
+  }
+
+  .retro-button {
+    position: relative;
+    overflow: hidden;
+    transform: perspective(500px);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  .retro-button:hover {
+    transform: perspective(500px) translateY(-2px);
+  }
+
+  .retro-button:active {
+    transform: perspective(500px) translateY(1px);
+  }
+}

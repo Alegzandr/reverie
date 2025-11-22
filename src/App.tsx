@@ -65,37 +65,52 @@ function App() {
   }, [exportToMp3]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-[#ff6ec7] via-[#b06aff] to-[#4de8ff] relative overflow-hidden">
+      {/* Animated Background Grid */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)`,
+          backgroundSize: '50px 50px',
+          transform: 'perspective(500px) rotateX(60deg)',
+          transformOrigin: 'center bottom'
+        }} />
+      </div>
+
       {/* Header */}
-      <header className="w-full py-8 px-4 border-b border-gray-200 bg-white/50 backdrop-blur-sm">
+      <header className="relative w-full py-6 px-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl">
-              <Music2 className="w-8 h-8 text-white" />
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <div className="absolute inset-0 bg-white blur-xl opacity-50"></div>
+              <div className="relative cassette-tape p-4 rounded-2xl">
+                <Music2 className="w-10 h-10 text-white drop-shadow-lg" />
+              </div>
             </div>
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                PitchSongs
+              <h1 className="text-4xl md:text-5xl font-black text-white drop-shadow-2xl tracking-tight">
+                PITCH<span className="text-[#4de8ff]">SONGS</span>
               </h1>
-              <p className="text-sm text-gray-600">Speed up & slow down your tracks</p>
+              <p className="text-white/90 text-sm md:text-base font-medium drop-shadow-lg">
+                Cassette-style audio manipulation
+              </p>
             </div>
           </div>
-          <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-purple-100 rounded-full">
-            <Sparkles className="w-4 h-4 text-purple-600" />
-            <span className="text-sm font-medium text-purple-700">
-              100% Client-Side Processing
+          <div className="hidden md:flex items-center gap-2 px-5 py-3 cassette-tape rounded-full">
+            <Sparkles className="w-5 h-5 text-white animate-pulse" />
+            <span className="text-sm font-bold text-white drop-shadow">
+              100% PRIVATE
             </span>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-12">
+      <main className="relative max-w-7xl mx-auto px-4 py-8">
         <div className="space-y-8">
           {/* Error Display */}
           {state.error && (
-            <div className="w-full max-w-2xl mx-auto bg-red-50 border border-red-200 rounded-xl p-4">
-              <p className="text-red-700 text-sm font-medium">{state.error}</p>
+            <div className="w-full max-w-2xl mx-auto cassette-tape rounded-2xl p-5 bg-red-500/20 border-2 border-red-400/50">
+              <p className="text-white font-bold text-sm drop-shadow">{state.error}</p>
             </div>
           )}
 
@@ -108,18 +123,18 @@ function App() {
 
           {/* Show file info if loaded */}
           {originalFile && !state.isLoading && (
-            <div className="w-full max-w-2xl mx-auto bg-white rounded-xl p-6 shadow-md border border-gray-200">
+            <div className="w-full max-w-2xl mx-auto cassette-tape rounded-2xl p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Loaded file</p>
-                  <p className="text-lg font-semibold text-gray-900">
+                  <p className="text-xs font-bold text-white/70 uppercase tracking-wider">Track Loaded</p>
+                  <p className="text-lg font-black text-white drop-shadow-lg truncate max-w-xs">
                     {originalFile.name}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-gray-500">Size</p>
-                  <p className="text-lg font-semibold text-gray-900">
-                    {(originalFile.size / 1024 / 1024).toFixed(2)} MB
+                  <p className="text-xs font-bold text-white/70 uppercase tracking-wider">Size</p>
+                  <p className="text-2xl font-black text-[#4de8ff] drop-shadow-lg">
+                    {(originalFile.size / 1024 / 1024).toFixed(1)}<span className="text-sm">MB</span>
                   </p>
                 </div>
               </div>
@@ -140,17 +155,20 @@ function App() {
                   onClick={handleProcess}
                   disabled={state.isProcessing || state.isPlaying}
                   className={`
-                    flex items-center gap-3 px-12 py-5 rounded-xl
-                    font-bold text-xl transition-all duration-300
+                    retro-button relative px-16 py-6 rounded-2xl
+                    font-black text-2xl uppercase tracking-wider
+                    transition-all duration-300 shadow-2xl
                     ${
                       !state.isProcessing && !state.isPlaying
-                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:shadow-2xl hover:shadow-purple-500/40 hover:scale-105'
-                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        ? 'bg-gradient-to-r from-[#ff6ec7] to-[#ff00ff] text-white hover:shadow-[0_0_40px_rgba(255,110,199,0.8)] cursor-pointer'
+                        : 'bg-gray-500/30 text-gray-400 cursor-not-allowed'
                     }
                   `}
                 >
-                  <Sparkles className="w-7 h-7" />
-                  {state.isProcessing ? 'Processing...' : 'Apply Effects'}
+                  <div className="flex items-center gap-4">
+                    <Sparkles className={`w-8 h-8 ${state.isProcessing ? 'animate-spin' : ''}`} />
+                    {state.isProcessing ? 'Processing...' : 'Transform'}
+                  </div>
                 </button>
               </div>
             </>
@@ -183,33 +201,33 @@ function App() {
         </div>
 
         {/* Info Section */}
-        <div className="mt-20 max-w-2xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200 text-center">
-              <div className="w-12 h-12 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-purple-600" />
+        <div className="mt-16 max-w-3xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="cassette-tape rounded-2xl p-5 text-center hover:scale-105 transition-transform cursor-default">
+              <div className="w-14 h-14 mx-auto mb-3 bg-white/20 rounded-full flex items-center justify-center backdrop-blur">
+                <Sparkles className="w-7 h-7 text-white" />
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Professional Audio</h3>
-              <p className="text-sm text-gray-600">
-                High-quality Web Audio API processing
+              <h3 className="font-black text-white mb-1 text-sm uppercase tracking-wide">Web Audio API</h3>
+              <p className="text-xs text-white/80 font-medium">
+                Professional audio processing
               </p>
             </div>
-            <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200 text-center">
-              <div className="w-12 h-12 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
-                <Music2 className="w-6 h-6 text-green-600" />
+            <div className="cassette-tape rounded-2xl p-5 text-center hover:scale-105 transition-transform cursor-default">
+              <div className="w-14 h-14 mx-auto mb-3 bg-white/20 rounded-full flex items-center justify-center backdrop-blur">
+                <Music2 className="w-7 h-7 text-white" />
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">100% Private</h3>
-              <p className="text-sm text-gray-600">
-                All processing happens in your browser
+              <h3 className="font-black text-white mb-1 text-sm uppercase tracking-wide">100% Private</h3>
+              <p className="text-xs text-white/80 font-medium">
+                All processing in your browser
               </p>
             </div>
-            <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200 text-center">
-              <div className="w-12 h-12 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-blue-600" />
+            <div className="cassette-tape rounded-2xl p-5 text-center hover:scale-105 transition-transform cursor-default">
+              <div className="w-14 h-14 mx-auto mb-3 bg-white/20 rounded-full flex items-center justify-center backdrop-blur">
+                <Sparkles className="w-7 h-7 text-white" />
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Instant Export</h3>
-              <p className="text-sm text-gray-600">
-                Download your transformed tracks
+              <h3 className="font-black text-white mb-1 text-sm uppercase tracking-wide">Instant Export</h3>
+              <p className="text-xs text-white/80 font-medium">
+                Download as MP3
               </p>
             </div>
           </div>
@@ -217,10 +235,10 @@ function App() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full py-8 mt-20 border-t border-gray-200 bg-white/50 backdrop-blur-sm">
+      <footer className="relative w-full py-6 mt-16">
         <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="text-sm text-gray-600">
-            Built with React, TypeScript, and Web Audio API
+          <p className="text-xs text-white/70 font-bold uppercase tracking-wider">
+            Built with React • TypeScript • Web Audio API
           </p>
         </div>
       </footer>

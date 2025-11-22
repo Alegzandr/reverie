@@ -27,52 +27,54 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
   return (
     <div className="w-full max-w-2xl mx-auto space-y-6">
       {/* Mode Selection */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-5">
         <button
           onClick={() => setMode('speed-up')}
           disabled={disabled}
           className={`
-            relative flex items-center justify-center gap-3 p-6 rounded-xl
-            font-semibold text-lg transition-all duration-300
+            retro-button relative flex items-center justify-center gap-3 p-7 rounded-2xl
+            font-black text-xl uppercase tracking-wider
+            transition-all duration-300 shadow-xl
             ${
               mode === 'speed-up'
-                ? 'bg-gradient-to-r from-orange-500 to-pink-500 text-white shadow-lg shadow-orange-500/30 scale-105'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-gradient-to-br from-[#ff6ec7] to-[#ff3d8f] text-white shadow-[0_0_30px_rgba(255,110,199,0.6)] scale-105 border-2 border-white/50'
+                : 'bg-white/10 text-white/70 hover:bg-white/20 border-2 border-white/20'
             }
             ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
           `}
         >
-          <Zap className="w-6 h-6" />
+          <Zap className="w-7 h-7" />
           Speed Up
         </button>
         <button
           onClick={() => setMode('slow-reverb')}
           disabled={disabled}
           className={`
-            relative flex items-center justify-center gap-3 p-6 rounded-xl
-            font-semibold text-lg transition-all duration-300
+            retro-button relative flex items-center justify-center gap-3 p-7 rounded-2xl
+            font-black text-xl uppercase tracking-wider
+            transition-all duration-300 shadow-xl
             ${
               mode === 'slow-reverb'
-                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/30 scale-105'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-gradient-to-br from-[#4de8ff] to-[#00a8ff] text-white shadow-[0_0_30px_rgba(77,232,255,0.6)] scale-105 border-2 border-white/50'
+                : 'bg-white/10 text-white/70 hover:bg-white/20 border-2 border-white/20'
             }
             ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
           `}
         >
-          <Waves className="w-6 h-6" />
-          Slow + Reverb
+          <Waves className="w-7 h-7" />
+          Slow+Reverb
         </button>
       </div>
 
       {/* Effect Settings */}
-      <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+      <div className="cassette-tape rounded-2xl p-6 border-2 border-white/30">
         {mode === 'speed-up' ? (
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-700">
-                Speed Multiplier
+              <label className="text-xs font-black text-white/80 uppercase tracking-widest">
+                Speed
               </label>
-              <span className="text-lg font-bold text-orange-500">
+              <span className="text-3xl font-black text-[#ff6ec7] drop-shadow-lg">
                 {speedMultiplier.toFixed(1)}x
               </span>
             </div>
@@ -84,20 +86,23 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
               value={speedMultiplier}
               onChange={(e) => setSpeedMultiplier(parseFloat(e.target.value))}
               disabled={disabled}
-              className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-orange-500"
+              className="w-full h-4 bg-white/20 rounded-full appearance-none cursor-pointer accent-[#ff6ec7] backdrop-blur"
+              style={{
+                backgroundImage: `linear-gradient(to right, #ff6ec7 0%, #ff6ec7 ${((speedMultiplier - 1.1) / (2.0 - 1.1)) * 100}%, rgba(255,255,255,0.2) ${((speedMultiplier - 1.1) / (2.0 - 1.1)) * 100}%, rgba(255,255,255,0.2) 100%)`
+              }}
             />
-            <div className="flex justify-between text-xs text-gray-500">
+            <div className="flex justify-between text-xs font-black text-white/60 uppercase">
               <span>1.1x</span>
               <span>2.0x</span>
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-700">
-                Reverb Amount
+              <label className="text-xs font-black text-white/80 uppercase tracking-widest">
+                Reverb
               </label>
-              <span className="text-lg font-bold text-blue-500">
+              <span className="text-3xl font-black text-[#4de8ff] drop-shadow-lg">
                 {Math.round(reverbAmount * 100)}%
               </span>
             </div>
@@ -109,9 +114,12 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
               value={reverbAmount}
               onChange={(e) => setReverbAmount(parseFloat(e.target.value))}
               disabled={disabled}
-              className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+              className="w-full h-4 bg-white/20 rounded-full appearance-none cursor-pointer accent-[#4de8ff] backdrop-blur"
+              style={{
+                backgroundImage: `linear-gradient(to right, #4de8ff 0%, #4de8ff ${reverbAmount * 100}%, rgba(255,255,255,0.2) ${reverbAmount * 100}%, rgba(255,255,255,0.2) 100%)`
+              }}
             />
-            <div className="flex justify-between text-xs text-gray-500">
+            <div className="flex justify-between text-xs font-black text-white/60 uppercase">
               <span>10%</span>
               <span>100%</span>
             </div>
