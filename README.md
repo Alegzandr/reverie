@@ -108,6 +108,24 @@ npm run build
 
 The production-ready files will be in the `dist/` directory.
 
+## Deploy to GitHub Pages
+
+This project is configured for automatic deployment to GitHub Pages:
+
+1. **Create a GitHub repository** named `pitch-songs`
+2. **Push your code**:
+   ```bash
+   git remote add origin https://github.com/YOUR_USERNAME/pitch-songs.git
+   git push -u origin main
+   ```
+3. **Enable GitHub Pages**:
+   - Go to your repository settings
+   - Navigate to "Pages" section
+   - Under "Build and deployment", select "GitHub Actions" as the source
+4. **Access your app** at: `https://YOUR_USERNAME.github.io/pitch-songs/`
+
+The GitHub Actions workflow will automatically build and deploy on every push to main.
+
 ## Browser Compatibility
 
 - Chrome/Edge 90+
