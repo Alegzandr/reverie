@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
-import { audioProcessor, AudioProcessingOptions } from '../utils/audioProcessor';
+import { audioProcessor } from '../utils/audioProcessor';
+import type { AudioProcessingOptions } from '../utils/audioProcessor';
 import { audioBufferToMp3, downloadBlob } from '../utils/mp3Encoder';
 
 export interface ProcessingState {

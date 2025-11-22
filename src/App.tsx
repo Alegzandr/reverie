@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react';
 import { Music2, Sparkles } from 'lucide-react';
 import { FileUploader } from './components/FileUploader';
-import { EffectControls, EffectSettings } from './components/EffectControls';
+import { EffectControls } from './components/EffectControls';
+import type { EffectSettings } from './components/EffectControls';
 import { PlaybackControls } from './components/PlaybackControls';
 import { ProgressBar } from './components/ProgressBar';
 import { useAudioProcessor } from './hooks/useAudioProcessor';
