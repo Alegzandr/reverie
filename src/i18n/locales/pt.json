@@ -1,0 +1,63 @@
+{
+  "app": {
+    "title": "PitchSongs",
+    "subtitle": "Manipulação de Áudio",
+    "description": "Transforme sua música com efeitos de áudio profissionais. Acelere, desacelere, adicione reverberação ou crie versões retrô 8-bit de suas faixas."
+  },
+  "upload": {
+    "title": "Carregar arquivo de áudio",
+    "dragDrop": "Arraste e solte um arquivo de áudio aqui",
+    "or": "ou",
+    "browse": "Procurar arquivos",
+    "formats": "MP3, WAV, OGG, M4A",
+    "loading": "Carregando..."
+  },
+  "effects": {
+    "speedUp": "Acelerar",
+    "slowReverb": "Lento + Reverb",
+    "8bit": "8-Bit",
+    "speed": "Velocidade",
+    "reverb": "Reverberação",
+    "bitDepth": "Profundidade de bits",
+    "sampleRate": "Taxa de amostragem",
+    "apply": "Aplicar efeitos",
+    "processing": "Processando..."
+  },
+  "playback": {
+    "play": "Reproduzir",
+    "pause": "Pausar",
+    "export": "Exportar",
+    "exporting": "Exportando...",
+    "volume": "Volume"
+  },
+  "track": {
+    "title": "Faixa",
+    "size": "Tamanho"
+  },
+  "features": {
+    "webAudio": {
+      "title": "Web Audio API",
+      "desc": "Qualidade profissional"
+    },
+    "private": {
+      "title": "100% Privado",
+      "desc": "Processamento local"
+    },
+    "export": {
+      "title": "Exportação Instantânea",
+      "desc": "Baixar como MP3"
+    }
+  },
+  "footer": {
+    "built": "Criado com React • TypeScript • Web Audio API"
+  },
+  "accessibility": {
+    "themeToggle": "Alternar modo escuro",
+    "resetApp": "Redefinir aplicação"
+  },
+  "meta": {
+    "title": "PitchSongs - Ferramenta Profissional de Manipulação de Áudio",
+    "description": "Transforme sua música com efeitos de áudio profissionais. Crie versões aceleradas, remixes lentos + reverb, ou sons retrô 8-bit. 100% grátis, processamento local para privacidade total.",
+    "keywords": "manipulação de áudio, acelerar áudio, slow reverb, áudio 8-bit, efeitos de áudio, editor musical, processador de áudio, web audio, ferramenta áudio grátis"
+  }
+}

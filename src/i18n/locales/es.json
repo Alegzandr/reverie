@@ -1,0 +1,63 @@
+{
+  "app": {
+    "title": "PitchSongs",
+    "subtitle": "Manipulación de Audio",
+    "description": "Transforma tu música con efectos de audio profesionales. Acelera, ralentiza, añade reverberación o crea versiones retro 8-bit de tus pistas."
+  },
+  "upload": {
+    "title": "Subir archivo de audio",
+    "dragDrop": "Arrastra y suelta un archivo de audio aquí",
+    "or": "o",
+    "browse": "Explorar archivos",
+    "formats": "MP3, WAV, OGG, M4A",
+    "loading": "Cargando..."
+  },
+  "effects": {
+    "speedUp": "Acelerar",
+    "slowReverb": "Lento + Reverb",
+    "8bit": "8-Bit",
+    "speed": "Velocidad",
+    "reverb": "Reverberación",
+    "bitDepth": "Profundidad de bits",
+    "sampleRate": "Frecuencia de muestreo",
+    "apply": "Aplicar efectos",
+    "processing": "Procesando..."
+  },
+  "playback": {
+    "play": "Reproducir",
+    "pause": "Pausa",
+    "export": "Exportar",
+    "exporting": "Exportando...",
+    "volume": "Volumen"
+  },
+  "track": {
+    "title": "Pista",
+    "size": "Tamaño"
+  },
+  "features": {
+    "webAudio": {
+      "title": "Web Audio API",
+      "desc": "Calidad profesional"
+    },
+    "private": {
+      "title": "100% Privado",
+      "desc": "Procesamiento local"
+    },
+    "export": {
+      "title": "Exportación Instantánea",
+      "desc": "Descargar como MP3"
+    }
+  },
+  "footer": {
+    "built": "Construido con React • TypeScript • Web Audio API"
+  },
+  "accessibility": {
+    "themeToggle": "Cambiar modo oscuro",
+    "resetApp": "Reiniciar aplicación"
+  },
+  "meta": {
+    "title": "PitchSongs - Herramienta Profesional de Manipulación de Audio",
+    "description": "Transforma tu música con efectos de audio profesionales. Crea versiones aceleradas, remixes lentos + reverb, o sonidos retro 8-bit. 100% gratis, procesamiento local para privacidad total.",
+    "keywords": "manipulación de audio, acelerar audio, slow reverb, audio 8-bit, efectos de audio, editor musical, procesador de audio, web audio, herramienta audio gratis"
+  }
+}

@@ -1,14 +1,17 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Music2, Moon, Sun } from 'lucide-react';
 import { FileUploader } from './components/FileUploader';
 import { EffectControls } from './components/EffectControls';
 import type { EffectSettings } from './components/EffectControls';
 import { PlaybackControls } from './components/PlaybackControls';
 import { ProgressBar } from './components/ProgressBar';
+import { LanguageSelector } from './components/LanguageSelector';
 import { useAudioProcessor } from './hooks/useAudioProcessor';
 import { useTheme } from './contexts/ThemeContext';
 
 function App() {
+  const { t, i18n } = useTranslation();
   const {
     state,
     originalFile,
@@ -24,6 +27,30 @@ function App() {
   } = useAudioProcessor();
 
   const { theme, toggleTheme } = useTheme();
+
+  // Update document meta tags when language changes
+  useEffect(() => {
+    document.title = t('meta.title');
+    document.documentElement.lang = i18n.language;
+
+    const updateMetaTag = (name: string, content: string, isProperty = false) => {
+      const attribute = isProperty ? 'property' : 'name';
+      let meta = document.querySelector(`meta[${attribute}="${name}"]`);
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute(attribute, name);
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute('content', content);
+    };
+
+    updateMetaTag('description', t('meta.description'));
+    updateMetaTag('keywords', t('meta.keywords'));
+    updateMetaTag('og:title', t('meta.title'), true);
+    updateMetaTag('og:description', t('meta.description'), true);
+    updateMetaTag('twitter:title', t('meta.title'));
+    updateMetaTag('twitter:description', t('meta.description'));
+  }, [i18n.language, t]);
 
   const [effectSettings, setEffectSettings] = useState<EffectSettings>({
     speedMultiplier: 1.2,
@@ -76,30 +103,35 @@ function App() {
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <button
             onClick={reset}
+            aria-label={t('accessibility.resetApp')}
             className="flex items-center gap-3 ios-button cursor-pointer transition-opacity hover:opacity-80"
           >
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-[10px] flex items-center justify-center shadow-sm">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-[10px] flex items-center justify-center shadow-sm" aria-hidden="true">
               <Music2 className="w-6 h-6 text-white" />
             </div>
             <div className="text-left">
               <h1 className="text-xl font-semibold text-[rgb(var(--color-text))]">
-                PitchSongs
+                {t('app.title')}
               </h1>
               <p className="text-xs text-[rgb(var(--color-text-secondary))]">
-                Audio Manipulation
+                {t('app.subtitle')}
               </p>
             </div>
           </button>
-          <button
-            onClick={toggleTheme}
-            className="w-10 h-10 glass rounded-full flex items-center justify-center ios-button cursor-pointer"
-          >
-            {theme === 'light' ? (
-              <Moon className="w-5 h-5 text-[rgb(var(--color-text))]" />
-            ) : (
-              <Sun className="w-5 h-5 text-[rgb(var(--color-text))]" />
-            )}
-          </button>
+          <div className="flex items-center gap-2">
+            <LanguageSelector />
+            <button
+              onClick={toggleTheme}
+              aria-label={t('accessibility.themeToggle')}
+              className="w-10 h-10 glass rounded-full flex items-center justify-center ios-button cursor-pointer"
+            >
+              {theme === 'light' ? (
+                <Moon className="w-5 h-5 text-[rgb(var(--color-text))]" aria-hidden="true" />
+              ) : (
+                <Sun className="w-5 h-5 text-[rgb(var(--color-text))]" aria-hidden="true" />
+              )}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -128,7 +160,7 @@ function App() {
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-[rgb(var(--color-text-secondary))] uppercase tracking-wide mb-1">
-                    Track
+                    {t('track.title')}
                   </p>
                   <p className="text-base font-semibold text-[rgb(var(--color-text))] truncate">
                     {originalFile.name}
@@ -136,7 +168,7 @@ function App() {
                 </div>
                 <div className="text-right ml-4">
                   <p className="text-xs font-medium text-[rgb(var(--color-text-secondary))] uppercase tracking-wide mb-1">
-                    Size
+                    {t('track.size')}
                   </p>
                   <p className="text-base font-semibold text-[rgb(var(--color-accent))]">
                     {(originalFile.size / 1024 / 1024).toFixed(1)} MB
@@ -158,6 +190,7 @@ function App() {
               <button
                 onClick={handleProcess}
                 disabled={state.isProcessing || state.isPlaying}
+                aria-label={state.isProcessing ? t('effects.processing') : t('effects.apply')}
                 className={`
                   w-full py-4 rounded-[14px] font-semibold text-[15px]
                   ios-button transition-all duration-200
@@ -168,7 +201,7 @@ function App() {
                   }
                 `}
               >
-                {state.isProcessing ? 'Processing...' : 'Apply Effects'}
+                {state.isProcessing ? t('effects.processing') : t('effects.apply')}
               </button>
             </>
           )}
@@ -178,7 +211,7 @@ function App() {
             <ProgressBar
               progress={state.progress}
               isProcessing={state.isProcessing || state.isLoading}
-              message={state.isLoading ? 'Loading...' : 'Processing...'}
+              message={state.isLoading ? t('upload.loading') : t('effects.processing')}
             />
           )}
 
@@ -201,27 +234,37 @@ function App() {
 
         {/* Features */}
         <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {[
-            { title: 'Web Audio API', desc: 'Professional quality' },
-            { title: '100% Private', desc: 'Client-side processing' },
-            { title: 'Instant Export', desc: 'Download as MP3' },
-          ].map((feature, i) => (
-            <div key={i} className="glass rounded-2xl p-5 text-center">
-              <p className="text-sm font-semibold text-[rgb(var(--color-text))] mb-1">
-                {feature.title}
-              </p>
-              <p className="text-xs text-[rgb(var(--color-text-secondary))]">
-                {feature.desc}
-              </p>
-            </div>
-          ))}
+          <div className="glass rounded-2xl p-5 text-center">
+            <p className="text-sm font-semibold text-[rgb(var(--color-text))] mb-1">
+              {t('features.webAudio.title')}
+            </p>
+            <p className="text-xs text-[rgb(var(--color-text-secondary))]">
+              {t('features.webAudio.desc')}
+            </p>
+          </div>
+          <div className="glass rounded-2xl p-5 text-center">
+            <p className="text-sm font-semibold text-[rgb(var(--color-text))] mb-1">
+              {t('features.private.title')}
+            </p>
+            <p className="text-xs text-[rgb(var(--color-text-secondary))]">
+              {t('features.private.desc')}
+            </p>
+          </div>
+          <div className="glass rounded-2xl p-5 text-center">
+            <p className="text-sm font-semibold text-[rgb(var(--color-text))] mb-1">
+              {t('features.export.title')}
+            </p>
+            <p className="text-xs text-[rgb(var(--color-text-secondary))]">
+              {t('features.export.desc')}
+            </p>
+          </div>
         </div>
       </main>
 
       {/* Footer */}
       <footer className="mt-16 pb-8 text-center">
         <p className="text-xs text-[rgb(var(--color-text-secondary))]">
-          Built with React • TypeScript • Web Audio API
+          {t('footer.built')}
         </p>
       </footer>
     </div>

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Play, Pause, RotateCcw, Download, Volume2 } from 'lucide-react';
 
 interface PlaybackControlsProps {
@@ -25,6 +26,8 @@ export function PlaybackControls({
   isProcessing,
   disabled,
 }: PlaybackControlsProps) {
+  const { t } = useTranslation();
+
   return (
     <div className="space-y-4">
       <div className="glass rounded-2xl p-5">
@@ -33,6 +36,7 @@ export function PlaybackControls({
           <button
             onClick={isPlaying ? onStop : onPlay}
             disabled={disabled || !hasProcessed}
+            aria-label={isPlaying ? t('playback.pause') : t('playback.play')}
             className={`
               flex-1 min-w-[140px] py-3 rounded-[12px] font-semibold text-[15px]
               ios-button transition-all duration-200 flex items-center justify-center gap-2
@@ -45,13 +49,13 @@ export function PlaybackControls({
           >
             {isPlaying ? (
               <>
-                <Pause className="w-5 h-5" />
-                Pause
+                <Pause className="w-5 h-5" aria-hidden="true" />
+                {t('playback.pause')}
               </>
             ) : (
               <>
-                <Play className="w-5 h-5" />
-                Play
+                <Play className="w-5 h-5" aria-hidden="true" />
+                {t('playback.play')}
               </>
             )}
           </button>
@@ -60,6 +64,7 @@ export function PlaybackControls({
           <button
             onClick={onExport}
             disabled={disabled || !hasProcessed || isProcessing}
+            aria-label={isProcessing ? t('playback.exporting') : t('playback.export')}
             className={`
               flex-1 min-w-[140px] py-3 rounded-[12px] font-semibold text-[15px]
               ios-button transition-all duration-200 flex items-center justify-center gap-2
@@ -70,14 +75,15 @@ export function PlaybackControls({
               }
             `}
           >
-            <Download className="w-5 h-5" />
-            {isProcessing ? 'Exporting...' : 'Export'}
+            <Download className="w-5 h-5" aria-hidden="true" />
+            {isProcessing ? t('playback.exporting') : t('playback.export')}
           </button>
 
           {/* Reset */}
           <button
             onClick={onReset}
             disabled={disabled}
+            aria-label={t('accessibility.resetApp')}
             className={`
               p-3 rounded-[12px]
               ios-button transition-all duration-200
@@ -88,7 +94,7 @@ export function PlaybackControls({
               }
             `}
           >
-            <RotateCcw className="w-5 h-5" />
+            <RotateCcw className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -96,17 +102,20 @@ export function PlaybackControls({
         {hasProcessed && (
           <div className="mt-5 pt-5 border-t border-[rgb(var(--color-border))]">
             <div className="flex items-center gap-3">
-              <Volume2 className="w-5 h-5 text-[rgb(var(--color-text-secondary))] flex-shrink-0" />
+              <Volume2 className="w-5 h-5 text-[rgb(var(--color-text-secondary))] flex-shrink-0" aria-hidden="true" />
+              <label htmlFor="volume-slider" className="sr-only">{t('playback.volume')}</label>
               <input
+                id="volume-slider"
                 type="range"
                 min="0"
                 max="1"
                 step="0.01"
                 value={volume}
                 onChange={(e) => onVolumeChange(parseFloat(e.target.value))}
+                aria-label={`${t('playback.volume')}: ${Math.round(volume * 100)}%`}
                 className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer accent-[rgb(var(--color-accent))]"
               />
-              <span className="text-sm font-medium text-[rgb(var(--color-text))] w-12 text-right">
+              <span className="text-sm font-medium text-[rgb(var(--color-text))] w-12 text-right" aria-live="polite">
                 {Math.round(volume * 100)}%
               </span>
             </div>

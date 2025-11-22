@@ -1,0 +1,63 @@
+{
+  "app": {
+    "title": "PitchSongs",
+    "subtitle": "Manipulation Audio",
+    "description": "Transformez votre musique avec des effets audio professionnels. Accélérez, ralentissez, ajoutez de la réverbération ou créez des versions rétro 8-bit de vos morceaux."
+  },
+  "upload": {
+    "title": "Téléverser un fichier audio",
+    "dragDrop": "Glissez-déposez un fichier audio ici",
+    "or": "ou",
+    "browse": "Parcourir les fichiers",
+    "formats": "MP3, WAV, OGG, M4A",
+    "loading": "Chargement..."
+  },
+  "effects": {
+    "speedUp": "Accélérer",
+    "slowReverb": "Ralenti + Reverb",
+    "8bit": "8-Bit",
+    "speed": "Vitesse",
+    "reverb": "Réverbération",
+    "bitDepth": "Profondeur de bits",
+    "sampleRate": "Taux d'échantillonnage",
+    "apply": "Appliquer les effets",
+    "processing": "Traitement en cours..."
+  },
+  "playback": {
+    "play": "Lecture",
+    "pause": "Pause",
+    "export": "Exporter",
+    "exporting": "Exportation...",
+    "volume": "Volume"
+  },
+  "track": {
+    "title": "Piste",
+    "size": "Taille"
+  },
+  "features": {
+    "webAudio": {
+      "title": "Web Audio API",
+      "desc": "Qualité professionnelle"
+    },
+    "private": {
+      "title": "100% Privé",
+      "desc": "Traitement côté client"
+    },
+    "export": {
+      "title": "Export Instantané",
+      "desc": "Télécharger en MP3"
+    }
+  },
+  "footer": {
+    "built": "Créé avec React • TypeScript • Web Audio API"
+  },
+  "accessibility": {
+    "themeToggle": "Basculer le mode sombre",
+    "resetApp": "Réinitialiser l'application"
+  },
+  "meta": {
+    "title": "PitchSongs - Outil de Manipulation Audio Professionnel",
+    "description": "Transformez votre musique avec des effets audio professionnels. Créez des versions accélérées, des remixes ralentis + reverb, ou des sons rétro 8-bit. 100% gratuit, traitement côté client pour une confidentialité totale.",
+    "keywords": "manipulation audio, accélérer audio, slow reverb, audio 8-bit, effets audio, éditeur musical, processeur audio, web audio, outil audio gratuit"
+  }
+}

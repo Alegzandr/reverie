@@ -1,0 +1,63 @@
+{
+  "app": {
+    "title": "PitchSongs",
+    "subtitle": "Audio-Manipulation",
+    "description": "Verwandeln Sie Ihre Musik mit professionellen Audio-Effekten. Beschleunigen, verlangsamen, Hall hinzufügen oder Retro-8-Bit-Versionen Ihrer Tracks erstellen."
+  },
+  "upload": {
+    "title": "Audiodatei hochladen",
+    "dragDrop": "Ziehen Sie eine Audiodatei hierher",
+    "or": "oder",
+    "browse": "Dateien durchsuchen",
+    "formats": "MP3, WAV, OGG, M4A",
+    "loading": "Lädt..."
+  },
+  "effects": {
+    "speedUp": "Beschleunigen",
+    "slowReverb": "Langsam + Hall",
+    "8bit": "8-Bit",
+    "speed": "Geschwindigkeit",
+    "reverb": "Hall",
+    "bitDepth": "Bittiefe",
+    "sampleRate": "Abtastrate",
+    "apply": "Effekte anwenden",
+    "processing": "Verarbeitung..."
+  },
+  "playback": {
+    "play": "Abspielen",
+    "pause": "Pause",
+    "export": "Exportieren",
+    "exporting": "Exportiere...",
+    "volume": "Lautstärke"
+  },
+  "track": {
+    "title": "Track",
+    "size": "Größe"
+  },
+  "features": {
+    "webAudio": {
+      "title": "Web Audio API",
+      "desc": "Professionelle Qualität"
+    },
+    "private": {
+      "title": "100% Privat",
+      "desc": "Lokale Verarbeitung"
+    },
+    "export": {
+      "title": "Sofort-Export",
+      "desc": "Als MP3 herunterladen"
+    }
+  },
+  "footer": {
+    "built": "Erstellt mit React • TypeScript • Web Audio API"
+  },
+  "accessibility": {
+    "themeToggle": "Dunkelmodus umschalten",
+    "resetApp": "Anwendung zurücksetzen"
+  },
+  "meta": {
+    "title": "PitchSongs - Professionelles Audio-Manipulationswerkzeug",
+    "description": "Verwandeln Sie Ihre Musik mit professionellen Audio-Effekten. Erstellen Sie beschleunigte Versionen, langsame + Hall-Remixe oder Retro-8-Bit-Sounds. 100% kostenlos, lokale Verarbeitung für vollständige Privatsphäre.",
+    "keywords": "Audio-Manipulation, Audio beschleunigen, Slow Reverb, 8-Bit-Audio, Audio-Effekte, Musik-Editor, Audio-Prozessor, Web Audio, kostenloses Audio-Tool"
+  }
+}

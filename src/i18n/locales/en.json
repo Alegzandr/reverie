@@ -1,0 +1,63 @@
+{
+  "app": {
+    "title": "PitchSongs",
+    "subtitle": "Audio Manipulation",
+    "description": "Transform your music with professional audio effects. Speed up, slow down, add reverb, or create retro 8-bit versions of your tracks."
+  },
+  "upload": {
+    "title": "Upload Audio File",
+    "dragDrop": "Drag and drop an audio file here",
+    "or": "or",
+    "browse": "Browse Files",
+    "formats": "MP3, WAV, OGG, M4A",
+    "loading": "Loading..."
+  },
+  "effects": {
+    "speedUp": "Speed Up",
+    "slowReverb": "Slow + Reverb",
+    "8bit": "8-Bit",
+    "speed": "Speed",
+    "reverb": "Reverb",
+    "bitDepth": "Bit Depth",
+    "sampleRate": "Sample Rate",
+    "apply": "Apply Effects",
+    "processing": "Processing..."
+  },
+  "playback": {
+    "play": "Play",
+    "pause": "Pause",
+    "export": "Export",
+    "exporting": "Exporting...",
+    "volume": "Volume"
+  },
+  "track": {
+    "title": "Track",
+    "size": "Size"
+  },
+  "features": {
+    "webAudio": {
+      "title": "Web Audio API",
+      "desc": "Professional quality"
+    },
+    "private": {
+      "title": "100% Private",
+      "desc": "Client-side processing"
+    },
+    "export": {
+      "title": "Instant Export",
+      "desc": "Download as MP3"
+    }
+  },
+  "footer": {
+    "built": "Built with React • TypeScript • Web Audio API"
+  },
+  "accessibility": {
+    "themeToggle": "Toggle dark mode",
+    "resetApp": "Reset application"
+  },
+  "meta": {
+    "title": "PitchSongs - Professional Audio Manipulation Tool",
+    "description": "Transform your music with professional audio effects. Create sped up versions, slow + reverb remixes, or retro 8-bit sounds. 100% free, client-side processing for complete privacy.",
+    "keywords": "audio manipulation, speed up audio, slow reverb, 8-bit audio, audio effects, music editor, audio processor, web audio, free audio tool"
+  }
+}

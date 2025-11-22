@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Zap, Waves, Box } from 'lucide-react';
 
 export interface EffectSettings {
@@ -14,6 +15,7 @@ interface EffectControlsProps {
 }
 
 export function EffectControls({ onChange, disabled }: EffectControlsProps) {
+  const { t } = useTranslation();
   const [mode, setMode] = useState<'speed-up' | 'slow-reverb' | '8-bit'>('speed-up');
   const [speedMultiplier, setSpeedMultiplier] = useState(1.2);
   const [reverbAmount, setReverbAmount] = useState(0.3);
@@ -37,6 +39,8 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
         <button
           onClick={() => setMode('speed-up')}
           disabled={disabled}
+          aria-pressed={mode === 'speed-up'}
+          aria-label={t('effects.speedUp')}
           className={`
             glass rounded-[14px] px-4 py-4
             font-medium text-[14px]
@@ -50,15 +54,17 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
           `}
         >
           <div className="flex flex-col items-center justify-center gap-1">
-            <Zap className={`w-5 h-5 ${mode === 'speed-up' ? 'text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-text-secondary))]'}`} />
+            <Zap className={`w-5 h-5 ${mode === 'speed-up' ? 'text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-text-secondary))]'}`} aria-hidden="true" />
             <span className={mode === 'speed-up' ? 'text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-text))]'}>
-              Speed Up
+              {t('effects.speedUp')}
             </span>
           </div>
         </button>
         <button
           onClick={() => setMode('slow-reverb')}
           disabled={disabled}
+          aria-pressed={mode === 'slow-reverb'}
+          aria-label={t('effects.slowReverb')}
           className={`
             glass rounded-[14px] px-4 py-4
             font-medium text-[14px]
@@ -72,15 +78,17 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
           `}
         >
           <div className="flex flex-col items-center justify-center gap-1">
-            <Waves className={`w-5 h-5 ${mode === 'slow-reverb' ? 'text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-text-secondary))]'}`} />
+            <Waves className={`w-5 h-5 ${mode === 'slow-reverb' ? 'text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-text-secondary))]'}`} aria-hidden="true" />
             <span className={mode === 'slow-reverb' ? 'text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-text))]'}>
-              Slow + Reverb
+              {t('effects.slowReverb')}
             </span>
           </div>
         </button>
         <button
           onClick={() => setMode('8-bit')}
           disabled={disabled}
+          aria-pressed={mode === '8-bit'}
+          aria-label={t('effects.8bit')}
           className={`
             glass rounded-[14px] px-4 py-4
             font-medium text-[14px]
@@ -94,9 +102,9 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
           `}
         >
           <div className="flex flex-col items-center justify-center gap-1">
-            <Box className={`w-5 h-5 ${mode === '8-bit' ? 'text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-text-secondary))]'}`} />
+            <Box className={`w-5 h-5 ${mode === '8-bit' ? 'text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-text-secondary))]'}`} aria-hidden="true" />
             <span className={mode === '8-bit' ? 'text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-text))]'}>
-              8-Bit
+              {t('effects.8bit')}
             </span>
           </div>
         </button>
@@ -107,14 +115,15 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
         {mode === 'speed-up' ? (
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-medium text-[rgb(var(--color-text))]">
-                Speed
-              </span>
-              <span className="text-2xl font-semibold text-[rgb(var(--color-accent))]">
+              <label htmlFor="speed-slider" className="text-sm font-medium text-[rgb(var(--color-text))]">
+                {t('effects.speed')}
+              </label>
+              <span className="text-2xl font-semibold text-[rgb(var(--color-accent))]" aria-live="polite">
                 {speedMultiplier.toFixed(1)}x
               </span>
             </div>
             <input
+              id="speed-slider"
               type="range"
               min="1.1"
               max="2.0"
@@ -122,6 +131,7 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
               value={speedMultiplier}
               onChange={(e) => setSpeedMultiplier(parseFloat(e.target.value))}
               disabled={disabled}
+              aria-label={`${t('effects.speed')}: ${speedMultiplier.toFixed(1)}x`}
               className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer accent-[rgb(var(--color-accent))]"
             />
             <div className="flex justify-between text-xs text-[rgb(var(--color-text-secondary))]">
@@ -132,14 +142,15 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
         ) : mode === 'slow-reverb' ? (
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-medium text-[rgb(var(--color-text))]">
-                Reverb
-              </span>
-              <span className="text-2xl font-semibold text-[rgb(var(--color-accent))]">
+              <label htmlFor="reverb-slider" className="text-sm font-medium text-[rgb(var(--color-text))]">
+                {t('effects.reverb')}
+              </label>
+              <span className="text-2xl font-semibold text-[rgb(var(--color-accent))]" aria-live="polite">
                 {Math.round(reverbAmount * 100)}%
               </span>
             </div>
             <input
+              id="reverb-slider"
               type="range"
               min="0.1"
               max="1.0"
@@ -147,6 +158,7 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
               value={reverbAmount}
               onChange={(e) => setReverbAmount(parseFloat(e.target.value))}
               disabled={disabled}
+              aria-label={`${t('effects.reverb')}: ${Math.round(reverbAmount * 100)}%`}
               className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer accent-[rgb(var(--color-accent))]"
             />
             <div className="flex justify-between text-xs text-[rgb(var(--color-text-secondary))]">
@@ -159,14 +171,15 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
             {/* Bit Depth */}
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-medium text-[rgb(var(--color-text))]">
-                  Bit Depth
-                </span>
-                <span className="text-2xl font-semibold text-[rgb(var(--color-accent))]">
+                <label htmlFor="bitdepth-slider" className="text-sm font-medium text-[rgb(var(--color-text))]">
+                  {t('effects.bitDepth')}
+                </label>
+                <span className="text-2xl font-semibold text-[rgb(var(--color-accent))]" aria-live="polite">
                   {bitDepth}-bit
                 </span>
               </div>
               <input
+                id="bitdepth-slider"
                 type="range"
                 min="4"
                 max="12"
@@ -174,6 +187,7 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
                 value={bitDepth}
                 onChange={(e) => setBitDepth(parseFloat(e.target.value))}
                 disabled={disabled}
+                aria-label={`${t('effects.bitDepth')}: ${bitDepth}-bit`}
                 className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer accent-[rgb(var(--color-accent))]"
               />
               <div className="flex justify-between text-xs text-[rgb(var(--color-text-secondary))]">
@@ -185,14 +199,15 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
             {/* Sample Rate Reduction */}
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-medium text-[rgb(var(--color-text))]">
-                  Sample Rate
-                </span>
-                <span className="text-2xl font-semibold text-[rgb(var(--color-accent))]">
+                <label htmlFor="samplerate-slider" className="text-sm font-medium text-[rgb(var(--color-text))]">
+                  {t('effects.sampleRate')}
+                </label>
+                <span className="text-2xl font-semibold text-[rgb(var(--color-accent))]" aria-live="polite">
                   /{sampleRateReduction}
                 </span>
               </div>
               <input
+                id="samplerate-slider"
                 type="range"
                 min="1"
                 max="8"
@@ -200,6 +215,7 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
                 value={sampleRateReduction}
                 onChange={(e) => setSampleRateReduction(parseFloat(e.target.value))}
                 disabled={disabled}
+                aria-label={`${t('effects.sampleRate')}: /${sampleRateReduction}`}
                 className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer accent-[rgb(var(--color-accent))]"
               />
               <div className="flex justify-between text-xs text-[rgb(var(--color-text-secondary))]">
