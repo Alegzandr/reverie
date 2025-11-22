@@ -2,6 +2,8 @@ export interface AudioProcessingOptions {
   speedMultiplier: number;
   reverbAmount: number;
   preservePitch: boolean;
+  bitDepth?: number;
+  sampleRateReduction?: number;
 }
 
 export class AudioProcessor {
@@ -23,7 +25,7 @@ export class AudioProcessor {
       throw new Error('No audio file loaded');
     }
 
-    const { speedMultiplier, reverbAmount } = options;
+    const { speedMultiplier, reverbAmount, bitDepth, sampleRateReduction } = options;
 
     // Create offline context for processing
     const offlineContext = new OfflineAudioContext(
@@ -64,7 +66,41 @@ export class AudioProcessor {
       lastNode = merger;
     }
 
-    lastNode.connect(offlineContext.destination);
+    // Apply bit-crushing and sample rate reduction for 8-bit effect
+    if (bitDepth || sampleRateReduction) {
+      const scriptProcessor = offlineContext.createScriptProcessor(4096, 2, 2);
+      const bitReduction = bitDepth ? Math.pow(2, bitDepth) : 65536;
+      const sampleRateDiv = sampleRateReduction || 1;
+      let lastSample: number[] = [0, 0];
+      let sampleCounter = 0;
+
+      scriptProcessor.onaudioprocess = (e) => {
+        const inputBuffer = e.inputBuffer;
+        const outputBuffer = e.outputBuffer;
+
+        for (let channel = 0; channel < outputBuffer.numberOfChannels; channel++) {
+          const inputData = inputBuffer.getChannelData(channel);
+          const outputData = outputBuffer.getChannelData(channel);
+
+          for (let sample = 0; sample < inputBuffer.length; sample++) {
+            // Sample rate reduction (hold sample for multiple frames)
+            if (sampleCounter % sampleRateDiv === 0) {
+              // Bit depth reduction (quantize the sample)
+              const quantized = Math.floor(inputData[sample] * bitReduction) / bitReduction;
+              lastSample[channel] = quantized;
+            }
+            outputData[sample] = lastSample[channel];
+            sampleCounter++;
+          }
+        }
+      };
+
+      lastNode.connect(scriptProcessor);
+      scriptProcessor.connect(offlineContext.destination);
+    } else {
+      lastNode.connect(offlineContext.destination);
+    }
+
     source.start(0);
 
     return await offlineContext.startRendering();

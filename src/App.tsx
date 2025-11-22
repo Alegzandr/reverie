@@ -47,6 +47,8 @@ function App() {
         speedMultiplier: effectSettings.speedMultiplier,
         reverbAmount: effectSettings.reverbAmount,
         preservePitch: false,
+        bitDepth: effectSettings.bitDepth,
+        sampleRateReduction: effectSettings.sampleRateReduction,
       });
     } catch (error) {
       console.error('Processing error:', error);
@@ -72,11 +74,14 @@ function App() {
       {/* Header */}
       <header className="sticky top-0 z-50 glass">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <button
+            onClick={reset}
+            className="flex items-center gap-3 ios-button cursor-pointer transition-opacity hover:opacity-80"
+          >
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-[10px] flex items-center justify-center shadow-sm">
               <Music2 className="w-6 h-6 text-white" />
             </div>
-            <div>
+            <div className="text-left">
               <h1 className="text-xl font-semibold text-[rgb(var(--color-text))]">
                 PitchSongs
               </h1>
@@ -84,7 +89,7 @@ function App() {
                 Audio Manipulation
               </p>
             </div>
-          </div>
+          </button>
           <button
             onClick={toggleTheme}
             className="w-10 h-10 glass rounded-full flex items-center justify-center ios-button cursor-pointer"
