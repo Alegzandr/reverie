@@ -130,7 +130,8 @@ export function useAudioProcessor() {
 
     try {
       const mp3Blob = await audioBufferToMp3(buffer);
-      const defaultFilename = filename || `${originalFile?.name.replace('.mp3', '')}_processed.mp3` || 'processed_audio.mp3';
+      const derivedName = originalFile ? `${originalFile.name.replace('.mp3', '')}_processed.mp3` : 'processed_audio.mp3';
+      const defaultFilename = filename || derivedName;
       downloadBlob(mp3Blob, defaultFilename);
       setState((prev) => ({ ...prev, isProcessing: false }));
     } catch (error) {
