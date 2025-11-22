@@ -25,56 +25,64 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
   }, [mode, speedMultiplier, reverbAmount, onChange]);
 
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-6">
+    <div className="space-y-4">
       {/* Mode Selection */}
-      <div className="grid grid-cols-2 gap-5">
+      <div className="grid grid-cols-2 gap-3">
         <button
           onClick={() => setMode('speed-up')}
           disabled={disabled}
           className={`
-            retro-button relative flex items-center justify-center gap-3 p-7 rounded-2xl
-            font-black text-xl uppercase tracking-wider
-            transition-all duration-300 shadow-xl
+            glass rounded-[14px] px-5 py-4
+            font-medium text-[15px]
+            ios-button transition-all duration-200
             ${
               mode === 'speed-up'
-                ? 'bg-gradient-to-br from-[#ff6ec7] to-[#ff3d8f] text-white shadow-[0_0_30px_rgba(255,110,199,0.6)] scale-105 border-2 border-white/50'
-                : 'bg-white/10 text-white/70 hover:bg-white/20 border-2 border-white/20'
+                ? 'bg-[rgb(var(--color-accent))]/10 border-2 border-[rgb(var(--color-accent))]/50'
+                : 'border-2 border-transparent'
             }
             ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
           `}
         >
-          <Zap className="w-7 h-7" />
-          Speed Up
+          <div className="flex items-center justify-center gap-2">
+            <Zap className={`w-5 h-5 ${mode === 'speed-up' ? 'text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-text-secondary))]'}`} />
+            <span className={mode === 'speed-up' ? 'text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-text))]'}>
+              Speed Up
+            </span>
+          </div>
         </button>
         <button
           onClick={() => setMode('slow-reverb')}
           disabled={disabled}
           className={`
-            retro-button relative flex items-center justify-center gap-3 p-7 rounded-2xl
-            font-black text-xl uppercase tracking-wider
-            transition-all duration-300 shadow-xl
+            glass rounded-[14px] px-5 py-4
+            font-medium text-[15px]
+            ios-button transition-all duration-200
             ${
               mode === 'slow-reverb'
-                ? 'bg-gradient-to-br from-[#4de8ff] to-[#00a8ff] text-white shadow-[0_0_30px_rgba(77,232,255,0.6)] scale-105 border-2 border-white/50'
-                : 'bg-white/10 text-white/70 hover:bg-white/20 border-2 border-white/20'
+                ? 'bg-[rgb(var(--color-accent))]/10 border-2 border-[rgb(var(--color-accent))]/50'
+                : 'border-2 border-transparent'
             }
             ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
           `}
         >
-          <Waves className="w-7 h-7" />
-          Slow+Reverb
+          <div className="flex items-center justify-center gap-2">
+            <Waves className={`w-5 h-5 ${mode === 'slow-reverb' ? 'text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-text-secondary))]'}`} />
+            <span className={mode === 'slow-reverb' ? 'text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-text))]'}>
+              Slow + Reverb
+            </span>
+          </div>
         </button>
       </div>
 
-      {/* Effect Settings */}
-      <div className="cassette-tape rounded-2xl p-6 border-2 border-white/30">
+      {/* Settings */}
+      <div className="glass rounded-2xl p-6">
         {mode === 'speed-up' ? (
-          <div className="space-y-5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-black text-white/80 uppercase tracking-widest">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-medium text-[rgb(var(--color-text))]">
                 Speed
-              </label>
-              <span className="text-3xl font-black text-[#ff6ec7] drop-shadow-lg">
+              </span>
+              <span className="text-2xl font-semibold text-[rgb(var(--color-accent))]">
                 {speedMultiplier.toFixed(1)}x
               </span>
             </div>
@@ -86,23 +94,20 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
               value={speedMultiplier}
               onChange={(e) => setSpeedMultiplier(parseFloat(e.target.value))}
               disabled={disabled}
-              className="w-full h-4 bg-white/20 rounded-full appearance-none cursor-pointer accent-[#ff6ec7] backdrop-blur"
-              style={{
-                backgroundImage: `linear-gradient(to right, #ff6ec7 0%, #ff6ec7 ${((speedMultiplier - 1.1) / (2.0 - 1.1)) * 100}%, rgba(255,255,255,0.2) ${((speedMultiplier - 1.1) / (2.0 - 1.1)) * 100}%, rgba(255,255,255,0.2) 100%)`
-              }}
+              className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer accent-[rgb(var(--color-accent))]"
             />
-            <div className="flex justify-between text-xs font-black text-white/60 uppercase">
+            <div className="flex justify-between text-xs text-[rgb(var(--color-text-secondary))]">
               <span>1.1x</span>
               <span>2.0x</span>
             </div>
           </div>
         ) : (
-          <div className="space-y-5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-black text-white/80 uppercase tracking-widest">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-medium text-[rgb(var(--color-text))]">
                 Reverb
-              </label>
-              <span className="text-3xl font-black text-[#4de8ff] drop-shadow-lg">
+              </span>
+              <span className="text-2xl font-semibold text-[rgb(var(--color-accent))]">
                 {Math.round(reverbAmount * 100)}%
               </span>
             </div>
@@ -114,12 +119,9 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
               value={reverbAmount}
               onChange={(e) => setReverbAmount(parseFloat(e.target.value))}
               disabled={disabled}
-              className="w-full h-4 bg-white/20 rounded-full appearance-none cursor-pointer accent-[#4de8ff] backdrop-blur"
-              style={{
-                backgroundImage: `linear-gradient(to right, #4de8ff 0%, #4de8ff ${reverbAmount * 100}%, rgba(255,255,255,0.2) ${reverbAmount * 100}%, rgba(255,255,255,0.2) 100%)`
-              }}
+              className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer accent-[rgb(var(--color-accent))]"
             />
-            <div className="flex justify-between text-xs font-black text-white/60 uppercase">
+            <div className="flex justify-between text-xs text-[rgb(var(--color-text-secondary))]">
               <span>10%</span>
               <span>100%</span>
             </div>

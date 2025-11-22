@@ -37,7 +37,7 @@ export function FileUploader({ onFileSelect, isLoading, hasFile }: FileUploaderP
     <div
       onDrop={handleDrop}
       onDragOver={handleDragOver}
-      className="relative w-full max-w-2xl mx-auto"
+      className="relative"
     >
       <input
         type="file"
@@ -51,38 +51,29 @@ export function FileUploader({ onFileSelect, isLoading, hasFile }: FileUploaderP
         htmlFor="file-input"
         className={`
           flex flex-col items-center justify-center
-          w-full h-72 px-8 py-12
-          cassette-tape rounded-3xl
-          cursor-pointer transition-all duration-500
-          ${
-            hasFile
-              ? 'border-4 border-[#4de8ff] shadow-[0_0_40px_rgba(77,232,255,0.5)]'
-              : 'border-4 border-white/30 hover:border-white/50 hover:shadow-[0_0_30px_rgba(255,255,255,0.3)]'
-          }
-          ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}
+          glass rounded-3xl p-12 min-h-[280px]
+          cursor-pointer transition-all duration-200
+          ${hasFile ? 'border-2 border-[rgb(var(--color-accent))]/30' : 'border-2 border-transparent hover:border-[rgb(var(--color-border))]'}
+          ${isLoading ? 'opacity-50 cursor-not-allowed' : 'ios-button'}
         `}
       >
         <div className="flex flex-col items-center gap-6">
-          {hasFile ? (
-            <div className="relative">
-              <div className="absolute inset-0 bg-[#4de8ff] blur-2xl opacity-50 rounded-full"></div>
-              <div className="relative p-6 bg-gradient-to-br from-[#4de8ff] to-[#00d4ff] rounded-full shadow-2xl">
-                <Music className="w-16 h-16 text-white drop-shadow-lg" />
-              </div>
-            </div>
-          ) : (
-            <div className="relative">
-              <div className="absolute inset-0 bg-white blur-2xl opacity-30 rounded-full"></div>
-              <div className="relative p-6 bg-white/20 rounded-full backdrop-blur-sm border-2 border-white/40">
-                <Upload className="w-16 h-16 text-white drop-shadow-lg" />
-              </div>
-            </div>
-          )}
+          <div className={`
+            w-20 h-20 rounded-[20px] flex items-center justify-center
+            ${hasFile ? 'bg-[rgb(var(--color-accent))]' : 'bg-gray-200 dark:bg-gray-700'}
+            transition-colors duration-200
+          `}>
+            {hasFile ? (
+              <Music className="w-10 h-10 text-white" />
+            ) : (
+              <Upload className="w-10 h-10 text-gray-600 dark:text-gray-300" />
+            )}
+          </div>
           <div className="text-center">
-            <p className="text-2xl font-black text-white drop-shadow-2xl mb-2 uppercase tracking-wide">
-              {hasFile ? 'Tape Loaded!' : 'Drop Your MP3'}
+            <p className="text-[17px] font-semibold text-[rgb(var(--color-text))] mb-2">
+              {hasFile ? 'File Loaded' : 'Drop MP3 File'}
             </p>
-            <p className="text-sm text-white/80 font-bold uppercase tracking-wider">
+            <p className="text-[13px] text-[rgb(var(--color-text-secondary))]">
               {hasFile ? 'Drop another to replace' : 'or click to browse'}
             </p>
           </div>

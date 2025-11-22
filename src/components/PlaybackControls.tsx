@@ -26,94 +26,87 @@ export function PlaybackControls({
   disabled,
 }: PlaybackControlsProps) {
   return (
-    <div className="w-full max-w-2xl mx-auto">
-      <div className="cassette-tape rounded-2xl p-6 border-2 border-white/30">
-        <div className="flex items-center justify-center gap-4 flex-wrap">
-          {/* Play/Pause Button */}
+    <div className="space-y-4">
+      <div className="glass rounded-2xl p-5">
+        <div className="flex items-center justify-center gap-3 flex-wrap">
+          {/* Play/Pause */}
           <button
             onClick={isPlaying ? onStop : onPlay}
             disabled={disabled || !hasProcessed}
             className={`
-              retro-button flex items-center justify-center gap-2 px-10 py-5 rounded-xl
-              font-black text-lg uppercase tracking-wider
-              transition-all duration-300 shadow-xl
+              flex-1 min-w-[140px] py-3 rounded-[12px] font-semibold text-[15px]
+              ios-button transition-all duration-200 flex items-center justify-center gap-2
               ${
                 hasProcessed && !disabled
-                  ? 'bg-gradient-to-r from-[#ff6ec7] to-[#b06aff] text-white hover:shadow-[0_0_30px_rgba(255,110,199,0.6)] cursor-pointer'
-                  : 'bg-gray-500/20 text-gray-400 cursor-not-allowed'
+                  ? 'bg-[rgb(var(--color-accent))] text-white hover:bg-[rgb(var(--color-accent-hover))] cursor-pointer'
+                  : 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
               }
             `}
           >
             {isPlaying ? (
               <>
-                <Pause className="w-7 h-7" />
+                <Pause className="w-5 h-5" />
                 Pause
               </>
             ) : (
               <>
-                <Play className="w-7 h-7" />
+                <Play className="w-5 h-5" />
                 Play
               </>
             )}
           </button>
 
-          {/* Export Button */}
+          {/* Export */}
           <button
             onClick={onExport}
             disabled={disabled || !hasProcessed || isProcessing}
             className={`
-              retro-button flex items-center justify-center gap-2 px-10 py-5 rounded-xl
-              font-black text-lg uppercase tracking-wider
-              transition-all duration-300 shadow-xl
+              flex-1 min-w-[140px] py-3 rounded-[12px] font-semibold text-[15px]
+              ios-button transition-all duration-200 flex items-center justify-center gap-2
               ${
                 hasProcessed && !disabled && !isProcessing
-                  ? 'bg-gradient-to-r from-[#4de8ff] to-[#00d4ff] text-white hover:shadow-[0_0_30px_rgba(77,232,255,0.6)] cursor-pointer'
-                  : 'bg-gray-500/20 text-gray-400 cursor-not-allowed'
+                  ? 'bg-green-500 text-white hover:bg-green-600 cursor-pointer'
+                  : 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
               }
             `}
           >
-            <Download className="w-7 h-7" />
+            <Download className="w-5 h-5" />
             {isProcessing ? 'Exporting...' : 'Export'}
           </button>
 
-          {/* Reset Button */}
+          {/* Reset */}
           <button
             onClick={onReset}
             disabled={disabled}
             className={`
-              retro-button flex items-center justify-center p-5 rounded-xl
-              font-black transition-all duration-300 shadow-lg
+              p-3 rounded-[12px]
+              ios-button transition-all duration-200
               ${
                 !disabled
-                  ? 'bg-white/10 text-white hover:bg-white/20 cursor-pointer border-2 border-white/20'
-                  : 'bg-gray-500/20 text-gray-400 cursor-not-allowed border-2 border-gray-400/20'
+                  ? 'bg-gray-200 dark:bg-gray-700 text-[rgb(var(--color-text))] hover:bg-gray-300 dark:hover:bg-gray-600 cursor-pointer'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
               }
             `}
           >
-            <RotateCcw className="w-6 h-6" />
+            <RotateCcw className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Volume Control */}
+        {/* Volume */}
         {hasProcessed && (
-          <div className="mt-8 pt-6 border-t-2 border-white/20">
-            <div className="flex items-center gap-4">
-              <Volume2 className="w-6 h-6 text-white/80 flex-shrink-0" />
-              <div className="flex-1">
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.01"
-                  value={volume}
-                  onChange={(e) => onVolumeChange(parseFloat(e.target.value))}
-                  className="w-full h-3 bg-white/20 rounded-full appearance-none cursor-pointer accent-[#b06aff] backdrop-blur"
-                  style={{
-                    backgroundImage: `linear-gradient(to right, #b06aff 0%, #b06aff ${volume * 100}%, rgba(255,255,255,0.2) ${volume * 100}%, rgba(255,255,255,0.2) 100%)`
-                  }}
-                />
-              </div>
-              <span className="text-sm font-black text-white/90 w-14 text-right drop-shadow">
+          <div className="mt-5 pt-5 border-t border-[rgb(var(--color-border))]">
+            <div className="flex items-center gap-3">
+              <Volume2 className="w-5 h-5 text-[rgb(var(--color-text-secondary))] flex-shrink-0" />
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={volume}
+                onChange={(e) => onVolumeChange(parseFloat(e.target.value))}
+                className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer accent-[rgb(var(--color-accent))]"
+              />
+              <span className="text-sm font-medium text-[rgb(var(--color-text))] w-12 text-right">
                 {Math.round(volume * 100)}%
               </span>
             </div>
