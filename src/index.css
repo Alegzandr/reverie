@@ -1,48 +1,102 @@
 @import "tailwindcss";
 
-/* Custom styles */
+/* Apple-style iOS Glass Design */
 @layer base {
   :root {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --color-background: 245 245 247;
+    --color-surface: 255 255 255;
+    --color-text: 0 0 0;
+    --color-text-secondary: 60 60 67;
+    --color-border: 209 213 219;
+    --color-accent: 0 122 255;
+    --color-accent-hover: 10 132 255;
+
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
+  .dark {
+    --color-background: 0 0 0;
+    --color-surface: 28 28 30;
+    --color-text: 255 255 255;
+    --color-text-secondary: 152 152 157;
+    --color-border: 58 58 60;
+    --color-accent: 10 132 255;
+    --color-accent-hover: 64 156 255;
+  }
+
   body {
     @apply m-0 min-h-screen;
+    background: rgb(var(--color-background));
+    color: rgb(var(--color-text));
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 }
 
 @layer utilities {
+  /* iOS Glass Effect */
   .glass {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-  }
-
-  .cassette-tape {
-    position: relative;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
-    backdrop-filter: blur(20px);
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border: 0.5px solid rgba(0, 0, 0, 0.04);
     box-shadow:
-      0 8px 32px 0 rgba(31, 38, 135, 0.37),
-      inset 0 0 20px rgba(255, 255, 255, 0.1);
+      0 1px 2px -1px rgba(0, 0, 0, 0.06),
+      0 2px 4px -1px rgba(0, 0, 0, 0.06);
   }
 
-  .retro-button {
+  .dark .glass {
+    background: rgba(28, 28, 30, 0.72);
+    border: 0.5px solid rgba(255, 255, 255, 0.1);
+    box-shadow:
+      0 1px 2px -1px rgba(0, 0, 0, 0.3),
+      0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  }
+
+  /* iOS Button Style */
+  .ios-button {
     position: relative;
     overflow: hidden;
-    transform: perspective(500px);
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  .retro-button:hover {
-    transform: perspective(500px) translateY(-2px);
+  .ios-button:active {
+    transform: scale(0.96);
   }
 
-  .retro-button:active {
-    transform: perspective(500px) translateY(1px);
+  .ios-button:hover {
+    filter: brightness(1.05);
+  }
+
+  .dark .ios-button:hover {
+    filter: brightness(1.15);
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.3);
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
   }
 }

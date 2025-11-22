@@ -1,4 +1,4 @@
-import { Mp3Encoder } from 'lamejs';
+import { Mp3Encoder } from '@breezystack/lamejs';
 
 export async function audioBufferToMp3(
   audioBuffer: AudioBuffer,
