@@ -96,6 +96,7 @@ function App() {
         preservePitch: false,
         bitDepth: effectSettings.bitDepth,
         sampleRateReduction: effectSettings.sampleRateReduction,
+        chiptune: effectSettings.mode === '8-bit', // Enable authentic chiptune mode for 8-bit
       });
       setSelectedTrack('fx');
     } catch (error) {
