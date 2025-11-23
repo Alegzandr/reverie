@@ -31,7 +31,13 @@
   },
   "track": {
     "title": "Piste",
-    "size": "Taille"
+    "name": "Nom",
+    "size": "Taille",
+    "bitrate": "Débit binaire",
+    "sampleRate": "Fréq. échantillon",
+    "channels": "Canaux",
+    "mono": "Mono",
+    "stereo": "Stéréo"
   },
   "features": {
     "webAudio": {
@@ -71,8 +77,8 @@
     "notice": "Toutes les traductions sont synchronisées avec l'anglais pour garantir une couverture à 100 %."
   },
   "meta": {
-    "title": "PitchSongs - Outil de Manipulation Audio Professionnel",
-    "description": "Transformez votre musique avec des effets audio professionnels. Créez des versions accélérées, des remixes ralentis + reverb, ou de l'audio 8D immersif et exportez dans le format et la qualité d'origine. 100% gratuit, traitement côté client pour une confidentialité totale.",
-    "keywords": "manipulation audio, accélérer audio, slow reverb, audio 8D, audio spatial, effets audio, éditeur musical, processeur audio, web audio, outil audio gratuit"
+    "title": "PitchSongs - Éditeur Audio en Ligne Gratuit | Outil Professionnel",
+    "description": "Éditeur audio en ligne gratuit - Transformez votre musique avec des effets professionnels instantanément dans votre navigateur. Créez des versions accélérées, remixes ralentis + reverb, ou audio 8D immersif. Sans téléchargement. Outil en ligne 100% gratuit avec traitement côté client.",
+    "keywords": "éditeur audio en ligne, manipulation audio en ligne, accélérer audio en ligne, slow reverb en ligne, audio 8D en ligne, effets audio en ligne, éditeur musical en ligne, processeur audio en ligne, outil audio gratuit en ligne, éditeur audio navigateur"
   }
 }

@@ -12,6 +12,12 @@ export interface ProcessingState {
   error: string | null;
 }
 
+export interface AudioMetadata {
+  sampleRate: number;
+  channels: number;
+  bitrate: number | null;
+}
+
 export function useAudioProcessor() {
   const getBufferDuration = useCallback((buffer: AudioBuffer | null) => {
     if (!buffer) return 0;
@@ -38,6 +44,7 @@ export function useAudioProcessor() {
   });
   const [playbackTime, setPlaybackTime] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
+  const [metadata, setMetadata] = useState<AudioMetadata | null>(null);
   const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
   const gainNodeRef = useRef<GainNode | null>(null);
   const playbackRafRef = useRef<number | null>(null);
@@ -99,9 +106,20 @@ export function useAudioProcessor() {
     setState((prev) => ({ ...prev, isLoading: true, error: null, progress: 0 }));
     try {
       const buffer = await audioProcessor.loadAudioFile(file);
+      const bufferDuration = getBufferDuration(buffer);
+
+      // Calculate metadata
+      const sampleRate = buffer.sampleRate;
+      const channels = buffer.numberOfChannels;
+      // Estimate bitrate from file size and duration (in kbps)
+      const bitrate = bufferDuration > 0
+        ? Math.round((file.size * 8) / bufferDuration / 1000)
+        : null;
+
       setOriginalFile(file);
       setOriginalBuffer(buffer);
-      setDuration(getBufferDuration(buffer));
+      setDuration(bufferDuration);
+      setMetadata({ sampleRate, channels, bitrate });
       setPlaybackTime(0);
       setState((prev) => ({ ...prev, isLoading: false, progress: 100 }));
     } catch (error) {
@@ -326,6 +344,7 @@ export function useAudioProcessor() {
     setProcessedBuffer(null);
     setDuration(0);
     setPlaybackTime(0);
+    setMetadata(null);
     startOffsetRef.current = 0;
     setState({
       isLoading: false,
@@ -345,6 +364,7 @@ export function useAudioProcessor() {
     playbackTime,
     duration,
     volume,
+    metadata,
     loadAudioFile,
     processAudio,
     playAudio,

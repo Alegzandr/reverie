@@ -1,6 +1,6 @@
 # PitchSongs 🎵
 
-A modern, professional web application for transforming your music with audio effects. Create sped-up versions, slow+reverb remixes, or immersive 8D audio - all directly in your browser with complete privacy and exports that mirror your original format and quality.
+A modern, professional **free online audio editor** for transforming your music with audio effects. Create sped-up versions, slow+reverb remixes, or immersive 8D audio - all directly in your browser with complete privacy and exports that mirror your original format and quality. **No download or installation required** - works 100% online.
 
 **🌐 Live Demo:** [alegzandr.github.io/pitch-songs](https://alegzandr.github.io/pitch-songs/)
 
@@ -12,11 +12,13 @@ A modern, professional web application for transforming your music with audio ef
 - **8D Audio Mode**: Create immersive spatial audio with adjustable rotation speed (0.1x - 2.0x) for a surround-style headphone effect
 
 ### User Experience
+- **🌐 100% Online**: Works entirely in your browser - no download or installation required
 - **🔒 100% Client-Side Processing**: All audio processing happens in your browser - files never leave your device
+- **📊 Audio Metadata Display**: View technical details including bitrate, sample rate, and channel information
 - **🎨 Waveform Visualization**: Real-time waveform display showing both original and processed audio
 - **🎧 Track Comparison**: Switch between original and processed versions with synchronized playback
 - **💾 Auto Export**: Downloads match your upload format/quality (WAV preserved; MP3 mirrors source bitrate; other uploads use matched-bitrate MP3)
-- **🌍 Multi-Language Support**: Available in English, French, Spanish, German, and Portuguese
+- **🌍 Multi-Language Support**: Available in 10 languages (English, French, Spanish, German, Portuguese, Russian, Chinese, Japanese, Korean, Hindi)
 - **🌓 Dark/Light Mode**: Automatic theme detection with manual toggle
 - **📱 PWA Support**: Install as a standalone app on mobile and desktop
 - **♿ Accessible**: Full keyboard navigation and screen reader support
@@ -86,14 +88,15 @@ npm run dev
 ## 📖 Usage
 
 1. **Upload Audio**: Drag and drop or click to browse (supports MP3, WAV, OGG, M4A, MP4)
-2. **Select Effect Mode**:
+2. **View Metadata**: See technical details including file size, bitrate, sample rate, and channels (mono/stereo)
+3. **Select Effect Mode**:
    - **Speed Up**: Adjust multiplier (1.1x - 2.0x)
    - **Slow + Reverb**: Adjust reverb amount (10% - 100%)
    - **8D Audio**: Adjust rotation speed (0.1x - 2.0x) to control the spatial movement
-3. **Apply Effects**: Click "Apply Effects" to process
-4. **Preview**: Use playback controls to listen
-5. **Compare**: Switch between original ("raw") and processed ("fx") tracks
-6. **Export**: Download in your original format/quality automatically (WAV stays WAV; MP3 keeps source bitrate; other uploads use a matched-bitrate MP3)
+4. **Apply Effects**: Click "Apply Effects" to process
+5. **Preview**: Use playback controls to listen
+6. **Compare**: Switch between original ("raw") and processed ("fx") tracks
+7. **Export**: Download in your original format/quality automatically (WAV stays WAV; MP3 keeps source bitrate; other uploads use a matched-bitrate MP3)
 
 ## 📁 Project Structure
 

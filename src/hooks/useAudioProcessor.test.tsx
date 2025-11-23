@@ -80,6 +80,12 @@ describe('useAudioProcessor', () => {
     const expectedDuration = mockAudioBuffer.length / mockAudioBuffer.sampleRate;
     expect(result.current.duration).toBeCloseTo(expectedDuration);
     expect(result.current.state.progress).toBe(100);
+
+    // Verify metadata is set correctly
+    expect(result.current.metadata).toBeDefined();
+    expect(result.current.metadata?.sampleRate).toBe(mockAudioBuffer.sampleRate);
+    expect(result.current.metadata?.channels).toBe(mockAudioBuffer.numberOfChannels);
+    expect(typeof result.current.metadata?.bitrate).toBe('number');
   });
 
   it('handles load errors', async () => {
@@ -399,6 +405,7 @@ describe('useAudioProcessor', () => {
 
     expect(result.current.originalFile).toBeNull();
     expect(result.current.processedBuffer).toBeNull();
+    expect(result.current.metadata).toBeNull();
     expect(result.current.state.progress).toBe(0);
     expect(result.current.duration).toBe(0);
     expect(result.current.playbackTime).toBe(0);

@@ -20,6 +20,7 @@ function App() {
     processedBuffer,
     playbackTime,
     volume,
+    metadata,
     loadAudioFile,
     processAudio,
     playAudio,
@@ -215,22 +216,64 @@ function App() {
           {/* File Info */}
           {originalFile && !state.isLoading && (
             <div className="glass rounded-2xl p-5">
-              <div className="flex items-center justify-between">
-                <div className="flex-1 min-w-0">
+              <div className="space-y-3">
+                {/* File Name */}
+                <div>
                   <p className="text-xs font-medium text-[rgb(var(--color-text-secondary))] uppercase tracking-wide mb-1">
-                    {t('track.title')}
+                    {t('track.name')}
                   </p>
                   <p className="text-base font-semibold text-[rgb(var(--color-text))] truncate">
                     {originalFile.name}
                   </p>
                 </div>
-                <div className="text-right ml-4">
-                  <p className="text-xs font-medium text-[rgb(var(--color-text-secondary))] uppercase tracking-wide mb-1">
-                    {t('track.size')}
-                  </p>
-                  <p className="text-base font-semibold text-[rgb(var(--color-accent))]">
-                    {(originalFile.size / 1024 / 1024).toFixed(1)} MB
-                  </p>
+
+                {/* Technical Info Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-[rgb(var(--color-border))]">
+                  {/* File Size */}
+                  <div>
+                    <p className="text-xs font-medium text-[rgb(var(--color-text-secondary))] uppercase tracking-wide mb-1">
+                      {t('track.size')}
+                    </p>
+                    <p className="text-sm font-semibold text-[rgb(var(--color-accent))]">
+                      {(originalFile.size / 1024 / 1024).toFixed(1)} MB
+                    </p>
+                  </div>
+
+                  {/* Bitrate */}
+                  {metadata?.bitrate && (
+                    <div>
+                      <p className="text-xs font-medium text-[rgb(var(--color-text-secondary))] uppercase tracking-wide mb-1">
+                        {t('track.bitrate')}
+                      </p>
+                      <p className="text-sm font-semibold text-[rgb(var(--color-accent))]">
+                        {metadata.bitrate} kbps
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Sample Rate */}
+                  {metadata?.sampleRate && (
+                    <div>
+                      <p className="text-xs font-medium text-[rgb(var(--color-text-secondary))] uppercase tracking-wide mb-1">
+                        {t('track.sampleRate')}
+                      </p>
+                      <p className="text-sm font-semibold text-[rgb(var(--color-accent))]">
+                        {(metadata.sampleRate / 1000).toFixed(1)} kHz
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Channels */}
+                  {metadata?.channels && (
+                    <div>
+                      <p className="text-xs font-medium text-[rgb(var(--color-text-secondary))] uppercase tracking-wide mb-1">
+                        {t('track.channels')}
+                      </p>
+                      <p className="text-sm font-semibold text-[rgb(var(--color-accent))]">
+                        {metadata.channels === 1 ? t('track.mono') : metadata.channels === 2 ? t('track.stereo') : `${metadata.channels}ch`}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

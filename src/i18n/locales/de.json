@@ -31,7 +31,13 @@
   },
   "track": {
     "title": "Track",
-    "size": "Größe"
+    "name": "Name",
+    "size": "Größe",
+    "bitrate": "Bitrate",
+    "sampleRate": "Abtastrate",
+    "channels": "Kanäle",
+    "mono": "Mono",
+    "stereo": "Stereo"
   },
   "features": {
     "webAudio": {
@@ -71,8 +77,8 @@
     "notice": "Alle Übersetzungen bleiben mit Englisch synchron für 100 % Abdeckung."
   },
   "meta": {
-    "title": "PitchSongs - Professionelles Audio-Manipulationswerkzeug",
-    "description": "Verwandeln Sie Ihre Musik mit professionellen Audio-Effekten. Erstellen Sie beschleunigte Versionen, langsame + Hall-Remixe oder immersives 8D-Audio und exportieren Sie im ursprünglichen Format und in ursprünglicher Qualität. 100% kostenlos, lokale Verarbeitung für vollständige Privatsphäre.",
-    "keywords": "Audio-Manipulation, Audio beschleunigen, Slow Reverb, 8D-Audio, Raumklang, Audio-Effekte, Musik-Editor, Audio-Prozessor, Web Audio, kostenloses Audio-Tool"
+    "title": "PitchSongs - Online Audio-Editor Kostenlos | Professionelles Werkzeug",
+    "description": "Kostenloser Online-Audio-Editor - Verwandeln Sie Ihre Musik mit professionellen Effekten sofort in Ihrem Browser. Erstellen Sie beschleunigte Versionen, langsame + Hall-Remixe oder immersives 8D-Audio. Kein Download erforderlich. 100% kostenloses Online-Tool mit lokaler Verarbeitung.",
+    "keywords": "Online-Audio-Editor, Audio-Manipulation online, Audio beschleunigen online, Slow Reverb online, 8D-Audio online, Audio-Effekte online, Musik-Editor online, Audio-Prozessor online, kostenloses Audio-Tool online, Browser-Audio-Editor"
   }
 }
