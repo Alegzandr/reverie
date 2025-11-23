@@ -6,6 +6,7 @@ import { audioBufferToMp3, downloadBlob } from '../utils/mp3Encoder';
 export interface ProcessingState {
   isLoading: boolean;
   isProcessing: boolean;
+  isExporting: boolean;
   isPlaying: boolean;
   progress: number;
   error: string | null;
@@ -20,6 +21,7 @@ export function useAudioProcessor() {
   const [state, setState] = useState<ProcessingState>({
     isLoading: false,
     isProcessing: false,
+    isExporting: false,
     isPlaying: false,
     progress: 0,
     error: null,
@@ -44,7 +46,7 @@ export function useAudioProcessor() {
   const activeBufferRef = useRef<AudioBuffer | null>(null);
   const playbackSessionRef = useRef<number>(0);
 
-  const getAudioContext = () => audioProcessor.getAudioContext();
+  const getAudioContext = useCallback(() => audioProcessor.getAudioContext(), []);
 
   const captureProgress = useCallback(() => {
     const audioContext = getAudioContext();
@@ -52,7 +54,7 @@ export function useAudioProcessor() {
     const elapsed = Math.max(0, audioContext.currentTime - playStartTimeRef.current);
     const totalDuration = getBufferDuration(activeBufferRef.current);
     return Math.min(startOffsetRef.current + elapsed, totalDuration);
-  }, [getBufferDuration, playbackTime]);
+  }, [getAudioContext, getBufferDuration, playbackTime]);
 
   const stopPlayback = useCallback(() => {
     playbackSessionRef.current += 1;
@@ -62,12 +64,12 @@ export function useAudioProcessor() {
       sourceNodeRef.current.onended = null;
       try {
         sourceNodeRef.current.stop();
-      } catch (e) {
+      } catch {
         // ignore stop errors
       }
       try {
         sourceNodeRef.current.disconnect();
-      } catch (e) {
+      } catch {
         // ignore disconnect errors
       }
       sourceNodeRef.current = null;
@@ -76,7 +78,7 @@ export function useAudioProcessor() {
     if (gainNodeRef.current) {
       try {
         gainNodeRef.current.disconnect();
-      } catch (e) {
+      } catch {
         // ignore disconnect errors
       }
       gainNodeRef.current = null;
@@ -160,19 +162,19 @@ export function useAudioProcessor() {
         sourceNodeRef.current.onended = null;
         try {
           sourceNodeRef.current.stop();
-        } catch (e) {
+        } catch {
           // ignore
         }
         try {
           sourceNodeRef.current.disconnect();
-        } catch (e) {
+        } catch {
           // ignore
         }
       }
       if (gainNodeRef.current) {
         try {
           gainNodeRef.current.disconnect();
-        } catch (e) {
+        } catch {
           // ignore
         }
       }
@@ -242,18 +244,18 @@ export function useAudioProcessor() {
       throw new Error('No audio to export');
     }
 
-    setState((prev) => ({ ...prev, isProcessing: true }));
+    setState((prev) => ({ ...prev, isExporting: true }));
 
     try {
       const mp3Blob = await audioBufferToMp3(buffer);
       const derivedName = originalFile ? `${originalFile.name.replace('.mp3', '')}_processed.mp3` : 'processed_audio.mp3';
       const defaultFilename = filename || derivedName;
       downloadBlob(mp3Blob, defaultFilename);
-      setState((prev) => ({ ...prev, isProcessing: false }));
+      setState((prev) => ({ ...prev, isExporting: false }));
     } catch (error) {
       setState((prev) => ({
         ...prev,
-        isProcessing: false,
+        isExporting: false,
         error: error instanceof Error ? error.message : 'Failed to export audio',
       }));
       throw error;
@@ -298,6 +300,7 @@ export function useAudioProcessor() {
     setState({
       isLoading: false,
       isProcessing: false,
+      isExporting: false,
       isPlaying: false,
       progress: 0,
       error: null,

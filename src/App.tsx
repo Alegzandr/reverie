@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Music2, Moon, Sun } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import { FileUploader } from './components/FileUploader';
 import { EffectControls } from './components/EffectControls';
-import type { EffectSettings, EffectMode } from './components/EffectControls';
+import type { EffectSettings } from './components/EffectControls';
 import { PlaybackControls } from './components/PlaybackControls';
 import { ProgressBar } from './components/ProgressBar';
 import { LanguageSelector } from './components/LanguageSelector';
@@ -19,7 +19,6 @@ function App() {
     originalBuffer,
     processedBuffer,
     playbackTime,
-    duration,
     volume,
     loadAudioFile,
     processAudio,
@@ -305,8 +304,8 @@ function App() {
               hasAudio={!!(processedBuffer || originalBuffer)}
               hasProcessed={!!processedBuffer}
               canExport={!!processedBuffer}
-              isProcessing={state.isProcessing}
-              disabled={state.isProcessing}
+              isExporting={state.isExporting}
+              disabled={state.isProcessing || state.isExporting}
             />
           )}
         </div>

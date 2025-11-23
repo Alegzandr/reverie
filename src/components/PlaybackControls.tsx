@@ -12,7 +12,7 @@ interface PlaybackControlsProps {
   hasAudio: boolean;
   hasProcessed: boolean;
   canExport: boolean;
-  isProcessing?: boolean;
+  isExporting?: boolean;
   disabled?: boolean;
 }
 
@@ -25,9 +25,8 @@ export function PlaybackControls({
   volume,
   onVolumeChange,
   hasAudio,
-  hasProcessed,
   canExport,
-  isProcessing,
+  isExporting,
   disabled,
 }: PlaybackControlsProps) {
   const { t } = useTranslation();
@@ -67,20 +66,29 @@ export function PlaybackControls({
           {/* Export */}
           <button
             onClick={onExport}
-            disabled={disabled || !canExport || isProcessing}
-            aria-label={isProcessing ? t('playback.exporting') : t('playback.export')}
+            disabled={disabled || !canExport || isExporting}
+            aria-label={isExporting ? t('playback.exporting') : t('playback.export')}
             className={`
               flex-1 min-w-[140px] py-3 rounded-[12px] font-semibold text-[15px]
               ios-button transition-all duration-200 flex items-center justify-center gap-2
               ${
-                canExport && !disabled && !isProcessing
+                canExport && !disabled && !isExporting
                   ? 'bg-[linear-gradient(120deg,rgba(var(--color-accent),0.95),rgba(var(--color-ambient),0.9))] text-white shadow-[0_10px_30px_-18px_rgba(var(--color-accent),0.6)] cursor-pointer'
                   : 'bg-[rgba(var(--color-border),0.5)] dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
               }
             `}
           >
-            <Download className="w-5 h-5" aria-hidden="true" />
-            {isProcessing ? t('playback.exporting') : t('playback.export')}
+            {isExporting ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+                {t('playback.exporting')}
+              </>
+            ) : (
+              <>
+                <Download className="w-5 h-5" aria-hidden="true" />
+                {t('playback.export')}
+              </>
+            )}
           </button>
 
           {/* Reset */}

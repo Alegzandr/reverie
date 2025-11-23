@@ -28,7 +28,6 @@ describe('LanguageSelector modal', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /Español/ }));
     expect(mockChangeLanguage).toHaveBeenCalledWith('es');
-    expect(document.documentElement.lang).toBe('es');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

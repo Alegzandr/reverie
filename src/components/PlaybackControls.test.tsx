@@ -30,7 +30,7 @@ describe('PlaybackControls', () => {
     const { rerender } = render(
       <PlaybackControls
         {...props}
-        isProcessing={false}
+        isExporting={false}
         disabled={false}
       />
     );
@@ -42,7 +42,7 @@ describe('PlaybackControls', () => {
       <PlaybackControls
         {...props}
         isPlaying
-        isProcessing={false}
+        isExporting={false}
         disabled={false}
       />
     );
@@ -62,7 +62,7 @@ describe('PlaybackControls', () => {
         hasAudio={false}
         hasProcessed={false}
         canExport={false}
-        isProcessing={false}
+        isExporting={false}
         disabled={false}
       />
     );
@@ -76,7 +76,7 @@ describe('PlaybackControls', () => {
         hasProcessed
         hasAudio
         canExport
-        isProcessing={false}
+        isExporting={false}
         disabled={false}
       />
     );
@@ -95,7 +95,7 @@ describe('PlaybackControls', () => {
     render(
       <PlaybackControls
         {...props}
-        isProcessing={false}
+        isExporting={false}
         disabled
       />
     );

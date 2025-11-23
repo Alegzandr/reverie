@@ -26,7 +26,6 @@ export function LanguageSelector() {
 
   const handleLanguageChange = (langCode: string) => {
     i18n.changeLanguage(langCode);
-    document.documentElement.lang = langCode;
     setOpen(false);
   };
 

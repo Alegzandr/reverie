@@ -1,0 +1,9 @@
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://alegzandr.github.io/pitch-songs/sitemap.xml
+
+# Crawl-delay to be respectful (optional)
+Crawl-delay: 1
