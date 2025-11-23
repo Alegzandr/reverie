@@ -1,6 +1,6 @@
 # PitchSongs 🎵
 
-A modern, professional **free online audio editor** for transforming your music with audio effects. Create sped-up versions, slow+reverb remixes, or immersive 8D audio - all directly in your browser with complete privacy and exports that mirror your original format and quality. **No download or installation required** - works 100% online.
+A modern, professional **free online audio editor** for transforming your music with audio effects. Create sped-up versions, slow+reverb remixes, immersive 8D audio, or bass boosted tracks - all directly in your browser with complete privacy and exports that mirror your original format and quality. **No download or installation required** - works 100% online.
 
 **🌐 Live Demo:** [alegzandr.github.io/pitch-songs](https://alegzandr.github.io/pitch-songs/)
 
@@ -10,6 +10,7 @@ A modern, professional **free online audio editor** for transforming your music 
 - **Speed Up Mode**: Create high-energy sped-up versions (1.1x - 2.0x speed multiplier)
 - **Slow + Reverb Mode**: Generate atmospheric slowed + reverb versions (0.8x speed with adjustable reverb)
 - **8D Audio Mode**: Create immersive spatial audio with adjustable rotation speed (0.1x - 2.0x) for a surround-style headphone effect
+- **Bass Boost Mode**: Enhance low frequencies with professional filters and adjustable intensity (Light, Normal, Strong)
 
 ### User Experience
 - **🌐 100% Online**: Works entirely in your browser - no download or installation required
@@ -24,7 +25,7 @@ A modern, professional **free online audio editor** for transforming your music 
 - **♿ Accessible**: Full keyboard navigation and screen reader support
 
 ### Developer Features
-- **✅ 95%+ Test Coverage**: Comprehensive test suite with 66+ passing tests
+- **✅ 95%+ Test Coverage**: Comprehensive test suite with 67+ passing tests
 - **🔍 SEO Optimized**: Schema.org metadata, sitemap, robots.txt
 - **🚀 CI/CD Pipeline**: Automated linting, testing, and deployment
 - **📊 Type-Safe**: Full TypeScript with strict mode enabled
@@ -93,6 +94,7 @@ npm run dev
    - **Speed Up**: Adjust multiplier (1.1x - 2.0x)
    - **Slow + Reverb**: Adjust reverb amount (10% - 100%)
    - **8D Audio**: Adjust rotation speed (0.1x - 2.0x) to control the spatial movement
+   - **Bass Boost**: Select intensity level (Light, Normal, Strong)
 4. **Apply Effects**: Click "Apply Effects" to process
 5. **Preview**: Use playback controls to listen
 6. **Compare**: Switch between original ("raw") and processed ("fx") tracks
@@ -152,6 +154,7 @@ pitch-songs/
    - **Speed**: Adjusts playback rate with AudioBufferSourceNode
    - **Reverb**: Creates convolution reverb with procedurally generated impulse response
    - **8D Audio**: Automates stereo panning with a custom impulse reverb tail to create rotating spatial sound
+   - **Bass Boost**: Uses lowshelf filter (100 Hz), highpass filter (40 Hz), and peaking filter (300 Hz) with makeup gain for professional bass enhancement
 3. **Buffer Management**: Maintains separate buffers for original and processed audio
 4. **Export**: Detects the source format and exports either WAV (lossless) or MP3 with matched bitrate to mirror original quality
 5. **Download**: Triggers browser download with custom filename
@@ -182,7 +185,7 @@ Generate coverage report:
 npm run test:coverage
 ```
 
-**Current Coverage**: 95.59% (66/66 tests passing)
+**Current Coverage**: 95.59% (67/67 tests passing)
 
 ## 🏗 Build for Production
 
@@ -211,7 +214,7 @@ This project uses GitHub Actions for automated deployment:
 Every push to main runs:
 - ✅ ESLint code linting
 - ✅ TypeScript type checking
-- ✅ Full test suite (66 tests)
+- ✅ Full test suite (67 tests)
 - ✅ Production build
 - ✅ Deployment to GitHub Pages
 
