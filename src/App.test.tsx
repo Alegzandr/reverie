@@ -93,7 +93,7 @@ describe('App', () => {
       reverbAmount: 0,
       preservePitch: false,
       audio8D: true,
-      rotationSpeed: 0.5,
+      rotationSpeed: 0.4,
       bassBoost: false,
       bassBoostIntensity: undefined,
     });

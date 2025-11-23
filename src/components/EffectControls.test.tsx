@@ -12,17 +12,21 @@ describe('EffectControls', () => {
     const onChange = vi.fn();
     render(<EffectControls onChange={onChange} />);
 
-    expect(onChange).toHaveBeenCalledWith({ mode: 'speed-up', speedMultiplier: 1.2, reverbAmount: 0 });
+    expect(onChange).toHaveBeenCalledWith({ mode: 'speed-up', speedMultiplier: 1.3, reverbAmount: 0 });
 
     await userEvent.click(screen.getByText('effects.slowReverb'));
-    expect(onChange).toHaveBeenLastCalledWith({ mode: 'slow-reverb', speedMultiplier: 0.8, reverbAmount: 0.3 });
+    expect(onChange).toHaveBeenLastCalledWith({ mode: 'slow-reverb', speedMultiplier: 0.7, reverbAmount: 0.5 });
+
+    const slowSpeedSlider = screen.getByLabelText(/effects\.slowSpeed/);
+    fireEvent.change(slowSpeedSlider, { target: { value: '0.6' } });
+    expect(onChange).toHaveBeenLastCalledWith({ mode: 'slow-reverb', speedMultiplier: 0.6, reverbAmount: 0.5 });
 
     const reverbSlider = screen.getByLabelText(/effects\.reverb/);
     fireEvent.change(reverbSlider, { target: { value: '0.4' } });
-    expect(onChange).toHaveBeenLastCalledWith({ mode: 'slow-reverb', speedMultiplier: 0.8, reverbAmount: 0.4 });
+    expect(onChange).toHaveBeenLastCalledWith({ mode: 'slow-reverb', speedMultiplier: 0.6, reverbAmount: 0.4 });
 
     await userEvent.click(screen.getByText('effects.8dAudio'));
-    expect(onChange).toHaveBeenLastCalledWith({ mode: '8d-audio', speedMultiplier: 1, reverbAmount: 0, rotationSpeed: 0.5 });
+    expect(onChange).toHaveBeenLastCalledWith({ mode: '8d-audio', speedMultiplier: 1, reverbAmount: 0, rotationSpeed: 0.4 });
 
     const rotationSlider = screen.getByLabelText(/effects\.rotationSpeed/);
     fireEvent.change(rotationSlider, { target: { value: '1.2' } });
