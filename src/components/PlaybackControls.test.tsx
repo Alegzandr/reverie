@@ -15,6 +15,7 @@ describe('PlaybackControls', () => {
     onExport: vi.fn(),
     onVolumeChange: vi.fn(),
     isPlaying: false,
+    hasAudio: true,
     hasProcessed: true,
     canExport: true,
     volume: 0.5,
@@ -58,6 +59,7 @@ describe('PlaybackControls', () => {
     const { rerender } = render(
       <PlaybackControls
         {...props}
+        hasAudio={false}
         hasProcessed={false}
         canExport={false}
         isProcessing={false}
@@ -72,6 +74,7 @@ describe('PlaybackControls', () => {
       <PlaybackControls
         {...props}
         hasProcessed
+        hasAudio
         canExport
         isProcessing={false}
         disabled={false}
@@ -88,7 +91,7 @@ describe('PlaybackControls', () => {
   });
 
   it('renders disabled reset state', () => {
-    const props = { ...baseProps, isPlaying: false, hasProcessed: true, volume: 0.5 };
+    const props = { ...baseProps, isPlaying: false, hasAudio: true, hasProcessed: true, volume: 0.5 };
     render(
       <PlaybackControls
         {...props}

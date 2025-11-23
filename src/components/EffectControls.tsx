@@ -2,11 +2,14 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Zap, Waves, Box } from 'lucide-react';
 
+export type EffectMode = 'speed-up' | 'slow-reverb' | '8-bit';
+
 export interface EffectSettings {
   speedMultiplier: number;
   reverbAmount: number;
   bitDepth?: number;
   sampleRateReduction?: number;
+  mode: EffectMode;
 }
 
 interface EffectControlsProps {
@@ -16,19 +19,19 @@ interface EffectControlsProps {
 
 export function EffectControls({ onChange, disabled }: EffectControlsProps) {
   const { t } = useTranslation();
-  const [mode, setMode] = useState<'speed-up' | 'slow-reverb' | '8-bit'>('speed-up');
+  const [mode, setMode] = useState<EffectMode>('speed-up');
   const [speedMultiplier, setSpeedMultiplier] = useState(1.2);
   const [reverbAmount, setReverbAmount] = useState(0.3);
-  const [bitDepth, setBitDepth] = useState(8);
-  const [sampleRateReduction, setSampleRateReduction] = useState(4);
+  const [bitDepth, setBitDepth] = useState(6);
+  const [sampleRateReduction, setSampleRateReduction] = useState(6);
 
   useEffect(() => {
     if (mode === 'speed-up') {
-      onChange({ speedMultiplier, reverbAmount: 0 });
+      onChange({ mode: 'speed-up', speedMultiplier, reverbAmount: 0 });
     } else if (mode === 'slow-reverb') {
-      onChange({ speedMultiplier: 0.8, reverbAmount });
+      onChange({ mode: 'slow-reverb', speedMultiplier: 0.8, reverbAmount });
     } else {
-      onChange({ speedMultiplier: 1, reverbAmount: 0, bitDepth, sampleRateReduction });
+      onChange({ mode: '8-bit', speedMultiplier: 1, reverbAmount: 0, bitDepth, sampleRateReduction });
     }
   }, [mode, speedMultiplier, reverbAmount, bitDepth, sampleRateReduction, onChange]);
 
@@ -132,7 +135,7 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
               onChange={(e) => setSpeedMultiplier(parseFloat(e.target.value))}
               disabled={disabled}
               aria-label={`${t('effects.speed')}: ${speedMultiplier.toFixed(1)}x`}
-              className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer accent-[rgb(var(--color-accent))]"
+              className="w-full h-2 rounded-full appearance-none cursor-pointer accent-[rgb(var(--color-accent))] bg-[rgba(var(--color-border),0.55)]"
             />
             <div className="flex justify-between text-xs text-[rgb(var(--color-text-secondary))]">
               <span>1.1x</span>
@@ -159,7 +162,7 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
               onChange={(e) => setReverbAmount(parseFloat(e.target.value))}
               disabled={disabled}
               aria-label={`${t('effects.reverb')}: ${Math.round(reverbAmount * 100)}%`}
-              className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer accent-[rgb(var(--color-accent))]"
+              className="w-full h-2 rounded-full appearance-none cursor-pointer accent-[rgb(var(--color-accent))] bg-[rgba(var(--color-border),0.55)]"
             />
             <div className="flex justify-between text-xs text-[rgb(var(--color-text-secondary))]">
               <span>10%</span>
@@ -179,17 +182,17 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
                 </span>
               </div>
               <input
-                id="bitdepth-slider"
-                type="range"
-                min="4"
-                max="12"
-                step="1"
-                value={bitDepth}
-                onChange={(e) => setBitDepth(parseFloat(e.target.value))}
-                disabled={disabled}
-                aria-label={`${t('effects.bitDepth')}: ${bitDepth}-bit`}
-                className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer accent-[rgb(var(--color-accent))]"
-              />
+              id="bitdepth-slider"
+              type="range"
+              min="4"
+              max="12"
+              step="1"
+              value={bitDepth}
+              onChange={(e) => setBitDepth(parseFloat(e.target.value))}
+              disabled={disabled}
+              aria-label={`${t('effects.bitDepth')}: ${bitDepth}-bit`}
+              className="w-full h-2 rounded-full appearance-none cursor-pointer accent-[rgb(var(--color-accent))] bg-[rgba(var(--color-border),0.55)]"
+            />
               <div className="flex justify-between text-xs text-[rgb(var(--color-text-secondary))]">
                 <span>4-bit</span>
                 <span>12-bit</span>
@@ -207,17 +210,17 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
                 </span>
               </div>
               <input
-                id="samplerate-slider"
-                type="range"
-                min="1"
-                max="8"
-                step="1"
-                value={sampleRateReduction}
-                onChange={(e) => setSampleRateReduction(parseFloat(e.target.value))}
-                disabled={disabled}
-                aria-label={`${t('effects.sampleRate')}: /${sampleRateReduction}`}
-                className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer accent-[rgb(var(--color-accent))]"
-              />
+              id="samplerate-slider"
+              type="range"
+              min="1"
+              max="8"
+              step="1"
+              value={sampleRateReduction}
+              onChange={(e) => setSampleRateReduction(parseFloat(e.target.value))}
+              disabled={disabled}
+              aria-label={`${t('effects.sampleRate')}: /${sampleRateReduction}`}
+              className="w-full h-2 rounded-full appearance-none cursor-pointer accent-[rgb(var(--color-accent))] bg-[rgba(var(--color-border),0.55)]"
+            />
               <div className="flex justify-between text-xs text-[rgb(var(--color-text-secondary))]">
                 <span>Full</span>
                 <span>1/8th</span>

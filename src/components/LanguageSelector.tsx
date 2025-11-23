@@ -45,7 +45,7 @@ export function LanguageSelector() {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-6"
+          className="fixed inset-0 z-50 grid place-items-center p-6"
         >
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"

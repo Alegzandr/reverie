@@ -92,8 +92,8 @@ describe('App', () => {
       speedMultiplier: 1,
       reverbAmount: 0,
       preservePitch: false,
-      bitDepth: 8,
-      sampleRateReduction: 4,
+      bitDepth: 6,
+      sampleRateReduction: 6,
     });
 
     await userEvent.click(screen.getByText('playback.play'));

@@ -12,25 +12,25 @@ describe('EffectControls', () => {
     const onChange = vi.fn();
     render(<EffectControls onChange={onChange} />);
 
-    expect(onChange).toHaveBeenCalledWith({ speedMultiplier: 1.2, reverbAmount: 0 });
+    expect(onChange).toHaveBeenCalledWith({ mode: 'speed-up', speedMultiplier: 1.2, reverbAmount: 0 });
 
     await userEvent.click(screen.getByText('effects.slowReverb'));
-    expect(onChange).toHaveBeenLastCalledWith({ speedMultiplier: 0.8, reverbAmount: 0.3 });
+    expect(onChange).toHaveBeenLastCalledWith({ mode: 'slow-reverb', speedMultiplier: 0.8, reverbAmount: 0.3 });
 
     const reverbSlider = screen.getByLabelText(/effects\.reverb/);
     fireEvent.change(reverbSlider, { target: { value: '0.4' } });
-    expect(onChange).toHaveBeenLastCalledWith({ speedMultiplier: 0.8, reverbAmount: 0.4 });
+    expect(onChange).toHaveBeenLastCalledWith({ mode: 'slow-reverb', speedMultiplier: 0.8, reverbAmount: 0.4 });
 
     await userEvent.click(screen.getByText('effects.8bit'));
-    expect(onChange).toHaveBeenLastCalledWith({ speedMultiplier: 1, reverbAmount: 0, bitDepth: 8, sampleRateReduction: 4 });
+    expect(onChange).toHaveBeenLastCalledWith({ mode: '8-bit', speedMultiplier: 1, reverbAmount: 0, bitDepth: 6, sampleRateReduction: 6 });
 
     const bitDepthSlider = screen.getByLabelText(/effects\.bitDepth/);
     fireEvent.change(bitDepthSlider, { target: { value: '9' } });
-    expect(onChange).toHaveBeenLastCalledWith({ speedMultiplier: 1, reverbAmount: 0, bitDepth: 9, sampleRateReduction: 4 });
+    expect(onChange).toHaveBeenLastCalledWith({ mode: '8-bit', speedMultiplier: 1, reverbAmount: 0, bitDepth: 9, sampleRateReduction: 6 });
 
     const sampleRateSlider = screen.getByLabelText(/effects\.sampleRate/);
     fireEvent.change(sampleRateSlider, { target: { value: '3' } });
-    expect(onChange).toHaveBeenLastCalledWith({ speedMultiplier: 1, reverbAmount: 0, bitDepth: 9, sampleRateReduction: 3 });
+    expect(onChange).toHaveBeenLastCalledWith({ mode: '8-bit', speedMultiplier: 1, reverbAmount: 0, bitDepth: 9, sampleRateReduction: 3 });
   });
 
   it('ignores interactions when disabled', async () => {

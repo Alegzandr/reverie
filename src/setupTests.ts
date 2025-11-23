@@ -33,6 +33,10 @@ class MockAudioBuffer {
   getChannelData(channel: number): Float32Array {
     return this.channels[channel];
   }
+
+  get duration() {
+    return this.length / this.sampleRate;
+  }
 }
 
 class MockGainNode {

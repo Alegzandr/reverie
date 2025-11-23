@@ -68,11 +68,12 @@ export class AudioProcessor {
 
     // Apply bit-crushing and sample rate reduction for 8-bit effect
     if (bitDepth || sampleRateReduction) {
-      const scriptProcessor = offlineContext.createScriptProcessor(4096, 2, 2);
-      const bitReduction = bitDepth ? Math.pow(2, bitDepth) : 65536;
-      const sampleRateDiv = sampleRateReduction || 1;
-      let lastSample: number[] = [0, 0];
-      let sampleCounter = 0;
+      const channelCount = this.audioBuffer.numberOfChannels;
+      const scriptProcessor = offlineContext.createScriptProcessor(4096, channelCount, channelCount);
+      const steps = bitDepth ? Math.max(1, Math.pow(2, bitDepth - 1)) : Math.pow(2, 8 - 1);
+      const sampleRateDiv = Math.max(1, sampleRateReduction || 2);
+      const heldSamples = Array.from({ length: channelCount }, () => 0);
+      const phases = Array.from({ length: channelCount }, () => 0);
 
       scriptProcessor.onaudioprocess = (e) => {
         const inputBuffer = e.inputBuffer;
@@ -83,14 +84,12 @@ export class AudioProcessor {
           const outputData = outputBuffer.getChannelData(channel);
 
           for (let sample = 0; sample < inputBuffer.length; sample++) {
-            // Sample rate reduction (hold sample for multiple frames)
-            if (sampleCounter % sampleRateDiv === 0) {
-              // Bit depth reduction (quantize the sample)
-              const quantized = Math.floor(inputData[sample] * bitReduction) / bitReduction;
-              lastSample[channel] = quantized;
+            if (phases[channel] % sampleRateDiv === 0) {
+              const quantized = Math.round(inputData[sample] * steps) / steps;
+              heldSamples[channel] = quantized;
             }
-            outputData[sample] = lastSample[channel];
-            sampleCounter++;
+            outputData[sample] = heldSamples[channel];
+            phases[channel]++;
           }
         }
       };

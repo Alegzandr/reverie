@@ -28,7 +28,12 @@ export function useAudioProcessor() {
   const [originalFile, setOriginalFile] = useState<File | null>(null);
   const [originalBuffer, setOriginalBuffer] = useState<AudioBuffer | null>(null);
   const [processedBuffer, setProcessedBuffer] = useState<AudioBuffer | null>(null);
-  const [volume, setVolume] = useState<number>(0.7);
+  const [volume, setVolume] = useState<number>(() => {
+    if (typeof localStorage === 'undefined') return 0.7;
+    const stored = localStorage.getItem('pitchsongs:volume');
+    const parsed = stored ? parseFloat(stored) : NaN;
+    return Number.isFinite(parsed) ? parsed : 0.7;
+  });
   const [playbackTime, setPlaybackTime] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
   const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
@@ -86,7 +91,7 @@ export function useAudioProcessor() {
     setPlaybackTime(nextTime);
     startOffsetRef.current = nextTime;
     setState((prev) => ({ ...prev, isPlaying: false }));
-  }, [captureProgress, getAudioContext]);
+  }, [captureProgress]);
 
   const loadAudioFile = useCallback(async (file: File) => {
     setState((prev) => ({ ...prev, isLoading: true, error: null, progress: 0 }));
@@ -257,6 +262,9 @@ export function useAudioProcessor() {
 
   const updateVolume = useCallback((newVolume: number) => {
     setVolume(newVolume);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('pitchsongs:volume', newVolume.toString());
+    }
     // Update volume in real-time if audio is playing
     if (gainNodeRef.current) {
       gainNodeRef.current.gain.value = newVolume;
@@ -264,8 +272,8 @@ export function useAudioProcessor() {
   }, []);
 
   const seekTo = useCallback(
-    (time: number) => {
-      const buffer = processedBuffer || originalBuffer || audioProcessor.getAudioBuffer();
+    (time: number, bufferOverride?: AudioBuffer | null) => {
+      const buffer = bufferOverride || processedBuffer || originalBuffer || audioProcessor.getAudioBuffer();
       const totalDuration = getBufferDuration(buffer);
       if (!buffer || totalDuration <= 0) return;
       const clamped = Math.max(0, Math.min(time, totalDuration));

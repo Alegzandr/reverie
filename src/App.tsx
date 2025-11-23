@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Music2, Moon, Sun } from 'lucide-react';
 import { FileUploader } from './components/FileUploader';
 import { EffectControls } from './components/EffectControls';
-import type { EffectSettings } from './components/EffectControls';
+import type { EffectSettings, EffectMode } from './components/EffectControls';
 import { PlaybackControls } from './components/PlaybackControls';
 import { ProgressBar } from './components/ProgressBar';
 import { LanguageSelector } from './components/LanguageSelector';
@@ -58,13 +58,16 @@ function App() {
   }, [i18n.language, t]);
 
   const [effectSettings, setEffectSettings] = useState<EffectSettings>({
+    mode: 'speed-up',
     speedMultiplier: 1.2,
     reverbAmount: 0,
   });
+  const [selectedTrack, setSelectedTrack] = useState<'raw' | 'fx'>('raw');
 
   const handleFileSelect = useCallback(
     async (file: File) => {
       await loadAudioFile(file);
+      setSelectedTrack('raw');
     },
     [loadAudioFile]
   );
@@ -76,9 +79,15 @@ function App() {
     setUploadRevision((n) => n + 1);
   }, [reset]);
 
-  const handleEffectChange = useCallback((settings: EffectSettings) => {
-    setEffectSettings(settings);
-  }, []);
+  const handleEffectChange = useCallback(
+    (settings: EffectSettings) => {
+      setEffectSettings(settings);
+      if (settings.mode === '8-bit' && processedBuffer) {
+        setSelectedTrack('fx');
+      }
+    },
+    [processedBuffer]
+  );
 
   const handleProcess = useCallback(async () => {
     try {
@@ -89,33 +98,63 @@ function App() {
         bitDepth: effectSettings.bitDepth,
         sampleRateReduction: effectSettings.sampleRateReduction,
       });
+      setSelectedTrack('fx');
     } catch (error) {
       console.error('Processing error:', error);
     }
   }, [processAudio, effectSettings]);
 
   const handlePlay = useCallback(() => {
-    if (processedBuffer) {
+    if (selectedTrack === 'fx' && processedBuffer) {
       playAudio(processedBuffer, playbackTime);
     } else if (originalBuffer) {
       playAudio(originalBuffer, playbackTime);
+    } else if (processedBuffer) {
+      playAudio(processedBuffer, playbackTime);
     }
-  }, [playAudio, processedBuffer, originalBuffer, playbackTime]);
+  }, [playAudio, processedBuffer, originalBuffer, playbackTime, selectedTrack]);
 
   const handleSeek = useCallback(
-    (time: number) => {
-      seekTo(time);
+    (time: number, bufferOverride?: AudioBuffer | null) => {
+      seekTo(time, bufferOverride);
     },
     [seekTo]
   );
 
   const handleExport = useCallback(async () => {
     try {
-      await exportToMp3();
+      const baseName = originalFile ? originalFile.name.replace(/\.[^/.]+$/, '') : 'track';
+      const fxLabel = effectSettings.mode === 'speed-up'
+        ? t('effects.speedUp')
+        : effectSettings.mode === 'slow-reverb'
+          ? t('effects.slowReverb')
+          : t('effects.8bit');
+      const filename = `${baseName} ${fxLabel} by PitchSongs.mp3`;
+      await exportToMp3(filename);
     } catch (error) {
       console.error('Export error:', error);
     }
-  }, [exportToMp3]);
+  }, [exportToMp3, originalFile, effectSettings.mode, t]);
+
+  const handleTrackSelect = useCallback(
+    (track: 'raw' | 'fx') => {
+      if (track === 'fx' && !processedBuffer) return;
+      const currentDuration =
+        selectedTrack === 'fx' && processedBuffer
+          ? processedBuffer.duration
+          : originalBuffer?.duration || processedBuffer?.duration || 0;
+      const nextDuration =
+        track === 'fx' && processedBuffer
+          ? processedBuffer.duration
+          : originalBuffer?.duration || processedBuffer?.duration || 0;
+      const ratio = currentDuration > 0 ? playbackTime / currentDuration : 0;
+      const nextTime = Math.min(nextDuration, Math.max(0, ratio * nextDuration));
+      setSelectedTrack(track);
+      const nextBuffer = track === 'fx' ? processedBuffer : originalBuffer;
+      seekTo(nextTime, nextBuffer || undefined);
+    },
+    [processedBuffer, originalBuffer, playbackTime, selectedTrack, seekTo]
+  );
 
   return (
     <div className="min-h-screen transition-colors duration-300">
@@ -127,9 +166,7 @@ function App() {
             aria-label={t('accessibility.resetApp')}
             className="flex items-center gap-3 ios-button cursor-pointer transition-opacity hover:opacity-80"
           >
-            <div className="w-10 h-10 bg-gradient-to-br from-[rgb(var(--color-accent))] to-[rgb(var(--color-ambient))] rounded-[10px] flex items-center justify-center shadow-sm" aria-hidden="true">
-              <Music2 className="w-6 h-6 text-white" />
-            </div>
+            <div className="w-10 h-10 rounded-[12px] flex items-center justify-center shadow-sm bg-[url('/favicon.svg')] bg-center bg-cover" aria-hidden="true" />
             <div className="text-left">
               <h1 className="text-xl font-semibold text-[rgb(var(--color-text))]">
                 {t('app.title')}
@@ -241,10 +278,17 @@ function App() {
             <WaveformTimeline
               originalBuffer={originalBuffer}
               processedBuffer={processedBuffer}
-              duration={duration || processedBuffer?.duration || originalBuffer?.duration || 0}
+              longestDuration={Math.max(originalBuffer?.duration || 0, processedBuffer?.duration || 0)}
+              duration={
+                selectedTrack === 'fx' && processedBuffer
+                  ? processedBuffer.duration
+                  : originalBuffer?.duration || processedBuffer?.duration || 0
+              }
               currentTime={playbackTime}
               isPlaying={state.isPlaying}
-              onSeek={handleSeek}
+              selectedTrack={selectedTrack}
+              onSelectTrack={handleTrackSelect}
+              onSeek={(time, bufferOverride) => handleSeek(time, bufferOverride)}
             />
           )}
 
@@ -258,7 +302,8 @@ function App() {
               onExport={handleExport}
               volume={volume}
               onVolumeChange={updateVolume}
-              hasProcessed={!!(processedBuffer || originalBuffer)}
+              hasAudio={!!(processedBuffer || originalBuffer)}
+              hasProcessed={!!processedBuffer}
               canExport={!!processedBuffer}
               isProcessing={state.isProcessing}
               disabled={state.isProcessing}
