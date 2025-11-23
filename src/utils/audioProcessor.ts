@@ -113,20 +113,25 @@ export class AudioProcessor {
     dryGain.connect(outputGain);
     wetGain.connect(outputGain);
 
-    // Automate panning to create circular motion
+    // Automate panning to create smooth circular motion
     // The sound will rotate around your head in a circle
-    const cycleTime = 4 / rotationSpeed; // Time for one full rotation (adjustable)
-    const numCycles = Math.ceil(duration / cycleTime);
+    const cycleTime = 4 / rotationSpeed; // Time for one full rotation
+    const pointsPerSecond = 60; // 60 automation points per second for ultra-smooth motion
+    const totalPoints = Math.ceil(duration * pointsPerSecond);
 
-    for (let i = 0; i <= numCycles * 8; i++) {
-      const time = (i / 8) * cycleTime;
+    // Set initial value
+    panner.pan.setValueAtTime(0, 0);
+
+    for (let i = 1; i <= totalPoints; i++) {
+      const time = (i / pointsPerSecond);
       if (time > duration) break;
 
-      // Create smooth circular motion: sin wave for panning
+      // Create smooth circular motion using sine wave
       const angle = (time / cycleTime) * Math.PI * 2;
       const panValue = Math.sin(angle);
 
-      panner.pan.setValueAtTime(panValue, time);
+      // Use linear ramp for smooth interpolation between points
+      panner.pan.linearRampToValueAtTime(panValue, time);
     }
 
     return { input: inputGain, output: outputGain };
