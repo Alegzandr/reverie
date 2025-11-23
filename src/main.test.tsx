@@ -26,9 +26,9 @@ describe('main entry', () => {
     expect(createRootMock).toHaveBeenCalledWith(document.getElementById('root'));
     expect(renderMock).toHaveBeenCalled();
 
-    const tree: React.ReactElement = renderMock.mock.calls[0][0];
+    const tree = renderMock.mock.calls[0][0] as React.ReactElement;
     expect(tree.type).toBe(React.StrictMode);
-    const provider = (tree.props.children as React.ReactElement).type as any;
+    const provider = (tree.props as any).children.type as any;
     expect(provider.name).toBe('ThemeProvider');
   });
 });

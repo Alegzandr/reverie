@@ -13,11 +13,21 @@ class MockAudioBuffer {
   sampleRate: number;
   private channels: Float32Array[];
 
-  constructor(numberOfChannels: number, length: number, sampleRate: number) {
-    this.numberOfChannels = numberOfChannels;
-    this.length = length;
-    this.sampleRate = sampleRate;
-    this.channels = Array.from({ length: numberOfChannels }, () => new Float32Array(length));
+  constructor(
+    numberOfChannelsOrOptions: number | { numberOfChannels: number; length: number; sampleRate: number },
+    length?: number,
+    sampleRate?: number
+  ) {
+    if (typeof numberOfChannelsOrOptions === 'object') {
+      this.numberOfChannels = numberOfChannelsOrOptions.numberOfChannels;
+      this.length = numberOfChannelsOrOptions.length;
+      this.sampleRate = numberOfChannelsOrOptions.sampleRate;
+    } else {
+      this.numberOfChannels = numberOfChannelsOrOptions;
+      this.length = length ?? 1;
+      this.sampleRate = sampleRate ?? 44100;
+    }
+    this.channels = Array.from({ length: this.numberOfChannels }, () => new Float32Array(this.length));
   }
 
   getChannelData(channel: number): Float32Array {

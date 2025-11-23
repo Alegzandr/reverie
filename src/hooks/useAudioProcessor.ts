@@ -51,7 +51,6 @@ export function useAudioProcessor() {
 
   const stopPlayback = useCallback(() => {
     playbackSessionRef.current += 1;
-    const audioContext = getAudioContext();
     const nextTime = captureProgress();
 
     if (sourceNodeRef.current) {

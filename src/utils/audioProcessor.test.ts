@@ -52,7 +52,7 @@ class InspectableOfflineAudioContext {
   }
 
   createBuffer(numberOfChannels: number, length: number, sampleRate: number) {
-    return new AudioBuffer(numberOfChannels, length, sampleRate);
+    return new AudioBuffer({ numberOfChannels, length, sampleRate });
   }
 
   createConvolver() {
@@ -72,12 +72,12 @@ class InspectableOfflineAudioContext {
   }
 
   startRendering() {
-    const rendered = new AudioBuffer(this.numberOfChannels, this.length, this.sampleRate);
+    const rendered = new AudioBuffer({ numberOfChannels: this.numberOfChannels, length: this.length, sampleRate: this.sampleRate });
     if (this.scriptProcessor?.onaudioprocess) {
-      const inputBuffer = new AudioBuffer(2, 4, this.sampleRate);
+      const inputBuffer = new AudioBuffer({ numberOfChannels: 2, length: 4, sampleRate: this.sampleRate });
       inputBuffer.getChannelData(0).set([0.5, -0.5, 0.25, -0.25]);
       inputBuffer.getChannelData(1).set([0.1, -0.1, 0.05, -0.05]);
-      const outputBuffer = new AudioBuffer(2, 4, this.sampleRate);
+      const outputBuffer = new AudioBuffer({ numberOfChannels: 2, length: 4, sampleRate: this.sampleRate });
       const event: any = { inputBuffer, outputBuffer };
       this.scriptProcessor.processedEvent = event;
       this.scriptProcessor.onaudioprocess(event as any);
@@ -101,7 +101,7 @@ class InspectableAudioContext {
 
   decodeAudioData(data: ArrayBuffer) {
     const size = data.byteLength / 4 || 1;
-    const buffer = new AudioBuffer(2, size, this.sampleRate) as any;
+    const buffer = new AudioBuffer({ numberOfChannels: 2, length: size, sampleRate: this.sampleRate }) as any;
     this.decodedBuffers.push(buffer);
     return buffer;
   }
@@ -137,7 +137,7 @@ describe('audioProcessor utils', () => {
 
   it('applies effects and bit crushing through offline context', async () => {
     const processor: any = new AudioProcessor();
-    processor.audioBuffer = new AudioBuffer(2, 8, 44100);
+    processor.audioBuffer = new AudioBuffer({ numberOfChannels: 2, length: 8, sampleRate: 44100 });
 
     const rendered = await processor.processAudio({
       speedMultiplier: 1.5,
@@ -157,7 +157,7 @@ describe('audioProcessor utils', () => {
 
   it('connects directly when no bit crushing', async () => {
     const processor: any = new AudioProcessor();
-    processor.audioBuffer = new AudioBuffer(2, 8, 44100);
+    processor.audioBuffer = new AudioBuffer({ numberOfChannels: 2, length: 8, sampleRate: 44100 });
 
     const rendered = await processor.processAudio({
       speedMultiplier: 1,
@@ -173,7 +173,7 @@ describe('audioProcessor utils', () => {
 
   it('applies bit depth only with default sample rate divisor', async () => {
     const processor: any = new AudioProcessor();
-    processor.audioBuffer = new AudioBuffer(2, 8, 44100);
+    processor.audioBuffer = new AudioBuffer({ numberOfChannels: 2, length: 8, sampleRate: 44100 });
 
     await processor.processAudio({
       speedMultiplier: 1,
@@ -189,7 +189,7 @@ describe('audioProcessor utils', () => {
 
   it('applies sample rate reduction without bit depth', async () => {
     const processor: any = new AudioProcessor();
-    processor.audioBuffer = new AudioBuffer(2, 8, 44100);
+    processor.audioBuffer = new AudioBuffer({ numberOfChannels: 2, length: 8, sampleRate: 44100 });
 
     await processor.processAudio({
       speedMultiplier: 1,
@@ -211,12 +211,12 @@ describe('audioProcessor utils', () => {
     expect(impulse.length).toBe(48000 * (1 + 0.5 * 2));
     const data = impulse.getChannelData(0);
     expect(data[0]).not.toBe(0);
-    expect(data.some((value) => value !== 0)).toBe(true);
+    expect(data.some((value: number) => value !== 0)).toBe(true);
   });
 
   it('converts audio buffer to WAV blob', async () => {
     const processor: any = new AudioProcessor();
-    const buffer = new AudioBuffer(1, 2, 44100);
+    const buffer = new AudioBuffer({ numberOfChannels: 1, length: 2, sampleRate: 44100 });
     buffer.getChannelData(0).set([-0.5, 0.5]);
     const wav = await processor.audioBufferToWav(buffer as any);
 

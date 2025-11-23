@@ -3,7 +3,7 @@ import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { useAudioProcessor } from './useAudioProcessor';
 
 const { mockAudioBuffer, mockDownload, mockToMp3, mockAudioContext, mockAudioProcessor } = vi.hoisted(() => {
-  const buffer = new AudioBuffer(1, 44100, 44100);
+  const buffer = new AudioBuffer({ length: 44100, numberOfChannels: 1, sampleRate: 44100 });
   let storedBuffer: AudioBuffer | null = buffer;
   const download = vi.fn();
   const toMp3 = vi.fn(async () => new Blob(['mp3'], { type: 'audio/mp3' }));

@@ -20,7 +20,7 @@ const mockApi = {
   duration: 0,
   volume: 0.7,
   loadAudioFile: vi.fn(),
-  processAudio: vi.fn(async () => new AudioBuffer(1, 1, 44100)),
+  processAudio: vi.fn(async () => new AudioBuffer({ length: 1, numberOfChannels: 1, sampleRate: 44100 })),
   playAudio: vi.fn(),
   stopAudio: vi.fn(),
   exportToMp3: vi.fn(async () => {}),
@@ -80,8 +80,8 @@ describe('App', () => {
 
   it('handles processing and playback flow', async () => {
     mockApi.originalFile = new File(['123'], 'song.mp3', { type: 'audio/mp3' });
-    mockApi.processedBuffer = new AudioBuffer(1, 1, 44100);
-    mockApi.originalBuffer = new AudioBuffer(1, 1, 44100);
+    mockApi.processedBuffer = new AudioBuffer({ length: 1, numberOfChannels: 1, sampleRate: 44100 });
+    mockApi.originalBuffer = new AudioBuffer({ length: 1, numberOfChannels: 1, sampleRate: 44100 });
     mockApi.duration = 1.5;
     render(<App />);
 
@@ -141,7 +141,7 @@ describe('App', () => {
   });
 
   it('exports successfully', async () => {
-    mockApi.processedBuffer = new AudioBuffer(1, 1, 44100);
+    mockApi.processedBuffer = new AudioBuffer({ length: 1, numberOfChannels: 1, sampleRate: 44100 });
     render(<App />);
 
     await userEvent.click(screen.getByText('playback.export'));
@@ -150,7 +150,7 @@ describe('App', () => {
   });
 
   it('handles export errors gracefully', async () => {
-    mockApi.processedBuffer = new AudioBuffer(1, 1, 44100);
+    mockApi.processedBuffer = new AudioBuffer({ length: 1, numberOfChannels: 1, sampleRate: 44100 });
     mockApi.exportToMp3.mockRejectedValueOnce(new Error('fail'));
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -171,7 +171,7 @@ describe('App', () => {
 
   it('renders waveform timeline and allows seeking', async () => {
     mockApi.originalFile = new File(['123'], 'song.mp3', { type: 'audio/mp3' });
-    mockApi.originalBuffer = new AudioBuffer(1, 44100, 44100);
+    mockApi.originalBuffer = new AudioBuffer({ length: 44100, numberOfChannels: 1, sampleRate: 44100 });
     mockApi.duration = 2.5;
 
     render(<App />);

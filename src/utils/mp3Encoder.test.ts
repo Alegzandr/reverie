@@ -28,14 +28,14 @@ describe('mp3Encoder utils', () => {
   });
 
   it('encodes mono and stereo buffers into mp3 blob', async () => {
-    const mono = new AudioBuffer(1, 3, 44100);
+    const mono = new AudioBuffer({ numberOfChannels: 1, length: 3, sampleRate: 44100 });
     mono.getChannelData(0).set([-2, 0.5, 1]);
 
     const blob = await audioBufferToMp3(mono as any, 256);
     expect(blob.type).toBe('audio/mp3');
     expect(encodeBuffer).toHaveBeenCalledWith(expect.any(Int16Array), undefined);
 
-    const stereo = new AudioBuffer(2, 3, 44100);
+    const stereo = new AudioBuffer({ numberOfChannels: 2, length: 3, sampleRate: 44100 });
     stereo.getChannelData(0).set([0.1, 0.2, 0.3]);
     stereo.getChannelData(1).set([0.4, 0.5, 0.6]);
 
