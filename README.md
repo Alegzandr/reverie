@@ -1,6 +1,6 @@
 # PitchSongs 🎵
 
-A modern, professional web application for transforming your music with audio effects. Create sped-up versions, slow+reverb remixes, or retro 8-bit sounds - all directly in your browser with complete privacy.
+A modern, professional web application for transforming your music with audio effects. Create sped-up versions, slow+reverb remixes, or immersive 8D audio - all directly in your browser with complete privacy and exports that mirror your original format and quality.
 
 **🌐 Live Demo:** [alegzandr.github.io/pitch-songs](https://alegzandr.github.io/pitch-songs/)
 
@@ -9,13 +9,13 @@ A modern, professional web application for transforming your music with audio ef
 ### Audio Effects
 - **Speed Up Mode**: Create high-energy sped-up versions (1.1x - 2.0x speed multiplier)
 - **Slow + Reverb Mode**: Generate atmospheric slowed + reverb versions (0.8x speed with adjustable reverb)
-- **8-Bit Mode**: Create retro 8-bit/chiptune sounds with adjustable bit depth (4-12 bits) and sample rate reduction
+- **8D Audio Mode**: Create immersive spatial audio with adjustable rotation speed (0.1x - 2.0x) for a surround-style headphone effect
 
 ### User Experience
 - **🔒 100% Client-Side Processing**: All audio processing happens in your browser - files never leave your device
 - **🎨 Waveform Visualization**: Real-time waveform display showing both original and processed audio
 - **🎧 Track Comparison**: Switch between original and processed versions with synchronized playback
-- **💾 MP3 Export**: Download transformed tracks with custom filenames
+- **💾 Auto Export**: Downloads match your upload format/quality (WAV preserved; MP3 mirrors source bitrate; other uploads use matched-bitrate MP3)
 - **🌍 Multi-Language Support**: Available in English, French, Spanish, German, and Portuguese
 - **🌓 Dark/Light Mode**: Automatic theme detection with manual toggle
 - **📱 PWA Support**: Install as a standalone app on mobile and desktop
@@ -89,11 +89,11 @@ npm run dev
 2. **Select Effect Mode**:
    - **Speed Up**: Adjust multiplier (1.1x - 2.0x)
    - **Slow + Reverb**: Adjust reverb amount (10% - 100%)
-   - **8-Bit**: Adjust bit depth (4-12 bits) and sample rate reduction
+   - **8D Audio**: Adjust rotation speed (0.1x - 2.0x) to control the spatial movement
 3. **Apply Effects**: Click "Apply Effects" to process
 4. **Preview**: Use playback controls to listen
 5. **Compare**: Switch between original ("raw") and processed ("fx") tracks
-6. **Export**: Download as MP3 with custom filename
+6. **Export**: Download in your original format/quality automatically (WAV stays WAV; MP3 keeps source bitrate; other uploads use a matched-bitrate MP3)
 
 ## 📁 Project Structure
 
@@ -119,7 +119,7 @@ pitch-songs/
 │   │   └── locales/            # Translation files (EN, FR, ES, DE, PT)
 │   ├── utils/
 │   │   ├── audioProcessor.ts   # Web Audio API wrapper
-│   │   └── mp3Encoder.ts       # MP3 encoding utilities
+│   │   └── mp3Encoder.ts       # Audio export utilities (MP3 encoding, blob download)
 │   ├── types/
 │   │   └── lamejs.d.ts         # TypeScript type definitions
 │   ├── App.tsx                 # Main application component
@@ -148,9 +148,9 @@ pitch-songs/
 2. **Effect Processing** (using `OfflineAudioContext`):
    - **Speed**: Adjusts playback rate with AudioBufferSourceNode
    - **Reverb**: Creates convolution reverb with procedurally generated impulse response
-   - **8-Bit**: Applies bit-crushing and sample rate reduction using ScriptProcessorNode
+   - **8D Audio**: Automates stereo panning with a custom impulse reverb tail to create rotating spatial sound
 3. **Buffer Management**: Maintains separate buffers for original and processed audio
-4. **MP3 Encoding**: Converts AudioBuffer to MP3 using lamejs encoder
+4. **Export**: Detects the source format and exports either WAV (lossless) or MP3 with matched bitrate to mirror original quality
 5. **Download**: Triggers browser download with custom filename
 
 ### State Management
@@ -279,7 +279,7 @@ MIT License - feel free to use this project for personal or commercial purposes.
 
 - Built with [React](https://react.dev/)
 - Audio processing powered by [Web Audio API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API)
-- MP3 encoding by [lamejs](https://github.com/zhuker/lamejs)
+- MP3 encoding by [lamejs](https://github.com/zhuker/lamejs) (used when exporting MP3 at the source-matched bitrate)
 - Icons from [Lucide](https://lucide.dev/)
 
 ## 📞 Support

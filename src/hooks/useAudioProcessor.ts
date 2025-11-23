@@ -238,7 +238,16 @@ export function useAudioProcessor() {
     stopPlayback();
   }, [stopPlayback]);
 
-  const exportToMp3 = useCallback(async (filename?: string) => {
+  const estimateBitrate = useCallback(
+    (file: File | null, durationSeconds: number) => {
+      if (!file || durationSeconds <= 0) return 192;
+      const kbps = Math.round(((file.size * 8) / durationSeconds) / 1000);
+      return Math.min(320, Math.max(96, kbps)); // keep within common MP3 bitrates
+    },
+    []
+  );
+
+  const exportProcessedAudio = useCallback(async (filename?: string) => {
     const buffer = processedBuffer || audioProcessor.getAudioBuffer();
     if (!buffer) {
       throw new Error('No audio to export');
@@ -247,10 +256,30 @@ export function useAudioProcessor() {
     setState((prev) => ({ ...prev, isExporting: true }));
 
     try {
-      const mp3Blob = await audioBufferToMp3(buffer);
-      const derivedName = originalFile ? `${originalFile.name.replace('.mp3', '')}_processed.mp3` : 'processed_audio.mp3';
-      const defaultFilename = filename || derivedName;
-      downloadBlob(mp3Blob, defaultFilename);
+      const durationSeconds = getBufferDuration(buffer);
+      const extension = originalFile?.name.split('.').pop()?.toLowerCase() || '';
+      const mime = (originalFile?.type || '').toLowerCase();
+      const preferWav = mime.includes('wav') || extension === 'wav';
+
+      let blob: Blob;
+      let targetExtension: string;
+
+      if (preferWav) {
+        blob = await audioProcessor.audioBufferToWav(buffer);
+        targetExtension = 'wav';
+      } else {
+        const bitRate = estimateBitrate(originalFile, durationSeconds);
+        blob = await audioBufferToMp3(buffer, bitRate);
+        targetExtension = 'mp3';
+      }
+
+      const baseName = filename
+        ? filename.replace(/\.[^/.]+$/, '')
+        : originalFile
+          ? `${originalFile.name.replace(/\.[^/.]+$/, '')}_processed`
+          : 'processed_audio';
+
+      downloadBlob(blob, `${baseName}.${targetExtension}`);
       setState((prev) => ({ ...prev, isExporting: false }));
     } catch (error) {
       setState((prev) => ({
@@ -260,7 +289,7 @@ export function useAudioProcessor() {
       }));
       throw error;
     }
-  }, [processedBuffer, originalFile]);
+  }, [processedBuffer, originalFile, getBufferDuration, estimateBitrate]);
 
   const updateVolume = useCallback((newVolume: number) => {
     setVolume(newVolume);
@@ -319,7 +348,7 @@ export function useAudioProcessor() {
     processAudio,
     playAudio,
     stopAudio,
-    exportToMp3,
+    exportProcessedAudio,
     updateVolume,
     seekTo,
     reset,

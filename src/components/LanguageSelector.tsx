@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Globe, Check, X } from 'lucide-react';
 
@@ -18,6 +19,7 @@ const languages = [
 export function LanguageSelector() {
   const { i18n, t } = useTranslation();
   const [open, setOpen] = useState(false);
+  const portalTarget = typeof document !== 'undefined' ? document.body : null;
 
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
@@ -45,70 +47,69 @@ export function LanguageSelector() {
         <Globe className="w-5 h-5 text-[rgb(var(--color-text))]" />
       </button>
 
-      {open && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 grid place-items-center p-6"
-        >
-          <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            aria-hidden="true"
-            onClick={() => setOpen(false)}
-          />
-          <div className="relative glass rounded-3xl p-6 sm:p-7 w-full max-w-md shadow-2xl border border-[rgba(var(--color-border),0.7)]">
-            <div className="flex items-start justify-between gap-4 mb-4">
-              <div>
-                <p className="text-sm font-semibold text-[rgb(var(--color-text))]">
-                  {t('language.title')}
-                </p>
-                <p className="text-xs text-[rgb(var(--color-text-secondary))]">
-                  {t('language.subtitle')}
-                </p>
+      {open && portalTarget && createPortal(
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-[9999] overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4 sm:p-6">
+            <div
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              aria-hidden="true"
+              onClick={() => setOpen(false)}
+            />
+            <div className="relative glass rounded-3xl p-6 sm:p-7 w-full max-w-md shadow-2xl border border-[rgba(var(--color-border),0.7)] max-h-[92vh] overflow-hidden">
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div>
+                  <p className="text-sm font-semibold text-[rgb(var(--color-text))]">
+                    {t('language.title')}
+                  </p>
+                  <p className="text-xs text-[rgb(var(--color-text-secondary))]">
+                    {t('language.subtitle')}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  aria-label={t('language.close')}
+                  onClick={() => setOpen(false)}
+                  className="p-2 rounded-full ios-button bg-[rgba(var(--color-surface),0.8)] text-[rgb(var(--color-text))]"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-              <button
-                type="button"
-                aria-label={t('language.close')}
-                onClick={() => setOpen(false)}
-                className="p-2 rounded-full ios-button bg-[rgba(var(--color-surface),0.8)] text-[rgb(var(--color-text))]"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
 
-            <div className="space-y-2 mb-3">
-              {languages.map((lang) => {
-                const active = i18n.language === lang.code;
-                return (
-                  <button
-                    key={lang.code}
-                    type="button"
-                    onClick={() => handleLanguageChange(lang.code)}
-                    className={`
-                      w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl
-                      transition-all duration-150 ios-button border
-                      ${
-                        active
-                          ? 'border-[rgba(var(--color-accent),0.5)] bg-[rgba(var(--color-accent),0.08)] text-[rgb(var(--color-accent))]'
-                          : 'border-[rgba(var(--color-border),0.6)] hover:border-[rgba(var(--color-accent),0.3)] text-[rgb(var(--color-text))]'
-                      }
-                    `}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl">{lang.flag}</span>
-                      <span className="text-sm font-semibold">{lang.name}</span>
-                    </div>
-                    {active && <Check className="w-4 h-4" aria-hidden="true" />}
-                  </button>
-                );
-              })}
-            </div>
+              <div className="space-y-2 mb-3 overflow-y-auto pr-1 -mr-1 max-h-[55vh] sm:max-h-[60vh]">
+                {languages.map((lang) => {
+                  const active = i18n.language === lang.code;
+                  return (
+                    <button
+                      key={lang.code}
+                      type="button"
+                      onClick={() => handleLanguageChange(lang.code)}
+                      className={`
+                        w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl
+                        transition-all duration-150 ios-button border
+                        ${
+                          active
+                            ? 'border-[rgba(var(--color-accent),0.5)] bg-[rgba(var(--color-accent),0.08)] text-[rgb(var(--color-accent))]'
+                            : 'border-[rgba(var(--color-border),0.6)] hover:border-[rgba(var(--color-accent),0.3)] text-[rgb(var(--color-text))]'
+                        }
+                      `}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl">{lang.flag}</span>
+                        <span className="text-sm font-semibold">{lang.name}</span>
+                      </div>
+                      {active && <Check className="w-4 h-4" aria-hidden="true" />}
+                    </button>
+                  );
+                })}
+              </div>
 
-            <p className="text-[11px] text-[rgb(var(--color-text-secondary))] leading-relaxed">
-              {t('language.notice')}
-            </p>
+              <p className="text-[11px] text-[rgb(var(--color-text-secondary))] leading-relaxed">
+                {t('language.notice')}
+              </p>
+            </div>
           </div>
-        </div>
+        </div>,
+        portalTarget
       )}
     </>
   );

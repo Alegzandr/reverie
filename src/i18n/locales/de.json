@@ -2,7 +2,7 @@
   "app": {
     "title": "PitchSongs",
     "subtitle": "Audio-Manipulation",
-    "description": "Verwandeln Sie Ihre Musik mit professionellen Audio-Effekten. Beschleunigen, verlangsamen, Hall hinzufügen oder immersive 8D-Audio-Versionen Ihrer Tracks erstellen."
+    "description": "Verwandeln Sie Ihre Musik mit professionellen Audio-Effekten. Beschleunigen, verlangsamen, Hall hinzufügen oder immersive 8D-Audio-Versionen Ihrer Tracks erstellen und automatisch im ursprünglichen Format und in der ursprünglichen Qualität exportieren."
   },
   "upload": {
     "title": "Audiodatei hochladen",
@@ -44,7 +44,7 @@
     },
     "export": {
       "title": "Sofort-Export",
-      "desc": "Als MP3 herunterladen"
+      "desc": "Automatischer Export im Ursprungsformat/-qualität"
     }
   },
   "footer": {
@@ -72,7 +72,7 @@
   },
   "meta": {
     "title": "PitchSongs - Professionelles Audio-Manipulationswerkzeug",
-    "description": "Verwandeln Sie Ihre Musik mit professionellen Audio-Effekten. Erstellen Sie beschleunigte Versionen, langsame + Hall-Remixe oder immersives 8D-Audio. 100% kostenlos, lokale Verarbeitung für vollständige Privatsphäre.",
+    "description": "Verwandeln Sie Ihre Musik mit professionellen Audio-Effekten. Erstellen Sie beschleunigte Versionen, langsame + Hall-Remixe oder immersives 8D-Audio und exportieren Sie im ursprünglichen Format und in ursprünglicher Qualität. 100% kostenlos, lokale Verarbeitung für vollständige Privatsphäre.",
     "keywords": "Audio-Manipulation, Audio beschleunigen, Slow Reverb, 8D-Audio, Raumklang, Audio-Effekte, Musik-Editor, Audio-Prozessor, Web Audio, kostenloses Audio-Tool"
   }
 }

@@ -23,7 +23,7 @@ const mockApi = {
   processAudio: vi.fn(async () => new AudioBuffer({ length: 1, numberOfChannels: 1, sampleRate: 44100 })),
   playAudio: vi.fn(),
   stopAudio: vi.fn(),
-  exportToMp3: vi.fn(async () => {}),
+  exportProcessedAudio: vi.fn(async () => {}),
   updateVolume: vi.fn(),
   seekTo: vi.fn(),
   reset: vi.fn(),
@@ -146,18 +146,18 @@ describe('App', () => {
 
     await userEvent.click(screen.getByText('playback.export'));
 
-    expect(mockApi.exportToMp3).toHaveBeenCalled();
+    expect(mockApi.exportProcessedAudio).toHaveBeenCalled();
   });
 
   it('handles export errors gracefully', async () => {
     mockApi.processedBuffer = new AudioBuffer({ length: 1, numberOfChannels: 1, sampleRate: 44100 });
-    mockApi.exportToMp3.mockRejectedValueOnce(new Error('fail'));
+    mockApi.exportProcessedAudio.mockRejectedValueOnce(new Error('fail'));
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     render(<App />);
 
     await userEvent.click(screen.getByText('playback.export'));
-    expect(mockApi.exportToMp3).toHaveBeenCalled();
+    expect(mockApi.exportProcessedAudio).toHaveBeenCalled();
     expect(consoleSpy).toHaveBeenCalled();
 
     consoleSpy.mockRestore();

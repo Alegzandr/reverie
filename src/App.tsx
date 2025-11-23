@@ -24,7 +24,7 @@ function App() {
     processAudio,
     playAudio,
     stopAudio,
-    exportToMp3,
+    exportProcessedAudio,
     updateVolume,
     seekTo,
     reset,
@@ -128,12 +128,12 @@ function App() {
         : effectSettings.mode === 'slow-reverb'
           ? t('effects.slowReverb')
           : t('effects.8dAudio');
-      const filename = `${baseName} ${fxLabel} by PitchSongs.mp3`;
-      await exportToMp3(filename);
+      const filename = `${baseName} ${fxLabel} by PitchSongs`;
+      await exportProcessedAudio(filename);
     } catch (error) {
       console.error('Export error:', error);
     }
-  }, [exportToMp3, originalFile, effectSettings.mode, t]);
+  }, [exportProcessedAudio, originalFile, effectSettings.mode, t]);
 
   const handleTrackSelect = useCallback(
     (track: 'raw' | 'fx') => {

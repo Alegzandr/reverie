@@ -1,5 +1,6 @@
 import { Mp3Encoder } from '@breezystack/lamejs';
 
+// Encodes an AudioBuffer to MP3 at the requested bitrate (matched to the source when available).
 export async function audioBufferToMp3(
   audioBuffer: AudioBuffer,
   bitRate: number = 192
