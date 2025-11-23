@@ -94,6 +94,7 @@ describe('App', () => {
       preservePitch: false,
       bitDepth: 6,
       sampleRateReduction: 6,
+      chiptune: true,
     });
 
     await userEvent.click(screen.getByText('playback.play'));
