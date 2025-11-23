@@ -1,0 +1,78 @@
+{
+  "app": {
+    "title": "PitchSongs",
+    "subtitle": "音频处理",
+    "description": "使用专业音频效果转换您的音乐。加速、减速、添加混响或创建沉浸式 8D 音频。"
+  },
+  "upload": {
+    "title": "上传音频文件",
+    "dragDrop": "将音频文件拖放到此处",
+    "or": "或",
+    "browse": "浏览文件",
+    "formats": "MP3、WAV、OGG、M4A",
+    "loading": "加载中..."
+  },
+  "effects": {
+    "speedUp": "加速",
+    "slowReverb": "慢速 + 混响",
+    "8dAudio": "8D 音频",
+    "speed": "速度",
+    "reverb": "混响",
+    "rotationSpeed": "旋转速度",
+    "apply": "应用效果",
+    "processing": "处理中..."
+  },
+  "playback": {
+    "play": "播放",
+    "pause": "暂停",
+    "export": "导出",
+    "exporting": "导出中...",
+    "volume": "音量"
+  },
+  "track": {
+    "title": "曲目",
+    "size": "大小"
+  },
+  "features": {
+    "webAudio": {
+      "title": "Web Audio API",
+      "desc": "专业品质"
+    },
+    "private": {
+      "title": "100% 私密",
+      "desc": "客户端处理"
+    },
+    "export": {
+      "title": "即时导出",
+      "desc": "下载为 MP3"
+    }
+  },
+  "footer": {
+    "built": "使用 React • TypeScript • Web Audio API 构建"
+  },
+  "accessibility": {
+    "themeToggle": "切换深色模式",
+    "resetApp": "重置应用程序"
+  },
+  "waveform": {
+    "title": "波形时间轴",
+    "caption": "在原始音频和效果音频之间切换",
+    "playing": "预览中",
+    "idle": "就绪",
+    "scrub": "浏览时间轴",
+    "raw": "原始",
+    "fx": "效果"
+  },
+  "language": {
+    "open": "打开语言选择器",
+    "title": "选择您的语言",
+    "subtitle": "翻译已与英语验证",
+    "close": "关闭语言选择器",
+    "notice": "所有翻译都与英语保持同步，以确保 100% 覆盖。"
+  },
+  "meta": {
+    "title": "PitchSongs - 专业音频处理工具",
+    "description": "使用专业音频效果转换您的音乐。创建加速版本、慢速 + 混响混音或沉浸式 8D 音频。100% 免费，客户端处理以确保完全隐私。",
+    "keywords": "音频处理, 加速音频, 慢速混响, 8D音频, 空间音频, 音频效果, 音乐编辑器, 音频处理器, 网络音频, 免费音频工具"
+  }
+}

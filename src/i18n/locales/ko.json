@@ -1,0 +1,78 @@
+{
+  "app": {
+    "title": "PitchSongs",
+    "subtitle": "오디오 편집",
+    "description": "전문 오디오 효과로 음악을 변환하세요. 속도 조절, 리버브 추가 또는 몰입형 8D 오디오를 만드세요."
+  },
+  "upload": {
+    "title": "오디오 파일 업로드",
+    "dragDrop": "오디오 파일을 여기에 드래그 앤 드롭",
+    "or": "또는",
+    "browse": "파일 찾아보기",
+    "formats": "MP3, WAV, OGG, M4A",
+    "loading": "로딩 중..."
+  },
+  "effects": {
+    "speedUp": "속도 증가",
+    "slowReverb": "느리게 + 리버브",
+    "8dAudio": "8D 오디오",
+    "speed": "속도",
+    "reverb": "리버브",
+    "rotationSpeed": "회전 속도",
+    "apply": "효과 적용",
+    "processing": "처리 중..."
+  },
+  "playback": {
+    "play": "재생",
+    "pause": "일시정지",
+    "export": "내보내기",
+    "exporting": "내보내는 중...",
+    "volume": "볼륨"
+  },
+  "track": {
+    "title": "트랙",
+    "size": "크기"
+  },
+  "features": {
+    "webAudio": {
+      "title": "Web Audio API",
+      "desc": "전문가급 품질"
+    },
+    "private": {
+      "title": "100% 프라이빗",
+      "desc": "클라이언트 측 처리"
+    },
+    "export": {
+      "title": "즉시 내보내기",
+      "desc": "MP3로 다운로드"
+    }
+  },
+  "footer": {
+    "built": "React • TypeScript • Web Audio API로 제작"
+  },
+  "accessibility": {
+    "themeToggle": "다크 모드 전환",
+    "resetApp": "앱 초기화"
+  },
+  "waveform": {
+    "title": "파형 타임라인",
+    "caption": "원본 오디오와 효과 적용 오디오 전환",
+    "playing": "미리보기 중",
+    "idle": "준비 완료",
+    "scrub": "타임라인 스크럽",
+    "raw": "원본",
+    "fx": "효과"
+  },
+  "language": {
+    "open": "언어 선택 열기",
+    "title": "언어 선택",
+    "subtitle": "영어와 대조 확인된 번역",
+    "close": "언어 선택 닫기",
+    "notice": "모든 번역은 100% 커버리지를 보장하기 위해 영어와 동기화됩니다."
+  },
+  "meta": {
+    "title": "PitchSongs - 전문 오디오 편집 도구",
+    "description": "전문 오디오 효과로 음악을 변환하세요. 빠른 버전, 느린 + 리버브 리믹스 또는 몰입형 8D 오디오를 만드세요. 100% 무료, 완전한 프라이버시를 위한 클라이언트 측 처리.",
+    "keywords": "오디오 편집, 오디오 속도 조절, 슬로우 리버브, 8D 오디오, 공간 오디오, 오디오 효과, 음악 편집기, 오디오 프로세서, 웹 오디오, 무료 오디오 도구"
+  }
+}

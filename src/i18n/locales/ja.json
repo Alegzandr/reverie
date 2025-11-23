@@ -1,0 +1,78 @@
+{
+  "app": {
+    "title": "PitchSongs",
+    "subtitle": "オーディオ編集",
+    "description": "プロフェッショナルなオーディオエフェクトで音楽を変換。スピードアップ、スローダウン、リバーブ追加、または没入型8Dオーディオを作成。"
+  },
+  "upload": {
+    "title": "オーディオファイルをアップロード",
+    "dragDrop": "オーディオファイルをここにドラッグ＆ドロップ",
+    "or": "または",
+    "browse": "ファイルを参照",
+    "formats": "MP3、WAV、OGG、M4A",
+    "loading": "読み込み中..."
+  },
+  "effects": {
+    "speedUp": "スピードアップ",
+    "slowReverb": "スロー + リバーブ",
+    "8dAudio": "8D オーディオ",
+    "speed": "スピード",
+    "reverb": "リバーブ",
+    "rotationSpeed": "回転速度",
+    "apply": "エフェクトを適用",
+    "processing": "処理中..."
+  },
+  "playback": {
+    "play": "再生",
+    "pause": "一時停止",
+    "export": "エクスポート",
+    "exporting": "エクスポート中...",
+    "volume": "音量"
+  },
+  "track": {
+    "title": "トラック",
+    "size": "サイズ"
+  },
+  "features": {
+    "webAudio": {
+      "title": "Web Audio API",
+      "desc": "プロフェッショナル品質"
+    },
+    "private": {
+      "title": "100% プライベート",
+      "desc": "クライアント側処理"
+    },
+    "export": {
+      "title": "即座にエクスポート",
+      "desc": "MP3としてダウンロード"
+    }
+  },
+  "footer": {
+    "built": "React • TypeScript • Web Audio API で構築"
+  },
+  "accessibility": {
+    "themeToggle": "ダークモード切り替え",
+    "resetApp": "アプリをリセット"
+  },
+  "waveform": {
+    "title": "波形タイムライン",
+    "caption": "元のオーディオとエフェクト適用後を切り替え",
+    "playing": "プレビュー中",
+    "idle": "準備完了",
+    "scrub": "タイムラインをスクラブ",
+    "raw": "元の音源",
+    "fx": "エフェクト"
+  },
+  "language": {
+    "open": "言語選択を開く",
+    "title": "言語を選択",
+    "subtitle": "英語版と照合済みの翻訳",
+    "close": "言語選択を閉じる",
+    "notice": "すべての翻訳は英語と同期されており、100%のカバレッジを保証します。"
+  },
+  "meta": {
+    "title": "PitchSongs - プロフェッショナルオーディオ編集ツール",
+    "description": "プロフェッショナルなオーディオエフェクトで音楽を変換。スピードアップバージョン、スロー＋リバーブリミックス、または没入型8Dオーディオを作成。100%無料、クライアント側処理で完全なプライバシー。",
+    "keywords": "オーディオ編集, 音声加速, スローリバーブ, 8Dオーディオ, 空間オーディオ, オーディオエフェクト, 音楽エディター, オーディオプロセッサ, ウェブオーディオ, 無料オーディオツール"
+  }
+}
