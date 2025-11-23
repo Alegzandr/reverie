@@ -27,6 +27,11 @@ class InspectableScriptProcessor {
   processedEvent: any = null;
 }
 
+class InspectableStereoPanner {
+  pan = { value: 0, setValueAtTime: vi.fn() };
+  connect = vi.fn();
+}
+
 class InspectableOfflineAudioContext {
   static lastInstance: InspectableOfflineAudioContext | null = null;
   destination = {};
@@ -39,6 +44,7 @@ class InspectableOfflineAudioContext {
   wet = new InspectableGain();
   merger = new InspectableGain();
   scriptProcessor: InspectableScriptProcessor | null = null;
+  panner: InspectableStereoPanner | null = null;
 
   constructor(numberOfChannels: number, length: number, sampleRate: number) {
     this.numberOfChannels = numberOfChannels;
@@ -69,6 +75,11 @@ class InspectableOfflineAudioContext {
   createScriptProcessor() {
     this.scriptProcessor = new InspectableScriptProcessor();
     return this.scriptProcessor;
+  }
+
+  createStereoPanner() {
+    this.panner = new InspectableStereoPanner();
+    return this.panner;
   }
 
   startRendering() {
@@ -135,7 +146,7 @@ describe('audioProcessor utils', () => {
     await expect(processor.processAudio({ speedMultiplier: 1, reverbAmount: 0, preservePitch: false })).rejects.toThrow('No audio file loaded');
   });
 
-  it('applies effects and bit crushing through offline context', async () => {
+  it('applies effects and 8D audio through offline context', async () => {
     const processor: any = new AudioProcessor();
     processor.audioBuffer = new AudioBuffer({ numberOfChannels: 2, length: 8, sampleRate: 44100 });
 
@@ -143,19 +154,20 @@ describe('audioProcessor utils', () => {
       speedMultiplier: 1.5,
       reverbAmount: 0.4,
       preservePitch: false,
-      bitDepth: 8,
-      sampleRateReduction: 2,
+      audio8D: true,
+      rotationSpeed: 1.0,
     });
 
     const offline = InspectableOfflineAudioContext.lastInstance!;
     expect(offline.length).toBe(Math.floor(8 / 1.5));
     expect(offline.source.playbackRate.value).toBeCloseTo(1.5);
     expect(offline.convolver.buffer).toBeDefined();
-    expect(offline.scriptProcessor?.processedEvent).toBeTruthy();
+    expect(offline.panner).not.toBeNull();
+    expect(offline.panner?.pan.setValueAtTime).toHaveBeenCalled();
     expect(rendered).toBeDefined();
   });
 
-  it('connects directly when no bit crushing', async () => {
+  it('connects directly when no effects enabled', async () => {
     const processor: any = new AudioProcessor();
     processor.audioBuffer = new AudioBuffer({ numberOfChannels: 2, length: 8, sampleRate: 44100 });
 
@@ -166,12 +178,12 @@ describe('audioProcessor utils', () => {
     });
 
     const offline = InspectableOfflineAudioContext.lastInstance!;
-    expect(offline.scriptProcessor).toBeNull();
+    expect(offline.panner).toBeNull();
     expect(offline.source.connect).toHaveBeenCalledWith(offline.destination);
     expect(rendered).toBeDefined();
   });
 
-  it('applies bit depth only with default sample rate divisor', async () => {
+  it('applies 8D audio effect with rotation speed', async () => {
     const processor: any = new AudioProcessor();
     processor.audioBuffer = new AudioBuffer({ numberOfChannels: 2, length: 8, sampleRate: 44100 });
 
@@ -179,15 +191,16 @@ describe('audioProcessor utils', () => {
       speedMultiplier: 1,
       reverbAmount: 0,
       preservePitch: false,
-      bitDepth: 4,
+      audio8D: true,
+      rotationSpeed: 0.5,
     });
 
     const offline = InspectableOfflineAudioContext.lastInstance!;
-    expect(offline.scriptProcessor).not.toBeNull();
-    expect(offline.scriptProcessor?.processedEvent).toBeTruthy();
+    expect(offline.panner).not.toBeNull();
+    expect(offline.panner?.pan.setValueAtTime).toHaveBeenCalled();
   });
 
-  it('applies sample rate reduction without bit depth', async () => {
+  it('applies 8D audio without rotation speed parameter', async () => {
     const processor: any = new AudioProcessor();
     processor.audioBuffer = new AudioBuffer({ numberOfChannels: 2, length: 8, sampleRate: 44100 });
 
@@ -195,12 +208,12 @@ describe('audioProcessor utils', () => {
       speedMultiplier: 1,
       reverbAmount: 0,
       preservePitch: false,
-      sampleRateReduction: 3,
+      audio8D: true,
     });
 
     const offline = InspectableOfflineAudioContext.lastInstance!;
-    expect(offline.scriptProcessor).not.toBeNull();
-    expect(offline.scriptProcessor?.processedEvent).toBeTruthy();
+    expect(offline.panner).not.toBeNull();
+    expect(offline.panner?.pan.setValueAtTime).toHaveBeenCalled();
   });
 
   it('creates reverb impulse with decay', async () => {

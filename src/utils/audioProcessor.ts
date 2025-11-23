@@ -2,9 +2,8 @@ export interface AudioProcessingOptions {
   speedMultiplier: number;
   reverbAmount: number;
   preservePitch: boolean;
-  bitDepth?: number;
-  sampleRateReduction?: number;
-  chiptune?: boolean; // New authentic chiptune mode
+  audio8D?: boolean; // 8D spatial audio effect
+  rotationSpeed?: number; // Speed of 8D rotation (0.1 - 2.0)
 }
 
 export class AudioProcessor {
@@ -26,7 +25,7 @@ export class AudioProcessor {
       throw new Error('No audio file loaded');
     }
 
-    const { speedMultiplier, reverbAmount, bitDepth, sampleRateReduction } = options;
+    const { speedMultiplier, reverbAmount, audio8D, rotationSpeed } = options;
 
     // Create offline context for processing
     const offlineContext = new OfflineAudioContext(
@@ -67,42 +66,11 @@ export class AudioProcessor {
       lastNode = merger;
     }
 
-    // Apply authentic chiptune effect or simple bit-crushing
-    if (options.chiptune) {
-      // Create authentic 8-bit console sound (square waves, etc.)
-      const chiptuneProcessor = await this.createChiptuneProcessor(offlineContext, this.audioBuffer);
-      lastNode.connect(chiptuneProcessor);
-      chiptuneProcessor.connect(offlineContext.destination);
-    } else if (bitDepth || sampleRateReduction) {
-      // Original bit-crushing effect
-      const channelCount = this.audioBuffer.numberOfChannels;
-      const scriptProcessor = offlineContext.createScriptProcessor(4096, channelCount, channelCount);
-      const steps = bitDepth ? Math.max(1, Math.pow(2, bitDepth - 1)) : Math.pow(2, 8 - 1);
-      const sampleRateDiv = Math.max(1, sampleRateReduction || 2);
-      const heldSamples = Array.from({ length: channelCount }, () => 0);
-      const phases = Array.from({ length: channelCount }, () => 0);
-
-      scriptProcessor.onaudioprocess = (e) => {
-        const inputBuffer = e.inputBuffer;
-        const outputBuffer = e.outputBuffer;
-
-        for (let channel = 0; channel < outputBuffer.numberOfChannels; channel++) {
-          const inputData = inputBuffer.getChannelData(channel);
-          const outputData = outputBuffer.getChannelData(channel);
-
-          for (let sample = 0; sample < inputBuffer.length; sample++) {
-            if (phases[channel] % sampleRateDiv === 0) {
-              const quantized = Math.round(inputData[sample] * steps) / steps;
-              heldSamples[channel] = quantized;
-            }
-            outputData[sample] = heldSamples[channel];
-            phases[channel]++;
-          }
-        }
-      };
-
-      lastNode.connect(scriptProcessor);
-      scriptProcessor.connect(offlineContext.destination);
+    // Apply 8D spatial audio effect if enabled
+    if (audio8D) {
+      const audio8DProcessor = this.create8DAudioEffect(offlineContext, this.audioBuffer, rotationSpeed || 0.5);
+      lastNode.connect(audio8DProcessor.input);
+      audio8DProcessor.output.connect(offlineContext.destination);
     } else {
       lastNode.connect(offlineContext.destination);
     }
@@ -112,100 +80,76 @@ export class AudioProcessor {
     return await offlineContext.startRendering();
   }
 
-  private async createChiptuneProcessor(
+  private create8DAudioEffect(
     context: OfflineAudioContext,
-    sourceBuffer: AudioBuffer
-  ): Promise<ScriptProcessorNode> {
-    const channelCount = sourceBuffer.numberOfChannels;
-    const scriptProcessor = context.createScriptProcessor(4096, channelCount, channelCount);
+    sourceBuffer: AudioBuffer,
+    rotationSpeed: number
+  ): { input: GainNode; output: GainNode } {
+    // Create the 8D effect using automated panning and spatial audio
+    const duration = sourceBuffer.duration;
+
+    // Input/output nodes
+    const inputGain = context.createGain();
+    const outputGain = context.createGain();
+
+    // Create stereo panner for left-right movement
+    const panner = context.createStereoPanner();
+
+    // Create additional depth with reverb
+    const convolver = context.createConvolver();
+    convolver.buffer = this.create8DReverbImpulse(context);
+
+    // Dry/wet mix for reverb
+    const dryGain = context.createGain();
+    const wetGain = context.createGain();
+    dryGain.gain.value = 0.7;
+    wetGain.gain.value = 0.3;
+
+    // Connect the nodes
+    inputGain.connect(panner);
+    panner.connect(dryGain);
+    panner.connect(convolver);
+    convolver.connect(wetGain);
+    dryGain.connect(outputGain);
+    wetGain.connect(outputGain);
+
+    // Automate panning to create circular motion
+    // The sound will rotate around your head in a circle
+    const cycleTime = 4 / rotationSpeed; // Time for one full rotation (adjustable)
+    const numCycles = Math.ceil(duration / cycleTime);
+
+    for (let i = 0; i <= numCycles * 8; i++) {
+      const time = (i / 8) * cycleTime;
+      if (time > duration) break;
+
+      // Create smooth circular motion: sin wave for panning
+      const angle = (time / cycleTime) * Math.PI * 2;
+      const panValue = Math.sin(angle);
+
+      panner.pan.setValueAtTime(panValue, time);
+    }
+
+    return { input: inputGain, output: outputGain };
+  }
+
+  private create8DReverbImpulse(context: OfflineAudioContext): AudioBuffer {
+    // Create a short, subtle reverb for 8D spatial effect
     const sampleRate = context.sampleRate;
+    const length = sampleRate * 0.5; // 500ms reverb
+    const impulse = context.createBuffer(2, length, sampleRate);
 
-    // Chiptune parameters (NES/Game Boy style)
-    const QUANTIZE_STEPS = 16; // 4-bit amplitude
-    const PULSE_WIDTH = 0.5; // 50% duty cycle for square wave
-
-    // Simplified approach: Use envelope following with frequency downsampling
-    // This is MUCH faster than DFT and creates an authentic chiptune sound
-
-    // Phase accumulators for oscillators
-    let squarePhase = 0;
-    let trianglePhase = 0;
-    let pulsePhase = 0;
-    let envelope = 0;
-
-    // Simple envelope follower
-    const attackRate = 0.001;
-    const releaseRate = 0.0005;
-
-    // Downsampling for that classic lo-fi sound
-    const DOWNSAMPLE_FACTOR = 6; // Simulate lower sample rate
-    let downsampleCounter = 0;
-    let heldSample = 0;
-
-    scriptProcessor.onaudioprocess = (e) => {
-      const inputBuffer = e.inputBuffer;
-      const outputBuffer = e.outputBuffer;
-
-      for (let channel = 0; channel < channelCount; channel++) {
-        const inputData = inputBuffer.getChannelData(channel);
-        const outputData = outputBuffer.getChannelData(channel);
-
-        for (let i = 0; i < inputBuffer.length; i++) {
-          const input = inputData[i];
-
-          // Downsample the input signal (hold samples)
-          if (downsampleCounter % DOWNSAMPLE_FACTOR === 0) {
-            heldSample = input;
-
-            // Simple envelope follower
-            const inputAbs = Math.abs(input);
-            if (inputAbs > envelope) {
-              envelope += (inputAbs - envelope) * attackRate;
-            } else {
-              envelope += (inputAbs - envelope) * releaseRate;
-            }
-          }
-          downsampleCounter++;
-
-          // Estimate fundamental frequency from zero-crossing rate (super fast)
-          // For chiptune, we simplify by using a fixed base frequency modulated by input
-          const baseFreq = 220 + (heldSample * 1000); // A3 +/- modulation
-
-          // Generate composite chiptune output using multiple waveforms
-          let chipSample = 0;
-
-          // Square wave (iconic chiptune sound) - 40% of mix
-          squarePhase += baseFreq / sampleRate;
-          const squareVal = (squarePhase % 1.0) < PULSE_WIDTH ? 1 : -1;
-          chipSample += squareVal * envelope * 0.4;
-
-          // Triangle wave (bass) - 30% of mix
-          trianglePhase += (baseFreq * 0.5) / sampleRate; // Octave down
-          const triangleVal = Math.abs((trianglePhase % 1.0) * 2 - 1) * 2 - 1;
-          chipSample += triangleVal * envelope * 0.3;
-
-          // Pulse wave (harmony) - 20% of mix
-          pulsePhase += (baseFreq * 1.5) / sampleRate; // Fifth up
-          const pulseVal = (pulsePhase % 1.0) < 0.25 ? 1 : -1; // 25% duty
-          chipSample += pulseVal * envelope * 0.2;
-
-          // Add slight noise for texture - 10% of mix
-          const noise = (Math.random() * 2 - 1) * envelope * 0.1;
-          chipSample += noise;
-
-          // Quantize amplitude (4-bit style) for authentic stepped sound
-          chipSample = Math.round(chipSample * QUANTIZE_STEPS) / QUANTIZE_STEPS;
-
-          // Hard clipping (authentic console limitation)
-          chipSample = Math.max(-1, Math.min(1, chipSample));
-
-          // Mix: 75% chiptune + 25% original for musicality
-          outputData[i] = chipSample * 0.75 + heldSample * 0.25;
-        }
+    for (let channel = 0; channel < 2; channel++) {
+      const channelData = impulse.getChannelData(channel);
+      for (let i = 0; i < length; i++) {
+        // Create a short, bright reverb tail
+        const decay = Math.exp(-i / (sampleRate * 0.1));
+        // Add some variation between channels for stereo width
+        const stereoVariation = channel === 0 ? 1.0 : 0.9;
+        channelData[i] = (Math.random() * 2 - 1) * decay * stereoVariation;
       }
-    };
+    }
 
-    return scriptProcessor;
+    return impulse;
   }
 
   private async createReverbImpulse(

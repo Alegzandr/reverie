@@ -81,7 +81,7 @@ function App() {
   const handleEffectChange = useCallback(
     (settings: EffectSettings) => {
       setEffectSettings(settings);
-      if (settings.mode === '8-bit' && processedBuffer) {
+      if (settings.mode === '8d-audio' && processedBuffer) {
         setSelectedTrack('fx');
       }
     },
@@ -94,9 +94,8 @@ function App() {
         speedMultiplier: effectSettings.speedMultiplier,
         reverbAmount: effectSettings.reverbAmount,
         preservePitch: false,
-        bitDepth: effectSettings.bitDepth,
-        sampleRateReduction: effectSettings.sampleRateReduction,
-        chiptune: effectSettings.mode === '8-bit', // Enable authentic chiptune mode for 8-bit
+        audio8D: effectSettings.mode === '8d-audio',
+        rotationSpeed: effectSettings.rotationSpeed,
       });
       setSelectedTrack('fx');
     } catch (error) {
@@ -128,7 +127,7 @@ function App() {
         ? t('effects.speedUp')
         : effectSettings.mode === 'slow-reverb'
           ? t('effects.slowReverb')
-          : t('effects.8bit');
+          : t('effects.8dAudio');
       const filename = `${baseName} ${fxLabel} by PitchSongs.mp3`;
       await exportToMp3(filename);
     } catch (error) {

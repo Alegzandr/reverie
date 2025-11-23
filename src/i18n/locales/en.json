@@ -2,7 +2,7 @@
   "app": {
     "title": "PitchSongs",
     "subtitle": "Audio Manipulation",
-    "description": "Transform your music with professional audio effects. Speed up, slow down, add reverb, or create retro 8-bit versions of your tracks."
+    "description": "Transform your music with professional audio effects. Speed up, slow down, add reverb, or create immersive 8D audio versions of your tracks."
   },
   "upload": {
     "title": "Upload Audio File",
@@ -15,11 +15,10 @@
   "effects": {
     "speedUp": "Speed Up",
     "slowReverb": "Slow + Reverb",
-    "8bit": "8-Bit",
+    "8dAudio": "8D Audio",
     "speed": "Speed",
     "reverb": "Reverb",
-    "bitDepth": "Bit Depth",
-    "sampleRate": "Sample Rate",
+    "rotationSpeed": "Rotation Speed",
     "apply": "Apply Effects",
     "processing": "Processing..."
   },
@@ -73,7 +72,7 @@
   },
   "meta": {
     "title": "PitchSongs - Professional Audio Manipulation Tool",
-    "description": "Transform your music with professional audio effects. Create sped up versions, slow + reverb remixes, or retro 8-bit sounds. 100% free, client-side processing for complete privacy.",
-    "keywords": "audio manipulation, speed up audio, slow reverb, 8-bit audio, audio effects, music editor, audio processor, web audio, free audio tool"
+    "description": "Transform your music with professional audio effects. Create sped up versions, slow + reverb remixes, or immersive 8D audio. 100% free, client-side processing for complete privacy.",
+    "keywords": "audio manipulation, speed up audio, slow reverb, 8D audio, spatial audio, audio effects, music editor, audio processor, web audio, free audio tool"
   }
 }

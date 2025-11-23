@@ -21,16 +21,12 @@ describe('EffectControls', () => {
     fireEvent.change(reverbSlider, { target: { value: '0.4' } });
     expect(onChange).toHaveBeenLastCalledWith({ mode: 'slow-reverb', speedMultiplier: 0.8, reverbAmount: 0.4 });
 
-    await userEvent.click(screen.getByText('effects.8bit'));
-    expect(onChange).toHaveBeenLastCalledWith({ mode: '8-bit', speedMultiplier: 1, reverbAmount: 0, bitDepth: 6, sampleRateReduction: 6 });
+    await userEvent.click(screen.getByText('effects.8dAudio'));
+    expect(onChange).toHaveBeenLastCalledWith({ mode: '8d-audio', speedMultiplier: 1, reverbAmount: 0, rotationSpeed: 0.5 });
 
-    const bitDepthSlider = screen.getByLabelText(/effects\.bitDepth/);
-    fireEvent.change(bitDepthSlider, { target: { value: '9' } });
-    expect(onChange).toHaveBeenLastCalledWith({ mode: '8-bit', speedMultiplier: 1, reverbAmount: 0, bitDepth: 9, sampleRateReduction: 6 });
-
-    const sampleRateSlider = screen.getByLabelText(/effects\.sampleRate/);
-    fireEvent.change(sampleRateSlider, { target: { value: '3' } });
-    expect(onChange).toHaveBeenLastCalledWith({ mode: '8-bit', speedMultiplier: 1, reverbAmount: 0, bitDepth: 9, sampleRateReduction: 3 });
+    const rotationSlider = screen.getByLabelText(/effects\.rotationSpeed/);
+    fireEvent.change(rotationSlider, { target: { value: '1.2' } });
+    expect(onChange).toHaveBeenLastCalledWith({ mode: '8d-audio', speedMultiplier: 1, reverbAmount: 0, rotationSpeed: 1.2 });
   });
 
   it('ignores interactions when disabled', async () => {
@@ -38,7 +34,7 @@ describe('EffectControls', () => {
     render(<EffectControls onChange={onChange} disabled />);
 
     expect(onChange).toHaveBeenCalledTimes(1);
-    await userEvent.click(screen.getByText('effects.8bit'));
+    await userEvent.click(screen.getByText('effects.8dAudio'));
     expect(onChange).toHaveBeenCalledTimes(1);
   });
 });

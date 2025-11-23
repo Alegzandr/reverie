@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Zap, Waves, Box } from 'lucide-react';
+import { Zap, Waves, Radio } from 'lucide-react';
 
-export type EffectMode = 'speed-up' | 'slow-reverb' | '8-bit';
+export type EffectMode = 'speed-up' | 'slow-reverb' | '8d-audio';
 
 export interface EffectSettings {
   speedMultiplier: number;
   reverbAmount: number;
-  bitDepth?: number;
-  sampleRateReduction?: number;
+  rotationSpeed?: number;
   mode: EffectMode;
 }
 
@@ -22,8 +21,7 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
   const [mode, setMode] = useState<EffectMode>('speed-up');
   const [speedMultiplier, setSpeedMultiplier] = useState(1.2);
   const [reverbAmount, setReverbAmount] = useState(0.3);
-  const [bitDepth, setBitDepth] = useState(6);
-  const [sampleRateReduction, setSampleRateReduction] = useState(6);
+  const [rotationSpeed, setRotationSpeed] = useState(0.5);
 
   useEffect(() => {
     if (mode === 'speed-up') {
@@ -31,9 +29,9 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
     } else if (mode === 'slow-reverb') {
       onChange({ mode: 'slow-reverb', speedMultiplier: 0.8, reverbAmount });
     } else {
-      onChange({ mode: '8-bit', speedMultiplier: 1, reverbAmount: 0, bitDepth, sampleRateReduction });
+      onChange({ mode: '8d-audio', speedMultiplier: 1, reverbAmount: 0, rotationSpeed });
     }
-  }, [mode, speedMultiplier, reverbAmount, bitDepth, sampleRateReduction, onChange]);
+  }, [mode, speedMultiplier, reverbAmount, rotationSpeed, onChange]);
 
   return (
     <div className="space-y-4">
@@ -88,16 +86,16 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
           </div>
         </button>
         <button
-          onClick={() => setMode('8-bit')}
+          onClick={() => setMode('8d-audio')}
           disabled={disabled}
-          aria-pressed={mode === '8-bit'}
-          aria-label={t('effects.8bit')}
+          aria-pressed={mode === '8d-audio'}
+          aria-label={t('effects.8dAudio')}
           className={`
             glass rounded-[14px] px-4 py-4
             font-medium text-[14px]
             ios-button transition-all duration-200
             ${
-              mode === '8-bit'
+              mode === '8d-audio'
                 ? 'bg-[rgb(var(--color-accent))]/10 border-2 border-[rgb(var(--color-accent))]/50'
                 : 'border-2 border-transparent'
             }
@@ -105,9 +103,9 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
           `}
         >
           <div className="flex flex-col items-center justify-center gap-1">
-            <Box className={`w-5 h-5 ${mode === '8-bit' ? 'text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-text-secondary))]'}`} aria-hidden="true" />
-            <span className={mode === '8-bit' ? 'text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-text))]'}>
-              {t('effects.8bit')}
+            <Radio className={`w-5 h-5 ${mode === '8d-audio' ? 'text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-text-secondary))]'}`} aria-hidden="true" />
+            <span className={mode === '8d-audio' ? 'text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-text))]'}>
+              {t('effects.8dAudio')}
             </span>
           </div>
         </button>
@@ -170,61 +168,30 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
             </div>
           </div>
         ) : (
-          <div className="space-y-6">
-            {/* Bit Depth */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between mb-3">
-                <label htmlFor="bitdepth-slider" className="text-sm font-medium text-[rgb(var(--color-text))]">
-                  {t('effects.bitDepth')}
-                </label>
-                <span className="text-2xl font-semibold text-[rgb(var(--color-accent))]" aria-live="polite">
-                  {bitDepth}-bit
-                </span>
-              </div>
-              <input
-              id="bitdepth-slider"
-              type="range"
-              min="4"
-              max="12"
-              step="1"
-              value={bitDepth}
-              onChange={(e) => setBitDepth(parseFloat(e.target.value))}
-              disabled={disabled}
-              aria-label={`${t('effects.bitDepth')}: ${bitDepth}-bit`}
-              className="w-full h-2 rounded-full appearance-none cursor-pointer accent-[rgb(var(--color-accent))] bg-[rgba(var(--color-border),0.55)]"
-            />
-              <div className="flex justify-between text-xs text-[rgb(var(--color-text-secondary))]">
-                <span>4-bit</span>
-                <span>12-bit</span>
-              </div>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between mb-3">
+              <label htmlFor="rotation-slider" className="text-sm font-medium text-[rgb(var(--color-text))]">
+                {t('effects.rotationSpeed')}
+              </label>
+              <span className="text-2xl font-semibold text-[rgb(var(--color-accent))]" aria-live="polite">
+                {rotationSpeed.toFixed(1)}x
+              </span>
             </div>
-
-            {/* Sample Rate Reduction */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between mb-3">
-                <label htmlFor="samplerate-slider" className="text-sm font-medium text-[rgb(var(--color-text))]">
-                  {t('effects.sampleRate')}
-                </label>
-                <span className="text-2xl font-semibold text-[rgb(var(--color-accent))]" aria-live="polite">
-                  /{sampleRateReduction}
-                </span>
-              </div>
-              <input
-              id="samplerate-slider"
+            <input
+              id="rotation-slider"
               type="range"
-              min="1"
-              max="8"
-              step="1"
-              value={sampleRateReduction}
-              onChange={(e) => setSampleRateReduction(parseFloat(e.target.value))}
+              min="0.1"
+              max="2.0"
+              step="0.1"
+              value={rotationSpeed}
+              onChange={(e) => setRotationSpeed(parseFloat(e.target.value))}
               disabled={disabled}
-              aria-label={`${t('effects.sampleRate')}: /${sampleRateReduction}`}
+              aria-label={`${t('effects.rotationSpeed')}: ${rotationSpeed.toFixed(1)}x`}
               className="w-full h-2 rounded-full appearance-none cursor-pointer accent-[rgb(var(--color-accent))] bg-[rgba(var(--color-border),0.55)]"
             />
-              <div className="flex justify-between text-xs text-[rgb(var(--color-text-secondary))]">
-                <span>Full</span>
-                <span>1/8th</span>
-              </div>
+            <div className="flex justify-between text-xs text-[rgb(var(--color-text-secondary))]">
+              <span>0.1x</span>
+              <span>2.0x</span>
             </div>
           </div>
         )}

@@ -2,7 +2,7 @@
   "app": {
     "title": "PitchSongs",
     "subtitle": "Audio-Manipulation",
-    "description": "Verwandeln Sie Ihre Musik mit professionellen Audio-Effekten. Beschleunigen, verlangsamen, Hall hinzufügen oder Retro-8-Bit-Versionen Ihrer Tracks erstellen."
+    "description": "Verwandeln Sie Ihre Musik mit professionellen Audio-Effekten. Beschleunigen, verlangsamen, Hall hinzufügen oder immersive 8D-Audio-Versionen Ihrer Tracks erstellen."
   },
   "upload": {
     "title": "Audiodatei hochladen",
@@ -15,11 +15,10 @@
   "effects": {
     "speedUp": "Beschleunigen",
     "slowReverb": "Langsam + Hall",
-    "8bit": "8-Bit",
+    "8dAudio": "8D-Audio",
     "speed": "Geschwindigkeit",
     "reverb": "Hall",
-    "bitDepth": "Bittiefe",
-    "sampleRate": "Abtastrate",
+    "rotationSpeed": "Rotationsgeschwindigkeit",
     "apply": "Effekte anwenden",
     "processing": "Verarbeitung..."
   },
@@ -73,7 +72,7 @@
   },
   "meta": {
     "title": "PitchSongs - Professionelles Audio-Manipulationswerkzeug",
-    "description": "Verwandeln Sie Ihre Musik mit professionellen Audio-Effekten. Erstellen Sie beschleunigte Versionen, langsame + Hall-Remixe oder Retro-8-Bit-Sounds. 100% kostenlos, lokale Verarbeitung für vollständige Privatsphäre.",
-    "keywords": "Audio-Manipulation, Audio beschleunigen, Slow Reverb, 8-Bit-Audio, Audio-Effekte, Musik-Editor, Audio-Prozessor, Web Audio, kostenloses Audio-Tool"
+    "description": "Verwandeln Sie Ihre Musik mit professionellen Audio-Effekten. Erstellen Sie beschleunigte Versionen, langsame + Hall-Remixe oder immersives 8D-Audio. 100% kostenlos, lokale Verarbeitung für vollständige Privatsphäre.",
+    "keywords": "Audio-Manipulation, Audio beschleunigen, Slow Reverb, 8D-Audio, Raumklang, Audio-Effekte, Musik-Editor, Audio-Prozessor, Web Audio, kostenloses Audio-Tool"
   }
 }

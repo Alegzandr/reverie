@@ -85,16 +85,15 @@ describe('App', () => {
     mockApi.duration = 1.5;
     render(<App />);
 
-    await userEvent.click(screen.getByText('effects.8bit'));
+    await userEvent.click(screen.getByText('effects.8dAudio'));
     await userEvent.click(screen.getByText('effects.apply'));
 
     expect(mockApi.processAudio).toHaveBeenCalledWith({
       speedMultiplier: 1,
       reverbAmount: 0,
       preservePitch: false,
-      bitDepth: 6,
-      sampleRateReduction: 6,
-      chiptune: true,
+      audio8D: true,
+      rotationSpeed: 0.5,
     });
 
     await userEvent.click(screen.getByText('playback.play'));

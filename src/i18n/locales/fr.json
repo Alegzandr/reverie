@@ -2,7 +2,7 @@
   "app": {
     "title": "PitchSongs",
     "subtitle": "Manipulation Audio",
-    "description": "Transformez votre musique avec des effets audio professionnels. Accélérez, ralentissez, ajoutez de la réverbération ou créez des versions rétro 8-bit de vos morceaux."
+    "description": "Transformez votre musique avec des effets audio professionnels. Accélérez, ralentissez, ajoutez de la réverbération ou créez des versions audio 8D immersives de vos morceaux."
   },
   "upload": {
     "title": "Téléverser un fichier audio",
@@ -15,11 +15,10 @@
   "effects": {
     "speedUp": "Accélérer",
     "slowReverb": "Ralenti + Reverb",
-    "8bit": "8-Bit",
+    "8dAudio": "Audio 8D",
     "speed": "Vitesse",
     "reverb": "Réverbération",
-    "bitDepth": "Profondeur de bits",
-    "sampleRate": "Taux d'échantillonnage",
+    "rotationSpeed": "Vitesse de rotation",
     "apply": "Appliquer les effets",
     "processing": "Traitement en cours..."
   },
@@ -73,7 +72,7 @@
   },
   "meta": {
     "title": "PitchSongs - Outil de Manipulation Audio Professionnel",
-    "description": "Transformez votre musique avec des effets audio professionnels. Créez des versions accélérées, des remixes ralentis + reverb, ou des sons rétro 8-bit. 100% gratuit, traitement côté client pour une confidentialité totale.",
-    "keywords": "manipulation audio, accélérer audio, slow reverb, audio 8-bit, effets audio, éditeur musical, processeur audio, web audio, outil audio gratuit"
+    "description": "Transformez votre musique avec des effets audio professionnels. Créez des versions accélérées, des remixes ralentis + reverb, ou de l'audio 8D immersif. 100% gratuit, traitement côté client pour une confidentialité totale.",
+    "keywords": "manipulation audio, accélérer audio, slow reverb, audio 8D, audio spatial, effets audio, éditeur musical, processeur audio, web audio, outil audio gratuit"
   }
 }
