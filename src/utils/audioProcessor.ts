@@ -4,6 +4,8 @@ export interface AudioProcessingOptions {
   preservePitch: boolean;
   audio8D?: boolean; // 8D spatial audio effect
   rotationSpeed?: number; // Speed of 8D rotation (0.1 - 2.0)
+  bassBoost?: boolean; // Bass boost effect
+  bassBoostIntensity?: number; // Bass boost intensity (0.0 - 1.0)
 }
 
 export class AudioProcessor {
@@ -25,7 +27,7 @@ export class AudioProcessor {
       throw new Error('No audio file loaded');
     }
 
-    const { speedMultiplier, reverbAmount, audio8D, rotationSpeed } = options;
+    const { speedMultiplier, reverbAmount, audio8D, rotationSpeed, bassBoost, bassBoostIntensity } = options;
 
     // Create offline context for processing
     const offlineContext = new OfflineAudioContext(
@@ -64,6 +66,13 @@ export class AudioProcessor {
       wet.connect(merger);
 
       lastNode = merger;
+    }
+
+    // Apply bass boost if enabled
+    if (bassBoost && bassBoostIntensity !== undefined) {
+      const bassBoostNode = this.createBassBoostEffect(offlineContext, bassBoostIntensity);
+      lastNode.connect(bassBoostNode.input);
+      lastNode = bassBoostNode.output;
     }
 
     // Apply 8D spatial audio effect if enabled
@@ -155,6 +164,53 @@ export class AudioProcessor {
     }
 
     return impulse;
+  }
+
+  private createBassBoostEffect(
+    context: OfflineAudioContext,
+    intensity: number
+  ): { input: GainNode; output: GainNode } {
+    // Create input/output gain nodes
+    const inputGain = context.createGain();
+    const outputGain = context.createGain();
+
+    // Create lowshelf filter for bass boost (centered around 100 Hz)
+    const lowshelf = context.createBiquadFilter();
+    lowshelf.type = 'lowshelf';
+    lowshelf.frequency.value = 100; // Boost frequencies below 100 Hz
+
+    // Map intensity (0-1) to gain boost (0-18 dB)
+    // Light: 0-6dB, Normal: 6-12dB, Strong: 12-18dB
+    const gainBoost = intensity * 18;
+    lowshelf.gain.value = gainBoost;
+
+    // Create highpass filter to cut sub-bass rumble (below 40 Hz)
+    const highpass = context.createBiquadFilter();
+    highpass.type = 'highpass';
+    highpass.frequency.value = 40;
+    highpass.Q.value = 0.7;
+
+    // Create slight cut in low-mids (200-400 Hz) to avoid muddiness
+    // Only apply if intensity is high enough
+    const lowMidCut = context.createBiquadFilter();
+    lowMidCut.type = 'peaking';
+    lowMidCut.frequency.value = 300;
+    lowMidCut.Q.value = 1.0;
+    // Reduce muddiness proportional to bass boost (up to -3 dB)
+    lowMidCut.gain.value = Math.min(0, -intensity * 3);
+
+    // Apply makeup gain to compensate for overall level increase and prevent clipping
+    // Reduce output gain as bass boost increases to maintain headroom
+    const makeupGain = 1.0 - (intensity * 0.25); // Reduce by up to 25% at max intensity
+    outputGain.gain.value = makeupGain;
+
+    // Connect the chain
+    inputGain.connect(highpass);
+    highpass.connect(lowshelf);
+    lowshelf.connect(lowMidCut);
+    lowMidCut.connect(outputGain);
+
+    return { input: inputGain, output: outputGain };
   }
 
   private async createReverbImpulse(

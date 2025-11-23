@@ -97,6 +97,8 @@ function App() {
         preservePitch: false,
         audio8D: effectSettings.mode === '8d-audio',
         rotationSpeed: effectSettings.rotationSpeed,
+        bassBoost: effectSettings.mode === 'bass-boost',
+        bassBoostIntensity: effectSettings.bassBoostIntensity,
       });
       setSelectedTrack('fx');
     } catch (error) {
@@ -128,7 +130,9 @@ function App() {
         ? t('effects.speedUp')
         : effectSettings.mode === 'slow-reverb'
           ? t('effects.slowReverb')
-          : t('effects.8dAudio');
+          : effectSettings.mode === '8d-audio'
+            ? t('effects.8dAudio')
+            : t('effects.bassBoost');
       const filename = `${baseName} ${fxLabel} by PitchSongs`;
       await exportProcessedAudio(filename);
     } catch (error) {

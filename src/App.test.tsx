@@ -94,6 +94,8 @@ describe('App', () => {
       preservePitch: false,
       audio8D: true,
       rotationSpeed: 0.5,
+      bassBoost: false,
+      bassBoostIntensity: undefined,
     });
 
     await userEvent.click(screen.getByText('playback.play'));

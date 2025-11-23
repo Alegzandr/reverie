@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Zap, Waves, Radio } from 'lucide-react';
+import { Zap, Waves, Radio, Volume2 } from 'lucide-react';
 
-export type EffectMode = 'speed-up' | 'slow-reverb' | '8d-audio';
+export type EffectMode = 'speed-up' | 'slow-reverb' | '8d-audio' | 'bass-boost';
 
 export interface EffectSettings {
   speedMultiplier: number;
   reverbAmount: number;
   rotationSpeed?: number;
+  bassBoostIntensity?: number;
   mode: EffectMode;
 }
 
@@ -22,21 +23,24 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
   const [speedMultiplier, setSpeedMultiplier] = useState(1.2);
   const [reverbAmount, setReverbAmount] = useState(0.3);
   const [rotationSpeed, setRotationSpeed] = useState(0.5);
+  const [bassBoostIntensity, setBassBoostIntensity] = useState(0.5);
 
   useEffect(() => {
     if (mode === 'speed-up') {
       onChange({ mode: 'speed-up', speedMultiplier, reverbAmount: 0 });
     } else if (mode === 'slow-reverb') {
       onChange({ mode: 'slow-reverb', speedMultiplier: 0.8, reverbAmount });
-    } else {
+    } else if (mode === '8d-audio') {
       onChange({ mode: '8d-audio', speedMultiplier: 1, reverbAmount: 0, rotationSpeed });
+    } else {
+      onChange({ mode: 'bass-boost', speedMultiplier: 1, reverbAmount: 0, bassBoostIntensity });
     }
-  }, [mode, speedMultiplier, reverbAmount, rotationSpeed, onChange]);
+  }, [mode, speedMultiplier, reverbAmount, rotationSpeed, bassBoostIntensity, onChange]);
 
   return (
     <div className="space-y-4">
       {/* Mode Selection */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <button
           onClick={() => setMode('speed-up')}
           disabled={disabled}
@@ -109,6 +113,30 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
             </span>
           </div>
         </button>
+        <button
+          onClick={() => setMode('bass-boost')}
+          disabled={disabled}
+          aria-pressed={mode === 'bass-boost'}
+          aria-label={t('effects.bassBoost')}
+          className={`
+            glass rounded-[14px] px-4 py-4
+            font-medium text-[14px]
+            ios-button transition-all duration-200
+            ${
+              mode === 'bass-boost'
+                ? 'bg-[rgb(var(--color-accent))]/10 border-2 border-[rgb(var(--color-accent))]/50'
+                : 'border-2 border-transparent'
+            }
+            ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+          `}
+        >
+          <div className="flex flex-col items-center justify-center gap-1">
+            <Volume2 className={`w-5 h-5 ${mode === 'bass-boost' ? 'text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-text-secondary))]'}`} aria-hidden="true" />
+            <span className={mode === 'bass-boost' ? 'text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-text))]'}>
+              {t('effects.bassBoost')}
+            </span>
+          </div>
+        </button>
       </div>
 
       {/* Settings */}
@@ -167,7 +195,7 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
               <span>100%</span>
             </div>
           </div>
-        ) : (
+        ) : mode === '8d-audio' ? (
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-3">
               <label htmlFor="rotation-slider" className="text-sm font-medium text-[rgb(var(--color-text))]">
@@ -192,6 +220,33 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
             <div className="flex justify-between text-xs text-[rgb(var(--color-text-secondary))]">
               <span>0.1x</span>
               <span>2.0x</span>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between mb-3">
+              <label htmlFor="bass-slider" className="text-sm font-medium text-[rgb(var(--color-text))]">
+                {t('effects.bassIntensity')}
+              </label>
+              <span className="text-2xl font-semibold text-[rgb(var(--color-accent))]" aria-live="polite">
+                {bassBoostIntensity < 0.33 ? t('effects.bassLight') : bassBoostIntensity < 0.67 ? t('effects.bassNormal') : t('effects.bassStrong')}
+              </span>
+            </div>
+            <input
+              id="bass-slider"
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={bassBoostIntensity}
+              onChange={(e) => setBassBoostIntensity(parseFloat(e.target.value))}
+              disabled={disabled}
+              aria-label={`${t('effects.bassIntensity')}: ${Math.round(bassBoostIntensity * 100)}%`}
+              className="w-full h-2 rounded-full appearance-none cursor-pointer accent-[rgb(var(--color-accent))] bg-[rgba(var(--color-border),0.55)]"
+            />
+            <div className="flex justify-between text-xs text-[rgb(var(--color-text-secondary))]">
+              <span>{t('effects.bassLight')}</span>
+              <span>{t('effects.bassStrong')}</span>
             </div>
           </div>
         )}
