@@ -15,6 +15,9 @@ const mockApi = {
   state: mockState,
   originalFile: null as File | null,
   processedBuffer: null as AudioBuffer | null,
+  originalBuffer: null as AudioBuffer | null,
+  playbackTime: 0,
+  duration: 0,
   volume: 0.7,
   loadAudioFile: vi.fn(),
   processAudio: vi.fn(async () => new AudioBuffer(1, 1, 44100)),
@@ -22,6 +25,7 @@ const mockApi = {
   stopAudio: vi.fn(),
   exportToMp3: vi.fn(async () => {}),
   updateVolume: vi.fn(),
+  seekTo: vi.fn(),
   reset: vi.fn(),
 };
 
@@ -44,6 +48,9 @@ describe('App', () => {
   beforeEach(() => {
     mockApi.originalFile = null;
     mockApi.processedBuffer = null;
+    mockApi.originalBuffer = null;
+    mockApi.duration = 0;
+    mockApi.playbackTime = 0;
     mockState.error = null;
     mockState.isLoading = false;
     mockState.isProcessing = false;
@@ -74,6 +81,8 @@ describe('App', () => {
   it('handles processing and playback flow', async () => {
     mockApi.originalFile = new File(['123'], 'song.mp3', { type: 'audio/mp3' });
     mockApi.processedBuffer = new AudioBuffer(1, 1, 44100);
+    mockApi.originalBuffer = new AudioBuffer(1, 1, 44100);
+    mockApi.duration = 1.5;
     render(<App />);
 
     await userEvent.click(screen.getByText('effects.8bit'));
@@ -88,7 +97,7 @@ describe('App', () => {
     });
 
     await userEvent.click(screen.getByText('playback.play'));
-    expect(mockApi.playAudio).toHaveBeenCalledWith(mockApi.processedBuffer);
+    expect(mockApi.playAudio).toHaveBeenCalledWith(mockApi.processedBuffer, 0);
 
     const resetButtons = screen.getAllByLabelText('accessibility.resetApp');
     await userEvent.click(resetButtons[0]);
@@ -158,5 +167,18 @@ describe('App', () => {
     render(<App />);
     await userEvent.click(screen.getByLabelText('accessibility.themeToggle'));
     expect(mockToggleTheme).toHaveBeenCalled();
+  });
+
+  it('renders waveform timeline and allows seeking', async () => {
+    mockApi.originalFile = new File(['123'], 'song.mp3', { type: 'audio/mp3' });
+    mockApi.originalBuffer = new AudioBuffer(1, 44100, 44100);
+    mockApi.duration = 2.5;
+
+    render(<App />);
+
+    const timeline = screen.getByTestId('waveform-timeline');
+    await userEvent.click(timeline);
+
+    expect(mockApi.seekTo).toHaveBeenCalled();
   });
 });

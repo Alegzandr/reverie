@@ -3,14 +3,15 @@ import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { useAudioProcessor } from './useAudioProcessor';
 
 const { mockAudioBuffer, mockDownload, mockToMp3, mockAudioContext, mockAudioProcessor } = vi.hoisted(() => {
-  const buffer = new AudioBuffer(1, 10, 44100);
+  const buffer = new AudioBuffer(1, 44100, 44100);
   let storedBuffer: AudioBuffer | null = buffer;
   const download = vi.fn();
   const toMp3 = vi.fn(async () => new Blob(['mp3'], { type: 'audio/mp3' }));
 
   const audioContext = {
     destination: {},
-    createGain: vi.fn(() => ({ gain: { value: 1 }, connect: vi.fn() })),
+    currentTime: 0,
+    createGain: vi.fn(() => ({ gain: { value: 1 }, connect: vi.fn(), disconnect: vi.fn() })),
     createBufferSource: vi.fn(() => {
       const node: any = { buffer: null, playbackRate: { value: 1 }, connect: vi.fn(), start: vi.fn(), stop: vi.fn(), onended: null };
       return node;
@@ -40,16 +41,27 @@ vi.mock('../utils/mp3Encoder', () => ({
   downloadBlob: mockDownload,
 }));
 
+const realRaf = globalThis.requestAnimationFrame;
+const realCancelRaf = globalThis.cancelAnimationFrame;
+
 describe('useAudioProcessor', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAudioContext.createGain.mockClear();
     mockAudioContext.createBufferSource.mockClear();
     (mockAudioProcessor as any).__setBuffer(mockAudioBuffer);
+    (globalThis as any).requestAnimationFrame = vi.fn(() => 0 as unknown as number);
+    (globalThis as any).cancelAnimationFrame = vi.fn();
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    if (realRaf) {
+      (globalThis as any).requestAnimationFrame = realRaf;
+    }
+    if (realCancelRaf) {
+      (globalThis as any).cancelAnimationFrame = realCancelRaf;
+    }
   });
 
   it('loads audio file and updates state', async () => {
@@ -62,6 +74,9 @@ describe('useAudioProcessor', () => {
 
     expect(mockAudioProcessor.loadAudioFile).toHaveBeenCalledWith(file);
     expect(result.current.originalFile).toBe(file);
+    expect(result.current.originalBuffer).toBe(mockAudioBuffer);
+    const expectedDuration = mockAudioBuffer.length / mockAudioBuffer.sampleRate;
+    expect(result.current.duration).toBeCloseTo(expectedDuration);
     expect(result.current.state.progress).toBe(100);
   });
 
@@ -102,6 +117,8 @@ describe('useAudioProcessor', () => {
 
     expect(mockAudioProcessor.processAudio).toHaveBeenCalled();
     expect(result.current.processedBuffer).toBe(mockAudioBuffer);
+    expect(result.current.duration).toBeCloseTo(mockAudioBuffer.length / mockAudioBuffer.sampleRate);
+    expect(result.current.playbackTime).toBe(0);
     expect(result.current.state.progress).toBe(100);
     expect(result.current.state.isProcessing).toBe(false);
   });
@@ -149,9 +166,10 @@ describe('useAudioProcessor', () => {
     const source = mockAudioContext.createBufferSource.mock.results[0].value;
     const gain = mockAudioContext.createGain.mock.results[0].value;
 
-    expect(source.start).toHaveBeenCalled();
+    expect(source.start).toHaveBeenCalledWith(0, 0);
     expect(gain.gain.value).toBeCloseTo(0.7);
     expect(result.current.state.isPlaying).toBe(true);
+    expect(result.current.playbackTime).toBe(0);
 
     act(() => {
       result.current.updateVolume(0.3);
@@ -164,10 +182,8 @@ describe('useAudioProcessor', () => {
     });
 
     expect(source.stop).toHaveBeenCalled();
-    act(() => {
-      source.onended?.();
-    });
     expect(result.current.state.isPlaying).toBe(false);
+    expect(result.current.playbackTime).toBeCloseTo(0);
   });
 
   it('swallows stop errors while switching sources', () => {
@@ -299,6 +315,52 @@ describe('useAudioProcessor', () => {
     expect(result.current.state.error).toBe('Failed to export audio');
   });
 
+  it('seeks while paused and updates playhead', () => {
+    const { result } = renderHook(() => useAudioProcessor());
+
+    act(() => {
+      result.current.seekTo(0.5);
+    });
+
+    expect(result.current.playbackTime).toBeCloseTo(0.5);
+  });
+
+  it('restarts playback when seeking during preview', () => {
+    const { result } = renderHook(() => useAudioProcessor());
+
+    act(() => {
+      result.current.playAudio(mockAudioBuffer);
+    });
+
+    act(() => {
+      result.current.seekTo(0.25);
+    });
+
+    const secondSource = mockAudioContext.createBufferSource.mock.results[1].value;
+    expect(secondSource.start).toHaveBeenCalledWith(0, expect.any(Number));
+  });
+
+  it('ignores stale onended callbacks after restart', () => {
+    const { result } = renderHook(() => useAudioProcessor());
+
+    act(() => {
+      result.current.playAudio(mockAudioBuffer);
+    });
+
+    const firstSource = mockAudioContext.createBufferSource.mock.results[0].value;
+
+    act(() => {
+      result.current.playAudio(mockAudioBuffer, 0.5);
+    });
+
+    act(() => {
+      firstSource.onended?.();
+    });
+
+    expect(result.current.state.isPlaying).toBe(true);
+    expect(result.current.playbackTime).toBeCloseTo(0.5);
+  });
+
   it('resets processing state and buffer', async () => {
     const { result } = renderHook(() => useAudioProcessor());
 
@@ -314,5 +376,7 @@ describe('useAudioProcessor', () => {
     expect(result.current.originalFile).toBeNull();
     expect(result.current.processedBuffer).toBeNull();
     expect(result.current.state.progress).toBe(0);
+    expect(result.current.duration).toBe(0);
+    expect(result.current.playbackTime).toBe(0);
   });
 });

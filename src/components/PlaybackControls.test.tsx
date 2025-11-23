@@ -8,17 +8,21 @@ vi.mock('react-i18next', () => ({
 }));
 
 describe('PlaybackControls', () => {
-const baseProps = {
-  onPlay: vi.fn(),
-  onStop: vi.fn(),
-  onReset: vi.fn(),
-  onExport: vi.fn(),
-  onVolumeChange: vi.fn(),
-};
+  const baseProps = {
+    onPlay: vi.fn(),
+    onStop: vi.fn(),
+    onReset: vi.fn(),
+    onExport: vi.fn(),
+    onVolumeChange: vi.fn(),
+    isPlaying: false,
+    hasProcessed: true,
+    canExport: true,
+    volume: 0.5,
+  };
 
-beforeEach(() => {
-  vi.clearAllMocks();
-});
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('toggles play/pause and reset', async () => {
     const props = { ...baseProps, isPlaying: false, hasProcessed: true, volume: 0.5 };
@@ -55,6 +59,7 @@ beforeEach(() => {
       <PlaybackControls
         {...props}
         hasProcessed={false}
+        canExport={false}
         isProcessing={false}
         disabled={false}
       />
@@ -67,6 +72,7 @@ beforeEach(() => {
       <PlaybackControls
         {...props}
         hasProcessed
+        canExport
         isProcessing={false}
         disabled={false}
       />

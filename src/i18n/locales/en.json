@@ -55,6 +55,22 @@
     "themeToggle": "Toggle dark mode",
     "resetApp": "Reset application"
   },
+  "waveform": {
+    "title": "Waveform Timeline",
+    "caption": "Scrub between raw and FX audio",
+    "playing": "Previewing",
+    "idle": "Ready",
+    "scrub": "Scrub timeline",
+    "raw": "Raw",
+    "fx": "FX"
+  },
+  "language": {
+    "open": "Open language modal",
+    "title": "Choose your language",
+    "subtitle": "Translations verified against English keys",
+    "close": "Close language modal",
+    "notice": "All translations are kept in sync with English to guarantee 100% coverage."
+  },
   "meta": {
     "title": "PitchSongs - Professional Audio Manipulation Tool",
     "description": "Transform your music with professional audio effects. Create sped up versions, slow + reverb remixes, or retro 8-bit sounds. 100% free, client-side processing for complete privacy.",

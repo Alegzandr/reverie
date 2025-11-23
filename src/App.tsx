@@ -7,6 +7,7 @@ import type { EffectSettings } from './components/EffectControls';
 import { PlaybackControls } from './components/PlaybackControls';
 import { ProgressBar } from './components/ProgressBar';
 import { LanguageSelector } from './components/LanguageSelector';
+import { WaveformTimeline } from './components/WaveformTimeline';
 import { useAudioProcessor } from './hooks/useAudioProcessor';
 import { useTheme } from './contexts/ThemeContext';
 
@@ -15,7 +16,10 @@ function App() {
   const {
     state,
     originalFile,
+    originalBuffer,
     processedBuffer,
+    playbackTime,
+    duration,
     volume,
     loadAudioFile,
     processAudio,
@@ -23,6 +27,7 @@ function App() {
     stopAudio,
     exportToMp3,
     updateVolume,
+    seekTo,
     reset,
   } = useAudioProcessor();
 
@@ -64,6 +69,13 @@ function App() {
     [loadAudioFile]
   );
 
+  const [uploadRevision, setUploadRevision] = useState(0);
+
+  const handleReset = useCallback(() => {
+    reset();
+    setUploadRevision((n) => n + 1);
+  }, [reset]);
+
   const handleEffectChange = useCallback((settings: EffectSettings) => {
     setEffectSettings(settings);
   }, []);
@@ -84,9 +96,18 @@ function App() {
 
   const handlePlay = useCallback(() => {
     if (processedBuffer) {
-      playAudio(processedBuffer);
+      playAudio(processedBuffer, playbackTime);
+    } else if (originalBuffer) {
+      playAudio(originalBuffer, playbackTime);
     }
-  }, [playAudio, processedBuffer]);
+  }, [playAudio, processedBuffer, originalBuffer, playbackTime]);
+
+  const handleSeek = useCallback(
+    (time: number) => {
+      seekTo(time);
+    },
+    [seekTo]
+  );
 
   const handleExport = useCallback(async () => {
     try {
@@ -102,11 +123,11 @@ function App() {
       <header className="sticky top-0 z-50 glass">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <button
-            onClick={reset}
+            onClick={handleReset}
             aria-label={t('accessibility.resetApp')}
             className="flex items-center gap-3 ios-button cursor-pointer transition-opacity hover:opacity-80"
           >
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-[10px] flex items-center justify-center shadow-sm" aria-hidden="true">
+            <div className="w-10 h-10 bg-gradient-to-br from-[rgb(var(--color-accent))] to-[rgb(var(--color-ambient))] rounded-[10px] flex items-center justify-center shadow-sm" aria-hidden="true">
               <Music2 className="w-6 h-6 text-white" />
             </div>
             <div className="text-left">
@@ -149,6 +170,7 @@ function App() {
 
           {/* File Upload */}
           <FileUploader
+            key={uploadRevision}
             onFileSelect={handleFileSelect}
             isLoading={state.isLoading}
             hasFile={!!originalFile}
@@ -196,7 +218,7 @@ function App() {
                   ios-button transition-all duration-200
                   ${
                     !state.isProcessing && !state.isPlaying
-                      ? 'bg-[rgb(var(--color-accent))] text-white hover:bg-[rgb(var(--color-accent-hover))] cursor-pointer shadow-sm'
+                      ? 'bg-[linear-gradient(120deg,rgba(var(--color-accent),1),rgba(var(--color-ambient),0.92))] text-white shadow-[0_14px_30px_-18px_rgba(var(--color-accent),0.7)] cursor-pointer'
                       : 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                   }
                 `}
@@ -215,17 +237,29 @@ function App() {
             />
           )}
 
+          {(originalBuffer || processedBuffer) && (
+            <WaveformTimeline
+              originalBuffer={originalBuffer}
+              processedBuffer={processedBuffer}
+              duration={duration || processedBuffer?.duration || originalBuffer?.duration || 0}
+              currentTime={playbackTime}
+              isPlaying={state.isPlaying}
+              onSeek={handleSeek}
+            />
+          )}
+
           {/* Playback Controls */}
           {(processedBuffer || originalFile) && (
             <PlaybackControls
               isPlaying={state.isPlaying}
               onPlay={handlePlay}
               onStop={stopAudio}
-              onReset={reset}
+              onReset={handleReset}
               onExport={handleExport}
               volume={volume}
               onVolumeChange={updateVolume}
-              hasProcessed={!!processedBuffer}
+              hasProcessed={!!(processedBuffer || originalBuffer)}
+              canExport={!!processedBuffer}
               isProcessing={state.isProcessing}
               disabled={state.isProcessing}
             />

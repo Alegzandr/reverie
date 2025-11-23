@@ -55,6 +55,22 @@
     "themeToggle": "Cambiar modo oscuro",
     "resetApp": "Reiniciar aplicación"
   },
+  "waveform": {
+    "title": "Línea de tiempo de forma de onda",
+    "caption": "Mueve entre audio original y con efectos",
+    "playing": "Previsualizando",
+    "idle": "Listo",
+    "scrub": "Mover en la línea de tiempo",
+    "raw": "Original",
+    "fx": "FX"
+  },
+  "language": {
+    "open": "Abrir selector de idioma",
+    "title": "Elige tu idioma",
+    "subtitle": "Traducciones verificadas contra el inglés",
+    "close": "Cerrar selector de idioma",
+    "notice": "Todas las traducciones se sincronizan con el inglés para garantizar una cobertura del 100 %."
+  },
   "meta": {
     "title": "PitchSongs - Herramienta Profesional de Manipulación de Audio",
     "description": "Transforma tu música con efectos de audio profesionales. Crea versiones aceleradas, remixes lentos + reverb, o sonidos retro 8-bit. 100% gratis, procesamiento local para privacidad total.",

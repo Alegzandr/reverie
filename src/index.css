@@ -3,13 +3,14 @@
 /* Apple-style iOS Glass Design */
 @layer base {
   :root {
-    --color-background: 245 245 247;
-    --color-surface: 255 255 255;
-    --color-text: 0 0 0;
-    --color-text-secondary: 60 60 67;
-    --color-border: 209 213 219;
-    --color-accent: 0 122 255;
-    --color-accent-hover: 10 132 255;
+    --color-background: 243, 245, 248;
+    --color-surface: 255, 255, 255;
+    --color-text: 18, 23, 44;
+    --color-text-secondary: 94, 105, 130;
+    --color-border: 210, 220, 235;
+    --color-accent: 255, 138, 163;
+    --color-accent-hover: 255, 159, 183;
+    --color-ambient: 72, 199, 236;
 
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -17,18 +18,21 @@
   }
 
   .dark {
-    --color-background: 0 0 0;
-    --color-surface: 28 28 30;
-    --color-text: 255 255 255;
-    --color-text-secondary: 152 152 157;
-    --color-border: 58 58 60;
-    --color-accent: 10 132 255;
-    --color-accent-hover: 64 156 255;
+    --color-background: 10, 12, 24;
+    --color-surface: 20, 24, 36;
+    --color-text: 236, 240, 252;
+    --color-text-secondary: 162, 175, 197;
+    --color-border: 70, 86, 114;
+    --color-accent: 255, 151, 178;
+    --color-accent-hover: 255, 174, 194;
+    --color-ambient: 56, 189, 248;
   }
 
   body {
     @apply m-0 min-h-screen;
-    background: rgb(var(--color-background));
+    background: radial-gradient(120% 120% at 20% 20%, rgba(var(--color-ambient), 0.12), transparent 40%),
+      radial-gradient(140% 140% at 80% 10%, rgba(var(--color-accent), 0.08), transparent 46%),
+      rgb(var(--color-background));
     color: rgb(var(--color-text));
     transition: background-color 0.3s ease, color 0.3s ease;
   }
@@ -37,21 +41,21 @@
 @layer utilities {
   /* iOS Glass Effect */
   .glass {
-    background: rgba(255, 255, 255, 0.72);
+    background: rgba(var(--color-surface), 0.82);
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
-    border: 0.5px solid rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(var(--color-border), 0.6);
     box-shadow:
       0 1px 2px -1px rgba(0, 0, 0, 0.06),
-      0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      0 18px 50px -24px rgba(var(--color-accent), 0.35);
   }
 
   .dark .glass {
-    background: rgba(28, 28, 30, 0.72);
-    border: 0.5px solid rgba(255, 255, 255, 0.1);
+    background: rgba(var(--color-surface), 0.8);
+    border: 1px solid rgba(var(--color-border), 0.4);
     box-shadow:
       0 1px 2px -1px rgba(0, 0, 0, 0.3),
-      0 2px 4px -1px rgba(0, 0, 0, 0.3);
+      0 18px 50px -24px rgba(var(--color-ambient), 0.28);
   }
 
   /* iOS Button Style */

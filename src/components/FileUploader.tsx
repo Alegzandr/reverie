@@ -36,6 +36,7 @@ export function FileUploader({ onFileSelect, isLoading, hasFile }: FileUploaderP
       const file = e.target.files?.[0];
       if (file) {
         onFileSelect(file);
+        e.target.value = '';
       }
     },
     [onFileSelect]
@@ -67,6 +68,7 @@ export function FileUploader({ onFileSelect, isLoading, hasFile }: FileUploaderP
         className={`
           flex flex-col items-center justify-center
           glass rounded-3xl p-12 min-h-[280px]
+          bg-gradient-to-br from-[rgba(var(--color-ambient),0.05)] to-[rgba(var(--color-accent),0.08)]
           cursor-pointer transition-all duration-200
           ${hasFile ? 'border-2 border-[rgb(var(--color-accent))]/30' : 'border-2 border-transparent hover:border-[rgb(var(--color-border))]'}
           ${isLoading ? 'opacity-50 cursor-not-allowed' : 'ios-button'}
@@ -75,7 +77,9 @@ export function FileUploader({ onFileSelect, isLoading, hasFile }: FileUploaderP
         <div className="flex flex-col items-center gap-6">
           <div className={`
             w-20 h-20 rounded-[20px] flex items-center justify-center
-            ${hasFile ? 'bg-[rgb(var(--color-accent))]' : 'bg-gray-200 dark:bg-gray-700'}
+            ${hasFile
+              ? 'bg-[linear-gradient(135deg,rgba(var(--color-accent),0.95),rgba(var(--color-ambient),0.9))]'
+              : 'bg-[rgba(var(--color-border),0.4)] dark:bg-gray-700'}
             transition-colors duration-200
           `} aria-hidden="true">
             {hasFile ? (

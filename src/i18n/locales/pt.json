@@ -55,6 +55,22 @@
     "themeToggle": "Alternar modo escuro",
     "resetApp": "Redefinir aplicação"
   },
+  "waveform": {
+    "title": "Linha do tempo da forma de onda",
+    "caption": "Percorra entre áudio bruto e com efeitos",
+    "playing": "Prévia em reprodução",
+    "idle": "Pronto",
+    "scrub": "Mover na linha do tempo",
+    "raw": "Bruto",
+    "fx": "FX"
+  },
+  "language": {
+    "open": "Abrir seletor de idioma",
+    "title": "Escolha seu idioma",
+    "subtitle": "Traduções verificadas com o inglês",
+    "close": "Fechar seletor de idioma",
+    "notice": "Todas as traduções ficam em sincronia com o inglês para garantir 100% de cobertura."
+  },
   "meta": {
     "title": "PitchSongs - Ferramenta Profissional de Manipulação de Áudio",
     "description": "Transforme sua música com efeitos de áudio profissionais. Crie versões aceleradas, remixes lentos + reverb, ou sons retrô 8-bit. 100% grátis, processamento local para privacidade total.",

@@ -10,6 +10,7 @@ interface PlaybackControlsProps {
   volume: number;
   onVolumeChange: (volume: number) => void;
   hasProcessed: boolean;
+  canExport: boolean;
   isProcessing?: boolean;
   disabled?: boolean;
 }
@@ -23,6 +24,7 @@ export function PlaybackControls({
   volume,
   onVolumeChange,
   hasProcessed,
+  canExport,
   isProcessing,
   disabled,
 }: PlaybackControlsProps) {
@@ -42,7 +44,7 @@ export function PlaybackControls({
               ios-button transition-all duration-200 flex items-center justify-center gap-2
               ${
                 hasProcessed && !disabled
-                  ? 'bg-[rgb(var(--color-accent))] text-white hover:bg-[rgb(var(--color-accent-hover))] cursor-pointer'
+                  ? 'bg-[linear-gradient(120deg,rgba(var(--color-accent),0.95),rgba(var(--color-ambient),0.9))] text-white shadow-[0_10px_30px_-18px_rgba(var(--color-accent),0.6)] cursor-pointer'
                   : 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
               }
             `}
@@ -63,14 +65,14 @@ export function PlaybackControls({
           {/* Export */}
           <button
             onClick={onExport}
-            disabled={disabled || !hasProcessed || isProcessing}
+            disabled={disabled || !canExport || isProcessing}
             aria-label={isProcessing ? t('playback.exporting') : t('playback.export')}
             className={`
               flex-1 min-w-[140px] py-3 rounded-[12px] font-semibold text-[15px]
               ios-button transition-all duration-200 flex items-center justify-center gap-2
               ${
-                hasProcessed && !disabled && !isProcessing
-                  ? 'bg-green-500 text-white hover:bg-green-600 cursor-pointer'
+                canExport && !disabled && !isProcessing
+                  ? 'bg-[linear-gradient(120deg,rgba(var(--color-accent),0.95),rgba(var(--color-ambient),0.9))] text-white shadow-[0_10px_30px_-18px_rgba(var(--color-accent),0.6)] cursor-pointer'
                   : 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
               }
             `}

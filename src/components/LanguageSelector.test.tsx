@@ -1,25 +1,34 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { vi, describe, it, expect } from 'vitest';
+import { vi, describe, it, beforeEach, expect } from 'vitest';
 import { LanguageSelector } from './LanguageSelector';
 
-const changeLanguage = vi.fn();
-const i18n = { language: 'en', changeLanguage };
+const mockChangeLanguage = vi.fn();
+const mockI18n = { language: 'en', changeLanguage: mockChangeLanguage };
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n }),
+  useTranslation: () => ({
+    t: (key: string) => key,
+    i18n: mockI18n,
+  }),
 }));
 
-describe('LanguageSelector', () => {
-  it('lists languages and switches document lang', async () => {
+describe('LanguageSelector modal', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockI18n.language = 'en';
+    document.documentElement.lang = 'en';
+  });
+
+  it('opens a modal and switches languages', async () => {
     render(<LanguageSelector />);
 
-    const portuguese = await screen.findByText('Português');
-    expect(portuguese).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'language.open' }));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
 
-    await userEvent.click(portuguese);
-
-    expect(changeLanguage).toHaveBeenCalledWith('pt');
-    expect(document.documentElement.lang).toBe('pt');
+    await userEvent.click(screen.getByRole('button', { name: /Español/ }));
+    expect(mockChangeLanguage).toHaveBeenCalledWith('es');
+    expect(document.documentElement.lang).toBe('es');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

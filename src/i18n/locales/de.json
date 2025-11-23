@@ -55,6 +55,22 @@
     "themeToggle": "Dunkelmodus umschalten",
     "resetApp": "Anwendung zurücksetzen"
   },
+  "waveform": {
+    "title": "Wellenform-Zeitleiste",
+    "caption": "Springe zwischen Roh- und Effekt-Audio",
+    "playing": "Vorschau läuft",
+    "idle": "Bereit",
+    "scrub": "Zeitleiste anpassen",
+    "raw": "Roh",
+    "fx": "FX"
+  },
+  "language": {
+    "open": "Sprachauswahl öffnen",
+    "title": "Sprache wählen",
+    "subtitle": "Übersetzungen mit Englisch abgeglichen",
+    "close": "Sprachauswahl schließen",
+    "notice": "Alle Übersetzungen bleiben mit Englisch synchron für 100 % Abdeckung."
+  },
   "meta": {
     "title": "PitchSongs - Professionelles Audio-Manipulationswerkzeug",
     "description": "Verwandeln Sie Ihre Musik mit professionellen Audio-Effekten. Erstellen Sie beschleunigte Versionen, langsame + Hall-Remixe oder Retro-8-Bit-Sounds. 100% kostenlos, lokale Verarbeitung für vollständige Privatsphäre.",
