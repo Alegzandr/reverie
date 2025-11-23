@@ -195,6 +195,7 @@ export function useAudioProcessor() {
 
       const source = audioContext.createBufferSource();
       source.buffer = bufferToPlay;
+      source.loop = false; // Never loop - stop at end
       source.connect(gainNode);
       gainNode.connect(audioContext.destination);
 
