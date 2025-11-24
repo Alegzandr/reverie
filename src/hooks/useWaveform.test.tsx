@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 import { useWaveform } from './useWaveform';
 import { clearWaveformCache, getOrCreateWaveform } from '../utils/waveform';
 

@@ -20,7 +20,7 @@ const createMockMediaRecorder = () => {
     onerror: ((event: any) => void) | null = null;
     state: 'inactive' | 'recording' | 'paused' = 'inactive';
 
-    constructor(stream: MediaStream, options?: any) {
+    constructor(_stream: MediaStream, _options?: any) {
       this.state = 'recording';
     }
 

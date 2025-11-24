@@ -156,12 +156,7 @@ describe('useAudioFile', () => {
 
       const { result } = renderHook(() => useAudioFile());
 
-      // Set up with original buffer
-      act(() => {
-        result.current['setOriginalBuffer']?.({ duration: 180 } as AudioBuffer);
-      });
-
-      act(() => {
+      await act(async () => {
         result.current.processAudio({
           speedMultiplier: 1.0,
           reverbAmount: 0,
