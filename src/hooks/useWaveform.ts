@@ -21,19 +21,33 @@ export function useWaveform({ buffer, bars = WAVEFORM.BAR_COUNT }: UseWaveformPa
     isComputing: Boolean(buffer),
   });
 
+  const schedule = (fn: () => void) => {
+    if (typeof queueMicrotask === 'function') {
+      queueMicrotask(fn);
+      return null;
+    }
+    return setTimeout(fn, 0);
+  };
+
   useEffect(() => {
     const targetBars = Math.max(1, Math.floor(bars));
 
     if (!buffer) {
-      setState({ bars: new Array(targetBars).fill(0), isComputing: false });
-      return;
+      const handle = schedule(() => setState({ bars: new Array(targetBars).fill(0), isComputing: false }));
+      return () => {
+        if (typeof handle === 'number') {
+          clearTimeout(handle);
+        }
+      };
     }
 
     let cancelled = false;
-    setState((prev) => ({
-      bars: prev.bars.length === targetBars ? prev.bars : new Array(targetBars).fill(0),
-      isComputing: true,
-    }));
+    const pending = schedule(() => {
+      setState((prev) => ({
+        bars: prev.bars.length === targetBars ? prev.bars : new Array(targetBars).fill(0),
+        isComputing: true,
+      }));
+    });
 
     // Compute synchronously but yield to next tick to avoid blocking render
     const compute = () => {
@@ -43,10 +57,13 @@ export function useWaveform({ buffer, bars = WAVEFORM.BAR_COUNT }: UseWaveformPa
       }
     };
 
-    const handle = queueMicrotask ? queueMicrotask(compute) : setTimeout(compute, 0);
+    const handle = schedule(compute);
 
     return () => {
       cancelled = true;
+      if (typeof pending === 'number') {
+        clearTimeout(pending);
+      }
       if (typeof handle === 'number') {
         clearTimeout(handle);
       }

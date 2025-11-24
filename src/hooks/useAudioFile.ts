@@ -62,7 +62,7 @@ export function useAudioFile(): UseAudioFileReturn {
 
   const estimateBitDepth = useCallback((format: string, fileSize: number, duration: number, channels: number, sampleRate: number): number | null => {
     // Only lossless formats have meaningful bit depth
-    if (!BIT_DEPTH.LOSSLESS_FORMATS.includes(format as any) || duration <= 0) {
+    if (!BIT_DEPTH.LOSSLESS_FORMATS.includes(format as typeof BIT_DEPTH.LOSSLESS_FORMATS[number]) || duration <= 0) {
       return null;
     }
 

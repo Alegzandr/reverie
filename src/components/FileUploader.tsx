@@ -16,7 +16,8 @@ export function FileUploader({ onFileSelect, isLoading, hasFile }: FileUploaderP
     (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       const file = e.dataTransfer.files[0];
-      if (file && FILE_FORMATS.ACCEPTED_MIME_TYPES.includes(file.type as any)) {
+      const mime = file?.type as typeof FILE_FORMATS.ACCEPTED_MIME_TYPES[number];
+      if (file && FILE_FORMATS.ACCEPTED_MIME_TYPES.includes(mime)) {
         onFileSelect(file);
       }
     },

@@ -96,7 +96,7 @@ export function useAudioExport({
       }
       throw error instanceof Error ? error : new Error(message);
     }
-  }, [getBuffer, getBufferDuration, metadata, onError, originalFile, setError]);
+  }, [effectLabel, getBuffer, getBufferDuration, metadata, onError, originalFile, setError]);
 
   const resetExport = useCallback(() => {
     setState({ isExporting: false, error: null });

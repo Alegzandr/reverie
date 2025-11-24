@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { audioProcessor } from '../utils/audioProcessor';
 import type { AudioProcessingOptions } from '../utils/audioProcessor';
 import { useAudioFile } from './useAudioFile';
@@ -68,12 +68,6 @@ export function useAudioProcessor() {
     () => error ?? fileState.error ?? playbackState.error ?? exportState.error ?? null,
     [error, fileState.error, playbackState.error, exportState.error],
   );
-
-  useEffect(() => {
-    if (fileState.error) {
-      setError(fileState.error);
-    }
-  }, [fileState.error]);
 
   const loadAudioFile = useCallback(async (file: File) => {
     setError(null);
