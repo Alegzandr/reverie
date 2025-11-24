@@ -2,12 +2,13 @@ import { renderHook, act } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { useAudioProcessor } from './useAudioProcessor';
 
-const { mockAudioBuffer, mockDownload, mockToMp3, mockToWav, mockAudioContext, mockAudioProcessor } = vi.hoisted(() => {
+const { mockAudioBuffer, mockDownload, mockAudioContext, mockAudioProcessor, mockExportStrategy, mockGetExportStrategy, mockEstimateBitrate } = vi.hoisted(() => {
   const buffer = new AudioBuffer({ length: 44100, numberOfChannels: 1, sampleRate: 44100 });
   let storedBuffer: AudioBuffer | null = buffer;
   const download = vi.fn();
-  const toMp3 = vi.fn(async () => new Blob(['mp3'], { type: 'audio/mp3' }));
-  const toWav = vi.fn(async () => new Blob(['wav'], { type: 'audio/wav' }));
+  const exportStrategy = { export: vi.fn(async () => ({ blob: new Blob(['mp3'], { type: 'audio/mp3' }), extension: 'mp3' })) };
+  const getStrategy = vi.fn(() => exportStrategy);
+  const estimate = vi.fn(() => 192);
 
   const audioContext = {
     destination: {},
@@ -24,22 +25,42 @@ const { mockAudioBuffer, mockDownload, mockToMp3, mockToWav, mockAudioContext, m
     processAudio: vi.fn(async () => buffer),
     getAudioContext: vi.fn(() => audioContext as any),
     getAudioBuffer: vi.fn(() => storedBuffer as any),
-    audioBufferToWav: toWav,
+    audioBufferToWav: vi.fn(),
   };
 
   (processor as any).__setBuffer = (next: AudioBuffer | null) => {
     storedBuffer = next;
   };
 
-  return { mockAudioBuffer: buffer, mockDownload: download, mockToMp3: toMp3, mockToWav: toWav, mockAudioContext: audioContext, mockAudioProcessor: processor };
+  return {
+    mockAudioBuffer: buffer,
+    mockDownload: download,
+    mockAudioContext: audioContext,
+    mockAudioProcessor: processor,
+    mockExportStrategy: exportStrategy,
+    mockGetExportStrategy: getStrategy,
+    mockEstimateBitrate: estimate,
+  };
 });
 
 vi.mock('../utils/audioProcessor', () => ({
   audioProcessor: mockAudioProcessor,
 }));
 
+vi.mock('../utils/exportStrategies', () => ({
+  getExportStrategy: mockGetExportStrategy,
+  estimateBitrate: mockEstimateBitrate,
+}));
+
+vi.mock('../utils/audioMetadataExtractor', () => ({
+  extractAudioMetadata: vi.fn(() => Promise.resolve({
+    sampleRate: 44100,
+    channels: 1,
+    bitDepth: null,
+  })),
+}));
+
 vi.mock('../utils/mp3Encoder', () => ({
-  audioBufferToMp3: mockToMp3,
   downloadBlob: mockDownload,
 }));
 
@@ -98,7 +119,7 @@ describe('useAudioProcessor', () => {
       await result.current.loadAudioFile(file);
     });
 
-    expect(result.current.state.error).toBe('fail');
+    expect(result.current.state.error).toBe('Failed to load audio file: fail');
   });
 
   it('handles load errors with non-error types', async () => {
@@ -264,7 +285,7 @@ describe('useAudioProcessor', () => {
     expect(result.current.state.error).toBe('No audio to play');
   });
 
-  it('exports using original mp3 format and mirrors bitrate when known', async () => {
+  it('exports using strategy and derived bitrate', async () => {
     const { result } = renderHook(() => useAudioProcessor());
     const file = new File(['data'.repeat(1024)], 'demo.mp3', { type: 'audio/mp3' });
 
@@ -272,28 +293,28 @@ describe('useAudioProcessor', () => {
       await result.current.loadAudioFile(file);
     });
 
-    act(() => {
-      result.current.playAudio(mockAudioBuffer);
-    });
-
     await act(async () => {
       await result.current.exportProcessedAudio();
     });
 
-    expect(mockToMp3).toHaveBeenCalledWith(mockAudioBuffer, expect.any(Number));
-    expect(mockDownload).toHaveBeenCalledWith(expect.any(Blob), expect.stringMatching(/demo_processed\.mp3$/));
-    const bitrateArg = (mockToMp3.mock.calls[0] as any)?.[1];
-    expect(typeof bitrateArg).toBe('number');
-    if (typeof bitrateArg === 'number') {
-      expect(bitrateArg).toBeGreaterThanOrEqual(96);
-      expect(bitrateArg).toBeLessThanOrEqual(320);
-    }
-    expect(result.current.state.isProcessing).toBe(false);
+    expect(mockGetExportStrategy).toHaveBeenCalledWith('mp3');
+    expect(mockEstimateBitrate).toHaveBeenCalledWith(file, expect.any(Number));
+    expect(mockExportStrategy.export).toHaveBeenCalledWith({
+      buffer: mockAudioBuffer,
+      originalFile: file,
+      estimatedBitrate: 192,
+    });
+    expect(mockDownload).toHaveBeenCalledWith(expect.any(Blob), 'demo_processed ver. by PitchSongs.mp3');
+    expect(result.current.state.isExporting).toBe(false);
   });
 
-  it('exports as wav when source is wav', async () => {
+  it('exports with target extension when strategy changes format', async () => {
     const { result } = renderHook(() => useAudioProcessor());
     const file = new File(['data'], 'demo.wav', { type: 'audio/wav' });
+    mockExportStrategy.export.mockResolvedValueOnce({
+      blob: new Blob(['wav'], { type: 'audio/wav' }),
+      extension: 'wav',
+    });
 
     await act(async () => {
       await result.current.loadAudioFile(file);
@@ -303,8 +324,8 @@ describe('useAudioProcessor', () => {
       await result.current.exportProcessedAudio();
     });
 
-    expect(mockToWav).toHaveBeenCalledWith(mockAudioBuffer);
-    expect(mockDownload).toHaveBeenCalledWith(expect.any(Blob), 'demo_processed.wav');
+    expect(mockGetExportStrategy).toHaveBeenCalledWith('wav');
+    expect(mockDownload).toHaveBeenCalledWith(expect.any(Blob), 'demo_processed ver. by PitchSongs.wav');
   });
 
   it('exports with fallback filename when no original file', async () => {
@@ -318,18 +339,20 @@ describe('useAudioProcessor', () => {
       await result.current.exportProcessedAudio();
     });
 
-    expect(mockDownload).toHaveBeenCalledWith(expect.any(Blob), 'processed_audio.mp3');
+    expect(mockDownload).toHaveBeenCalledWith(expect.any(Blob), 'processed_audio ver. by PitchSongs.mp3');
   });
 
   it('throws when exporting without audio and records error', async () => {
     const { result } = renderHook(() => useAudioProcessor());
     (mockAudioProcessor as any).__setBuffer(null);
 
-    await expect(result.current.exportProcessedAudio()).rejects.toThrow('No audio to export');
+    await act(async () => {
+      await expect(result.current.exportProcessedAudio()).rejects.toThrow('No audio to export');
+    });
   });
 
   it('handles export errors', async () => {
-    mockToMp3.mockRejectedValueOnce(new Error('export fail'));
+    mockExportStrategy.export.mockRejectedValueOnce(new Error('export fail'));
     const { result } = renderHook(() => useAudioProcessor());
 
     await act(async () => {
@@ -338,17 +361,17 @@ describe('useAudioProcessor', () => {
 
     await act(async () => {
       try {
-      await result.current.exportProcessedAudio('custom.mp3');
-    } catch (e) {
-      // expected
-    }
-  });
+        await result.current.exportProcessedAudio('custom.mp3');
+      } catch (e) {
+        // expected
+      }
+    });
 
     expect(result.current.state.error).toBe('export fail');
   });
 
   it('handles export errors with non-error values', async () => {
-    mockToMp3.mockRejectedValueOnce('fail');
+    mockExportStrategy.export.mockRejectedValueOnce('fail');
     const { result } = renderHook(() => useAudioProcessor());
 
     await act(async () => {
@@ -357,11 +380,11 @@ describe('useAudioProcessor', () => {
 
     await act(async () => {
       try {
-      await result.current.exportProcessedAudio('custom.mp3');
-    } catch (e) {
-      // expected
-    }
-  });
+        await result.current.exportProcessedAudio('custom.mp3');
+      } catch (e) {
+        // expected
+      }
+    });
 
     expect(result.current.state.error).toBe('Failed to export audio');
   });

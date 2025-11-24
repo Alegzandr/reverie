@@ -1,3 +1,5 @@
+import { AUDIO_EFFECTS } from '../constants';
+
 export interface AudioProcessingOptions {
   speedMultiplier: number;
   reverbAmount: number;
@@ -8,6 +10,12 @@ export interface AudioProcessingOptions {
   bassBoostIntensity?: number; // Bass boost intensity (0.0 - 1.0)
 }
 
+/**
+ * Audio Processor
+ *
+ * Handles all audio processing operations including loading, effects processing,
+ * and format conversion using the Web Audio API.
+ */
 export class AudioProcessor {
   private audioContext: AudioContext;
   private audioBuffer: AudioBuffer | null = null;
@@ -16,16 +24,37 @@ export class AudioProcessor {
     this.audioContext = new AudioContext();
   }
 
+  /**
+   * Load an audio file and decode it into an AudioBuffer
+   *
+   * @param file - The audio file to load
+   * @returns Promise that resolves to the decoded AudioBuffer
+   * @throws Error if file cannot be decoded or is not a valid audio file
+   */
   async loadAudioFile(file: File): Promise<AudioBuffer> {
-    const arrayBuffer = await file.arrayBuffer();
-    this.audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
-    return this.audioBuffer;
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      this.audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+      return this.audioBuffer;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to load audio file: ${message}`);
+    }
   }
 
+  /**
+   * Process audio with various effects (speed, reverb, 8D spatial, bass boost)
+   *
+   * @param options - Processing options including speed, reverb, and effects
+   * @returns Promise that resolves to the processed AudioBuffer
+   * @throws Error if no audio file is loaded or processing fails
+   */
   async processAudio(options: AudioProcessingOptions): Promise<AudioBuffer> {
     if (!this.audioBuffer) {
       throw new Error('No audio file loaded');
     }
+
+    try {
 
     const { speedMultiplier, reverbAmount, audio8D, rotationSpeed, bassBoost, bassBoostIntensity } = options;
 
@@ -86,9 +115,24 @@ export class AudioProcessor {
 
     source.start(0);
 
-    return await offlineContext.startRendering();
+      return await offlineContext.startRendering();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to process audio: ${message}`);
+    }
   }
 
+  /**
+   * Create 8D spatial audio effect
+   *
+   * Creates a circular panning effect that makes the sound appear to rotate
+   * around the listener's head in 3D space.
+   *
+   * @param context - The OfflineAudioContext to create nodes in
+   * @param sourceBuffer - The source AudioBuffer for duration calculation
+   * @param rotationSpeed - Speed multiplier for rotation (0.1 - 2.0)
+   * @returns Object with input and output GainNodes
+   */
   private create8DAudioEffect(
     context: OfflineAudioContext,
     sourceBuffer: AudioBuffer,
@@ -125,7 +169,7 @@ export class AudioProcessor {
     // Automate panning to create smooth circular motion
     // The sound will rotate around your head in a circle
     const cycleTime = 4 / rotationSpeed; // Time for one full rotation
-    const pointsPerSecond = 60; // 60 automation points per second for ultra-smooth motion
+    const pointsPerSecond = AUDIO_EFFECTS.EIGHT_D.AUTOMATION_POINTS_PER_SECOND;
     const totalPoints = Math.ceil(duration * pointsPerSecond);
 
     // Set initial value
@@ -146,10 +190,16 @@ export class AudioProcessor {
     return { input: inputGain, output: outputGain };
   }
 
+  /**
+   * Create reverb impulse response for 8D spatial effect
+   *
+   * @param context - The OfflineAudioContext to create the buffer in
+   * @returns AudioBuffer containing the reverb impulse response
+   */
   private create8DReverbImpulse(context: OfflineAudioContext): AudioBuffer {
     // Create a short, subtle reverb for 8D spatial effect
     const sampleRate = context.sampleRate;
-    const length = sampleRate * 0.5; // 500ms reverb
+    const length = sampleRate * (AUDIO_EFFECTS.REVERB.DEFAULT_DURATION_MS / 1000);
     const impulse = context.createBuffer(2, length, sampleRate);
 
     for (let channel = 0; channel < 2; channel++) {
@@ -166,6 +216,16 @@ export class AudioProcessor {
     return impulse;
   }
 
+  /**
+   * Create bass boost effect filter chain
+   *
+   * Applies a lowshelf filter to boost bass frequencies, a highpass to remove
+   * sub-bass rumble, and a peaking filter to reduce muddiness.
+   *
+   * @param context - The OfflineAudioContext to create nodes in
+   * @param intensity - Bass boost intensity (0.0 - 1.0)
+   * @returns Object with input and output GainNodes
+   */
   private createBassBoostEffect(
     context: OfflineAudioContext,
     intensity: number
@@ -174,27 +234,26 @@ export class AudioProcessor {
     const inputGain = context.createGain();
     const outputGain = context.createGain();
 
-    // Create lowshelf filter for bass boost (centered around 100 Hz)
+    // Create lowshelf filter for bass boost
     const lowshelf = context.createBiquadFilter();
     lowshelf.type = 'lowshelf';
-    lowshelf.frequency.value = 100; // Boost frequencies below 100 Hz
+    lowshelf.frequency.value = AUDIO_EFFECTS.BASS_BOOST.LOWSHELF_FREQUENCY_HZ;
 
     // Map intensity (0-1) to gain boost (0-18 dB)
     // Light: 0-6dB, Normal: 6-12dB, Strong: 12-18dB
     const gainBoost = intensity * 18;
     lowshelf.gain.value = gainBoost;
 
-    // Create highpass filter to cut sub-bass rumble (below 40 Hz)
+    // Create highpass filter to cut sub-bass rumble
     const highpass = context.createBiquadFilter();
     highpass.type = 'highpass';
-    highpass.frequency.value = 40;
+    highpass.frequency.value = AUDIO_EFFECTS.BASS_BOOST.HIGHPASS_FREQUENCY_HZ;
     highpass.Q.value = 0.7;
 
-    // Create slight cut in low-mids (200-400 Hz) to avoid muddiness
-    // Only apply if intensity is high enough
+    // Create slight cut in low-mids to avoid muddiness
     const lowMidCut = context.createBiquadFilter();
     lowMidCut.type = 'peaking';
-    lowMidCut.frequency.value = 300;
+    lowMidCut.frequency.value = AUDIO_EFFECTS.BASS_BOOST.PEAKING_FREQUENCY_HZ;
     lowMidCut.Q.value = 1.0;
     // Reduce muddiness proportional to bass boost (up to -3 dB)
     lowMidCut.gain.value = Math.min(0, -intensity * 3);
@@ -213,12 +272,21 @@ export class AudioProcessor {
     return { input: inputGain, output: outputGain };
   }
 
+  /**
+   * Create reverb impulse response for standard reverb effect
+   *
+   * Generates an exponentially decaying noise buffer that simulates room reverb.
+   *
+   * @param context - The OfflineAudioContext to create the buffer in
+   * @param amount - Reverb amount (0.0 - 1.0) affecting duration and intensity
+   * @returns Promise that resolves to AudioBuffer containing the impulse response
+   */
   private async createReverbImpulse(
     context: OfflineAudioContext,
     amount: number
   ): Promise<AudioBuffer> {
     const sampleRate = context.sampleRate;
-    const length = sampleRate * (1 + amount * 2); // Up to 3 seconds of reverb
+    const length = sampleRate * (1 + amount * AUDIO_EFFECTS.REVERB.DECAY_RATE);
     const impulse = context.createBuffer(2, length, sampleRate);
 
     for (let channel = 0; channel < 2; channel++) {
@@ -233,6 +301,14 @@ export class AudioProcessor {
     return impulse;
   }
 
+  /**
+   * Convert an AudioBuffer to WAV format
+   *
+   * Creates a standard WAV file with 16-bit PCM audio data.
+   *
+   * @param audioBuffer - The AudioBuffer to convert
+   * @returns Promise that resolves to a Blob containing the WAV file
+   */
   async audioBufferToWav(audioBuffer: AudioBuffer): Promise<Blob> {
     const numberOfChannels = audioBuffer.numberOfChannels;
     const length = audioBuffer.length * numberOfChannels * 2;

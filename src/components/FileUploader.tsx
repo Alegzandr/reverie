@@ -1,36 +1,13 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Upload, Music } from 'lucide-react';
+import { FILE_FORMATS } from '../constants';
 
 interface FileUploaderProps {
   onFileSelect: (file: File) => void;
   isLoading?: boolean;
   hasFile?: boolean;
 }
-
-const ACCEPTED_AUDIO_TYPES = [
-  'audio/mpeg',     // MP3
-  'audio/mp3',      // MP3 (alternative MIME)
-  'audio/wav',      // WAV
-  'audio/wave',     // WAV (alternative MIME)
-  'audio/x-wav',    // WAV (alternative MIME)
-  'audio/ogg',      // OGG Vorbis
-  'audio/opus',     // Opus
-  'audio/mp4',      // MP4/M4A
-  'audio/m4a',      // M4A
-  'audio/x-m4a',    // M4A (alternative MIME)
-  'audio/aac',      // AAC
-  'audio/aacp',     // AAC+
-  'audio/flac',     // FLAC
-  'audio/x-flac',   // FLAC (alternative MIME)
-  'audio/webm',     // WebM
-  'audio/aiff',     // AIFF
-  'audio/x-aiff',   // AIFF (alternative MIME)
-  'audio/aifc',     // AIFF-C
-  'audio/3gpp',     // 3GPP
-  'audio/3gpp2',    // 3GPP2
-  'audio/amr',      // AMR
-];
 
 export function FileUploader({ onFileSelect, isLoading, hasFile }: FileUploaderProps) {
   const { t } = useTranslation();
@@ -39,7 +16,7 @@ export function FileUploader({ onFileSelect, isLoading, hasFile }: FileUploaderP
     (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       const file = e.dataTransfer.files[0];
-      if (file && ACCEPTED_AUDIO_TYPES.includes(file.type)) {
+      if (file && FILE_FORMATS.ACCEPTED_MIME_TYPES.includes(file.type as any)) {
         onFileSelect(file);
       }
     },

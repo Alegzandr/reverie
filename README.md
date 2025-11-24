@@ -25,7 +25,7 @@ A modern, professional **free online audio editor** for transforming your music 
 - **♿ Accessible**: Full keyboard navigation and screen reader support
 
 ### Developer Features
-- **✅ 95%+ Test Coverage**: Comprehensive test suite with 68+ passing tests
+- **✅ Strong Test Coverage**: Comprehensive Vitest suite (100+ tests across hooks, utils, and components)
 - **🔍 SEO Optimized**: Schema.org metadata, sitemap, robots.txt
 - **🚀 CI/CD Pipeline**: Automated linting, testing, and deployment
 - **📊 Type-Safe**: Full TypeScript with strict mode enabled
@@ -130,15 +130,21 @@ pitch-songs/
 │   ├── contexts/
 │   │   └── ThemeContext.tsx    # Dark/light theme management
 │   ├── hooks/
-│   │   └── useAudioProcessor.ts # Audio processing logic
+│   │   ├── useAudioProcessor.ts # Orchestrates processing, playback, export
+│   │   ├── useAudioFile.ts      # Loading + metadata + processing
+│   │   ├── useAudioPlayback.ts  # Playback, seeking, volume
+│   │   ├── useAudioExport.ts    # Strategy-based exporting and filenames
+│   │   └── useWaveform.ts       # Cached waveform generation
 │   ├── i18n/
 │   │   ├── config.ts           # i18next configuration
 │   │   └── locales/            # Translation files (EN, FR, ES, DE, PT)
 │   ├── utils/
-│   │   ├── audioProcessor.ts   # Web Audio API wrapper
-│   │   ├── mp3Encoder.ts       # MP3 encoding (LAME.js)
-│   │   ├── aiffEncoder.ts      # AIFF encoding (manual implementation)
-│   │   └── mediaRecorderEncoder.ts # WebM/OGG/AAC encoding (MediaRecorder API)
+│   │   ├── audioProcessor.ts       # Web Audio API wrapper
+│   │   ├── mp3Encoder.ts           # MP3 encoding (LAME.js)
+│   │   ├── aiffEncoder.ts          # AIFF encoding (manual implementation)
+│   │   ├── mediaRecorderEncoder.ts # WebM/OGG/AAC encoding (MediaRecorder API)
+│   │   ├── exportStrategies.ts     # Strategy pattern for exports
+│   │   └── waveform.ts             # Waveform caching utilities
 │   ├── types/
 │   │   └── lamejs.d.ts         # TypeScript type definitions
 │   ├── App.tsx                 # Main application component
@@ -178,7 +184,7 @@ pitch-songs/
    - **AIFF**: Manual AIFF encoder (lossless, big-endian)
    - **FLAC**: Exports as WAV (both lossless)
    - **WebM/OGG/M4A**: MediaRecorder API with fallback to MP3
-5. **Download**: Triggers browser download with custom filename including effect type and "by PitchSongs" suffix
+5. **Download**: Triggers browser download with custom filename including effect label and "ver. by PitchSongs" suffix
 
 ### State Management
 
@@ -206,7 +212,7 @@ Generate coverage report:
 npm run test:coverage
 ```
 
-**Current Coverage**: 95%+ (68/68 tests passing)
+**Current Coverage**: See `npm test` output (116 tests passing as of latest run)
 
 ## 🏗 Build for Production
 

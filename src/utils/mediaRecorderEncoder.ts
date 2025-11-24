@@ -3,6 +3,8 @@
  * Supports: WebM, OGG (Opus/Vorbis), M4A/AAC (browser-dependent)
  */
 
+import { MEDIA_RECORDER_FORMATS, AUDIO_PROCESSING, BITRATE, ERROR_MESSAGES } from '../constants';
+
 export interface MediaRecorderEncoderOptions {
   mimeType: string;
   audioBitsPerSecond?: number;
@@ -16,11 +18,11 @@ export async function encodeWithMediaRecorder(
   audioBuffer: AudioBuffer,
   options: MediaRecorderEncoderOptions
 ): Promise<Blob> {
-  const { mimeType, audioBitsPerSecond = 192000 } = options;
+  const { mimeType, audioBitsPerSecond = BITRATE.DEFAULT_MEDIA_RECORDER_BPS } = options;
 
   // Check if the mimeType is supported
   if (!MediaRecorder.isTypeSupported(mimeType)) {
-    throw new Error(`MIME type ${mimeType} is not supported by this browser`);
+    throw new Error(ERROR_MESSAGES.MIME_TYPE_NOT_SUPPORTED(mimeType));
   }
 
   // Create an offline audio context to play the buffer
@@ -55,7 +57,7 @@ export async function encodeWithMediaRecorder(
 
     mediaRecorder.onerror = (event) => {
       audioContext.close();
-      reject(new Error(`MediaRecorder error: ${event}`));
+      reject(new Error(ERROR_MESSAGES.MEDIA_RECORDER_ERROR(event)));
     };
 
     // Start recording
@@ -71,7 +73,7 @@ export async function encodeWithMediaRecorder(
         if (mediaRecorder.state !== 'inactive') {
           mediaRecorder.stop();
         }
-      }, 100);
+      }, AUDIO_PROCESSING.MEDIA_RECORDER_STOP_DELAY_MS);
     };
   });
 }
@@ -80,20 +82,7 @@ export async function encodeWithMediaRecorder(
  * Check which formats are supported by the browser
  */
 export function getSupportedMimeTypes(): string[] {
-  const possibleTypes = [
-    'audio/webm',
-    'audio/webm;codecs=opus',
-    'audio/webm;codecs=vorbis',
-    'audio/ogg',
-    'audio/ogg;codecs=opus',
-    'audio/ogg;codecs=vorbis',
-    'audio/mp4',
-    'audio/mp4;codecs=mp4a.40.2', // AAC-LC
-    'audio/mpeg', // Some browsers might support MP3
-    'audio/wav', // Some browsers might support WAV
-  ];
-
-  return possibleTypes.filter(type => {
+  return [...MEDIA_RECORDER_FORMATS.POSSIBLE_MIME_TYPES].filter(type => {
     try {
       return MediaRecorder.isTypeSupported(type);
     } catch {
@@ -106,16 +95,7 @@ export function getSupportedMimeTypes(): string[] {
  * Get the best supported MIME type for a given format
  */
 export function getMimeTypeForFormat(format: string): string | null {
-  const formatMap: Record<string, string[]> = {
-    'webm': ['audio/webm;codecs=opus', 'audio/webm'],
-    'ogg': ['audio/ogg;codecs=opus', 'audio/ogg;codecs=vorbis', 'audio/ogg'],
-    'opus': ['audio/ogg;codecs=opus', 'audio/webm;codecs=opus'],
-    'm4a': ['audio/mp4;codecs=mp4a.40.2', 'audio/mp4'],
-    'aac': ['audio/mp4;codecs=mp4a.40.2', 'audio/mp4'],
-    'mp4': ['audio/mp4;codecs=mp4a.40.2', 'audio/mp4'],
-  };
-
-  const candidates = formatMap[format.toLowerCase()] || [];
+  const candidates = MEDIA_RECORDER_FORMATS.MIME_TYPE_MAP[format.toLowerCase() as keyof typeof MEDIA_RECORDER_FORMATS.MIME_TYPE_MAP] || [];
 
   for (const mimeType of candidates) {
     if (MediaRecorder.isTypeSupported(mimeType)) {

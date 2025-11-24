@@ -133,8 +133,7 @@ function App() {
           : effectSettings.mode === '8d-audio'
             ? t('effects.8dAudio')
             : t('effects.bassBoost');
-      const filename = `${baseName} ${fxLabel} by PitchSongs`;
-      await exportProcessedAudio(filename);
+      await exportProcessedAudio({ filename: baseName, effectLabel: fxLabel });
     } catch (error) {
       console.error('Export error:', error);
     }

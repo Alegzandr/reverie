@@ -3,6 +3,8 @@
  * This preserves the original sample rate before Web Audio API resampling
  */
 
+import { METADATA_EXTRACTION, ERROR_MESSAGES } from '../constants';
+
 export interface RawAudioMetadata {
   sampleRate: number | null;
   channels: number | null;
@@ -52,7 +54,7 @@ function readString(view: DataView, offset: number, length: number): string {
  * Extract metadata from WAV file header
  */
 async function extractWavMetadata(file: File): Promise<RawAudioMetadata> {
-  const buffer = await file.slice(0, 44).arrayBuffer();
+  const buffer = await file.slice(0, METADATA_EXTRACTION.HEADER_SIZES.WAV).arrayBuffer();
   const view = new DataView(buffer);
 
   // Check for RIFF header
@@ -84,7 +86,7 @@ async function extractWavMetadata(file: File): Promise<RawAudioMetadata> {
  * Extract metadata from AIFF file header
  */
 async function extractAiffMetadata(file: File): Promise<RawAudioMetadata> {
-  const buffer = await file.slice(0, 54).arrayBuffer();
+  const buffer = await file.slice(0, METADATA_EXTRACTION.HEADER_SIZES.AIFF).arrayBuffer();
   const view = new DataView(buffer);
 
   // Check for FORM header
@@ -129,7 +131,7 @@ async function extractAiffMetadata(file: File): Promise<RawAudioMetadata> {
  * Extract metadata from FLAC file header
  */
 async function extractFlacMetadata(file: File): Promise<RawAudioMetadata> {
-  const buffer = await file.slice(0, 42).arrayBuffer();
+  const buffer = await file.slice(0, METADATA_EXTRACTION.HEADER_SIZES.FLAC).arrayBuffer();
   const view = new DataView(buffer);
 
   // Check for fLaC header
@@ -163,7 +165,7 @@ async function extractFlacMetadata(file: File): Promise<RawAudioMetadata> {
  * Extract metadata from MP3 file header
  */
 async function extractMp3Metadata(file: File): Promise<RawAudioMetadata> {
-  const buffer = await file.slice(0, 4096).arrayBuffer();
+  const buffer = await file.slice(0, METADATA_EXTRACTION.HEADER_SIZES.MP3_SEARCH).arrayBuffer();
   const view = new DataView(buffer);
 
   // Skip ID3v2 tag if present
@@ -174,27 +176,19 @@ async function extractMp3Metadata(file: File): Promise<RawAudioMetadata> {
     offset = 10 + size;
   }
 
-  // Find first MP3 frame header
-  const sampleRates = [
-    [11025, 12000, 8000],  // MPEG 2.5
-    [0, 0, 0],              // reserved
-    [22050, 24000, 16000], // MPEG 2
-    [44100, 48000, 32000]  // MPEG 1
-  ];
-
   while (offset < buffer.byteLength - 4) {
     const byte = view.getUint8(offset);
 
     // Check for frame sync (11 consecutive set bits)
-    if (byte === 0xff) {
+    if (byte === METADATA_EXTRACTION.MP3_FRAME_SYNC) {
       const nextByte = view.getUint8(offset + 1);
-      if ((nextByte & 0xe0) === 0xe0) {
+      if ((nextByte & METADATA_EXTRACTION.MP3_FRAME_SYNC_MASK) === METADATA_EXTRACTION.MP3_FRAME_SYNC_MASK) {
         // Found sync word
         const version = (nextByte >> 3) & 0x03;
         const samplingRateIndex = (view.getUint8(offset + 2) >> 2) & 0x03;
         const channelMode = (view.getUint8(offset + 3) >> 6) & 0x03;
 
-        const sampleRate = sampleRates[version]?.[samplingRateIndex];
+        const sampleRate = METADATA_EXTRACTION.MP3_SAMPLE_RATES[version]?.[samplingRateIndex];
         const channels = channelMode === 3 ? 1 : 2;
 
         if (sampleRate) {
@@ -237,7 +231,7 @@ export async function extractAudioMetadata(file: File): Promise<RawAudioMetadata
         return { sampleRate: null, channels: null, bitDepth: null };
     }
   } catch (error) {
-    console.warn(`Failed to extract metadata from ${extension}:`, error);
+    console.warn(ERROR_MESSAGES.METADATA_EXTRACTION_FAILED(extension), error);
     return { sampleRate: null, channels: null, bitDepth: null };
   }
 }

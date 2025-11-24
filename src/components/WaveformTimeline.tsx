@@ -1,6 +1,8 @@
-import { useMemo, useRef } from 'react';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Sparkles, Waves } from 'lucide-react';
+import { WAVEFORM } from '../constants';
+import { useWaveform } from '../hooks/useWaveform';
 
 interface WaveformTimelineProps {
   originalBuffer?: AudioBuffer | null;
@@ -12,25 +14,6 @@ interface WaveformTimelineProps {
   selectedTrack: 'raw' | 'fx';
   onSelectTrack: (track: 'raw' | 'fx') => void;
   onSeek: (time: number, bufferOverride?: AudioBuffer | null) => void;
-}
-
-const BAR_COUNT = 96;
-
-function buildWaveform(buffer?: AudioBuffer | null, bars = BAR_COUNT): number[] {
-  if (!buffer) return Array(bars).fill(0);
-  const channelData = buffer.getChannelData(0);
-  const samplesPerBar = Math.max(1, Math.floor(channelData.length / bars));
-
-  return new Array(bars).fill(0).map((_, bar) => {
-    const start = bar * samplesPerBar;
-    const end = Math.min(start + samplesPerBar, channelData.length);
-    let sum = 0;
-    for (let i = start; i < end; i++) {
-      sum += Math.abs(channelData[i]);
-    }
-    const avg = sum / (end - start);
-    return Math.min(1, Math.sqrt(avg));
-  });
 }
 
 function formatClock(seconds: number) {
@@ -60,11 +43,11 @@ export function WaveformTimeline({
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const longest = Math.max(longestDuration || 0, duration || 0, processedBuffer?.duration || 0, originalBuffer?.duration || 0, 1);
-  const rawBars = Math.max(24, Math.round((originalBuffer?.duration || longest) / longest * BAR_COUNT));
-  const fxBars = Math.max(24, Math.round((processedBuffer?.duration || longest) / longest * BAR_COUNT));
+  const rawBars = Math.max(WAVEFORM.MIN_BAR_COUNT, Math.round((originalBuffer?.duration || longest) / longest * WAVEFORM.BAR_COUNT));
+  const fxBars = Math.max(WAVEFORM.MIN_BAR_COUNT, Math.round((processedBuffer?.duration || longest) / longest * WAVEFORM.BAR_COUNT));
 
-  const rawWaveform = useMemo(() => buildWaveform(originalBuffer, rawBars), [originalBuffer, rawBars]);
-  const fxWaveform = useMemo(() => buildWaveform(processedBuffer, fxBars), [processedBuffer, fxBars]);
+  const { bars: rawWaveform } = useWaveform({ buffer: originalBuffer, bars: rawBars });
+  const { bars: fxWaveform } = useWaveform({ buffer: processedBuffer, bars: fxBars });
 
   const handleSeek = (event: React.MouseEvent<HTMLDivElement>) => {
     if (!duration || !containerRef.current) return;
@@ -121,7 +104,7 @@ export function WaveformTimeline({
             active={selectedTrack === 'raw'}
             playing={selectedTrack === 'raw' && isPlaying}
             onSelect={() => onSelectTrack('raw')}
-            widthPercent={Math.min(100, (rawBars / BAR_COUNT) * 100)}
+            widthPercent={Math.min(100, (rawBars / WAVEFORM.BAR_COUNT) * 100)}
           />
           {processedBuffer && (
             <WaveformRow
@@ -131,7 +114,7 @@ export function WaveformTimeline({
               active={selectedTrack === 'fx'}
               playing={selectedTrack === 'fx' && isPlaying}
               onSelect={() => onSelectTrack('fx')}
-              widthPercent={Math.min(100, (fxBars / BAR_COUNT) * 100)}
+              widthPercent={Math.min(100, (fxBars / WAVEFORM.BAR_COUNT) * 100)}
             />
           )}
         </div>
@@ -195,7 +178,7 @@ function WaveformRow({
             <div
               className="absolute bottom-0 left-0 right-0 rounded-[10px] origin-bottom transition-[height] duration-150 ease-out"
               style={{
-                height: `${Math.max(8, bar * 100)}%`,
+                height: `${Math.max(WAVEFORM.MIN_BAR_HEIGHT_PERCENT, bar * 100)}%`,
                 background: `linear-gradient(180deg, rgba(var(${accentVar}),${active ? 0.95 : 0.55}) 0%, rgba(var(${accentVar}),${active ? 0.5 : 0.3}) 70%, rgba(255,255,255,0.08) 100%)`,
               }}
             />

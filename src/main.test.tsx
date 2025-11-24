@@ -20,7 +20,7 @@ describe('main entry', () => {
     document.body.innerHTML = '<div id="root"></div>';
   });
 
-  it('mounts app inside BrowserRouter > ThemeProvider > LanguageRouter', async () => {
+  it('mounts app inside ErrorBoundary > BrowserRouter > ThemeProvider > LanguageRouter', async () => {
     await import('./main');
 
     expect(createRootMock).toHaveBeenCalledWith(document.getElementById('root'));
@@ -29,8 +29,12 @@ describe('main entry', () => {
     const tree = renderMock.mock.calls[0][0] as React.ReactElement;
     expect(tree.type).toBe(React.StrictMode);
 
-    // Check BrowserRouter is the first wrapper
-    const browserRouter = (tree.props as any).children;
+    // Check ErrorBoundary is the first wrapper
+    const errorBoundary = (tree.props as any).children;
+    expect(errorBoundary.type.name).toBe('ErrorBoundary');
+
+    // Check BrowserRouter is inside ErrorBoundary
+    const browserRouter = (errorBoundary.props as any).children;
     expect(browserRouter.type.name).toMatch(/Router/i);
 
     // Check ThemeProvider is inside BrowserRouter
