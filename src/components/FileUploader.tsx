@@ -9,12 +9,27 @@ interface FileUploaderProps {
 }
 
 const ACCEPTED_AUDIO_TYPES = [
-  'audio/mpeg',
-  'audio/mp3',
-  'audio/wav',
-  'audio/ogg',
-  'audio/mp4',
-  'audio/m4a',
+  'audio/mpeg',     // MP3
+  'audio/mp3',      // MP3 (alternative MIME)
+  'audio/wav',      // WAV
+  'audio/wave',     // WAV (alternative MIME)
+  'audio/x-wav',    // WAV (alternative MIME)
+  'audio/ogg',      // OGG Vorbis
+  'audio/opus',     // Opus
+  'audio/mp4',      // MP4/M4A
+  'audio/m4a',      // M4A
+  'audio/x-m4a',    // M4A (alternative MIME)
+  'audio/aac',      // AAC
+  'audio/aacp',     // AAC+
+  'audio/flac',     // FLAC
+  'audio/x-flac',   // FLAC (alternative MIME)
+  'audio/webm',     // WebM
+  'audio/aiff',     // AIFF
+  'audio/x-aiff',   // AIFF (alternative MIME)
+  'audio/aifc',     // AIFF-C
+  'audio/3gpp',     // 3GPP
+  'audio/3gpp2',    // 3GPP2
+  'audio/amr',      // AMR
 ];
 
 export function FileUploader({ onFileSelect, isLoading, hasFile }: FileUploaderProps) {
@@ -56,7 +71,7 @@ export function FileUploader({ onFileSelect, isLoading, hasFile }: FileUploaderP
     >
       <input
         type="file"
-        accept="audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/mp4,audio/m4a"
+        accept="audio/*"
         onChange={handleFileInput}
         className="hidden"
         id="file-input"

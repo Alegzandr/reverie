@@ -232,7 +232,7 @@ function App() {
                 </div>
 
                 {/* Technical Info Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-[rgb(var(--color-border))]">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 pt-2 border-t border-[rgb(var(--color-border))]">
                   {/* File Size */}
                   <div>
                     <p className="text-xs font-medium text-[rgb(var(--color-text-secondary))] uppercase tracking-wide mb-1">
@@ -275,6 +275,18 @@ function App() {
                       </p>
                       <p className="text-sm font-semibold text-[rgb(var(--color-accent))]">
                         {metadata.channels === 1 ? t('track.mono') : metadata.channels === 2 ? t('track.stereo') : `${metadata.channels}ch`}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Bit Depth */}
+                  {metadata?.bitDepth && (
+                    <div>
+                      <p className="text-xs font-medium text-[rgb(var(--color-text-secondary))] uppercase tracking-wide mb-1">
+                        {t('track.bitDepth')}
+                      </p>
+                      <p className="text-sm font-semibold text-[rgb(var(--color-accent))]">
+                        {metadata.bitDepth}-bit
                       </p>
                     </div>
                   )}

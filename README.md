@@ -15,17 +15,17 @@ A modern, professional **free online audio editor** for transforming your music 
 ### User Experience
 - **🌐 100% Online**: Works entirely in your browser - no download or installation required
 - **🔒 100% Client-Side Processing**: All audio processing happens in your browser - files never leave your device
-- **📊 Audio Metadata Display**: View technical details including bitrate, sample rate, and channel information
+- **📊 Audio Metadata Display**: View technical details including bitrate, sample rate, bit depth (for lossless formats), and channel information
 - **🎨 Waveform Visualization**: Real-time waveform display showing both original and processed audio
 - **🎧 Track Comparison**: Switch between original and processed versions with synchronized playback
-- **💾 Auto Export**: Downloads match your upload format/quality (WAV preserved; MP3 mirrors source bitrate; other uploads use matched-bitrate MP3)
+- **💾 Smart Format Export**: Exports match your original format where possible (MP3→MP3, WAV→WAV, AIFF→AIFF, WebM→WebM, OGG→OGG, M4A→M4A, FLAC→WAV)
 - **🌍 Multi-Language Support**: Available in 10 languages (English, French, Spanish, German, Portuguese, Russian, Chinese, Japanese, Korean, Hindi)
 - **🌓 Dark/Light Mode**: Automatic theme detection with manual toggle
 - **📱 PWA Support**: Install as a standalone app on mobile and desktop
 - **♿ Accessible**: Full keyboard navigation and screen reader support
 
 ### Developer Features
-- **✅ 95%+ Test Coverage**: Comprehensive test suite with 67+ passing tests
+- **✅ 95%+ Test Coverage**: Comprehensive test suite with 68+ passing tests
 - **🔍 SEO Optimized**: Schema.org metadata, sitemap, robots.txt
 - **🚀 CI/CD Pipeline**: Automated linting, testing, and deployment
 - **📊 Type-Safe**: Full TypeScript with strict mode enabled
@@ -88,8 +88,13 @@ npm run dev
 
 ## 📖 Usage
 
-1. **Upload Audio**: Drag and drop or click to browse (supports MP3, WAV, OGG, M4A, MP4)
-2. **View Metadata**: See technical details including file size, bitrate, sample rate, and channels (mono/stereo)
+1. **Upload Audio**: Drag and drop or click to browse
+   - **Supported Formats**: MP3, WAV, AIFF, FLAC, OGG/Opus, WebM, AAC/M4A, and more
+2. **View Metadata**: See technical details including:
+   - File size and bitrate
+   - Sample rate (e.g., 44.1 kHz, 48 kHz)
+   - Bit depth for lossless formats (16-bit, 24-bit)
+   - Channel configuration (mono/stereo)
 3. **Select Effect Mode**:
    - **Speed Up**: Adjust multiplier (1.1x - 2.0x)
    - **Slow + Reverb**: Adjust reverb amount (10% - 100%)
@@ -98,7 +103,14 @@ npm run dev
 4. **Apply Effects**: Click "Apply Effects" to process
 5. **Preview**: Use playback controls to listen
 6. **Compare**: Switch between original ("raw") and processed ("fx") tracks
-7. **Export**: Download in your original format/quality automatically (WAV stays WAV; MP3 keeps source bitrate; other uploads use a matched-bitrate MP3)
+7. **Export**: Download with smart format matching:
+   - **MP3** → MP3 (preserves bitrate)
+   - **WAV** → WAV (lossless)
+   - **AIFF** → AIFF (lossless)
+   - **FLAC** → WAV (lossless preservation)
+   - **WebM** → WebM (browser-native encoding with fallback to MP3)
+   - **OGG/Opus** → OGG (browser-native encoding with fallback to MP3)
+   - **AAC/M4A** → M4A (browser-native encoding with fallback to MP3)
 
 ## 📁 Project Structure
 
@@ -124,7 +136,9 @@ pitch-songs/
 │   │   └── locales/            # Translation files (EN, FR, ES, DE, PT)
 │   ├── utils/
 │   │   ├── audioProcessor.ts   # Web Audio API wrapper
-│   │   └── mp3Encoder.ts       # Audio export utilities (MP3 encoding, blob download)
+│   │   ├── mp3Encoder.ts       # MP3 encoding (LAME.js)
+│   │   ├── aiffEncoder.ts      # AIFF encoding (manual implementation)
+│   │   └── mediaRecorderEncoder.ts # WebM/OGG/AAC encoding (MediaRecorder API)
 │   ├── types/
 │   │   └── lamejs.d.ts         # TypeScript type definitions
 │   ├── App.tsx                 # Main application component
@@ -150,14 +164,21 @@ pitch-songs/
 ### Audio Processing Pipeline
 
 1. **File Loading**: Audio files decoded using Web Audio API's `decodeAudioData()`
+   - Supports MP3, WAV, AIFF, FLAC, OGG/Opus, WebM, AAC/M4A, and more
+   - Extracts metadata: sample rate, channels, bitrate, bit depth (for lossless formats)
 2. **Effect Processing** (using `OfflineAudioContext`):
    - **Speed**: Adjusts playback rate with AudioBufferSourceNode
    - **Reverb**: Creates convolution reverb with procedurally generated impulse response
    - **8D Audio**: Automates stereo panning with a custom impulse reverb tail to create rotating spatial sound
    - **Bass Boost**: Uses lowshelf filter (100 Hz), highpass filter (40 Hz), and peaking filter (300 Hz) with makeup gain for professional bass enhancement
 3. **Buffer Management**: Maintains separate buffers for original and processed audio
-4. **Export**: Detects the source format and exports either WAV (lossless) or MP3 with matched bitrate to mirror original quality
-5. **Download**: Triggers browser download with custom filename
+4. **Smart Format Export**: Detects source format and uses appropriate encoder:
+   - **MP3**: LAME.js encoder with matched bitrate
+   - **WAV**: Manual PCM encoder (lossless)
+   - **AIFF**: Manual AIFF encoder (lossless, big-endian)
+   - **FLAC**: Exports as WAV (both lossless)
+   - **WebM/OGG/M4A**: MediaRecorder API with fallback to MP3
+5. **Download**: Triggers browser download with custom filename including effect type and "by PitchSongs" suffix
 
 ### State Management
 
@@ -185,7 +206,7 @@ Generate coverage report:
 npm run test:coverage
 ```
 
-**Current Coverage**: 95.59% (67/67 tests passing)
+**Current Coverage**: 95%+ (68/68 tests passing)
 
 ## 🏗 Build for Production
 
@@ -214,7 +235,7 @@ This project uses GitHub Actions for automated deployment:
 Every push to main runs:
 - ✅ ESLint code linting
 - ✅ TypeScript type checking
-- ✅ Full test suite (67 tests)
+- ✅ Full test suite (68 tests)
 - ✅ Production build
 - ✅ Deployment to GitHub Pages
 

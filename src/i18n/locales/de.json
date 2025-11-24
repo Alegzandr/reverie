@@ -42,6 +42,7 @@
     "bitrate": "Bitrate",
     "sampleRate": "Abtastrate",
     "channels": "Kanäle",
+    "bitDepth": "Bittiefe",
     "mono": "Mono",
     "stereo": "Stereo"
   },

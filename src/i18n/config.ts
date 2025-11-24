@@ -12,6 +12,9 @@ import ja from './locales/ja.json';
 import ko from './locales/ko.json';
 import hi from './locales/hi.json';
 
+export const supportedLanguages = ['en', 'fr', 'es', 'de', 'pt', 'ru', 'zh', 'ja', 'ko', 'hi'] as const;
+export type SupportedLanguage = typeof supportedLanguages[number];
+
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
@@ -29,12 +32,14 @@ i18n
       hi: { translation: hi },
     },
     fallbackLng: 'en',
+    supportedLngs: supportedLanguages,
     interpolation: {
       escapeValue: false,
     },
     detection: {
-      order: ['localStorage', 'navigator'],
+      order: ['path', 'localStorage', 'navigator'],
       caches: ['localStorage'],
+      lookupFromPathIndex: 0,
     },
   });
 

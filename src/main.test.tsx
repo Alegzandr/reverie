@@ -20,7 +20,7 @@ describe('main entry', () => {
     document.body.innerHTML = '<div id="root"></div>';
   });
 
-  it('mounts app inside ThemeProvider', async () => {
+  it('mounts app inside BrowserRouter > ThemeProvider > LanguageRouter', async () => {
     await import('./main');
 
     expect(createRootMock).toHaveBeenCalledWith(document.getElementById('root'));
@@ -28,7 +28,17 @@ describe('main entry', () => {
 
     const tree = renderMock.mock.calls[0][0] as React.ReactElement;
     expect(tree.type).toBe(React.StrictMode);
-    const provider = (tree.props as any).children.type as any;
-    expect(provider.name).toBe('ThemeProvider');
+
+    // Check BrowserRouter is the first wrapper
+    const browserRouter = (tree.props as any).children;
+    expect(browserRouter.type.name).toMatch(/Router/i);
+
+    // Check ThemeProvider is inside BrowserRouter
+    const themeProvider = (browserRouter.props as any).children;
+    expect(themeProvider.type.name).toBe('ThemeProvider');
+
+    // Check LanguageRouter is inside ThemeProvider
+    const languageRouter = (themeProvider.props as any).children;
+    expect(languageRouter.type.name).toBe('LanguageRouter');
   });
 });

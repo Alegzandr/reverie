@@ -42,6 +42,7 @@
     "bitrate": "Débit binaire",
     "sampleRate": "Fréq. échantillon",
     "channels": "Canaux",
+    "bitDepth": "Profondeur de Bits",
     "mono": "Mono",
     "stereo": "Stéréo"
   },

@@ -42,6 +42,7 @@
     "bitrate": "Taxa de bits",
     "sampleRate": "Taxa amostragem",
     "channels": "Canais",
+    "bitDepth": "Profundidade de Bits",
     "mono": "Mono",
     "stereo": "Estéreo"
   },

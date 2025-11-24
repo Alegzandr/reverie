@@ -42,6 +42,7 @@
     "bitrate": "비트레이트",
     "sampleRate": "샘플레이트",
     "channels": "채널",
+    "bitDepth": "비트 심도",
     "mono": "모노",
     "stereo": "스테레오"
   },

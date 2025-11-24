@@ -86,6 +86,7 @@ describe('useAudioProcessor', () => {
     expect(result.current.metadata?.sampleRate).toBe(mockAudioBuffer.sampleRate);
     expect(result.current.metadata?.channels).toBe(mockAudioBuffer.numberOfChannels);
     expect(typeof result.current.metadata?.bitrate).toBe('number');
+    expect(result.current.metadata?.bitDepth).toBeNull(); // MP3 is lossy, no bit depth
   });
 
   it('handles load errors', async () => {
@@ -110,6 +111,26 @@ describe('useAudioProcessor', () => {
     });
 
     expect(result.current.state.error).toBe('Failed to load audio file');
+  });
+
+  it('detects bit depth for lossless formats', async () => {
+    mockAudioProcessor.loadAudioFile.mockResolvedValueOnce(mockAudioBuffer);
+    const { result } = renderHook(() => useAudioProcessor());
+
+    // Create a mock WAV file with size for 16-bit audio
+    // File size = header (44 bytes) + (sampleRate * channels * bytesPerSample * duration)
+    const duration = mockAudioBuffer.length / mockAudioBuffer.sampleRate;
+    const sampleRate = mockAudioBuffer.sampleRate;
+    const channels = mockAudioBuffer.numberOfChannels;
+    const bytesPerSample = 2; // 16-bit = 2 bytes
+    const fileSize = 44 + (sampleRate * channels * bytesPerSample * duration);
+    const file = new File([new ArrayBuffer(Math.floor(fileSize))], 'test.wav', { type: 'audio/wav' });
+
+    await act(async () => {
+      await result.current.loadAudioFile(file);
+    });
+
+    expect(result.current.metadata?.bitDepth).toBe(16);
   });
 
   it('processes audio with progress updates', async () => {

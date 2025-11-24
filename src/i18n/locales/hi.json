@@ -42,6 +42,7 @@
     "bitrate": "बिटरेट",
     "sampleRate": "सैंपल रेट",
     "channels": "चैनल",
+    "bitDepth": "बिट गहराई",
     "mono": "मोनो",
     "stereo": "स्टीरियो"
   },

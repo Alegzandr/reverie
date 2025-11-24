@@ -1,7 +1,17 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi, describe, it, beforeEach, expect } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 import App from './App';
+
+// Test helper to render with router
+const renderWithRouter = (ui: React.ReactElement, { route = '/' } = {}) => {
+  return render(
+    <MemoryRouter initialEntries={[route]}>
+      {ui}
+    </MemoryRouter>
+  );
+};
 
 const mockState = {
   isLoading: false,
@@ -63,7 +73,7 @@ describe('App', () => {
   });
 
   it('renders layout and updates meta tags', () => {
-    render(<App />);
+    renderWithRouter(<App />);
 
     expect(screen.getByText('app.title')).toBeInTheDocument();
     expect(document.title).toBe('meta.title');
@@ -73,7 +83,7 @@ describe('App', () => {
 
   it('shows error message when present', () => {
     mockState.error = 'Oops';
-    render(<App />);
+    renderWithRouter(<App />);
 
     expect(screen.getByText('Oops')).toBeInTheDocument();
   });
@@ -83,7 +93,7 @@ describe('App', () => {
     mockApi.processedBuffer = new AudioBuffer({ length: 1, numberOfChannels: 1, sampleRate: 44100 });
     mockApi.originalBuffer = new AudioBuffer({ length: 1, numberOfChannels: 1, sampleRate: 44100 });
     mockApi.duration = 1.5;
-    render(<App />);
+    renderWithRouter(<App />);
 
     await userEvent.click(screen.getByText('effects.8dAudio'));
     await userEvent.click(screen.getByText('effects.apply'));
@@ -113,7 +123,7 @@ describe('App', () => {
     mockApi.processAudio.mockRejectedValueOnce(new Error('process fail'));
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    render(<App />);
+    renderWithRouter(<App />);
 
     await userEvent.upload(screen.getByLabelText('upload.browse'), file);
     expect(mockApi.loadAudioFile).toHaveBeenCalledWith(file);
@@ -128,7 +138,7 @@ describe('App', () => {
   it('shows disabled process button during processing', () => {
     mockState.isProcessing = true;
     mockApi.originalFile = new File(['123'], 'song.mp3', { type: 'audio/mp3' });
-    render(<App />);
+    renderWithRouter(<App />);
 
     const button = screen.getByRole('button', { name: 'effects.processing' });
     expect(button).toBeDisabled();
@@ -137,14 +147,14 @@ describe('App', () => {
   it('shows loading progress message', () => {
     mockState.isLoading = true;
     mockState.progress = 50;
-    render(<App />);
+    renderWithRouter(<App />);
 
     expect(screen.getByText('upload.loading')).toBeInTheDocument();
   });
 
   it('exports successfully', async () => {
     mockApi.processedBuffer = new AudioBuffer({ length: 1, numberOfChannels: 1, sampleRate: 44100 });
-    render(<App />);
+    renderWithRouter(<App />);
 
     await userEvent.click(screen.getByText('playback.export'));
 
@@ -156,7 +166,7 @@ describe('App', () => {
     mockApi.exportProcessedAudio.mockRejectedValueOnce(new Error('fail'));
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    render(<App />);
+    renderWithRouter(<App />);
 
     await userEvent.click(screen.getByText('playback.export'));
     expect(mockApi.exportProcessedAudio).toHaveBeenCalled();
@@ -166,7 +176,7 @@ describe('App', () => {
   });
 
   it('toggles theme', async () => {
-    render(<App />);
+    renderWithRouter(<App />);
     await userEvent.click(screen.getByLabelText('accessibility.themeToggle'));
     expect(mockToggleTheme).toHaveBeenCalled();
   });
@@ -176,7 +186,7 @@ describe('App', () => {
     mockApi.originalBuffer = new AudioBuffer({ length: 44100, numberOfChannels: 1, sampleRate: 44100 });
     mockApi.duration = 2.5;
 
-    render(<App />);
+    renderWithRouter(<App />);
 
     const timeline = screen.getByTestId('waveform-timeline');
     await userEvent.click(timeline);
