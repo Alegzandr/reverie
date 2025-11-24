@@ -2,7 +2,7 @@
  * Tests for Export Strategies
  */
 
-import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, vi, beforeEach, beforeAll, afterAll, afterEach } from 'vitest';
 import { getExportStrategy, estimateBitrate, type ExportOptions } from './exportStrategies';
 import { BITRATE } from '../constants';
 
@@ -44,16 +44,23 @@ const createMockMediaRecorder = () => {
 
 // Store original
 const originalMediaRecorder = (globalThis as any).MediaRecorder;
+const originalWarn = console.warn;
 
 describe('exportStrategies', () => {
   beforeAll(() => {
     // Install mock globally for all tests
     (globalThis as any).MediaRecorder = createMockMediaRecorder();
+    console.warn = vi.fn();
   });
 
   afterAll(() => {
     // Restore original
     (globalThis as any).MediaRecorder = originalMediaRecorder;
+    console.warn = originalWarn;
+  });
+
+  afterEach(() => {
+    vi.mocked(console.warn).mockClear();
   });
   describe('estimateBitrate', () => {
     it('returns default bitrate when file is null', () => {

@@ -8,12 +8,14 @@ describe('useWaveform', () => {
     clearWaveformCache();
   });
 
-  it('returns zeroed bars when no buffer is provided', () => {
+  it('returns zeroed bars when no buffer is provided', async () => {
     const { result } = renderHook(() => useWaveform({ buffer: null, bars: 4 }));
 
-    expect(result.current.bars).toHaveLength(4);
-    expect(result.current.bars.every((value) => value === 0)).toBe(true);
-    expect(result.current.isComputing).toBe(false);
+    await waitFor(() => {
+      expect(result.current.bars).toHaveLength(4);
+      expect(result.current.bars.every((value) => value === 0)).toBe(true);
+      expect(result.current.isComputing).toBe(false);
+    });
   });
 
   it('computes waveform bars and marks completion', async () => {

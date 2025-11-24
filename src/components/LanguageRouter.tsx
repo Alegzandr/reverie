@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Routes, Route, useParams, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supportedLanguages, type SupportedLanguage } from '../i18n/config';
 
@@ -7,21 +7,10 @@ interface LanguageRouteProps {
   children: React.ReactNode;
 }
 
-/**
- * Component that handles language detection from URL and updates i18n
- * For non-English languages with :lang parameter
- */
-const getRemainderPath = (pathname: string): string => {
-  const match = pathname.match(/^\/([a-z]{2})(\/.*)?$/);
-  const remainder = match?.[2] ?? pathname;
-  return remainder && remainder !== '' ? remainder : '/';
-};
-
 function LanguageRoute({ children }: LanguageRouteProps) {
   const { lang } = useParams<{ lang: string }>();
   const { i18n } = useTranslation();
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     // Validate and apply language from URL
@@ -35,41 +24,6 @@ function LanguageRoute({ children }: LanguageRouteProps) {
     }
   }, [lang, i18n, navigate]);
 
-  // Listen for language changes and update URL accordingly
-  useEffect(() => {
-    const handleLanguageChange = (lng: string) => {
-      if (!supportedLanguages.includes(lng as SupportedLanguage)) return;
-
-      const remainder = getRemainderPath(location.pathname);
-      // If changing to English, go to root
-      if (lng === 'en') {
-        const nextPath = remainder || '/';
-        if (location.pathname !== nextPath) {
-          navigate(nextPath, { replace: true });
-        }
-      }
-      // If currently on a language route and changing to another non-English language
-      else if (lang && lang !== lng) {
-        const nextPath = `/${lng}${remainder === '/' ? '/' : remainder}`;
-        if (location.pathname !== nextPath) {
-          navigate(nextPath, { replace: true });
-        }
-      }
-      // If on root (English) and changing to non-English
-      else if (!lang && lng !== 'en') {
-        const nextPath = `/${lng}${remainder === '/' ? '/' : remainder}`;
-        if (location.pathname !== nextPath) {
-          navigate(nextPath, { replace: true });
-        }
-      }
-    };
-
-    i18n.on('languageChanged', handleLanguageChange);
-    return () => {
-      i18n.off('languageChanged', handleLanguageChange);
-    };
-  }, [i18n, lang, navigate, location.pathname]);
-
   return <>{children}</>;
 }
 
@@ -78,8 +32,6 @@ function LanguageRoute({ children }: LanguageRouteProps) {
  */
 function EnglishRoute({ children }: LanguageRouteProps) {
   const { i18n } = useTranslation();
-  const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     // Set language to English when on root
@@ -87,24 +39,6 @@ function EnglishRoute({ children }: LanguageRouteProps) {
       i18n.changeLanguage('en');
     }
   }, [i18n]);
-
-  // Listen for language changes and update URL accordingly
-  useEffect(() => {
-    const handleLanguageChange = (lng: string) => {
-      if (lng !== 'en' && supportedLanguages.includes(lng as SupportedLanguage)) {
-        const remainder = getRemainderPath(location.pathname);
-        const nextPath = `/${lng}${remainder === '/' ? '/' : remainder}`;
-        if (location.pathname !== nextPath) {
-          navigate(nextPath, { replace: true });
-        }
-      }
-    };
-
-    i18n.on('languageChanged', handleLanguageChange);
-    return () => {
-      i18n.off('languageChanged', handleLanguageChange);
-    };
-  }, [i18n, navigate]);
 
   return <>{children}</>;
 }
