@@ -71,18 +71,20 @@ export function useAudioProcessor() {
 
   const loadAudioFile = useCallback(async (file: File) => {
     setError(null);
+    stopAudio();
     const buffer = await loadFile(file);
     const nextBuffer = buffer || audioProcessor.getAudioBuffer();
     attachBuffer(nextBuffer, { resetPosition: true });
     return buffer;
-  }, [attachBuffer, loadFile]);
+  }, [attachBuffer, loadFile, stopAudio]);
 
   const processAudio = useCallback(async (options: AudioProcessingOptions) => {
     setError(null);
+    stopAudio();
     const buffer = await processFile(options);
     attachBuffer(buffer, { resetPosition: true });
     return buffer;
-  }, [attachBuffer, processFile]);
+  }, [attachBuffer, processFile, stopAudio]);
 
   const reset = useCallback(() => {
     stopAudio();

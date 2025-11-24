@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AUDIO_PROCESSING, ERROR_MESSAGES } from '../constants';
 
 export interface PlaybackState {
@@ -255,6 +255,8 @@ export function useAudioPlayback({
       error: null,
     }));
   }, [stopPlayback]);
+
+  useEffect(() => () => stopPlayback(), [stopPlayback]);
 
   return {
     state,
