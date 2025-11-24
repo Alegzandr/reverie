@@ -1,6 +1,5 @@
 /**
  * Tests for useAudioFile hook
- * TDD: Tests written first
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';

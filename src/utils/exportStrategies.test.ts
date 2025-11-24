@@ -1,6 +1,5 @@
 /**
  * Tests for Export Strategies
- * Following TDD principles - tests written first
  */
 
 import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from 'vitest';
