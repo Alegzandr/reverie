@@ -1,7 +1,7 @@
 {
-  "name": "PitchSongs - Professional Audio Manipulation Tool",
+  "name": "PitchSongs - Audio Manipulation Tool",
   "short_name": "PitchSongs",
-  "description": "Transform your music with professional audio effects. Create sped up versions, slow + reverb remixes, or immersive 8D audio with exports that match your original format and quality.",
+  "description": "Transform your music with audio effects. Create sped up versions, slow + reverb remixes, or immersive 8D audio with exports that match your original format and quality.",
   "start_url": "/pitch-songs/",
   "display": "standalone",
   "background_color": "#f5f5f7",

@@ -1,6 +1,6 @@
 # PitchSongs 🎵
 
-A modern, professional **free online audio editor** for transforming your music with audio effects. Create sped-up versions, slow+reverb remixes, immersive 8D audio, or bass boosted tracks - all directly in your browser with complete privacy and exports that mirror your original format and quality. **No download or installation required** - works 100% online.
+A modern **free online audio editor** for transforming your music with audio effects. Create sped-up versions, slow+reverb remixes, immersive 8D audio, or bass boosted tracks - all directly in your browser with complete privacy and exports that mirror your original format and quality. **No download or installation required** - works 100% online.
 
 **🌐 Live Demo:** [alegzandr.github.io/pitch-songs](https://alegzandr.github.io/pitch-songs/)
 
@@ -10,7 +10,7 @@ A modern, professional **free online audio editor** for transforming your music 
 - **Speed Up Mode**: Create high-energy sped-up versions (1.1x - 2.0x speed multiplier)
 - **Slow + Reverb Mode**: Generate atmospheric slowed + reverb versions (0.8x speed with adjustable reverb)
 - **8D Audio Mode**: Create immersive spatial audio with adjustable rotation speed (0.1x - 2.0x) for a surround-style headphone effect
-- **Bass Boost Mode**: Enhance low frequencies with professional filters and adjustable intensity (Light, Normal, Strong)
+- **Bass Boost Mode**: Enhance low frequencies with adjustable intensity (Light, Normal, Strong)
 
 ### User Experience
 - **🌐 100% Online**: Works entirely in your browser - no download or installation required
@@ -42,7 +42,7 @@ A modern, professional **free online audio editor** for transforming your music 
 - **Tailwind CSS v4** - Utility-first styling with PostCSS
 
 ### Audio Processing
-- **Web Audio API** - Professional browser-native audio engine
+- **Web Audio API** - Browser-native audio engine
 - **@breezystack/lamejs** - In-browser MP3 encoding
 
 ### Internationalization
@@ -184,7 +184,7 @@ pitch-songs/
    - **Speed**: Adjusts playback rate with AudioBufferSourceNode
    - **Reverb**: Creates convolution reverb with procedurally generated impulse response
    - **8D Audio**: Automates stereo panning with a custom impulse reverb tail to create rotating spatial sound
-   - **Bass Boost**: Uses lowshelf filter (100 Hz), highpass filter (40 Hz), and peaking filter (300 Hz) with makeup gain for professional bass enhancement
+   - **Bass Boost**: Uses lowshelf filter (100 Hz), highpass filter (40 Hz), and peaking filter (300 Hz) with makeup gain
 3. **Buffer Management**: Maintains separate buffers for original and processed audio
 4. **Smart Format Export**: Detects source format and uses appropriate encoder:
    - **MP3**: LAME.js encoder with matched bitrate
