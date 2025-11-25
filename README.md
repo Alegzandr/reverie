@@ -26,6 +26,7 @@ A modern, professional **free online audio editor** for transforming your music 
 
 ### Developer Features
 - **✅ Strong Test Coverage**: Comprehensive Vitest suite (100+ tests across hooks, utils, and components)
+- **🏗 Elite Architecture**: Centralized constants, reusable components, DRY principles, Strategy pattern
 - **🔍 SEO Optimized**: Schema.org metadata, sitemap, robots.txt
 - **🚀 CI/CD Pipeline**: Automated linting, testing, and deployment
 - **📊 Type-Safe**: Full TypeScript with strict mode enabled
@@ -121,8 +122,12 @@ pitch-songs/
 │       └── deploy.yml          # CI/CD pipeline
 ├── src/
 │   ├── components/             # React components
-│   │   ├── EffectControls.tsx  # Effect mode selection
+│   │   ├── EffectControls.tsx  # Effect mode selection (orchestrator)
+│   │   ├── EffectModeButton.tsx # Reusable effect mode button
+│   │   ├── EffectSlider.tsx    # Reusable effect slider control
+│   │   ├── ErrorBoundary.tsx   # Error boundary wrapper
 │   │   ├── FileUploader.tsx    # Drag-drop file upload
+│   │   ├── LanguageRouter.tsx  # Language-based routing
 │   │   ├── LanguageSelector.tsx # i18n language picker
 │   │   ├── PlaybackControls.tsx # Play/pause/export controls
 │   │   ├── ProgressBar.tsx     # Loading progress
@@ -137,16 +142,19 @@ pitch-songs/
 │   │   └── useWaveform.ts       # Cached waveform generation
 │   ├── i18n/
 │   │   ├── config.ts           # i18next configuration
-│   │   └── locales/            # Translation files (EN, FR, ES, DE, PT)
+│   │   └── locales/            # Translation files (EN, FR, ES, DE, PT, RU, ZH, JA, KO, HI)
 │   ├── utils/
 │   │   ├── audioProcessor.ts       # Web Audio API wrapper
+│   │   ├── audioMetadataExtractor.ts # Extract metadata from file headers
 │   │   ├── mp3Encoder.ts           # MP3 encoding (LAME.js)
 │   │   ├── aiffEncoder.ts          # AIFF encoding (manual implementation)
 │   │   ├── mediaRecorderEncoder.ts # WebM/OGG/AAC encoding (MediaRecorder API)
 │   │   ├── exportStrategies.ts     # Strategy pattern for exports
+│   │   ├── formatters.ts           # UI value formatting utilities
 │   │   └── waveform.ts             # Waveform caching utilities
 │   ├── types/
 │   │   └── lamejs.d.ts         # TypeScript type definitions
+│   ├── constants.ts            # Centralized app constants and configuration
 │   ├── App.tsx                 # Main application component
 │   ├── main.tsx                # Entry point
 │   └── index.css               # Global styles
@@ -282,9 +290,10 @@ Requires: Web Audio API, ES2022, IndexedDB
 
 - **Color Palette**: iOS-inspired with blue accent (#007aff)
 - **Typography**: System fonts with fallbacks
-- **Components**: Glass-morphism effects with backdrop blur
+- **Components**: Modular, reusable components with glass-morphism effects
 - **Responsive**: Mobile-first design with breakpoints
 - **Accessibility**: WCAG 2.1 AA compliant
+- **Code Quality**: Zero magic numbers, centralized constants, DRY principles
 
 ## 🤝 Contributing
 

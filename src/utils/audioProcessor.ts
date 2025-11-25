@@ -1,4 +1,4 @@
-import { AUDIO_EFFECTS } from '../constants';
+import { AUDIO_EFFECTS, AUDIO_SIGNAL } from '../constants';
 
 export interface AudioProcessingOptions {
   speedMultiplier: number;
@@ -155,8 +155,8 @@ export class AudioProcessor {
     // Dry/wet mix for reverb
     const dryGain = context.createGain();
     const wetGain = context.createGain();
-    dryGain.gain.value = 0.7;
-    wetGain.gain.value = 0.3;
+    dryGain.gain.value = AUDIO_SIGNAL.EIGHT_D_MIX.DRY_GAIN;
+    wetGain.gain.value = AUDIO_SIGNAL.EIGHT_D_MIX.WET_GAIN;
 
     // Connect the nodes
     inputGain.connect(panner);
@@ -208,7 +208,9 @@ export class AudioProcessor {
         // Create a short, bright reverb tail
         const decay = Math.exp(-i / (sampleRate * 0.1));
         // Add some variation between channels for stereo width
-        const stereoVariation = channel === 0 ? 1.0 : 0.9;
+        const stereoVariation = channel === 0
+          ? AUDIO_SIGNAL.EIGHT_D_MIX.STEREO_VARIATION_LEFT
+          : AUDIO_SIGNAL.EIGHT_D_MIX.STEREO_VARIATION_RIGHT;
         channelData[i] = (Math.random() * 2 - 1) * decay * stereoVariation;
       }
     }
@@ -330,22 +332,22 @@ export class AudioProcessor {
     };
 
     // "RIFF" chunk descriptor
-    setUint32(0x46464952);
+    setUint32(AUDIO_SIGNAL.WAV_FORMAT.RIFF_ID);
     setUint32(36 + length);
-    setUint32(0x45564157);
+    setUint32(AUDIO_SIGNAL.WAV_FORMAT.WAVE_ID);
 
     // "fmt " sub-chunk
-    setUint32(0x20746d66);
-    setUint32(16);
-    setUint16(1);
+    setUint32(AUDIO_SIGNAL.WAV_FORMAT.FMT_ID);
+    setUint32(AUDIO_SIGNAL.WAV_FORMAT.FMT_CHUNK_SIZE);
+    setUint16(AUDIO_SIGNAL.WAV_FORMAT.PCM_FORMAT);
     setUint16(numberOfChannels);
     setUint32(audioBuffer.sampleRate);
     setUint32(audioBuffer.sampleRate * numberOfChannels * 2);
     setUint16(numberOfChannels * 2);
-    setUint16(16);
+    setUint16(AUDIO_SIGNAL.WAV_FORMAT.BITS_PER_SAMPLE);
 
     // "data" sub-chunk
-    setUint32(0x61746164);
+    setUint32(AUDIO_SIGNAL.WAV_FORMAT.DATA_ID);
     setUint32(length);
 
     // Write interleaved data
@@ -356,7 +358,9 @@ export class AudioProcessor {
     while (pos < buffer.byteLength) {
       for (let i = 0; i < numberOfChannels; i++) {
         let sample = Math.max(-1, Math.min(1, channels[i][offset]));
-        sample = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
+        sample = sample < 0
+          ? sample * AUDIO_SIGNAL.PCM.INT16_MIN
+          : sample * AUDIO_SIGNAL.PCM.INT16_MAX;
         view.setInt16(pos, sample, true);
         pos += 2;
       }

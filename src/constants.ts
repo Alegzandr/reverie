@@ -233,6 +233,94 @@ export const AUDIO_EFFECTS = {
 } as const;
 
 // ============================================================================
+// UI EFFECT CONTROL DEFAULTS
+// ============================================================================
+
+export const EFFECT_DEFAULTS = {
+  /** Speed-up effect defaults */
+  SPEED_UP: {
+    DEFAULT: 1.3,
+    MIN: 1.1,
+    MAX: 2.0,
+    STEP: 0.1,
+  },
+
+  /** Slow-reverb effect defaults */
+  SLOW_REVERB: {
+    SPEED_DEFAULT: 0.7,
+    SPEED_MIN: 0.5,
+    SPEED_MAX: 0.9,
+    SPEED_STEP: 0.05,
+    REVERB_DEFAULT: 0.5,
+    REVERB_MIN: 0.1,
+    REVERB_MAX: 1.0,
+    REVERB_STEP: 0.1,
+  },
+
+  /** 8D audio effect defaults */
+  EIGHT_D_AUDIO: {
+    ROTATION_DEFAULT: 0.4,
+    ROTATION_MIN: 0.2,
+    ROTATION_MAX: 1.5,
+    ROTATION_STEP: 0.1,
+  },
+
+  /** Bass boost effect defaults */
+  BASS_BOOST_UI: {
+    INTENSITY_DEFAULT: 0.5,
+    INTENSITY_MIN: 0.0,
+    INTENSITY_MAX: 1.0,
+    INTENSITY_STEP: 0.01,
+    /** Threshold for light bass intensity */
+    LIGHT_THRESHOLD: 0.33,
+    /** Threshold for normal bass intensity */
+    NORMAL_THRESHOLD: 0.67,
+  },
+} as const;
+
+// ============================================================================
+// AUDIO PROCESSING SIGNAL CONSTANTS
+// ============================================================================
+
+export const AUDIO_SIGNAL = {
+  /** 8D audio mix ratios */
+  EIGHT_D_MIX: {
+    DRY_GAIN: 0.7,
+    WET_GAIN: 0.3,
+    STEREO_VARIATION_LEFT: 1.0,
+    STEREO_VARIATION_RIGHT: 0.9,
+  },
+
+  /** PCM conversion constants */
+  PCM: {
+    /** Maximum negative value for 16-bit PCM */
+    INT16_MIN: 0x8000,
+    /** Maximum positive value for 16-bit PCM */
+    INT16_MAX: 0x7fff,
+  },
+
+  /** WAV file format constants */
+  WAV_FORMAT: {
+    /** "RIFF" chunk descriptor */
+    RIFF_ID: 0x46464952,
+    /** "WAVE" format */
+    WAVE_ID: 0x45564157,
+    /** "fmt " sub-chunk */
+    FMT_ID: 0x20746d66,
+    /** "data" sub-chunk */
+    DATA_ID: 0x61746164,
+    /** WAV header size in bytes */
+    HEADER_SIZE: 44,
+    /** PCM format code */
+    PCM_FORMAT: 1,
+    /** Format chunk size for PCM */
+    FMT_CHUNK_SIZE: 16,
+    /** Bits per sample for 16-bit PCM */
+    BITS_PER_SAMPLE: 16,
+  },
+} as const;
+
+// ============================================================================
 // TYPE EXPORTS
 // ============================================================================
 
