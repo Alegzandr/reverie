@@ -59,11 +59,11 @@ export function useAudioPlayback({
 
   const captureProgress = useCallback(() => {
     const audioContext = getAudioContext();
-    if (!activeBufferRef.current) return state.playbackTime;
+    if (!activeBufferRef.current) return startOffsetRef.current;
     const elapsed = Math.max(0, audioContext.currentTime - playStartTimeRef.current);
     const totalDuration = getBufferDuration(activeBufferRef.current);
     return Math.min(startOffsetRef.current + elapsed, totalDuration);
-  }, [getAudioContext, getBufferDuration, state.playbackTime]);
+  }, [getAudioContext, getBufferDuration]);
 
   const stopPlayback = useCallback(() => {
     playbackSessionRef.current += 1;
@@ -120,7 +120,7 @@ export function useAudioPlayback({
     }));
   }, [getBufferDuration]);
 
-  const playAudio = useCallback((buffer?: AudioBuffer, startTime = state.playbackTime) => {
+  const playAudio = useCallback((buffer?: AudioBuffer, startTime?: number) => {
     const audioContext = getAudioContext();
     const bufferToPlay = buffer || activeBufferRef.current || getFallbackBuffer();
 
@@ -162,7 +162,8 @@ export function useAudioPlayback({
     }
 
     const totalDuration = getBufferDuration(bufferToPlay);
-    const startAt = Math.max(0, Math.min(startTime, totalDuration));
+    // Use provided startTime or current offset (don't depend on state.playbackTime)
+    const startAt = Math.max(0, Math.min(startTime ?? startOffsetRef.current, totalDuration));
     startOffsetRef.current = startAt;
     activeBufferRef.current = bufferToPlay;
 
@@ -208,7 +209,7 @@ export function useAudioPlayback({
     source.start(0, startAt);
     sourceNodeRef.current = source;
     playbackRafRef.current = requestAnimationFrame(tick);
-  }, [getAudioContext, getBufferDuration, getFallbackBuffer, setError, state.volume, state.playbackTime]);
+  }, [getAudioContext, getBufferDuration, getFallbackBuffer, setError, state.volume]);
 
   const stopAudio = useCallback(() => {
     stopPlayback();
@@ -256,7 +257,44 @@ export function useAudioPlayback({
     }));
   }, [stopPlayback]);
 
-  useEffect(() => () => stopPlayback(), [stopPlayback]);
+  // Cleanup on unmount - stop playback
+  useEffect(() => {
+    return () => {
+      // Cleanup function captures the current session to avoid stale closures
+      playbackSessionRef.current += 1;
+
+      if (sourceNodeRef.current) {
+        sourceNodeRef.current.onended = null;
+        try {
+          sourceNodeRef.current.stop();
+        } catch {
+          // ignore stop errors
+        }
+        try {
+          sourceNodeRef.current.disconnect();
+        } catch {
+          // ignore disconnect errors
+        }
+        sourceNodeRef.current = null;
+      }
+
+      if (gainNodeRef.current) {
+        try {
+          gainNodeRef.current.disconnect();
+        } catch {
+          // ignore disconnect errors
+        }
+        gainNodeRef.current = null;
+      }
+
+      if (playbackRafRef.current) {
+        cancelAnimationFrame(playbackRafRef.current);
+        playbackRafRef.current = null;
+      }
+
+      activeBufferRef.current = null;
+    };
+  }, []); // Empty deps - only run on mount/unmount
 
   return {
     state,

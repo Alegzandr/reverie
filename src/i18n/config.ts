@@ -36,10 +36,14 @@ i18n
     interpolation: {
       escapeValue: false,
     },
+    // Disable automatic detection - we handle language detection via routing
     detection: {
-      order: ['path', 'localStorage', 'navigator'],
-      caches: ['localStorage'],
-      lookupFromPathIndex: 0,
+      order: [],
+      caches: [],
+    },
+    // Prevent i18n from modifying the URL
+    react: {
+      useSuspense: false,
     },
   });
 

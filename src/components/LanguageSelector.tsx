@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Globe, Check, X } from 'lucide-react';
 
 const languages = [
@@ -18,6 +19,8 @@ const languages = [
 
 export function LanguageSelector() {
   const { i18n, t } = useTranslation();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
   const portalTarget = typeof document !== 'undefined' ? document.body : null;
 
@@ -32,7 +35,24 @@ export function LanguageSelector() {
   }, []);
 
   const handleLanguageChange = (langCode: string) => {
-    i18n.changeLanguage(langCode);
+    // Navigate to the new language path
+    // English is at root (/), other languages at /:lang/
+
+    // Preserve any existing path segments after the language
+    const currentPath = location.pathname;
+    const pathSegments = currentPath.split('/').filter(Boolean);
+
+    // Remove language code if present (first segment for non-English)
+    const currentLang = pathSegments[0];
+    const isLangCode = languages.some(lang => lang.code === currentLang);
+    const remainingPath = isLangCode ? pathSegments.slice(1) : pathSegments;
+
+    // Build final path
+    const finalPath = langCode === 'en'
+      ? (remainingPath.length > 0 ? `/${remainingPath.join('/')}` : '/')
+      : `/${langCode}${remainingPath.length > 0 ? `/${remainingPath.join('/')}` : '/'}`;
+
+    navigate(finalPath, { replace: false });
     setOpen(false);
   };
 

@@ -279,6 +279,21 @@ export const EFFECT_DEFAULTS = {
 } as const;
 
 // ============================================================================
+// EXPORT LABELS (English-only for filenames)
+// ============================================================================
+
+/**
+ * English-only effect labels for exported filenames
+ * These should NOT be translated to maintain consistent naming across languages
+ */
+export const EFFECT_EXPORT_LABELS = {
+  'speed-up': 'sped-up',
+  'slow-reverb': 'slow+reverb',
+  '8d-audio': '8D',
+  'bass-boost': 'bass-boosted',
+} as const;
+
+// ============================================================================
 // AUDIO PROCESSING SIGNAL CONSTANTS
 // ============================================================================
 

@@ -10,6 +10,7 @@ import { LanguageSelector } from './components/LanguageSelector';
 import { WaveformTimeline } from './components/WaveformTimeline';
 import { useAudioProcessor } from './hooks/useAudioProcessor';
 import { useTheme } from './contexts/ThemeContext';
+import { EFFECT_EXPORT_LABELS } from './constants';
 
 function App() {
   const { t, i18n } = useTranslation();
@@ -126,18 +127,13 @@ function App() {
   const handleExport = useCallback(async () => {
     try {
       const baseName = originalFile ? originalFile.name.replace(/\.[^/.]+$/, '') : 'track';
-      const fxLabel = effectSettings.mode === 'speed-up'
-        ? t('effects.speedUp')
-        : effectSettings.mode === 'slow-reverb'
-          ? t('effects.slowReverb')
-          : effectSettings.mode === '8d-audio'
-            ? t('effects.8dAudio')
-            : t('effects.bassBoost');
+      // Use English-only labels for filenames (not translated)
+      const fxLabel = EFFECT_EXPORT_LABELS[effectSettings.mode];
       await exportProcessedAudio({ filename: baseName, effectLabel: fxLabel });
     } catch (error) {
       console.error('Export error:', error);
     }
-  }, [exportProcessedAudio, originalFile, effectSettings.mode, t]);
+  }, [exportProcessedAudio, originalFile, effectSettings.mode]);
 
   const handleTrackSelect = useCallback(
     (track: 'raw' | 'fx') => {
