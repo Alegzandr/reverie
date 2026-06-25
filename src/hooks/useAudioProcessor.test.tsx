@@ -10,14 +10,28 @@ const { mockAudioBuffer, mockDownload, mockAudioContext, mockAudioProcessor, moc
   const getStrategy = vi.fn(() => exportStrategy);
   const estimate = vi.fn(() => 192);
 
+  const param = (value = 0) => ({
+    value,
+    setValueAtTime: vi.fn(),
+    setTargetAtTime: vi.fn(),
+    linearRampToValueAtTime: vi.fn(),
+    cancelScheduledValues: vi.fn(),
+  });
+
   const audioContext = {
     destination: {},
     currentTime: 0,
-    createGain: vi.fn(() => ({ gain: { value: 1 }, connect: vi.fn(), disconnect: vi.fn() })),
+    sampleRate: 44100,
+    createGain: vi.fn(() => ({ gain: param(1), connect: vi.fn(), disconnect: vi.fn() })),
     createBufferSource: vi.fn(() => {
-      const node: any = { buffer: null, playbackRate: { value: 1 }, connect: vi.fn(), start: vi.fn(), stop: vi.fn(), onended: null };
+      const node: any = { buffer: null, loop: false, playbackRate: param(1), connect: vi.fn(), disconnect: vi.fn(), start: vi.fn(), stop: vi.fn(), onended: null };
       return node;
     }),
+    createBiquadFilter: vi.fn(() => ({ type: '', frequency: param(350), Q: param(1), gain: param(0), connect: vi.fn(), disconnect: vi.fn() })),
+    createConvolver: vi.fn(() => ({ buffer: null, connect: vi.fn(), disconnect: vi.fn() })),
+    createStereoPanner: vi.fn(() => ({ pan: param(0), connect: vi.fn(), disconnect: vi.fn() })),
+    createOscillator: vi.fn(() => ({ type: '', frequency: param(440), connect: vi.fn(), disconnect: vi.fn(), start: vi.fn(), stop: vi.fn() })),
+    createBuffer: vi.fn((_channels: number, length: number) => ({ getChannelData: () => new Float32Array(length) })),
   };
 
   const processor = {

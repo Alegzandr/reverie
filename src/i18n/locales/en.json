@@ -70,7 +70,7 @@
   "waveform": {
     "title": "Waveform Timeline",
     "caption": "Scrub between raw and FX audio",
-    "playing": "Previewing",
+    "playing": "Now playing",
     "idle": "Ready",
     "scrub": "Scrub timeline",
     "raw": "Raw",
@@ -87,5 +87,15 @@
     "title": "Reverie - Slowed + Reverb, 8D & Speed | Free Online Audio Editor",
     "description": "Free online audio editor - Transform your music with audio effects instantly in your browser. Create sped up versions, slow + reverb remixes, immersive 8D audio, or bass boosted tracks. No download required. 100% free online tool with client-side processing.",
     "keywords": "online audio editor, audio manipulation online, speed up audio online, slow reverb online, 8D audio online, bass boost online, online audio effects, online music editor, free audio tool online, browser audio editor, no download audio editor, bass booster online"
+  },
+  "settings": {
+    "open": "Settings",
+    "title": "Settings",
+    "subtitle": "Appearance and language",
+    "appearance": "Appearance",
+    "light": "Light",
+    "dark": "Dark",
+    "language": "Language",
+    "close": "Close settings"
   }
 }

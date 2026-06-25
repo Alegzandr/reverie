@@ -39,18 +39,53 @@ class MockAudioBuffer {
   }
 }
 
+const mockParam = (value = 0) => ({
+  value,
+  setValueAtTime: vi.fn(),
+  setTargetAtTime: vi.fn(),
+  linearRampToValueAtTime: vi.fn(),
+  cancelScheduledValues: vi.fn(),
+});
+
 class MockGainNode {
-  gain = { value: 1 };
+  gain = mockParam(1);
   connect = vi.fn();
+  disconnect = vi.fn();
 }
 
 class MockBufferSource {
   buffer: MockAudioBuffer | null = null;
-  playbackRate = { value: 1 };
+  loop = false;
+  playbackRate = mockParam(1);
   connect = vi.fn();
+  disconnect = vi.fn();
   start = vi.fn();
   stop = vi.fn();
   onended: (() => void) | null = null;
+}
+
+class MockBiquadFilter {
+  type = '';
+  frequency = mockParam(350);
+  Q = mockParam(1);
+  gain = mockParam(0);
+  connect = vi.fn();
+  disconnect = vi.fn();
+}
+
+class MockStereoPanner {
+  pan = mockParam(0);
+  connect = vi.fn();
+  disconnect = vi.fn();
+}
+
+class MockOscillator {
+  type = '';
+  frequency = mockParam(440);
+  connect = vi.fn();
+  disconnect = vi.fn();
+  start = vi.fn();
+  stop = vi.fn();
 }
 
 class MockScriptProcessor {
@@ -61,6 +96,7 @@ class MockScriptProcessor {
 class MockConvolverNode {
   buffer: MockAudioBuffer | null = null;
   connect = vi.fn();
+  disconnect = vi.fn();
 }
 
 class MockOfflineAudioContext {
@@ -99,6 +135,7 @@ class MockOfflineAudioContext {
 class MockAudioContext {
   destination = {} as AudioDestinationNode;
   sampleRate = 44100;
+  currentTime = 0;
 
   createGain() {
     return new MockGainNode();
@@ -106,6 +143,26 @@ class MockAudioContext {
 
   createBufferSource() {
     return new MockBufferSource();
+  }
+
+  createBiquadFilter() {
+    return new MockBiquadFilter();
+  }
+
+  createConvolver() {
+    return new MockConvolverNode();
+  }
+
+  createStereoPanner() {
+    return new MockStereoPanner();
+  }
+
+  createOscillator() {
+    return new MockOscillator();
+  }
+
+  createBuffer(channels: number, length: number, sampleRate: number) {
+    return new MockAudioBuffer(channels, length, sampleRate);
   }
 
   decodeAudioData(data: ArrayBuffer): Promise<MockAudioBuffer> {

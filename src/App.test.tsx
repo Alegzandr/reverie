@@ -1,17 +1,13 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi, describe, it, beforeEach, expect } from 'vitest';
-import { MemoryRouter } from 'react-router-dom';
 import App from './App';
+import { TooltipProvider } from './components/ui/tooltip';
 
-// Test helper to render with router
-const renderWithRouter = (ui: React.ReactElement, { route = '/' } = {}) => {
-  return render(
-    <MemoryRouter initialEntries={[route]}>
-      {ui}
-    </MemoryRouter>
-  );
-};
+// App no longer depends on a router (language lives in localStorage, not the URL).
+// It does use shadcn Tooltips, which require a TooltipProvider ancestor (as in main.tsx).
+const renderWithRouter = (ui: React.ReactElement) =>
+  render(<TooltipProvider>{ui}</TooltipProvider>);
 
 const mockState = {
   isLoading: false,
@@ -30,7 +26,7 @@ const mockApi = {
   duration: 0,
   volume: 0.7,
   loadAudioFile: vi.fn(),
-  processAudio: vi.fn(async () => new AudioBuffer({ length: 1, numberOfChannels: 1, sampleRate: 44100 })),
+  setEffects: vi.fn(),
   playAudio: vi.fn(),
   stopAudio: vi.fn(),
   exportProcessedAudio: vi.fn(async () => {}),
@@ -88,17 +84,15 @@ describe('App', () => {
     expect(screen.getByText('Oops')).toBeInTheDocument();
   });
 
-  it('handles processing and playback flow', async () => {
+  it('applies effects live, plays, and resets', async () => {
     mockApi.originalFile = new File(['123'], 'song.mp3', { type: 'audio/mp3' });
-    mockApi.processedBuffer = new AudioBuffer({ length: 1, numberOfChannels: 1, sampleRate: 44100 });
     mockApi.originalBuffer = new AudioBuffer({ length: 1, numberOfChannels: 1, sampleRate: 44100 });
     mockApi.duration = 1.5;
     renderWithRouter(<App />);
 
+    // Selecting a mode applies effects immediately (no separate "apply" step).
     await userEvent.click(screen.getByText('effects.8dAudio'));
-    await userEvent.click(screen.getByText('effects.apply'));
-
-    expect(mockApi.processAudio).toHaveBeenCalledWith({
+    expect(mockApi.setEffects).toHaveBeenLastCalledWith({
       speedMultiplier: 1,
       reverbAmount: 0,
       preservePitch: false,
@@ -108,40 +102,22 @@ describe('App', () => {
       bassBoostIntensity: undefined,
     });
 
-    await userEvent.click(screen.getByText('playback.play'));
-    expect(mockApi.playAudio).toHaveBeenCalledWith(mockApi.processedBuffer, 0);
+    await userEvent.click(screen.getByLabelText('playback.play'));
+    expect(mockApi.playAudio).toHaveBeenCalledWith(mockApi.originalBuffer, 0);
 
     const resetButtons = screen.getAllByLabelText('accessibility.resetApp');
     await userEvent.click(resetButtons[0]);
     expect(mockApi.reset).toHaveBeenCalled();
   });
 
-  it('uploads file and handles processing errors', async () => {
+  it('loads a replacement file from the workspace', async () => {
     const file = new File(['abc'], 'upload.mp3', { type: 'audio/mp3' });
     mockApi.originalFile = file;
-    mockApi.loadAudioFile.mockResolvedValueOnce(undefined);
-    mockApi.processAudio.mockRejectedValueOnce(new Error('process fail'));
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     renderWithRouter(<App />);
 
     await userEvent.upload(screen.getByLabelText('upload.browse'), file);
     expect(mockApi.loadAudioFile).toHaveBeenCalledWith(file);
-
-    await userEvent.click(screen.getByText('effects.apply'));
-    expect(mockApi.processAudio).toHaveBeenCalled();
-    expect(consoleSpy).toHaveBeenCalledWith('Processing error:', expect.any(Error));
-
-    consoleSpy.mockRestore();
-  });
-
-  it('shows disabled process button during processing', () => {
-    mockState.isProcessing = true;
-    mockApi.originalFile = new File(['123'], 'song.mp3', { type: 'audio/mp3' });
-    renderWithRouter(<App />);
-
-    const button = screen.getByRole('button', { name: 'effects.processing' });
-    expect(button).toBeDisabled();
   });
 
   it('shows loading progress message', () => {
@@ -175,9 +151,11 @@ describe('App', () => {
     consoleSpy.mockRestore();
   });
 
-  it('toggles theme', async () => {
+  it('toggles theme from the settings menu', async () => {
     renderWithRouter(<App />);
-    await userEvent.click(screen.getByLabelText('accessibility.themeToggle'));
+    // Theme + language now live behind a single settings menu.
+    await userEvent.click(screen.getByLabelText('settings.open'));
+    await userEvent.click(screen.getByLabelText('settings.dark'));
     expect(mockToggleTheme).toHaveBeenCalled();
   });
 
@@ -189,7 +167,9 @@ describe('App', () => {
     renderWithRouter(<App />);
 
     const timeline = screen.getByTestId('waveform-timeline');
-    await userEvent.click(timeline);
+    timeline.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, right: 200, bottom: 100, width: 200, height: 100, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect;
+    fireEvent.pointerDown(timeline, { clientX: 100 });
 
     expect(mockApi.seekTo).toHaveBeenCalled();
   });

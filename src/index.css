@@ -1,6 +1,45 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
-/* Apple-style iOS Glass Design */
+/* Dark mode keys off the `.dark` class (toggled on <html>), not prefers-color-scheme */
+@custom-variant dark (&:is(.dark *));
+
+/* Expose the shadcn semantic tokens to Tailwind's utility namespace.
+   `inline` substitutes the var() at build time so utilities like bg-card and
+   text-muted-foreground stay theme-reactive via the .dark overrides.
+   We intentionally omit background/border/accent here: those names already
+   exist as --color-* triplets and remapping them would break the many
+   rgb(var(--color-*)) call sites across the app. */
+@theme inline {
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-ring: var(--ring);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  /* Two real faces, no system UI font. Hanken Grotesk (humanist sans) carries
+     every label, control, and value; Fraunces (soft serif) is the dreamy
+     counterpoint for the wordmark + headings only. Trailing system entries are
+     a swap/non-Latin net, never the design intent. */
+  --font-sans: 'Hanken Grotesk Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Fraunces Variable', Georgia, 'Times New Roman', serif;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* Reverie — dreamy in-browser audio studio */
 @layer base {
   :root {
     --color-background: 244, 245, 249;
@@ -17,7 +56,32 @@
     --aurora-pink: 244, 114, 182;
     --aurora-cyan: 56, 224, 232;
 
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+    /* ── shadcn semantic layer ──────────────────────────────────────────
+       Full-color tokens derived from the Aurora triplets above. They use
+       var(--color-*) so they inherit the .dark overrides automatically —
+       no need to redeclare them per theme. Names are kept distinct from the
+       existing --color-* triplets so neither system clobbers the other. */
+    --radius: 1rem;
+    --foreground: rgb(var(--color-text));
+    --card: rgb(var(--color-surface));
+    --card-foreground: rgb(var(--color-text));
+    --popover: rgb(var(--color-surface));
+    --popover-foreground: rgb(var(--color-text));
+    --primary: rgb(var(--color-accent));
+    --primary-foreground: #ffffff;
+    --secondary: rgb(var(--color-surface));
+    --secondary-foreground: rgb(var(--color-text));
+    --muted: rgba(var(--color-border), 0.4);
+    --muted-foreground: rgb(var(--color-text-secondary));
+    --ring: rgb(var(--color-accent));
+    --destructive: rgb(239, 68, 68);
+    --destructive-foreground: #ffffff;
+
+    /* Hanken Grotesk carries the whole UI. The trailing system entries are a
+       last-resort net only: they catch the brief swap window and non-Latin
+       scripts (CJK/Cyrillic) that a Latin web font can't render. For every
+       Latin locale the UI is 100% Hanken, never a system face. */
+    font-family: 'Hanken Grotesk Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -41,10 +105,24 @@
     color: rgb(var(--color-text));
     transition: background-color 0.3s ease, color 0.3s ease;
   }
+
+  /* Fraunces' SOFT axis rounds the terminals just enough to read oneiric
+     rather than editorial-cold (the `soft` cut pins optical size to display).
+     Tracking is left to each call site: airy on the wordmark, neutral on
+     titles. */
+  .font-display {
+    font-variation-settings: 'SOFT' 50;
+  }
+
+  /* Visible focus for every interactive control (WCAG 2.1 AA) */
+  :focus-visible {
+    outline: 2px solid rgba(var(--color-accent), 0.9);
+    outline-offset: 2px;
+  }
 }
 
 @layer utilities {
-  /* iOS Glass Effect */
+  /* iOS Glass Effect — the core floating surface */
   .glass {
     background: rgba(var(--color-surface), 0.82);
     backdrop-filter: saturate(180%) blur(20px);
@@ -63,11 +141,16 @@
       0 18px 50px -24px rgba(var(--color-ambient), 0.28);
   }
 
-  /* iOS Button Style */
+  /* iOS Button Style — press scale + a soft, multi-property settle. The visible
+     lift now lives in each variant's shadow/fill (so transparent buttons react
+     too); brightness is only a faint top-up on filled surfaces. */
   .ios-button {
-    position: relative;
     overflow: hidden;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+      filter 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+      background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+      border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+      box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .ios-button:active {
@@ -75,11 +158,192 @@
   }
 
   .ios-button:hover {
-    filter: brightness(1.05);
+    filter: brightness(1.03);
   }
 
   .dark .ios-button:hover {
-    filter: brightness(1.15);
+    filter: brightness(1.08);
+  }
+
+  /* Aurora signature surface (Export). The full three-stop gradient sits on an
+     oversized canvas and pans gently on hover for a slow, dreamy shimmer —
+     a one-shot transition, not a loop, so it stays calm. */
+  .btn-aurora {
+    background-image: linear-gradient(
+      120deg,
+      rgb(var(--aurora-violet)) 0%,
+      rgb(var(--aurora-pink)) 52%,
+      rgb(var(--aurora-cyan)) 100%
+    );
+    background-size: 150% 150%;
+    background-position: 0% 50%;
+    transition: background-position 0.55s cubic-bezier(0.4, 0, 0.2, 1),
+      box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+      transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+      filter 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .btn-aurora:hover {
+    background-position: 100% 50%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn-aurora:hover {
+      background-position: 0% 50%;
+    }
+  }
+
+  /* Soft Aurora ring breathing outward from the play orb while a track plays.
+     A pure box-shadow pulse (no layout), silenced under reduced motion. */
+  .play-pulse {
+    box-shadow: 0 0 0 0 rgba(var(--aurora-violet), 0.45);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .play-pulse {
+      animation: play-pulse 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+  }
+
+  @keyframes play-pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(var(--aurora-violet), 0.45);
+      opacity: 0.9;
+    }
+    70% {
+      box-shadow: 0 0 0 13px rgba(var(--aurora-pink), 0);
+      opacity: 0;
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(var(--aurora-pink), 0);
+      opacity: 0;
+    }
+  }
+
+  /* Reverberation echoes behind the upload well. Concentric Aurora rings
+     breathe outward — the same reverb motif as the brand mark and play orb.
+     Static (faint, just present) under reduced motion. */
+  .upload-echo {
+    opacity: 0.5;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .upload-echo {
+      animation: upload-echo 3.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+  }
+
+  @keyframes upload-echo {
+    0% {
+      transform: scale(0.92);
+      opacity: 0.55;
+    }
+    70% {
+      transform: scale(1.16);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1.16);
+      opacity: 0;
+    }
+  }
+
+  /* Range slider — Aurora-filled track, soft halo thumb.
+     Drive the fill with --range (0–100) inline. */
+  .slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 9999px;
+    cursor: pointer;
+    background: linear-gradient(
+      to right,
+      rgb(var(--color-accent)) 0%,
+      rgb(var(--color-accent)) var(--range, 50%),
+      rgba(var(--color-border), 0.55) var(--range, 50%),
+      rgba(var(--color-border), 0.55) 100%
+    );
+    transition: filter 0.2s ease;
+  }
+
+  .slider:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 9999px;
+    background: #fff;
+    border: none;
+    box-shadow:
+      0 2px 6px -1px rgba(0, 0, 0, 0.35),
+      0 0 0 4px rgba(var(--color-accent), 0.22);
+    transition: box-shadow 0.2s ease, transform 0.1s ease;
+  }
+
+  .slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 9999px;
+    background: #fff;
+    border: none;
+    box-shadow:
+      0 2px 6px -1px rgba(0, 0, 0, 0.35),
+      0 0 0 4px rgba(var(--color-accent), 0.22);
+  }
+
+  .slider:hover::-webkit-slider-thumb {
+    box-shadow:
+      0 2px 8px -1px rgba(0, 0, 0, 0.4),
+      0 0 0 6px rgba(var(--color-accent), 0.28);
+  }
+
+  .slider:active::-webkit-slider-thumb {
+    transform: scale(1.08);
+  }
+
+  .slider:focus-visible {
+    outline: none;
+  }
+
+  .slider:focus-visible::-webkit-slider-thumb {
+    box-shadow:
+      0 2px 8px -1px rgba(0, 0, 0, 0.4),
+      0 0 0 6px rgba(var(--color-accent), 0.4);
+  }
+
+  /* Ambient drift behind the welcome stage — atmosphere, not chrome */
+  .aurora-stage::before {
+    content: "";
+    position: absolute;
+    inset: -20%;
+    z-index: -1;
+    background:
+      radial-gradient(40% 38% at 22% 30%, rgba(var(--aurora-violet), 0.20), transparent 70%),
+      radial-gradient(36% 34% at 78% 24%, rgba(var(--aurora-pink), 0.16), transparent 70%),
+      radial-gradient(42% 40% at 60% 82%, rgba(var(--aurora-cyan), 0.14), transparent 72%);
+    filter: blur(18px);
+    pointer-events: none;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .aurora-stage::before {
+      animation: aurora-drift 22s ease-in-out infinite alternate;
+    }
+  }
+
+  @keyframes aurora-drift {
+    from {
+      transform: translate3d(-2%, -1%, 0) scale(1);
+    }
+    to {
+      transform: translate3d(2%, 2%, 0) scale(1.08);
+    }
   }
 
   /* Custom scrollbar */
@@ -93,19 +357,15 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(var(--color-border), 0.8);
     border-radius: 4px;
   }
 
   .dark ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(var(--color-border), 0.9);
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.3);
-  }
-
-  .dark ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(var(--color-text-secondary), 0.6);
   }
 }

@@ -1,3 +1,5 @@
+import { Slider } from "@/components/ui/slider";
+
 interface EffectSliderProps {
     id: string;
     label: string;
@@ -13,7 +15,9 @@ interface EffectSliderProps {
 }
 
 /**
- * Reusable slider component for audio effect controls
+ * One clear control per effect. The track fills with the Aurora accent up to the
+ * current value (driven by the --range custom property), and the value is rendered
+ * large so the result, not the mechanism, leads.
  */
 export function EffectSlider({
     id,
@@ -31,32 +35,30 @@ export function EffectSlider({
     const formattedValue = formatValue(value);
 
     return (
-        <div className="space-y-4">
-            <div className="flex items-center justify-between mb-3">
+        <div className="space-y-3">
+            <div className="flex items-end justify-between gap-3">
                 <label
                     htmlFor={id}
-                    className="text-sm font-medium text-[rgb(var(--color-text))]"
+                    className="text-sm font-medium text-[rgb(var(--color-text-secondary))]"
                 >
                     {label}
                 </label>
                 <span
-                    className="text-2xl font-semibold text-[rgb(var(--color-accent))]"
+                    className="text-2xl font-semibold tabular-nums text-[rgb(var(--color-accent))]"
                     aria-live="polite"
                 >
                     {formattedValue}
                 </span>
             </div>
-            <input
+            <Slider
                 id={id}
-                type="range"
                 min={min}
                 max={max}
                 step={step}
                 value={value}
-                onChange={(e) => onChange(parseFloat(e.target.value))}
+                onValueChange={onChange}
                 disabled={disabled}
                 aria-label={`${label}: ${formattedValue}`}
-                className="w-full h-2 rounded-full appearance-none cursor-pointer accent-[rgb(var(--color-accent))] bg-[rgba(var(--color-border),0.55)]"
             />
             {showMarkers && markers && (
                 <div className="flex justify-between text-xs text-[rgb(var(--color-text-secondary))]">

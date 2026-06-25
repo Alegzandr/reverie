@@ -1,197 +1,180 @@
-import { useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Sparkles, Waves } from 'lucide-react';
 import { WAVEFORM } from '../constants';
 import { useWaveform } from '../hooks/useWaveform';
+import { shapeEnvelope } from '../utils/waveform';
+import { formatClock } from '../utils/formatters';
+import type { AudioProcessingOptions } from '../utils/audioProcessor';
 
 interface WaveformTimelineProps {
-  originalBuffer?: AudioBuffer | null;
-  processedBuffer?: AudioBuffer | null;
-  longestDuration: number;
+  buffer?: AudioBuffer | null;
   duration: number;
   currentTime: number;
   isPlaying: boolean;
-  selectedTrack: 'raw' | 'fx';
-  onSelectTrack: (track: 'raw' | 'fx') => void;
-  onSeek: (time: number, bufferOverride?: AudioBuffer | null) => void;
-}
-
-function formatClock(seconds: number) {
-  if (!Number.isFinite(seconds)) return '0:00';
-  const totalSeconds = Math.max(0, Math.floor(seconds));
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const secs = totalSeconds % 60;
-  if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  }
-  return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  onSeek: (time: number) => void;
+  options?: AudioProcessingOptions | null;
 }
 
 export function WaveformTimeline({
-  originalBuffer,
-  processedBuffer,
-  longestDuration,
+  buffer,
   duration,
   currentTime,
   isPlaying,
-  selectedTrack,
-  onSelectTrack,
   onSeek,
+  options,
 }: WaveformTimelineProps) {
   const { t } = useTranslation();
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const viewportRef = useRef<HTMLDivElement | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  const draggingRef = useRef(false);
 
-  const longest = Math.max(longestDuration || 0, duration || 0, processedBuffer?.duration || 0, originalBuffer?.duration || 0, 1);
-  const rawBars = Math.max(WAVEFORM.MIN_BAR_COUNT, Math.round((originalBuffer?.duration || longest) / longest * WAVEFORM.BAR_COUNT));
-  const fxBars = Math.max(WAVEFORM.MIN_BAR_COUNT, Math.round((processedBuffer?.duration || longest) / longest * WAVEFORM.BAR_COUNT));
+  // DAW-style zoom: a constant pixels-per-second, so the content width and the bar count
+  // both scale by the stretch factor (1 / rate) and density stays the same. Slowing down
+  // makes the clip physically wider (it overflows and scrolls); speeding up makes it
+  // shorter, so it sits narrower against the left, time-0 anchored like a real timeline.
+  const rate = options?.speedMultiplier || 1;
+  const stretch = rate > 0 ? 1 / rate : 1;
+  const widthPercent = stretch * 100;
+  const barCount = Math.max(WAVEFORM.MIN_BAR_COUNT, Math.round(WAVEFORM.BAR_COUNT * stretch));
 
-  const { bars: rawWaveform } = useWaveform({ buffer: originalBuffer, bars: rawBars });
-  const { bars: fxWaveform } = useWaveform({ buffer: processedBuffer, bars: fxBars });
+  const { bars: sourceBars } = useWaveform({ buffer, bars: barCount });
+  // Preview the active effect by reshaping the source envelope in step with the sound.
+  const bars = useMemo(() => shapeEnvelope(sourceBars, options), [sourceBars, options]);
 
-  const handleSeek = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (!duration || !containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const ratio = (event.clientX - rect.left) / rect.width;
-    const clampedRatio = Math.min(Math.max(ratio, 0), 1);
-    const bufferOverride = selectedTrack === 'fx' ? processedBuffer : originalBuffer;
-    onSeek(clampedRatio * duration, bufferOverride || undefined);
+  const ratio = duration ? Math.min(1, Math.max(0, currentTime / duration)) : 0;
+  const playhead = ratio * 100;
+
+  const seekFromEvent = (clientX: number) => {
+    if (!duration || !contentRef.current) return;
+    const rect = contentRef.current.getBoundingClientRect();
+    if (!rect.width) return;
+    const r = Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1);
+    onSeek(r * duration);
   };
 
-  const playhead = duration ? (currentTime / duration) * 100 : 0;
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    draggingRef.current = true;
+    try {
+      contentRef.current?.setPointerCapture(event.pointerId);
+    } catch {
+      // setPointerCapture is unavailable in some environments; dragging still works.
+    }
+    seekFromEvent(event.clientX);
+  };
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!draggingRef.current) return;
+    seekFromEvent(event.clientX);
+  };
+
+  const endDrag = () => {
+    draggingRef.current = false;
+  };
+
+  // Keep the playhead in view as it travels through an overflowing (stretched) waveform.
+  // Skipped while scrubbing so the auto-follow never fights the user's drag.
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    const content = contentRef.current;
+    if (!viewport || !content || draggingRef.current) return;
+    const overflow = content.scrollWidth - viewport.clientWidth;
+    if (overflow <= 1) return;
+    const playheadPx = ratio * content.scrollWidth;
+    const target = Math.min(Math.max(playheadPx - viewport.clientWidth / 2, 0), overflow);
+    viewport.scrollLeft = target;
+  }, [ratio, stretch, isPlaying]);
 
   return (
-    <div className="glass rounded-3xl p-4 sm:p-5 space-y-4 bg-[linear-gradient(145deg,rgba(var(--color-surface),0.95),rgba(var(--color-ambient),0.08))] shadow-[0_20px_70px_-40px_rgba(var(--color-accent),0.6)] border border-[rgba(var(--color-border),0.9)]">
+    <div className="glass rounded-3xl p-5 sm:p-6 flex flex-col gap-5 h-full">
+      {/* Slim header: now-playing status + elapsed clock */}
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-[rgb(var(--color-accent))]" aria-hidden="true" />
-          <div>
-            <p className="text-sm font-semibold text-[rgb(var(--color-text))]">
-              {t('waveform.title')}
-            </p>
-            <div className="flex items-center gap-2 text-xs text-[rgb(var(--color-text-secondary))]">
-              <Waves className="w-4 h-4" aria-hidden="true" />
-              <span>{t('waveform.caption')}</span>
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="text-right">
-            <p className="text-xs font-medium text-[rgb(var(--color-text-secondary))]">
-              {isPlaying ? t('waveform.playing') : t('waveform.idle')}
-            </p>
-            <p className="text-sm font-semibold text-[rgb(var(--color-text))]" aria-live="polite">
-              {formatClock(currentTime)} / {formatClock(duration)}
-            </p>
-          </div>
-        </div>
+        <span
+          className={`inline-flex items-center gap-2 text-xs font-medium px-2.5 py-1 rounded-full ${
+            isPlaying
+              ? 'text-[rgb(var(--color-accent))] bg-[rgba(var(--color-accent),0.12)]'
+              : 'text-[rgb(var(--color-text-secondary))] bg-[rgba(var(--color-border),0.35)]'
+          }`}
+        >
+          <span
+            className={`w-1.5 h-1.5 rounded-full ${
+              isPlaying ? 'bg-[rgb(var(--color-accent))] animate-pulse' : 'bg-[rgb(var(--color-text-secondary))]'
+            }`}
+            aria-hidden="true"
+          />
+          {isPlaying ? t('waveform.playing') : t('waveform.idle')}
+        </span>
+        <p className="text-sm font-semibold tabular-nums text-[rgb(var(--color-text))]" aria-live="polite">
+          {formatClock(currentTime)}
+          <span className="text-[rgb(var(--color-text-secondary))] font-normal"> / {formatClock(duration)}</span>
+        </p>
       </div>
 
+      {/* Scroll viewport: the ambient glow stays put while the waveform pans inside it.
+         A definite height is essential — the parent grid is items-start, so this card is
+         content-sized; without a concrete height here the inner h-full chain collapses. */}
       <div
-        ref={containerRef}
-        data-testid="waveform-timeline"
-        className="relative cursor-pointer group rounded-2xl overflow-hidden"
-        role="presentation"
-        aria-label={t('waveform.scrub')}
-        onClick={handleSeek}
+        ref={viewportRef}
+        className="relative h-52 sm:h-60 rounded-2xl overflow-x-auto overflow-y-hidden overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(var(--color-ambient),0.16),transparent_45%),radial-gradient(circle_at_80%_0%,rgba(var(--color-accent),0.14),transparent_40%),linear-gradient(115deg,rgba(var(--color-surface),0.9),rgba(var(--color-surface),0.75))]" />
-        <div className="relative space-y-3 py-3">
-          <WaveformRow
-            label={t('waveform.raw')}
-            bars={rawWaveform}
-            accentVar="--color-ambient"
-            active={selectedTrack === 'raw'}
-            playing={selectedTrack === 'raw' && isPlaying}
-            onSelect={() => onSelectTrack('raw')}
-            widthPercent={Math.min(100, (rawBars / WAVEFORM.BAR_COUNT) * 100)}
+        <div
+          className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_30%_20%,rgba(var(--color-ambient),0.10),transparent_50%),radial-gradient(circle_at_80%_0%,rgba(var(--color-accent),0.08),transparent_45%)]"
+          aria-hidden="true"
+        />
+
+        {/* Scrub surface — its width grows with the stretch factor, so it can overflow. */}
+        <div
+          ref={contentRef}
+          data-testid="waveform-timeline"
+          className="relative h-full cursor-pointer flex items-center touch-none select-none"
+          style={{ width: `${widthPercent}%` }}
+          role="slider"
+          aria-label={t('waveform.scrub')}
+          aria-valuemin={0}
+          aria-valuemax={Math.round(duration) || 0}
+          aria-valuenow={Math.round(currentTime) || 0}
+          tabIndex={0}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+          onKeyDown={(e) => {
+            if (!duration) return;
+            if (e.key === 'ArrowRight') onSeek(Math.min(duration, currentTime + 5));
+            if (e.key === 'ArrowLeft') onSeek(Math.max(0, currentTime - 5));
+          }}
+        >
+          {/* Fill the viewport height so bars and playhead share the same extent.
+             h-full on each column is essential: the bars size in % against it. */}
+          <div className="relative z-10 w-full flex items-center gap-[3px] h-full py-4 px-1 pointer-events-none">
+            {bars.map((bar, index) => {
+              const barCenter = ((index + 0.5) / bars.length) * 100;
+              const played = barCenter <= playhead;
+              return (
+                <div
+                  key={index}
+                  className="flex-1 h-full flex items-center"
+                  style={{ minWidth: '2px', maxWidth: '8px' }}
+                  aria-hidden="true"
+                >
+                  <div
+                    className="w-full rounded-full transition-[height] duration-150 ease-out"
+                    style={{
+                      height: `${Math.max(WAVEFORM.MIN_BAR_HEIGHT_PERCENT, bar * 100)}%`,
+                      background: `linear-gradient(180deg, rgba(var(--color-accent),${played ? 0.95 : 0.4}), rgba(var(--color-accent),${played ? 0.5 : 0.2}))`,
+                    }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+
+          <div
+            className="absolute top-4 bottom-4 z-20 w-[2px] bg-[rgb(var(--color-accent))] rounded-full shadow-[0_0_0_8px_rgba(var(--color-accent),0.12)] pointer-events-none"
+            style={{ left: `${playhead}%` }}
+            aria-hidden="true"
           />
-          {processedBuffer && (
-            <WaveformRow
-              label={t('waveform.fx')}
-              bars={fxWaveform}
-              accentVar="--color-accent"
-              active={selectedTrack === 'fx'}
-              playing={selectedTrack === 'fx' && isPlaying}
-              onSelect={() => onSelectTrack('fx')}
-              widthPercent={Math.min(100, (fxBars / WAVEFORM.BAR_COUNT) * 100)}
-            />
-          )}
         </div>
-        <div
-          className="absolute top-0 bottom-0 w-[3px] bg-[rgb(var(--color-accent))] rounded-full shadow-[0_0_0_10px_rgba(var(--color-accent),0.12)]"
-          style={{ left: `${playhead}%` }}
-          aria-hidden="true"
-        />
-        <div
-          className="absolute top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border border-[rgba(var(--color-accent),0.35)] bg-[rgba(var(--color-accent),0.18)] shadow-[0_10px_35px_-18px_rgba(var(--color-accent),0.9)] transition-transform duration-150"
-          style={{ left: `calc(${playhead}% - 12px)` }}
-          aria-hidden="true"
-        />
       </div>
     </div>
-  );
-}
-
-function WaveformRow({
-  label,
-  bars,
-  accentVar,
-  active,
-  playing,
-  onSelect,
-  widthPercent,
-}: {
-  label: string;
-  bars: number[];
-  accentVar: string;
-  active: boolean;
-  playing: boolean;
-  onSelect: () => void;
-  widthPercent?: number;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className={`flex items-center gap-3 w-full text-left transition-all duration-150 ${
-        active ? 'opacity-100' : 'opacity-70 hover:opacity-95'
-      } ${playing ? 'ring-1 ring-[rgba(var(--color-accent),0.4)]' : ''}`}
-      style={{ cursor: 'pointer' }}
-    >
-      <span className="text-[11px] uppercase font-semibold tracking-tight text-[rgb(var(--color-text-secondary))] w-14">
-        {label}
-      </span>
-      <div
-        className="flex-1 flex items-end gap-[3px] h-16 overflow-hidden"
-        style={{ maxWidth: widthPercent ? `${widthPercent}%` : undefined }}
-      >
-        {bars.map((bar, index) => (
-          <div
-            key={index}
-            className={`flex-1 rounded-[12px] relative overflow-hidden shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] ${
-              active ? 'bg-[rgba(var(--color-border),0.35)]' : 'bg-[rgba(var(--color-border),0.2)]'
-            }`}
-            style={{ minWidth: '3px', maxWidth: '8px', height: '100%' }}
-            aria-hidden="true"
-          >
-            <div
-              className="absolute bottom-0 left-0 right-0 rounded-[10px] origin-bottom transition-[height] duration-150 ease-out"
-              style={{
-                height: `${Math.max(WAVEFORM.MIN_BAR_HEIGHT_PERCENT, bar * 100)}%`,
-                background: `linear-gradient(180deg, rgba(var(${accentVar}),${active ? 0.95 : 0.55}) 0%, rgba(var(${accentVar}),${active ? 0.5 : 0.3}) 70%, rgba(255,255,255,0.08) 100%)`,
-              }}
-            />
-            <div
-              className="absolute inset-0 opacity-40 mix-blend-screen"
-              style={{
-                background: `linear-gradient(145deg, rgba(255,255,255,0.35), rgba(var(${accentVar}),0.2))`,
-              }}
-              aria-hidden="true"
-            />
-          </div>
-        ))}
-      </div>
-    </button>
   );
 }

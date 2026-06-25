@@ -20,7 +20,7 @@ describe('main entry', () => {
     document.body.innerHTML = '<div id="root"></div>';
   });
 
-  it('mounts app inside ErrorBoundary > BrowserRouter > ThemeProvider > LanguageRouter', async () => {
+  it('mounts app inside ErrorBoundary > ThemeProvider', async () => {
     await import('./main');
 
     expect(createRootMock).toHaveBeenCalledWith(document.getElementById('root'));
@@ -33,16 +33,12 @@ describe('main entry', () => {
     const errorBoundary = (tree.props as any).children;
     expect(errorBoundary.type.name).toBe('ErrorBoundary');
 
-    // Check BrowserRouter is inside ErrorBoundary
-    const browserRouter = (errorBoundary.props as any).children;
-    expect(browserRouter.type.name).toMatch(/Router/i);
-
-    // Check ThemeProvider is inside BrowserRouter
-    const themeProvider = (browserRouter.props as any).children;
+    // Check ThemeProvider is inside ErrorBoundary (no router: language lives in localStorage)
+    const themeProvider = (errorBoundary.props as any).children;
     expect(themeProvider.type.name).toBe('ThemeProvider');
 
-    // Check LanguageRouter is inside ThemeProvider
-    const languageRouter = (themeProvider.props as any).children;
-    expect(languageRouter.type.name).toBe('LanguageRouter');
+    // App is rendered directly inside ThemeProvider
+    const app = (themeProvider.props as any).children;
+    expect(app).toBeTruthy();
   });
 });

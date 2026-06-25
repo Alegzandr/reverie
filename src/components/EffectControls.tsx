@@ -90,9 +90,9 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
     );
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-6">
             {/* Mode Selection */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 gap-3">
                 <EffectModeButton
                     mode="speed-up"
                     currentMode={mode}
@@ -127,8 +127,13 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
                 />
             </div>
 
-            {/* Settings */}
-            <div className="glass rounded-2xl p-6">
+            {/* Settings — no glass here; the parent panel is the surface.
+               Keyed on `mode` so switching effect re-mounts and the new control
+               eases in: motion that signals the state change, not decoration. */}
+            <div
+                key={mode}
+                className="pt-1 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-1 motion-safe:duration-300"
+            >
                 {mode === "speed-up" ? (
                     <EffectSlider
                         id="speed-slider"

@@ -1,4 +1,6 @@
 import { Loader2 } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 
 interface ProgressBarProps {
   progress: number;
@@ -10,7 +12,7 @@ export function ProgressBar({ progress, isProcessing, message }: ProgressBarProp
   if (!isProcessing && progress === 0) return null;
 
   return (
-    <div className="glass rounded-2xl p-5">
+    <Card className="rounded-2xl p-5">
       <div className="flex items-center gap-3 mb-4">
         <Loader2 className="w-5 h-5 text-[rgb(var(--color-accent))] animate-spin flex-shrink-0" />
         <span className="text-sm font-medium text-[rgb(var(--color-text))]">
@@ -20,12 +22,7 @@ export function ProgressBar({ progress, isProcessing, message }: ProgressBarProp
           {Math.round(progress)}%
         </span>
       </div>
-      <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-[rgb(var(--color-accent))] transition-all duration-300 ease-out rounded-full"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
-    </div>
+      <Progress value={progress} />
+    </Card>
   );
 }

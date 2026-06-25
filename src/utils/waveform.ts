@@ -6,6 +6,7 @@
  */
 
 import { WAVEFORM } from '../constants';
+import type { AudioProcessingOptions } from './audioProcessor';
 
 type BarCache = Map<number, number[]>;
 let waveformCache = new WeakMap<AudioBuffer, BarCache>();
@@ -70,4 +71,59 @@ export function computeWaveform(buffer: AudioBuffer, bars: number): number[] {
   }
 
   return barsOut;
+}
+
+/**
+ * Reshape a source amplitude envelope to preview the active effect.
+ *
+ * The live audio graph never bakes a processed buffer, so the waveform reflects the
+ * settings by transforming the displayed bars in step with what you hear: bass adds
+ * body (more amplitude), reverb smears energy forward into a decaying tail, and 8D
+ * rotation makes perceived loudness swell and dip across the track. Speed isn't shaped
+ * here: the whole clip stays on screen and the playhead simply travels faster.
+ *
+ * Pure and cheap (operates on the ~96 display bars), so it can run on every tweak.
+ */
+export function shapeEnvelope(bars: number[], options?: AudioProcessingOptions | null): number[] {
+  if (!options || bars.length === 0) return bars;
+
+  const {
+    reverbAmount = 0,
+    audio8D = false,
+    rotationSpeed = 0,
+    bassBoost = false,
+    bassBoostIntensity = 0,
+  } = options;
+
+  let out = bars.slice();
+
+  // Bass boost: a fuller low end reads as more amplitude across the track.
+  if (bassBoost && bassBoostIntensity > 0) {
+    const gain = 1 + 0.8 * bassBoostIntensity;
+    out = out.map((b) => Math.min(1, b * gain));
+  }
+
+  // Reverb: each bar bleeds into the following ones (a decaying tail) and fills gaps.
+  if (reverbAmount > 0) {
+    const decay = 0.55 + 0.4 * reverbAmount;
+    const wet = Math.min(1, reverbAmount);
+    let carry = 0;
+    out = out.map((b) => {
+      carry = Math.max(b, carry * decay);
+      return Math.min(1, b * (1 - 0.45 * wet) + carry * (0.45 * wet));
+    });
+  }
+
+  // 8D rotation: the pan sweep makes loudness swell and dip over time.
+  if (audio8D) {
+    const depth = 0.22;
+    const cycles = Math.max(1, rotationSpeed * 5);
+    const n = out.length;
+    out = out.map((b, i) => {
+      const swell = 1 + depth * Math.sin((i / n) * Math.PI * 2 * cycles);
+      return Math.min(1, Math.max(0, b * swell));
+    });
+  }
+
+  return out;
 }

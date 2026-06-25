@@ -70,7 +70,7 @@
   "waveform": {
     "title": "Chronologie de forme d'onde",
     "caption": "Naviguez entre l'audio brut et traité",
-    "playing": "Pré-écoute",
+    "playing": "En lecture",
     "idle": "Prêt",
     "scrub": "Parcourir la chronologie",
     "raw": "Brut",
@@ -87,5 +87,15 @@
     "title": "Reverie - Ralenti + Reverb, 8D & Vitesse | Éditeur Audio en Ligne Gratuit",
     "description": "Éditeur audio en ligne gratuit - Transformez votre musique avec des effets professionnels instantanément dans votre navigateur. Créez des versions accélérées, remixes ralentis + reverb, audio 8D immersif ou pistes avec boost des basses. Sans téléchargement. Outil en ligne 100% gratuit avec traitement côté client.",
     "keywords": "éditeur audio en ligne, manipulation audio en ligne, accélérer audio en ligne, slow reverb en ligne, audio 8D en ligne, boost basses en ligne, effets audio en ligne, éditeur musical en ligne, processeur audio en ligne, outil audio gratuit en ligne, éditeur audio navigateur, bass boost en ligne"
+  },
+  "settings": {
+    "open": "Réglages",
+    "title": "Réglages",
+    "subtitle": "Apparence et langue",
+    "appearance": "Apparence",
+    "light": "Clair",
+    "dark": "Sombre",
+    "language": "Langue",
+    "close": "Fermer les réglages"
   }
 }

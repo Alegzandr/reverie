@@ -25,22 +25,54 @@ describe('useAudioPlayback', () => {
       })
     );
 
+  const mockParam = (value = 0) => ({
+    value,
+    setValueAtTime: vi.fn(),
+    setTargetAtTime: vi.fn(),
+    linearRampToValueAtTime: vi.fn(),
+    cancelScheduledValues: vi.fn(),
+  });
+
   beforeEach(() => {
     mockAudioContext = {
       currentTime: 0,
+      sampleRate: 44100,
       destination: {},
       createGain: vi.fn(() => ({
-        gain: { value: 1 },
+        gain: mockParam(1),
         connect: vi.fn(),
         disconnect: vi.fn(),
       })),
       createBufferSource: vi.fn(() => ({
         buffer: null,
         loop: false,
+        playbackRate: mockParam(1),
         connect: vi.fn(),
+        disconnect: vi.fn(),
         start: vi.fn(),
         stop: vi.fn(),
         onended: null,
+      })),
+      createBiquadFilter: vi.fn(() => ({
+        type: '',
+        frequency: mockParam(350),
+        Q: mockParam(1),
+        gain: mockParam(0),
+        connect: vi.fn(),
+        disconnect: vi.fn(),
+      })),
+      createConvolver: vi.fn(() => ({ buffer: null, connect: vi.fn(), disconnect: vi.fn() })),
+      createStereoPanner: vi.fn(() => ({ pan: mockParam(0), connect: vi.fn(), disconnect: vi.fn() })),
+      createOscillator: vi.fn(() => ({
+        type: '',
+        frequency: mockParam(440),
+        connect: vi.fn(),
+        disconnect: vi.fn(),
+        start: vi.fn(),
+        stop: vi.fn(),
+      })),
+      createBuffer: vi.fn((_channels: number, length: number) => ({
+        getChannelData: () => new Float32Array(length),
       })),
     };
 
@@ -167,5 +199,31 @@ describe('useAudioPlayback', () => {
     });
 
     expect(result.current.state.error).toBe(ERROR_MESSAGES.NO_AUDIO_TO_PLAY);
+  });
+
+  it('ramps the playback rate when effects change during play', () => {
+    const { result } = renderPlayback();
+
+    act(() => {
+      result.current.playAudio(mockBuffer);
+    });
+
+    const source = mockAudioContext.createBufferSource.mock.results[0].value;
+
+    act(() => {
+      result.current.setEffects({ speedMultiplier: 1.5, reverbAmount: 0.4, preservePitch: false });
+    });
+
+    expect(source.playbackRate.setTargetAtTime).toHaveBeenCalled();
+  });
+
+  it('stores effects while paused without throwing', () => {
+    const { result } = renderPlayback();
+
+    expect(() =>
+      act(() => {
+        result.current.setEffects({ speedMultiplier: 1.2, reverbAmount: 0, preservePitch: false });
+      })
+    ).not.toThrow();
   });
 });

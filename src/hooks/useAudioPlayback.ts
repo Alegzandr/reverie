@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AUDIO_PROCESSING, ERROR_MESSAGES } from '../constants';
+import type { AudioProcessingOptions } from '../utils/audioProcessor';
+import {
+  createEffectChain,
+  applyEffectOptions,
+  disconnectEffectChain,
+  NEUTRAL_OPTIONS,
+  type EffectChain,
+} from '../utils/effectGraph';
 
 export interface PlaybackState {
   isPlaying: boolean;
@@ -21,7 +29,11 @@ interface AttachOptions {
 }
 
 /**
- * Hook for managing audio playback, seeking, and volume control
+ * Manages playback through a live effect graph. Effects are applied in real time:
+ * `setEffects` ramps the running graph (DAW-style), and any change is also picked up
+ * the next time playback starts. Playback position is tracked in source-buffer time,
+ * advancing at the current playback rate so the playhead stays accurate when the
+ * speed changes mid-play.
  */
 export function useAudioPlayback({
   getAudioContext,
@@ -44,11 +56,15 @@ export function useAudioPlayback({
 
   const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
   const gainNodeRef = useRef<GainNode | null>(null);
+  const chainRef = useRef<EffectChain | null>(null);
   const playbackRafRef = useRef<number | null>(null);
   const startOffsetRef = useRef<number>(0);
   const playStartTimeRef = useRef<number>(0);
   const activeBufferRef = useRef<AudioBuffer | null>(null);
   const playbackSessionRef = useRef<number>(0);
+  const isPlayingRef = useRef<boolean>(false);
+  const optionsRef = useRef<AudioProcessingOptions>(NEUTRAL_OPTIONS);
+  const rateRef = useRef<number>(1);
 
   const setError = useCallback((message: string | null) => {
     setState((prev) => ({ ...prev, error: message }));
@@ -62,13 +78,10 @@ export function useAudioPlayback({
     if (!activeBufferRef.current) return startOffsetRef.current;
     const elapsed = Math.max(0, audioContext.currentTime - playStartTimeRef.current);
     const totalDuration = getBufferDuration(activeBufferRef.current);
-    return Math.min(startOffsetRef.current + elapsed, totalDuration);
+    return Math.min(startOffsetRef.current + elapsed * rateRef.current, totalDuration);
   }, [getAudioContext, getBufferDuration]);
 
-  const stopPlayback = useCallback(() => {
-    playbackSessionRef.current += 1;
-    const nextTime = captureProgress();
-
+  const teardownGraph = useCallback(() => {
     if (sourceNodeRef.current) {
       sourceNodeRef.current.onended = null;
       try {
@@ -84,6 +97,11 @@ export function useAudioPlayback({
       sourceNodeRef.current = null;
     }
 
+    if (chainRef.current) {
+      disconnectEffectChain(chainRef.current);
+      chainRef.current = null;
+    }
+
     if (gainNodeRef.current) {
       try {
         gainNodeRef.current.disconnect();
@@ -92,6 +110,13 @@ export function useAudioPlayback({
       }
       gainNodeRef.current = null;
     }
+  }, []);
+
+  const stopPlayback = useCallback(() => {
+    playbackSessionRef.current += 1;
+    const nextTime = captureProgress();
+
+    teardownGraph();
 
     if (playbackRafRef.current) {
       cancelAnimationFrame(playbackRafRef.current);
@@ -100,12 +125,13 @@ export function useAudioPlayback({
 
     activeBufferRef.current = null;
     startOffsetRef.current = nextTime;
+    isPlayingRef.current = false;
     setState((prev) => ({
       ...prev,
       isPlaying: false,
       playbackTime: nextTime,
     }));
-  }, [captureProgress]);
+  }, [captureProgress, teardownGraph]);
 
   const attachBuffer = useCallback((buffer: AudioBuffer | null, options: AttachOptions = {}) => {
     activeBufferRef.current = buffer;
@@ -131,30 +157,15 @@ export function useAudioPlayback({
 
     setError(null);
 
+    // Browsers suspend the AudioContext until a user gesture; playback is one.
+    if (audioContext.state === 'suspended' && typeof audioContext.resume === 'function') {
+      audioContext.resume();
+    }
+
     playbackSessionRef.current += 1;
     const sessionId = playbackSessionRef.current;
 
-    if (sourceNodeRef.current) {
-      sourceNodeRef.current.onended = null;
-      try {
-        sourceNodeRef.current.stop();
-      } catch {
-        // ignore
-      }
-      try {
-        sourceNodeRef.current.disconnect();
-      } catch {
-        // ignore
-      }
-    }
-
-    if (gainNodeRef.current) {
-      try {
-        gainNodeRef.current.disconnect();
-      } catch {
-        // ignore
-      }
-    }
+    teardownGraph();
 
     if (playbackRafRef.current) {
       cancelAnimationFrame(playbackRafRef.current);
@@ -167,21 +178,31 @@ export function useAudioPlayback({
     startOffsetRef.current = startAt;
     activeBufferRef.current = bufferToPlay;
 
+    // Volume gain is created first so it stays the master/output node.
     const gainNode = audioContext.createGain();
     gainNode.gain.value = state.volume;
     gainNodeRef.current = gainNode;
 
+    const chain = createEffectChain(audioContext);
+    chainRef.current = chain;
+
     const source = audioContext.createBufferSource();
     source.buffer = bufferToPlay;
     source.loop = false;
-    source.connect(gainNode);
+    const rate = optionsRef.current.speedMultiplier || 1;
+    rateRef.current = rate;
+    source.playbackRate.value = rate;
+
+    source.connect(chain.input);
+    chain.output.connect(gainNode);
     gainNode.connect(audioContext.destination);
+    applyEffectOptions(chain, optionsRef.current, audioContext, false);
 
     const tick = () => {
       if (playbackSessionRef.current !== sessionId) return;
       if (!activeBufferRef.current || !sourceNodeRef.current) return;
       const elapsed = audioContext.currentTime - playStartTimeRef.current;
-      const nextTime = Math.min(startOffsetRef.current + elapsed, totalDuration);
+      const nextTime = Math.min(startOffsetRef.current + elapsed * rateRef.current, totalDuration);
       setState((prev) => ({ ...prev, playbackTime: nextTime }));
       if (nextTime < totalDuration) {
         playbackRafRef.current = requestAnimationFrame(tick);
@@ -190,9 +211,9 @@ export function useAudioPlayback({
 
     source.onended = () => {
       if (playbackSessionRef.current !== sessionId) return;
+      isPlayingRef.current = false;
       setState((prev) => ({ ...prev, isPlaying: false, playbackTime: totalDuration }));
-      sourceNodeRef.current = null;
-      gainNodeRef.current = null;
+      teardownGraph();
       if (playbackRafRef.current) {
         cancelAnimationFrame(playbackRafRef.current);
         playbackRafRef.current = null;
@@ -200,6 +221,7 @@ export function useAudioPlayback({
     };
 
     playStartTimeRef.current = audioContext.currentTime;
+    isPlayingRef.current = true;
     setState((prev) => ({
       ...prev,
       isPlaying: true,
@@ -209,7 +231,7 @@ export function useAudioPlayback({
     source.start(0, startAt);
     sourceNodeRef.current = source;
     playbackRafRef.current = requestAnimationFrame(tick);
-  }, [getAudioContext, getBufferDuration, getFallbackBuffer, setError, state.volume]);
+  }, [getAudioContext, getBufferDuration, getFallbackBuffer, setError, state.volume, teardownGraph]);
 
   const stopAudio = useCallback(() => {
     stopPlayback();
@@ -239,15 +261,46 @@ export function useAudioPlayback({
       duration: totalDuration,
     }));
 
-    if (state.isPlaying) {
+    if (isPlayingRef.current) {
       playAudio(buffer, clamped);
     }
-  }, [getBufferDuration, getFallbackBuffer, playAudio, state.isPlaying]);
+  }, [getBufferDuration, getFallbackBuffer, playAudio]);
+
+  /**
+   * Update effects in real time. While playing, parameters ramp on the live graph;
+   * a speed change rebases the position clock so the playhead stays accurate. When
+   * paused, the new settings simply apply the next time playback starts.
+   */
+  const setEffects = useCallback((options: AudioProcessingOptions) => {
+    optionsRef.current = options;
+    const chain = chainRef.current;
+    if (!chain || !isPlayingRef.current) return;
+
+    const audioContext = getAudioContext();
+    applyEffectOptions(chain, options, audioContext, true);
+
+    const nextRate = options.speedMultiplier || 1;
+    if (nextRate !== rateRef.current && sourceNodeRef.current) {
+      // Rebase the position clock before switching rate so elapsed time keeps mapping
+      // correctly, then glide the source to the new rate.
+      startOffsetRef.current = captureProgress();
+      playStartTimeRef.current = audioContext.currentTime;
+      rateRef.current = nextRate;
+      const param = sourceNodeRef.current.playbackRate;
+      if (typeof param.setTargetAtTime === 'function') {
+        param.setTargetAtTime(nextRate, audioContext.currentTime, 0.04);
+      } else {
+        param.value = nextRate;
+      }
+    }
+  }, [captureProgress, getAudioContext]);
 
   const resetPlayback = useCallback(() => {
     stopPlayback();
     startOffsetRef.current = 0;
     activeBufferRef.current = null;
+    optionsRef.current = NEUTRAL_OPTIONS;
+    rateRef.current = 1;
     setState((prev) => ({
       ...prev,
       isPlaying: false,
@@ -260,41 +313,16 @@ export function useAudioPlayback({
   // Cleanup on unmount - stop playback
   useEffect(() => {
     return () => {
-      // Cleanup function captures the current session to avoid stale closures
       playbackSessionRef.current += 1;
-
-      if (sourceNodeRef.current) {
-        sourceNodeRef.current.onended = null;
-        try {
-          sourceNodeRef.current.stop();
-        } catch {
-          // ignore stop errors
-        }
-        try {
-          sourceNodeRef.current.disconnect();
-        } catch {
-          // ignore disconnect errors
-        }
-        sourceNodeRef.current = null;
-      }
-
-      if (gainNodeRef.current) {
-        try {
-          gainNodeRef.current.disconnect();
-        } catch {
-          // ignore disconnect errors
-        }
-        gainNodeRef.current = null;
-      }
-
+      teardownGraph();
       if (playbackRafRef.current) {
         cancelAnimationFrame(playbackRafRef.current);
         playbackRafRef.current = null;
       }
-
       activeBufferRef.current = null;
+      isPlayingRef.current = false;
     };
-  }, []); // Empty deps - only run on mount/unmount
+  }, [teardownGraph]);
 
   return {
     state,
@@ -302,6 +330,7 @@ export function useAudioPlayback({
     stopAudio,
     seekTo,
     updateVolume,
+    setEffects,
     attachBuffer,
     resetPlayback,
   };

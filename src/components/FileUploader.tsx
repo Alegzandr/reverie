@@ -1,6 +1,8 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Upload, Music } from 'lucide-react';
+import { Upload, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { FILE_FORMATS } from '../constants';
 
 interface FileUploaderProps {
@@ -11,10 +13,12 @@ interface FileUploaderProps {
 
 export function FileUploader({ onFileSelect, isLoading, hasFile }: FileUploaderProps) {
   const { t } = useTranslation();
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleDrop = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
+      setIsDragging(false);
       const file = e.dataTransfer.files[0];
       const mime = file?.type as typeof FILE_FORMATS.ACCEPTED_MIME_TYPES[number];
       if (file && FILE_FORMATS.ACCEPTED_MIME_TYPES.includes(mime)) {
@@ -37,65 +41,113 @@ export function FileUploader({ onFileSelect, isLoading, hasFile }: FileUploaderP
 
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    setIsDragging(true);
   }, []);
 
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+
+  const input = (
+    <input
+      type="file"
+      accept="audio/*"
+      onChange={handleFileInput}
+      className="hidden"
+      id="file-input"
+      disabled={isLoading}
+      aria-label={t('upload.browse')}
+    />
+  );
+
+  // Compact variant — lives in the workspace chrome to swap the current track.
+  if (hasFile) {
+    return (
+      <div
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        role="region"
+        aria-label={t('upload.title')}
+      >
+        {input}
+        <Button
+          asChild
+          variant="outline"
+          size="sm"
+          className={cn(isLoading && 'pointer-events-none opacity-50')}
+        >
+          <label htmlFor="file-input" className="cursor-pointer">
+            <RefreshCw className="w-4 h-4 text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
+            <span className="hidden sm:inline">{t('upload.browse')}</span>
+          </label>
+        </Button>
+      </div>
+    );
+  }
+
+  // Hero variant — the welcome stage's primary affordance.
   return (
     <div
       onDrop={handleDrop}
       onDragOver={handleDragOver}
-      className="relative"
+      onDragLeave={handleDragLeave}
+      className="relative w-full"
       role="region"
       aria-label={t('upload.title')}
     >
-      <input
-        type="file"
-        accept="audio/*"
-        onChange={handleFileInput}
-        className="hidden"
-        id="file-input"
-        disabled={isLoading}
-        aria-label={t('upload.browse')}
-      />
+      {input}
       <label
         htmlFor="file-input"
         className={`
-          flex flex-col items-center justify-center
-          glass rounded-3xl p-12 min-h-[280px]
-          bg-gradient-to-br from-[rgba(var(--color-ambient),0.05)] to-[rgba(var(--color-accent),0.08)]
-          cursor-pointer transition-all duration-200
-          ${hasFile ? 'border-2 border-[rgb(var(--color-accent))]/30' : 'border-2 border-transparent hover:border-[rgb(var(--color-border))]'}
-          ${isLoading ? 'opacity-50 cursor-not-allowed' : 'ios-button'}
+          group flex flex-col items-center justify-center text-center
+          rounded-[28px] px-8 py-14 sm:py-16
+          border-2 border-dashed transition-colors duration-200
+          bg-[radial-gradient(120%_120%_at_50%_0%,rgba(var(--color-surface),0.7),rgba(var(--color-surface),0.35))]
+          ${isDragging
+            ? 'border-[rgb(var(--color-accent))] bg-[rgba(var(--color-accent),0.06)]'
+            : 'border-[rgba(var(--color-border),0.8)] hover:border-[rgba(var(--color-accent),0.5)]'}
+          ${isLoading ? 'opacity-50 cursor-not-allowed' : 'ios-button cursor-pointer'}
         `}
       >
-        <div className="flex flex-col items-center gap-6">
-          <div className={`
-            w-20 h-20 rounded-[20px] flex items-center justify-center
-            ${hasFile
-              ? 'bg-[linear-gradient(135deg,rgba(var(--color-accent),0.95),rgba(var(--color-ambient),0.9))]'
-              : 'bg-[rgba(var(--color-border),0.4)] dark:bg-gray-700'}
-            transition-colors duration-200
-          `} aria-hidden="true">
-            {hasFile ? (
-              <Music className="w-10 h-10 text-white" />
-            ) : (
-              <Upload className="w-10 h-10 text-gray-600 dark:text-gray-300" />
+        <div className="relative mb-6 grid place-items-center" aria-hidden="true">
+          {/* Reverberation echoes — the brand's reverb motif (the mark's echo
+              arcs, the play orb's pulse), breathing softly behind the well. */}
+          <span className="upload-echo absolute h-[4.75rem] w-[4.75rem] rounded-full border border-[rgba(var(--aurora-violet),0.4)]" />
+          <span
+            className="upload-echo absolute h-[6.25rem] w-[6.25rem] rounded-full border border-[rgba(var(--aurora-pink),0.3)]"
+            style={{ animationDelay: '1.6s' }}
+          />
+          {/* Aurora as a stroke around a dark glass well, not a solid fill: it
+              reads as the brand without competing with the play orb, and steps
+              away from the gradient-square upload cliché. */}
+          <span
+            className={cn(
+              'relative h-16 w-16 rounded-full p-[2px] transition-transform duration-300 group-hover:scale-105',
+              'bg-[linear-gradient(135deg,rgb(var(--aurora-violet)),rgb(var(--aurora-pink))_55%,rgb(var(--aurora-cyan)))]',
+              isDragging
+                ? 'scale-105 shadow-[0_0_0_4px_rgba(var(--aurora-pink),0.18),0_22px_50px_-20px_rgba(var(--aurora-pink),0.9)]'
+                : 'shadow-[0_18px_44px_-22px_rgba(var(--aurora-pink),0.75)]'
             )}
-          </div>
-          <div className="text-center">
-            <p className="text-[17px] font-semibold text-[rgb(var(--color-text))] mb-2">
-              {t('upload.dragDrop')}
-            </p>
-            <p className="text-[13px] text-[rgb(var(--color-text-secondary))] mb-1">
-              {t('upload.or')}
-            </p>
-            <p className="text-[13px] font-medium text-[rgb(var(--color-accent))]">
-              {t('upload.browse')}
-            </p>
-            <p className="text-[11px] text-[rgb(var(--color-text-secondary))] mt-3">
-              {t('upload.formats')}
-            </p>
-          </div>
+          >
+            <span className="flex h-full w-full items-center justify-center rounded-full bg-[rgb(var(--color-surface))]">
+              <Upload className="h-6 w-6 text-[rgb(var(--aurora-violet))] transition-transform duration-300 group-hover:-translate-y-0.5" />
+            </span>
+          </span>
         </div>
+        <p className="text-lg sm:text-xl font-semibold text-[rgb(var(--color-text))]">
+          {t('upload.dragDrop')}
+        </p>
+        <p className="mt-2 text-sm text-[rgb(var(--color-text-secondary))]">
+          {t('upload.or')}{' '}
+          <span className="font-medium text-[rgb(var(--color-accent))] underline-offset-4 group-hover:underline">
+            {t('upload.browse')}
+          </span>
+        </p>
+        <p className="mt-5 text-xs uppercase tracking-wide text-[rgb(var(--color-text-secondary))]">
+          {t('upload.formats')}
+        </p>
       </label>
     </div>
   );

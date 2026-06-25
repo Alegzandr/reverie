@@ -1,16 +1,29 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Moon, Sun } from 'lucide-react';
+import { Zap, Waves, Radio, Volume2, ShieldCheck } from 'lucide-react';
 import { FileUploader } from './components/FileUploader';
 import { EffectControls } from './components/EffectControls';
 import type { EffectSettings } from './components/EffectControls';
 import { PlaybackControls } from './components/PlaybackControls';
 import { ProgressBar } from './components/ProgressBar';
-import { LanguageSelector } from './components/LanguageSelector';
+import { SettingsMenu } from './components/SettingsMenu';
 import { WaveformTimeline } from './components/WaveformTimeline';
+import { Card } from './components/ui/card';
+import { Badge } from './components/ui/badge';
+import { Tooltip, TooltipTrigger, TooltipContent } from './components/ui/tooltip';
 import { useAudioProcessor } from './hooks/useAudioProcessor';
-import { useTheme } from './contexts/ThemeContext';
 import { EFFECT_EXPORT_LABELS } from './constants';
+import type { AudioProcessingOptions } from './utils/audioProcessor';
+
+const toOptions = (s: EffectSettings): AudioProcessingOptions => ({
+  speedMultiplier: s.speedMultiplier,
+  reverbAmount: s.reverbAmount,
+  preservePitch: false,
+  audio8D: s.mode === '8d-audio',
+  rotationSpeed: s.rotationSpeed,
+  bassBoost: s.mode === 'bass-boost',
+  bassBoostIntensity: s.bassBoostIntensity,
+});
 
 function App() {
   const { t, i18n } = useTranslation();
@@ -20,10 +33,11 @@ function App() {
     originalBuffer,
     processedBuffer,
     playbackTime,
+    duration,
     volume,
     metadata,
     loadAudioFile,
-    processAudio,
+    setEffects,
     playAudio,
     stopAudio,
     exportProcessedAudio,
@@ -31,8 +45,6 @@ function App() {
     seekTo,
     reset,
   } = useAudioProcessor();
-
-  const { theme, toggleTheme } = useTheme();
 
   // Update document meta tags when language changes
   useEffect(() => {
@@ -63,17 +75,17 @@ function App() {
     speedMultiplier: 1.2,
     reverbAmount: 0,
   });
-  const [selectedTrack, setSelectedTrack] = useState<'raw' | 'fx'>('raw');
+  // Drives both the live graph and the waveform's effect preview.
+  const effectOptions = useMemo(() => toOptions(effectSettings), [effectSettings]);
+
+  const [uploadRevision, setUploadRevision] = useState(0);
 
   const handleFileSelect = useCallback(
     async (file: File) => {
       await loadAudioFile(file);
-      setSelectedTrack('raw');
     },
     [loadAudioFile]
   );
-
-  const [uploadRevision, setUploadRevision] = useState(0);
 
   const handleReset = useCallback(() => {
     reset();
@@ -83,45 +95,30 @@ function App() {
   const handleEffectChange = useCallback(
     (settings: EffectSettings) => {
       setEffectSettings(settings);
-      if (settings.mode === '8d-audio' && processedBuffer) {
-        setSelectedTrack('fx');
-      }
+      // Apply live: ramps the playing graph, and is remembered for the next play.
+      setEffects(toOptions(settings));
     },
-    [processedBuffer]
+    [setEffects]
   );
 
-  const handleProcess = useCallback(async () => {
-    try {
-      await processAudio({
-        speedMultiplier: effectSettings.speedMultiplier,
-        reverbAmount: effectSettings.reverbAmount,
-        preservePitch: false,
-        audio8D: effectSettings.mode === '8d-audio',
-        rotationSpeed: effectSettings.rotationSpeed,
-        bassBoost: effectSettings.mode === 'bass-boost',
-        bassBoostIntensity: effectSettings.bassBoostIntensity,
-      });
-      setSelectedTrack('fx');
-    } catch (error) {
-      console.error('Processing error:', error);
-    }
-  }, [processAudio, effectSettings]);
-
   const handlePlay = useCallback(() => {
-    if (selectedTrack === 'fx' && processedBuffer) {
-      playAudio(processedBuffer, playbackTime);
-    } else if (originalBuffer) {
-      playAudio(originalBuffer, playbackTime);
-    } else if (processedBuffer) {
-      playAudio(processedBuffer, playbackTime);
-    }
-  }, [playAudio, processedBuffer, originalBuffer, playbackTime, selectedTrack]);
+    if (originalBuffer) playAudio(originalBuffer, playbackTime);
+    else if (processedBuffer) playAudio(processedBuffer, playbackTime);
+  }, [playAudio, originalBuffer, processedBuffer, playbackTime]);
+
+  // Speed changes the listening length: a 3:00 clip at 0.5x lasts 6:00. We track time
+  // internally in source-buffer time, but the transport speaks in effective (output)
+  // time so the duration and clock stretch/compress with the rate, like a real player.
+  const playbackRate = effectSettings.speedMultiplier || 1;
+  const effectiveDuration = playbackRate > 0 ? duration / playbackRate : duration;
+  const effectiveTime = playbackRate > 0 ? playbackTime / playbackRate : playbackTime;
 
   const handleSeek = useCallback(
-    (time: number, bufferOverride?: AudioBuffer | null) => {
-      seekTo(time, bufferOverride);
+    (time: number) => {
+      // The UI seeks in effective time; convert back to source time for the engine.
+      seekTo(time * playbackRate);
     },
-    [seekTo]
+    [seekTo, playbackRate]
   );
 
   const handleExport = useCallback(async () => {
@@ -135,270 +132,207 @@ function App() {
     }
   }, [exportProcessedAudio, originalFile, effectSettings.mode]);
 
-  const handleTrackSelect = useCallback(
-    (track: 'raw' | 'fx') => {
-      if (track === 'fx' && !processedBuffer) return;
-      const currentDuration =
-        selectedTrack === 'fx' && processedBuffer
-          ? processedBuffer.duration
-          : originalBuffer?.duration || processedBuffer?.duration || 0;
-      const nextDuration =
-        track === 'fx' && processedBuffer
-          ? processedBuffer.duration
-          : originalBuffer?.duration || processedBuffer?.duration || 0;
-      const ratio = currentDuration > 0 ? playbackTime / currentDuration : 0;
-      const nextTime = Math.min(nextDuration, Math.max(0, ratio * nextDuration));
-      setSelectedTrack(track);
-      const nextBuffer = track === 'fx' ? processedBuffer : originalBuffer;
-      seekTo(nextTime, nextBuffer || undefined);
-    },
-    [processedBuffer, originalBuffer, playbackTime, selectedTrack, seekTo]
-  );
+  const hasSession = !!(originalFile || originalBuffer || processedBuffer);
+  const stageBuffer = originalBuffer || processedBuffer;
+
+  const errorBanner = state.error ? (
+    <div role="alert" className="rounded-2xl px-4 py-3 border border-[rgba(var(--color-accent),0.4)] bg-[rgba(var(--color-accent),0.1)]">
+      <p className="text-sm font-medium text-[rgb(var(--color-text))]">{state.error}</p>
+    </div>
+  ) : null;
+
+  // ---------------------------------------------------------------- Welcome
+  if (!hasSession) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <div className="flex items-center justify-end gap-2 px-4 sm:px-6 py-4">
+          <SettingsMenu />
+        </div>
+
+        <main className="flex-1 flex items-center justify-center px-4 sm:px-6 pb-16">
+          <div className="aurora-stage relative w-full max-w-2xl flex flex-col items-center text-center">
+            <div
+              className="w-16 h-16 rounded-[18px] bg-[url('/favicon.svg')] bg-center bg-cover shadow-[0_18px_50px_-24px_rgba(var(--aurora-pink),0.7)] mb-7"
+              aria-hidden="true"
+            />
+            <h1 className="font-display lowercase text-5xl sm:text-6xl font-light tracking-[0.04em] text-[rgb(var(--color-text))]">
+              {t('app.title')}
+            </h1>
+            <p className="font-display mt-4 text-lg sm:text-xl font-light text-balance text-[rgb(var(--color-text-secondary))] max-w-md">
+              {t('app.subtitle')}
+            </p>
+
+            <div className="w-full mt-10 space-y-4">
+              {errorBanner}
+              {state.isLoading ? (
+                <ProgressBar
+                  progress={state.progress}
+                  isProcessing={state.isLoading}
+                  message={t('upload.loading')}
+                />
+              ) : (
+                <FileUploader
+                  key={uploadRevision}
+                  onFileSelect={handleFileSelect}
+                  isLoading={state.isLoading}
+                  hasFile={false}
+                />
+              )}
+            </div>
+
+            <ul className="mt-10 flex flex-wrap items-center justify-center gap-3">
+              {[
+                { icon: Zap, label: t('effects.speedUp') },
+                { icon: Waves, label: t('effects.slowReverb') },
+                { icon: Radio, label: t('effects.8dAudio') },
+                { icon: Volume2, label: t('effects.bassBoost') },
+              ].map(({ icon: Icon, label }) => (
+                <li key={label}>
+                  <Badge variant="ghost" className="gap-2">
+                    <Icon className="w-4 h-4 text-[rgb(var(--color-accent))]" aria-hidden="true" />
+                    {label}
+                  </Badge>
+                </li>
+              ))}
+            </ul>
+
+            <p className="mt-8 flex items-center gap-2 text-xs text-[rgb(var(--color-text-secondary))]">
+              <ShieldCheck className="w-4 h-4" aria-hidden="true" />
+              {t('features.private.desc')}
+            </p>
+          </div>
+        </main>
+
+        <footer className="pb-8 text-center">
+          <p className="text-xs text-[rgb(var(--color-text-secondary))]">{t('footer.built')}</p>
+        </footer>
+      </div>
+    );
+  }
+
+  // -------------------------------------------------------------- Workspace
+  const metaItems = originalFile
+    ? [
+        { label: t('track.size'), value: `${(originalFile.size / 1024 / 1024).toFixed(1)} MB` },
+        metadata?.bitrate ? { label: t('track.bitrate'), value: `${metadata.bitrate} kbps` } : null,
+        metadata?.sampleRate ? { label: t('track.sampleRate'), value: `${(metadata.sampleRate / 1000).toFixed(1)} kHz` } : null,
+        metadata?.channels
+          ? {
+              label: t('track.channels'),
+              value: metadata.channels === 1 ? t('track.mono') : metadata.channels === 2 ? t('track.stereo') : `${metadata.channels}ch`,
+            }
+          : null,
+        metadata?.bitDepth ? { label: t('track.bitDepth'), value: `${metadata.bitDepth}-bit` } : null,
+      ].filter((item): item is { label: string; value: string } => item !== null)
+    : [];
 
   return (
-    <div className="min-h-screen transition-colors duration-300">
-      {/* Header */}
-      <header className="sticky top-0 z-50 glass">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <button
-            onClick={handleReset}
-            aria-label={t('accessibility.resetApp')}
-            className="flex items-center gap-3 ios-button cursor-pointer transition-opacity hover:opacity-80"
-          >
-            <div className="w-10 h-10 rounded-[12px] flex items-center justify-center shadow-sm bg-[url('/favicon.svg')] bg-center bg-cover" aria-hidden="true" />
-            <div className="text-left">
-              <h1 className="text-xl font-semibold text-[rgb(var(--color-text))]">
-                {t('app.title')}
-              </h1>
-              <p className="text-xs text-[rgb(var(--color-text-secondary))]">
-                {t('app.subtitle')}
-              </p>
-            </div>
-          </button>
+    <div className="min-h-screen flex flex-col">
+      {/* Header / toolbar */}
+      <header className="sticky top-0 z-40 bg-[rgba(var(--color-surface),0.78)] backdrop-blur-xl border-b border-[rgba(var(--color-border),0.5)]">
+        <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={handleReset}
+                aria-label={t('accessibility.resetApp')}
+                className="flex items-center gap-3 min-w-0 ios-button cursor-pointer rounded-full pr-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-background))] outline-none"
+              >
+                <div className="w-9 h-9 rounded-[10px] bg-[url('/favicon.svg')] bg-center bg-cover shrink-0" aria-hidden="true" />
+                <span className="font-display lowercase text-xl font-light tracking-[0.04em] text-[rgb(var(--color-text))] hidden sm:inline">
+                  {t('app.title')}
+                </span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>{t('accessibility.resetApp')}</TooltipContent>
+          </Tooltip>
           <div className="flex items-center gap-2">
-            <LanguageSelector />
-            <button
-              onClick={toggleTheme}
-              aria-label={t('accessibility.themeToggle')}
-              className="w-10 h-10 glass rounded-full flex items-center justify-center ios-button cursor-pointer"
-            >
-              {theme === 'light' ? (
-                <Moon className="w-5 h-5 text-[rgb(var(--color-text))]" aria-hidden="true" />
-              ) : (
-                <Sun className="w-5 h-5 text-[rgb(var(--color-text))]" aria-hidden="true" />
-              )}
-            </button>
+            <FileUploader
+              key={uploadRevision}
+              onFileSelect={handleFileSelect}
+              isLoading={state.isLoading}
+              hasFile
+            />
+            <SettingsMenu />
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-6 py-8">
-        <div className="space-y-6">
-          {/* Error Display */}
-          {state.error && (
-            <div className="glass rounded-2xl p-4 border border-red-500/20 bg-red-500/10">
-              <p className="text-sm font-medium text-red-600 dark:text-red-400">
-                {state.error}
-              </p>
-            </div>
-          )}
+      {/* Working area */}
+      <main className="flex-1 mx-auto w-full max-w-6xl px-4 sm:px-6 py-6 sm:py-8 flex flex-col gap-6">
+        {errorBanner}
 
-          {/* File Upload */}
-          <FileUploader
-            key={uploadRevision}
-            onFileSelect={handleFileSelect}
-            isLoading={state.isLoading}
-            hasFile={!!originalFile}
-          />
-
-          {/* File Info */}
-          {originalFile && !state.isLoading && (
-            <div className="glass rounded-2xl p-5">
-              <div className="space-y-3">
-                {/* File Name */}
-                <div>
-                  <p className="text-xs font-medium text-[rgb(var(--color-text-secondary))] uppercase tracking-wide mb-1">
-                    {t('track.name')}
-                  </p>
-                  <p className="text-base font-semibold text-[rgb(var(--color-text))] truncate">
-                    {originalFile.name}
-                  </p>
-                </div>
-
-                {/* Technical Info Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 pt-2 border-t border-[rgb(var(--color-border))]">
-                  {/* File Size */}
-                  <div>
-                    <p className="text-xs font-medium text-[rgb(var(--color-text-secondary))] uppercase tracking-wide mb-1">
-                      {t('track.size')}
-                    </p>
-                    <p className="text-sm font-semibold text-[rgb(var(--color-accent))]">
-                      {(originalFile.size / 1024 / 1024).toFixed(1)} MB
-                    </p>
+        {originalFile && (
+          <div>
+            <h2 className="font-display text-2xl sm:text-3xl font-normal text-[rgb(var(--color-text))] truncate">
+              {originalFile.name}
+            </h2>
+            {metaItems.length > 0 && (
+              <dl className="mt-3 flex flex-wrap gap-x-7 gap-y-2">
+                {metaItems.map((item) => (
+                  <div key={item.label}>
+                    <dt className="text-[11px] uppercase tracking-wide text-[rgb(var(--color-text-secondary))]">
+                      {item.label}
+                    </dt>
+                    <dd className="text-sm font-medium tabular-nums text-[rgb(var(--color-text))]">
+                      {item.value}
+                    </dd>
                   </div>
+                ))}
+              </dl>
+            )}
+          </div>
+        )}
 
-                  {/* Bitrate */}
-                  {metadata?.bitrate && (
-                    <div>
-                      <p className="text-xs font-medium text-[rgb(var(--color-text-secondary))] uppercase tracking-wide mb-1">
-                        {t('track.bitrate')}
-                      </p>
-                      <p className="text-sm font-semibold text-[rgb(var(--color-accent))]">
-                        {metadata.bitrate} kbps
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Sample Rate */}
-                  {metadata?.sampleRate && (
-                    <div>
-                      <p className="text-xs font-medium text-[rgb(var(--color-text-secondary))] uppercase tracking-wide mb-1">
-                        {t('track.sampleRate')}
-                      </p>
-                      <p className="text-sm font-semibold text-[rgb(var(--color-accent))]">
-                        {(metadata.sampleRate / 1000).toFixed(1)} kHz
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Channels */}
-                  {metadata?.channels && (
-                    <div>
-                      <p className="text-xs font-medium text-[rgb(var(--color-text-secondary))] uppercase tracking-wide mb-1">
-                        {t('track.channels')}
-                      </p>
-                      <p className="text-sm font-semibold text-[rgb(var(--color-accent))]">
-                        {metadata.channels === 1 ? t('track.mono') : metadata.channels === 2 ? t('track.stereo') : `${metadata.channels}ch`}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Bit Depth */}
-                  {metadata?.bitDepth && (
-                    <div>
-                      <p className="text-xs font-medium text-[rgb(var(--color-text-secondary))] uppercase tracking-wide mb-1">
-                        {t('track.bitDepth')}
-                      </p>
-                      <p className="text-sm font-semibold text-[rgb(var(--color-accent))]">
-                        {metadata.bitDepth}-bit
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+        <div className="grid gap-6 items-start lg:grid-cols-[minmax(320px,360px)_1fr]">
+          {/* Control panel — the machinery, grouped on one glass surface */}
+          {originalFile && (
+            <Card asChild className="p-5 sm:p-6">
+              <aside className="flex flex-col gap-6">
+                {/* Effects are live: moving a control reshapes the sound as it plays. */}
+                <EffectControls onChange={handleEffectChange} disabled={state.isExporting} />
+              </aside>
+            </Card>
           )}
 
-          {/* Effect Controls */}
-          {originalFile && !state.isLoading && (
-            <>
-              <EffectControls
-                onChange={handleEffectChange}
-                disabled={state.isProcessing || state.isPlaying}
+          {/* Stage — the waveform centerpiece */}
+          <section className="min-w-0">
+            {stageBuffer && (
+              <WaveformTimeline
+                buffer={stageBuffer}
+                duration={effectiveDuration}
+                currentTime={effectiveTime}
+                isPlaying={state.isPlaying}
+                onSeek={handleSeek}
+                options={effectOptions}
               />
+            )}
+          </section>
+        </div>
+      </main>
 
-              {/* Process Button */}
-              <button
-                onClick={handleProcess}
-                disabled={state.isProcessing || state.isPlaying}
-                aria-label={state.isProcessing ? t('effects.processing') : t('effects.apply')}
-                className={`
-                  w-full py-4 rounded-[14px] font-semibold text-[15px]
-                  ios-button transition-all duration-200
-                  ${
-                    !state.isProcessing && !state.isPlaying
-                      ? 'bg-[linear-gradient(120deg,rgba(var(--aurora-violet),1),rgba(var(--aurora-pink),0.95)_55%,rgba(var(--aurora-cyan),0.9))] text-white shadow-[0_14px_30px_-18px_rgba(var(--aurora-pink),0.7)] cursor-pointer'
-                      : 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                  }
-                `}
-              >
-                {state.isProcessing ? t('effects.processing') : t('effects.apply')}
-              </button>
-            </>
-          )}
-
-          {/* Progress Bar */}
-          {(state.isProcessing || state.isLoading) && (
-            <ProgressBar
-              progress={state.progress}
-              isProcessing={state.isProcessing || state.isLoading}
-              message={state.isLoading ? t('upload.loading') : t('effects.processing')}
-            />
-          )}
-
-          {(originalBuffer || processedBuffer) && (
-            <WaveformTimeline
-              originalBuffer={originalBuffer}
-              processedBuffer={processedBuffer}
-              longestDuration={Math.max(originalBuffer?.duration || 0, processedBuffer?.duration || 0)}
-              duration={
-                selectedTrack === 'fx' && processedBuffer
-                  ? processedBuffer.duration
-                  : originalBuffer?.duration || processedBuffer?.duration || 0
-              }
-              currentTime={playbackTime}
-              isPlaying={state.isPlaying}
-              selectedTrack={selectedTrack}
-              onSelectTrack={handleTrackSelect}
-              onSeek={(time, bufferOverride) => handleSeek(time, bufferOverride)}
-            />
-          )}
-
-          {/* Playback Controls */}
-          {(processedBuffer || originalFile) && (
+      {/* Transport bar */}
+      {(processedBuffer || originalFile) && (
+        <div className="sticky bottom-0 z-30 bg-[rgba(var(--color-surface),0.85)] backdrop-blur-xl border-t border-[rgba(var(--color-border),0.5)] shadow-[0_-14px_40px_-28px_rgba(var(--color-accent),0.5)]">
+          <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-3">
             <PlaybackControls
               isPlaying={state.isPlaying}
               onPlay={handlePlay}
               onStop={stopAudio}
-              onReset={handleReset}
               onExport={handleExport}
               volume={volume}
               onVolumeChange={updateVolume}
+              currentTime={effectiveTime}
+              duration={effectiveDuration}
+              onSeek={handleSeek}
               hasAudio={!!(processedBuffer || originalBuffer)}
-              hasProcessed={!!processedBuffer}
-              canExport={!!processedBuffer}
+              canExport={!!(originalBuffer || processedBuffer)}
               isExporting={state.isExporting}
-              disabled={state.isProcessing || state.isExporting}
+              disabled={state.isExporting}
             />
-          )}
-        </div>
-
-        {/* Features */}
-        <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="glass rounded-2xl p-5 text-center">
-            <p className="text-sm font-semibold text-[rgb(var(--color-text))] mb-1">
-              {t('features.webAudio.title')}
-            </p>
-            <p className="text-xs text-[rgb(var(--color-text-secondary))]">
-              {t('features.webAudio.desc')}
-            </p>
-          </div>
-          <div className="glass rounded-2xl p-5 text-center">
-            <p className="text-sm font-semibold text-[rgb(var(--color-text))] mb-1">
-              {t('features.private.title')}
-            </p>
-            <p className="text-xs text-[rgb(var(--color-text-secondary))]">
-              {t('features.private.desc')}
-            </p>
-          </div>
-          <div className="glass rounded-2xl p-5 text-center">
-            <p className="text-sm font-semibold text-[rgb(var(--color-text))] mb-1">
-              {t('features.export.title')}
-            </p>
-            <p className="text-xs text-[rgb(var(--color-text-secondary))]">
-              {t('features.export.desc')}
-            </p>
           </div>
         </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="mt-16 pb-8 text-center">
-        <p className="text-xs text-[rgb(var(--color-text-secondary))]">
-          {t('footer.built')}
-        </p>
-      </footer>
+      )}
     </div>
   );
 }

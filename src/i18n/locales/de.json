@@ -70,7 +70,7 @@
   "waveform": {
     "title": "Wellenform-Zeitleiste",
     "caption": "Springe zwischen Roh- und Effekt-Audio",
-    "playing": "Vorschau läuft",
+    "playing": "Wird abgespielt",
     "idle": "Bereit",
     "scrub": "Zeitleiste anpassen",
     "raw": "Roh",
@@ -87,5 +87,15 @@
     "title": "Reverie - Langsam + Hall, 8D & Tempo | Online Audio-Editor Kostenlos",
     "description": "Kostenloser Online-Audio-Editor - Verwandeln Sie Ihre Musik mit professionellen Effekten sofort in Ihrem Browser. Erstellen Sie beschleunigte Versionen, langsame + Hall-Remixe, immersives 8D-Audio oder Bass-verstärkte Tracks. Kein Download erforderlich. 100% kostenloses Online-Tool mit lokaler Verarbeitung.",
     "keywords": "Online-Audio-Editor, Audio-Manipulation online, Audio beschleunigen online, Slow Reverb online, 8D-Audio online, Bass-Boost online, Audio-Effekte online, Musik-Editor online, Audio-Prozessor online, kostenloses Audio-Tool online, Browser-Audio-Editor, Bassverstärkung online"
+  },
+  "settings": {
+    "open": "Einstellungen",
+    "title": "Einstellungen",
+    "subtitle": "Darstellung und Sprache",
+    "appearance": "Darstellung",
+    "light": "Hell",
+    "dark": "Dunkel",
+    "language": "Sprache",
+    "close": "Einstellungen schließen"
   }
 }

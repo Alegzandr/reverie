@@ -11,95 +11,61 @@ describe('PlaybackControls', () => {
   const baseProps = {
     onPlay: vi.fn(),
     onStop: vi.fn(),
-    onReset: vi.fn(),
     onExport: vi.fn(),
     onVolumeChange: vi.fn(),
+    onSeek: vi.fn(),
     isPlaying: false,
     hasAudio: true,
-    hasProcessed: true,
     canExport: true,
     volume: 0.5,
+    currentTime: 0,
+    duration: 10,
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('toggles play/pause and reset', async () => {
-    const props = { ...baseProps, isPlaying: false, hasProcessed: true, volume: 0.5 };
+  it('toggles play/pause', async () => {
+    const props = { ...baseProps, isPlaying: false };
     const { rerender } = render(
-      <PlaybackControls
-        {...props}
-        isExporting={false}
-        disabled={false}
-      />
+      <PlaybackControls {...props} isExporting={false} disabled={false} />
     );
 
-    await userEvent.click(screen.getByText('playback.play'));
+    await userEvent.click(screen.getByLabelText('playback.play'));
     expect(baseProps.onPlay).toHaveBeenCalled();
 
-    rerender(
-      <PlaybackControls
-        {...props}
-        isPlaying
-        isExporting={false}
-        disabled={false}
-      />
-    );
+    rerender(<PlaybackControls {...props} isPlaying isExporting={false} disabled={false} />);
 
-    await userEvent.click(screen.getByText('playback.pause'));
+    await userEvent.click(screen.getByLabelText('playback.pause'));
     expect(baseProps.onStop).toHaveBeenCalled();
-
-    await userEvent.click(screen.getByLabelText('accessibility.resetApp'));
-    expect(baseProps.onReset).toHaveBeenCalled();
   });
 
   it('handles export availability and volume control', async () => {
     const props = { ...baseProps, isPlaying: false, volume: 0.2 };
     const { rerender } = render(
-      <PlaybackControls
-        {...props}
-        hasAudio={false}
-        hasProcessed={false}
-        canExport={false}
-        isExporting={false}
-        disabled={false}
-      />
+      <PlaybackControls {...props} hasAudio={false} canExport={false} isExporting={false} disabled={false} />
     );
 
-    expect(screen.getByText('playback.export')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'playback.export' })).toBeDisabled();
+    // Volume only appears when there is audio to control.
     expect(screen.queryByLabelText(/playback.volume/)).not.toBeInTheDocument();
 
-    rerender(
-      <PlaybackControls
-        {...props}
-        hasProcessed
-        hasAudio
-        canExport
-        isExporting={false}
-        disabled={false}
-      />
-    );
+    rerender(<PlaybackControls {...props} hasAudio canExport isExporting={false} disabled={false} />);
 
-    await userEvent.click(screen.getByText('playback.export'));
+    await userEvent.click(screen.getByRole('button', { name: 'playback.export' }));
     expect(baseProps.onExport).toHaveBeenCalled();
 
     const volume = screen.getByLabelText(/playback.volume/);
-    await userEvent.click(volume);
     fireEvent.change(volume, { target: { value: '0.4' } });
     expect(baseProps.onVolumeChange).toHaveBeenCalledWith(0.4);
   });
 
-  it('renders disabled reset state', () => {
-    const props = { ...baseProps, isPlaying: false, hasAudio: true, hasProcessed: true, volume: 0.5 };
-    render(
-      <PlaybackControls
-        {...props}
-        isExporting={false}
-        disabled
-      />
-    );
+  it('disables controls when busy', () => {
+    const props = { ...baseProps, isPlaying: false };
+    render(<PlaybackControls {...props} isExporting={false} disabled />);
 
-    expect(screen.getByLabelText('accessibility.resetApp')).toBeDisabled();
+    expect(screen.getByLabelText('playback.play')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'playback.export' })).toBeDisabled();
   });
 });

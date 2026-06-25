@@ -70,7 +70,7 @@
   "waveform": {
     "title": "Linha do tempo da forma de onda",
     "caption": "Percorra entre áudio bruto e com efeitos",
-    "playing": "Prévia em reprodução",
+    "playing": "A reproduzir",
     "idle": "Pronto",
     "scrub": "Mover na linha do tempo",
     "raw": "Bruto",
@@ -87,5 +87,15 @@
     "title": "Reverie - Lento + Reverb, 8D e Velocidade | Editor de Áudio Online Grátis",
     "description": "Editor de áudio online grátis - Transforme sua música com efeitos profissionais instantaneamente no seu navegador. Crie versões aceleradas, remixes lentos + reverb, áudio 8D imersivo ou faixas com graves realçados. Sem download. Ferramenta online 100% grátis com processamento local.",
     "keywords": "editor de áudio online, manipulação de áudio online, acelerar áudio online, slow reverb online, áudio 8D online, realce de graves online, efeitos de áudio online, editor musical online, processador de áudio online, ferramenta áudio grátis online, editor áudio navegador, bass boost online"
+  },
+  "settings": {
+    "open": "Definições",
+    "title": "Definições",
+    "subtitle": "Aparência e idioma",
+    "appearance": "Aparência",
+    "light": "Claro",
+    "dark": "Escuro",
+    "language": "Idioma",
+    "close": "Fechar definições"
   }
 }

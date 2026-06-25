@@ -36,12 +36,13 @@ i18n
     interpolation: {
       escapeValue: false,
     },
-    // Disable automatic detection - we handle language detection via routing
+    // Language lives in localStorage, not the URL. Detect from a stored choice
+    // first, then the browser, and persist the user's pick.
     detection: {
-      order: [],
-      caches: [],
+      order: ['localStorage', 'navigator'],
+      caches: ['localStorage'],
+      lookupLocalStorage: 'reverie:lang',
     },
-    // Prevent i18n from modifying the URL
     react: {
       useSuspense: false,
     },

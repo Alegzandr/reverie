@@ -39,3 +39,20 @@ export function formatBassIntensityLabel(
   if (value < normalThreshold) return labels.normal;
   return labels.strong;
 }
+
+/**
+ * Format a number of seconds as a transport clock (m:ss, or h:mm:ss past an hour).
+ * @param seconds - Elapsed seconds
+ * @returns Clock string, e.g. "1:07" or "1:02:09"
+ */
+export function formatClock(seconds: number): string {
+  if (!Number.isFinite(seconds)) return '0:00';
+  const totalSeconds = Math.max(0, Math.floor(seconds));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const secs = totalSeconds % 60;
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+  return `${minutes}:${secs.toString().padStart(2, '0')}`;
+}

@@ -127,11 +127,12 @@ reverie/
 │   │   ├── EffectSlider.tsx    # Reusable effect slider control
 │   │   ├── ErrorBoundary.tsx   # Error boundary wrapper
 │   │   ├── FileUploader.tsx    # Drag-drop file upload
-│   │   ├── LanguageRouter.tsx  # Language-based routing
-│   │   ├── LanguageSelector.tsx # i18n language picker
-│   │   ├── PlaybackControls.tsx # Play/pause/export controls
+│   │   ├── PlaybackControls.tsx # Transport bar: play, timeline, volume, export
+│   │   ├── TransportTimeline.tsx # Classic scrubbable seekbar (footer center)
+│   │   ├── VolumeControl.tsx   # Compact volume with scroll-to-adjust
+│   │   ├── SettingsMenu.tsx    # Appearance + language menu (localStorage, no URL)
 │   │   ├── ProgressBar.tsx     # Loading progress
-│   │   └── WaveformTimeline.tsx # Audio waveform visualization
+│   │   └── WaveformTimeline.tsx # Audio waveform visualization + scrub
 │   ├── contexts/
 │   │   └── ThemeContext.tsx    # Dark/light theme management
 │   ├── hooks/
