@@ -582,7 +582,14 @@
      by a taller pseudo-plate whose elliptical corner radii sum to 100% across
      the width, producing one smooth convex arc. The plate overhangs the bar by
      --hud-curve so the bulge floats over the scene; pointer-events stay off it.
-     Content sits in normal flow above the plate, never clipped. */
+     Content sits in normal flow above the plate, never clipped.
+
+     The holographic plate itself (translucent gradient, luminous hairline, inner
+     glow) is painted at every width — it's what keeps the rails feeling like HUD
+     chrome rather than a flat boxy strip. Only the *curve* (the plate's outward
+     overhang + elliptical corner radii + optical recentring) is reserved for `sm+`:
+     a fisheye arc needs real width, and on a narrow phone it collapses into a
+     lopsided bulge. So phones get the same glass plate, just with straight edges. */
   .immersive .hud-rail {
     background: transparent;
     border: 0;
@@ -596,7 +603,8 @@
     left: 0;
     right: 0;
     z-index: -1;
-    height: calc(100% + var(--hud-curve));
+    /* Flat by default (no overhang); the curve adds the --hud-curve bulge at sm+. */
+    height: 100%;
     pointer-events: none;
     background: linear-gradient(
       to bottom,
@@ -613,29 +621,37 @@
   .immersive .hud-rail-top::after {
     top: -1px;
     border-bottom: 1px solid rgba(var(--hud-line), 0.5);
-    border-radius: 0 0 50% 50% / 0 0 calc(var(--hud-curve) + 10px) calc(var(--hud-curve) + 10px);
   }
 
   .immersive .hud-rail-bottom::after {
     bottom: -1px;
     border-top: 1px solid rgba(var(--hud-line), 0.5);
-    border-radius: 50% 50% 0 0 / calc(var(--hud-curve) + 10px) calc(var(--hud-curve) + 10px) 0 0;
   }
 
-  /* Header/footer content stays flat: a 3D tilt there distorts text and turns
-     the round play orb into an ellipse. The curve lives only in the glass plate
-     (the bowed ::after). The 3D belongs on the main side consoles instead. */
+  /* The fisheye curve + its optical recentring — desktop only (see note above). */
+  @media (min-width: 640px) {
+    .immersive .hud-rail::after {
+      height: calc(100% + var(--hud-curve));
+    }
 
-  /* Optical centring inside the bow: the glass plate bulges past the flat content
-     row by --hud-curve, so centring on the row alone leaves the text/buttons too
-     high (top rail) / too low (bottom rail). Nudge the content toward the plate's
-     true centre. ~half the curve overhang. */
-  .immersive .hud-rail-top .hud-bow-inner {
-    transform: translateY(calc(var(--hud-curve) * 0.46));
-  }
+    .immersive .hud-rail-top::after {
+      border-radius: 0 0 50% 50% / 0 0 calc(var(--hud-curve) + 10px) calc(var(--hud-curve) + 10px);
+    }
 
-  .immersive .hud-rail-bottom .hud-bow-inner {
-    transform: translateY(calc(var(--hud-curve) * -0.46));
+    .immersive .hud-rail-bottom::after {
+      border-radius: 50% 50% 0 0 / calc(var(--hud-curve) + 10px) calc(var(--hud-curve) + 10px) 0 0;
+    }
+
+    /* Optical centring inside the bow: the glass plate bulges past the flat content
+       row by --hud-curve, so centring on the row alone leaves the text/buttons too
+       high (top rail) / too low (bottom rail). Nudge toward the plate's true centre. */
+    .immersive .hud-rail-top .hud-bow-inner {
+      transform: translateY(calc(var(--hud-curve) * 0.46));
+    }
+
+    .immersive .hud-rail-bottom .hud-bow-inner {
+      transform: translateY(calc(var(--hud-curve) * -0.46));
+    }
   }
 
   /* ── Ambient scene scaffold ─────────────────────────────────────────────

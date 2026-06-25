@@ -270,7 +270,7 @@ function App() {
       </header>
 
       {/* Biased upward (bottom padding > top) so content sits in the upper-middle. */}
-      <main className="flex-1 mx-auto w-full max-w-[1700px] px-6 sm:px-10 pt-6 sm:pt-8 pb-24 sm:pb-40 flex flex-col gap-8 sm:gap-10 lg:justify-center">
+      <main className="flex-1 mx-auto w-full max-w-[1700px] px-6 sm:px-10 pt-6 sm:pt-8 pb-32 sm:pb-40 flex flex-col gap-8 sm:gap-10 lg:justify-center">
         {errorBanner}
 
         {originalFile && (

@@ -7,6 +7,7 @@ interface VolumeControlProps {
   volume: number;
   onVolumeChange: (volume: number) => void;
   disabled?: boolean;
+  className?: string;
 }
 
 const WHEEL_STEP = 0.05;
@@ -18,7 +19,7 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
  * The whole control is a wheel target, so scrolling anywhere over it (a generous
  * hit area, not just the thin track) nudges the volume without scrolling the page.
  */
-export function VolumeControl({ volume, onVolumeChange, disabled }: VolumeControlProps) {
+export function VolumeControl({ volume, onVolumeChange, disabled, className = '' }: VolumeControlProps) {
   const { t } = useTranslation();
   const wrapperRef = useRef<HTMLDivElement | null>(null);
 
@@ -56,7 +57,7 @@ export function VolumeControl({ volume, onVolumeChange, disabled }: VolumeContro
   return (
     <div
       ref={wrapperRef}
-      className="flex items-center gap-2 px-2 py-2 rounded-full hover:bg-[rgba(var(--color-border),0.3)] transition-colors"
+      className={`flex items-center gap-2 px-2 py-2 rounded-full hover:bg-[rgba(var(--color-border),0.3)] transition-colors ${className}`}
       title={`${t('playback.volume')}: ${percent}%`}
     >
       <VolumeIcon className="w-4 h-4 text-[rgb(var(--color-text-secondary))] shrink-0" aria-hidden="true" />
