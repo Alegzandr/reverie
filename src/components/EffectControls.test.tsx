@@ -12,7 +12,11 @@ describe('EffectControls', () => {
     const onChange = vi.fn();
     render(<EffectControls onChange={onChange} />);
 
-    expect(onChange).toHaveBeenCalledWith({ mode: 'speed-up', speedMultiplier: 1.3, reverbAmount: 0 });
+    // Slow + Reverb is the default active mode.
+    expect(onChange).toHaveBeenCalledWith({ mode: 'slow-reverb', speedMultiplier: 0.7, reverbAmount: 0.5 });
+
+    await userEvent.click(screen.getByText('effects.speedUp'));
+    expect(onChange).toHaveBeenLastCalledWith({ mode: 'speed-up', speedMultiplier: 1.3, reverbAmount: 0 });
 
     await userEvent.click(screen.getByText('effects.slowReverb'));
     expect(onChange).toHaveBeenLastCalledWith({ mode: 'slow-reverb', speedMultiplier: 0.7, reverbAmount: 0.5 });

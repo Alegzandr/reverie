@@ -33,9 +33,10 @@ const mockApi = {
   updateVolume: vi.fn(),
   seekTo: vi.fn(),
   reset: vi.fn(),
+  getAnalyser: () => null,
 };
 
-const mockToggleTheme = vi.fn();
+const mockSetTheme = vi.fn();
 const mockI18n = { language: 'en', changeLanguage: vi.fn() };
 
 vi.mock('./hooks/useAudioProcessor', () => ({
@@ -43,7 +44,11 @@ vi.mock('./hooks/useAudioProcessor', () => ({
 }));
 
 vi.mock('./contexts/ThemeContext', () => ({
-  useTheme: () => ({ theme: 'light', toggleTheme: mockToggleTheme }),
+  useTheme: () => ({
+    theme: 'light',
+    def: { kind: 'workspace', scene: 'daybreak' },
+    setTheme: mockSetTheme,
+  }),
 }));
 
 vi.mock('react-i18next', () => ({
@@ -151,12 +156,12 @@ describe('App', () => {
     consoleSpy.mockRestore();
   });
 
-  it('toggles theme from the settings menu', async () => {
+  it('selects a theme from the settings menu', async () => {
     renderWithRouter(<App />);
     // Theme + language now live behind a single settings menu.
     await userEvent.click(screen.getByLabelText('settings.open'));
-    await userEvent.click(screen.getByLabelText('settings.dark'));
-    expect(mockToggleTheme).toHaveBeenCalled();
+    await userEvent.click(screen.getByLabelText('settings.theme.dark'));
+    expect(mockSetTheme).toHaveBeenCalledWith('dark');
   });
 
   it('renders waveform timeline and allows seeking', async () => {

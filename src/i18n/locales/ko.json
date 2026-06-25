@@ -92,10 +92,26 @@
     "open": "설정",
     "title": "설정",
     "subtitle": "테마 및 언어",
-    "appearance": "테마",
-    "light": "라이트",
-    "dark": "다크",
+    "themes": "테마",
+    "theme": {
+      "light": "라이트",
+      "dark": "Void Bloom",
+      "tidal": "Cosmic Wave",
+      "nocturne": "Midnight Pulse",
+      "aurora": "Nebula Drift",
+      "horizon": "Lunar Haze"
+    },
     "language": "언어",
     "close": "설정 닫기"
+  },
+  "studio": {
+    "effects": "이펙트",
+    "adjustments": "조절",
+    "mood": "무드",
+    "themes": "테마",
+    "moreThemes": "테마 더 보기",
+    "active": "켜짐",
+    "inactive": "꺼짐",
+    "levels": "레벨"
   }
 }

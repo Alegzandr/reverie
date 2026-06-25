@@ -91,11 +91,27 @@
   "settings": {
     "open": "Настройки",
     "title": "Настройки",
-    "subtitle": "Оформление и язык",
-    "appearance": "Оформление",
-    "light": "Светлая",
-    "dark": "Тёмная",
+    "subtitle": "Темы и язык",
+    "themes": "Темы",
+    "theme": {
+      "light": "Светлая",
+      "dark": "Void Bloom",
+      "tidal": "Cosmic Wave",
+      "nocturne": "Midnight Pulse",
+      "aurora": "Nebula Drift",
+      "horizon": "Lunar Haze"
+    },
     "language": "Язык",
     "close": "Закрыть настройки"
+  },
+  "studio": {
+    "effects": "Эффекты",
+    "adjustments": "Настройки",
+    "mood": "Атмосфера",
+    "themes": "Темы",
+    "moreThemes": "Другие темы",
+    "active": "Активно",
+    "inactive": "Неактивно",
+    "levels": "Уровни"
   }
 }

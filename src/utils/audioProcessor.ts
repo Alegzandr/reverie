@@ -158,10 +158,16 @@ export class AudioProcessor {
     dryGain.gain.value = AUDIO_SIGNAL.EIGHT_D_MIX.DRY_GAIN;
     wetGain.gain.value = AUDIO_SIGNAL.EIGHT_D_MIX.WET_GAIN;
 
-    // Connect the nodes
+    // Connect the nodes.
+    //
+    // Only the DRY path is panned, so the music orbits the head. The reverb bed
+    // taps the UN-panned input, so its tail stays present in both ears at all
+    // times. Without this (convolver fed from the panner) the reverb rotates with
+    // the music, leaving a complete silence circling opposite it — the opposite
+    // of how real 8D tracks sound, where a quiet ambience fills both ears.
     inputGain.connect(panner);
     panner.connect(dryGain);
-    panner.connect(convolver);
+    inputGain.connect(convolver);
     convolver.connect(wetGain);
     dryGain.connect(outputGain);
     wetGain.connect(outputGain);

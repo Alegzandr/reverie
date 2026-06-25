@@ -3,6 +3,8 @@ import { Play, Pause, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TransportTimeline } from './TransportTimeline';
 import { VolumeControl } from './VolumeControl';
+import { SpectrumMeter } from './SpectrumMeter';
+import { HudDial } from './hud/HudDial';
 
 interface PlaybackControlsProps {
   isPlaying: boolean;
@@ -18,6 +20,7 @@ interface PlaybackControlsProps {
   canExport: boolean;
   isExporting?: boolean;
   disabled?: boolean;
+  getAnalyser: () => AnalyserNode | null;
 }
 
 /**
@@ -38,6 +41,7 @@ export function PlaybackControls({
   canExport,
   isExporting,
   disabled,
+  getAnalyser,
 }: PlaybackControlsProps) {
   const { t } = useTranslation();
 
@@ -46,8 +50,18 @@ export function PlaybackControls({
 
   return (
     <div className="flex items-center gap-3 sm:gap-4">
-      {/* Play / Pause — the Aurora orb. A soft ring pulses outward while playing. */}
+      {/* Play / Pause — the Aurora orb inside a holographic instrument dial whose
+          rings rotate while a track plays. A soft ring also pulses outward. */}
       <div className="relative shrink-0">
+        <HudDial
+          spinning={playEnabled && isPlaying}
+          className="pointer-events-none absolute -inset-[11px] z-0"
+        />
+        {/* Audio-reactive halo — punches with the kick (bass + onset). Rendered
+            whenever the orb is live so the glow eases back down on pause. */}
+        {playEnabled && (
+          <span className="audio-orb-glow pointer-events-none absolute inset-0 z-0" aria-hidden="true" />
+        )}
         {playEnabled && isPlaying && (
           <span className="play-pulse pointer-events-none absolute inset-0 rounded-full" aria-hidden="true" />
         )}
@@ -75,6 +89,16 @@ export function PlaybackControls({
         onSeek={onSeek}
         disabled={disabled || !hasAudio}
       />
+
+      {/* Live spectrum — a small instrument that makes the bar feel alive.
+          Hidden on narrow screens where space is tight. */}
+      {hasAudio && (
+        <SpectrumMeter
+          getAnalyser={getAnalyser}
+          isPlaying={isPlaying}
+          className="hidden lg:block h-8 w-24 shrink-0"
+        />
+      )}
 
       {/* Volume — compact, scroll to adjust */}
       {hasAudio && (

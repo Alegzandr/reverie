@@ -20,6 +20,7 @@ describe('PlaybackControls', () => {
     volume: 0.5,
     currentTime: 0,
     duration: 10,
+    getAnalyser: () => null,
   };
 
   beforeEach(() => {

@@ -56,6 +56,7 @@ export function useAudioPlayback({
 
   const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
   const gainNodeRef = useRef<GainNode | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
   const chainRef = useRef<EffectChain | null>(null);
   const playbackRafRef = useRef<number | null>(null);
   const startOffsetRef = useRef<number>(0);
@@ -109,6 +110,15 @@ export function useAudioPlayback({
         // ignore disconnect errors
       }
       gainNodeRef.current = null;
+    }
+
+    if (analyserRef.current) {
+      try {
+        analyserRef.current.disconnect();
+      } catch {
+        // ignore disconnect errors
+      }
+      analyserRef.current = null;
     }
   }, []);
 
@@ -193,9 +203,25 @@ export function useAudioPlayback({
     rateRef.current = rate;
     source.playbackRate.value = rate;
 
+    // A pass-through analyser tees off the master gain so the UI can draw a live
+    // spectrum without altering the signal (gain -> analyser -> destination).
+    // Optional: skipped when the context can't create one (older engines, tests).
+    const analyser =
+      typeof audioContext.createAnalyser === 'function' ? audioContext.createAnalyser() : null;
+    if (analyser) {
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.8;
+    }
+    analyserRef.current = analyser;
+
     source.connect(chain.input);
     chain.output.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+    if (analyser) {
+      gainNode.connect(analyser);
+      analyser.connect(audioContext.destination);
+    } else {
+      gainNode.connect(audioContext.destination);
+    }
     applyEffectOptions(chain, optionsRef.current, audioContext, false);
 
     const tick = () => {
@@ -324,6 +350,9 @@ export function useAudioPlayback({
     };
   }, [teardownGraph]);
 
+  // Live analyser node for visualisations; null while stopped.
+  const getAnalyser = useCallback(() => analyserRef.current, []);
+
   return {
     state,
     playAudio,
@@ -333,5 +362,6 @@ export function useAudioPlayback({
     setEffects,
     attachBuffer,
     resetPlayback,
+    getAnalyser,
   };
 }

@@ -1,0 +1,143 @@
+import { useEffect, useRef } from 'react';
+
+interface UseAudioReactivityOptions {
+  /** Returns the live playback analyser, or null while stopped. */
+  getAnalyser: () => AnalyserNode | null;
+  isPlaying: boolean;
+  /** Element to receive the CSS variables. Defaults to the document root. */
+  target?: HTMLElement | null;
+}
+
+/**
+ * The "breathe with the music" engine — Reverie's signature.
+ *
+ * Each frame it reads the live playback analyser and publishes a handful of
+ * normalised audio-energy values as CSS custom properties on the target element
+ * (the document root by default), where stylesheets consume them to swell bloom,
+ * pulse borders and brighten the environment:
+ *
+ *   --audio-level   overall loudness  (time-domain RMS, fast attack / slow release)
+ *   --audio-bass    low-band energy   (kick/bass weight)
+ *   --audio-treble  high-band energy  (air/transients)
+ *   --audio-pulse   onset flash       (spikes on a kick, decays fast)
+ *
+ * This is subconscious emotional feedback, not a gamer RGB visualiser. It only
+ * runs while a track plays, freezes flat under prefers-reduced-motion, and eases
+ * every value back to rest when playback stops so nothing ever snaps. The
+ * smoothed state lives in a ref so easing stays continuous across play/pause.
+ */
+export function useAudioReactivity({ getAnalyser, isPlaying, target }: UseAudioReactivityOptions) {
+  // Smoothed, published energies — kept in a ref so a play/pause toggle eases
+  // from the current value instead of jumping back to zero on effect re-run.
+  const energy = useRef({ level: 0, bass: 0, mid: 0, treble: 0, pulse: 0, bassBaseline: 0 });
+
+  useEffect(() => {
+    const root = target ?? document.documentElement;
+    const reduceMotion =
+      typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const e = energy.current;
+
+    const publish = () => {
+      root.style.setProperty('--audio-level', e.level.toFixed(3));
+      root.style.setProperty('--audio-bass', e.bass.toFixed(3));
+      root.style.setProperty('--audio-mid', e.mid.toFixed(3));
+      root.style.setProperty('--audio-treble', e.treble.toFixed(3));
+      root.style.setProperty('--audio-pulse', e.pulse.toFixed(3));
+    };
+
+    const clear = () => {
+      root.style.removeProperty('--audio-level');
+      root.style.removeProperty('--audio-bass');
+      root.style.removeProperty('--audio-mid');
+      root.style.removeProperty('--audio-treble');
+      root.style.removeProperty('--audio-pulse');
+    };
+
+    // Honour reduced-motion absolutely: a flat, silent interface.
+    if (reduceMotion) {
+      clear();
+      return;
+    }
+
+    let raf = 0;
+    let freq: Uint8Array<ArrayBuffer> | null = null;
+    let time: Uint8Array<ArrayBuffer> | null = null;
+
+    const frame = () => {
+      const analyser = typeof getAnalyser === 'function' ? getAnalyser() : null;
+
+      if (analyser && isPlaying) {
+        const bins = analyser.frequencyBinCount;
+        if (!freq || freq.length !== bins) freq = new Uint8Array(new ArrayBuffer(bins));
+        if (!time || time.length !== analyser.fftSize) {
+          time = new Uint8Array(new ArrayBuffer(analyser.fftSize));
+        }
+        analyser.getByteFrequencyData(freq);
+        analyser.getByteTimeDomainData(time);
+
+        // Loudness — RMS of the time-domain signal (128 = silence midpoint).
+        let sumSq = 0;
+        for (let i = 0; i < time.length; i++) {
+          const v = (time[i] - 128) / 128;
+          sumSq += v * v;
+        }
+        // RMS rarely exceeds ~0.45 on real music; lift it into a usable 0..1.
+        const targetLevel = Math.min(1, Math.sqrt(sumSq / time.length) * 2.2);
+
+        // Three distinct bands so different surfaces can react to different parts
+        // of the music (not everything strobing on the kick): bass = low ~12%,
+        // mid = ~12–55%, treble = top ~40%.
+        const bassEnd = Math.max(1, Math.floor(bins * 0.12));
+        let bSum = 0;
+        for (let i = 0; i < bassEnd; i++) bSum += freq[i];
+        const targetBass = bSum / bassEnd / 255;
+
+        const midStart = bassEnd;
+        const midEnd = Math.max(midStart + 1, Math.floor(bins * 0.55));
+        let mSum = 0;
+        for (let i = midStart; i < midEnd; i++) mSum += freq[i];
+        const targetMid = mSum / (midEnd - midStart) / 255;
+
+        const trebleStart = Math.floor(bins * 0.6);
+        let tSum = 0;
+        for (let i = trebleStart; i < bins; i++) tSum += freq[i];
+        const targetTreble = tSum / (bins - trebleStart) / 255;
+
+        // Fast attack, slower release — reads musical, not jittery.
+        e.level += (targetLevel - e.level) * (targetLevel > e.level ? 0.5 : 0.12);
+        e.bass += (targetBass - e.bass) * (targetBass > e.bass ? 0.5 : 0.15);
+        e.mid += (targetMid - e.mid) * (targetMid > e.mid ? 0.45 : 0.18);
+        e.treble += (targetTreble - e.treble) * 0.3;
+
+        // Onset — bass punching above its own slow baseline fires a flash.
+        e.bassBaseline += (targetBass - e.bassBaseline) * 0.08;
+        if (targetBass > e.bassBaseline * 1.35 + 0.06) {
+          e.pulse = Math.min(1, Math.max(e.pulse, (targetBass - e.bassBaseline) * 3));
+        }
+        e.pulse *= 0.86;
+        if (e.pulse < 0.005) e.pulse = 0;
+
+        publish();
+        raf = requestAnimationFrame(frame);
+      } else {
+        // Stopped (or analyser gone) — ease everything down, then settle + clear.
+        e.level *= 0.85;
+        e.bass *= 0.85;
+        e.mid *= 0.85;
+        e.treble *= 0.85;
+        e.pulse *= 0.8;
+        if (e.level + e.bass + e.mid + e.treble + e.pulse > 0.01) {
+          publish();
+          raf = requestAnimationFrame(frame);
+        } else {
+          e.level = e.bass = e.mid = e.treble = e.pulse = 0;
+          clear();
+        }
+      }
+    };
+
+    raf = requestAnimationFrame(frame);
+    return () => cancelAnimationFrame(raf);
+  }, [getAnalyser, isPlaying, target]);
+}

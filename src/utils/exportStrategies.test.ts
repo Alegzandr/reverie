@@ -4,7 +4,13 @@
 
 import { describe, it, expect, vi, beforeEach, beforeAll, afterAll, afterEach } from 'vitest';
 import { getExportStrategy, estimateBitrate, type ExportOptions } from './exportStrategies';
+import { audioBufferToFlac } from './flacEncoder';
 import { BITRATE } from '../constants';
+
+// Mock the FLAC encoder: the real one loads a WASM module that is unavailable in jsdom.
+vi.mock('./flacEncoder', () => ({
+  audioBufferToFlac: vi.fn(async () => new Blob(['flac'], { type: 'audio/flac' })),
+}));
 
 // Mock MediaRecorder for tests (not available in Node.js)
 const createMockMediaRecorder = () => {
@@ -208,12 +214,23 @@ describe('exportStrategies', () => {
       expect(result.extension).toBe('aiff');
     });
 
-    it('FLAC strategy exports as WAV (lossless preservation)', async () => {
+    it('FLAC strategy encodes a real FLAC stream', async () => {
+      const strategy = getExportStrategy('flac');
+      const result = await strategy.export(mockOptions);
+
+      expect(audioBufferToFlac).toHaveBeenCalledWith(mockAudioBuffer);
+      expect(result.blob).toBeInstanceOf(Blob);
+      expect(result.extension).toBe('flac');
+      expect(result.blob.type).toBe('audio/flac');
+    });
+
+    it('FLAC strategy falls back to WAV when encoding fails', async () => {
+      vi.mocked(audioBufferToFlac).mockRejectedValueOnce(new Error('wasm unavailable'));
       const strategy = getExportStrategy('flac');
       const result = await strategy.export(mockOptions);
 
       expect(result.blob).toBeInstanceOf(Blob);
-      expect(result.extension).toBe('wav'); // FLAC exports as WAV
+      expect(result.extension).toBe('wav');
       expect(result.blob.type).toBe('audio/wav');
     });
 

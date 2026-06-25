@@ -91,11 +91,27 @@
   "settings": {
     "open": "सेटिंग्स",
     "title": "सेटिंग्स",
-    "subtitle": "रूप और भाषा",
-    "appearance": "रूप",
-    "light": "लाइट",
-    "dark": "डार्क",
+    "subtitle": "थीम और भाषा",
+    "themes": "थीम",
+    "theme": {
+      "light": "लाइट",
+      "dark": "Void Bloom",
+      "tidal": "Cosmic Wave",
+      "nocturne": "Midnight Pulse",
+      "aurora": "Nebula Drift",
+      "horizon": "Lunar Haze"
+    },
     "language": "भाषा",
     "close": "सेटिंग्स बंद करें"
+  },
+  "studio": {
+    "effects": "प्रभाव",
+    "adjustments": "समायोजन",
+    "mood": "मूड",
+    "themes": "थीम",
+    "moreThemes": "और थीम",
+    "active": "सक्रिय",
+    "inactive": "निष्क्रिय",
+    "levels": "स्तर"
   }
 }

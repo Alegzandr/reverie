@@ -43,6 +43,21 @@ export const BITRATE = {
 } as const;
 
 // ============================================================================
+// FLAC ENCODING CONSTANTS
+// ============================================================================
+
+export const FLAC_ENCODING = {
+  /**
+   * libFLAC compression level (0 = fastest/largest, 8 = slowest/smallest).
+   * Level 5 is the FLAC default: a good speed/size balance and lossless either way.
+   */
+  COMPRESSION_LEVEL: 5,
+
+  /** Bit depth used when encoding the (16-bit PCM) processed buffer to FLAC */
+  BITS_PER_SAMPLE: 16,
+} as const;
+
+// ============================================================================
 // BIT DEPTH CONSTANTS
 // ============================================================================
 
@@ -300,8 +315,14 @@ export const EFFECT_EXPORT_LABELS = {
 export const AUDIO_SIGNAL = {
   /** 8D audio mix ratios */
   EIGHT_D_MIX: {
-    DRY_GAIN: 0.7,
-    WET_GAIN: 0.3,
+    /** Rotating dry signal (panned) — the main music that orbits the head. */
+    DRY_GAIN: 0.85,
+    /**
+     * Constant reverb bed (un-panned). Fed from the pre-pan signal so a quiet
+     * ambience stays present in BOTH ears at all times — this prevents a "silent
+     * void" from rotating opposite the music. Kept low so it sits under the music.
+     */
+    WET_GAIN: 0.22,
     STEREO_VARIATION_LEFT: 1.0,
     STEREO_VARIATION_RIGHT: 0.9,
   },

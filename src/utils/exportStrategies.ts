@@ -8,6 +8,7 @@
 import { audioProcessor } from './audioProcessor';
 import { audioBufferToMp3 } from './mp3Encoder';
 import { audioBufferToAiff } from './aiffEncoder';
+import { audioBufferToFlac } from './flacEncoder';
 import { encodeWithMediaRecorder, getMimeTypeForFormat } from './mediaRecorderEncoder';
 import { BITRATE } from '../constants';
 
@@ -71,13 +72,19 @@ class AiffExportStrategy implements ExportStrategy {
 
 /**
  * FLAC Export Strategy
- * FLAC files are exported as WAV to preserve lossless quality
+ * Encodes a true lossless FLAC stream via libFLAC (WASM). Falls back to WAV —
+ * also lossless — if the encoder fails to load or run.
  */
 class FlacExportStrategy implements ExportStrategy {
   async export({ buffer }: ExportOptions): Promise<ExportResult> {
-    // Both are lossless, so WAV preserves quality
-    const blob = await audioProcessor.audioBufferToWav(buffer);
-    return { blob, extension: 'wav' };
+    try {
+      const blob = await audioBufferToFlac(buffer);
+      return { blob, extension: 'flac' };
+    } catch (error) {
+      console.warn('FLAC encoding failed, falling back to WAV (lossless):', error);
+      const blob = await audioProcessor.audioBufferToWav(buffer);
+      return { blob, extension: 'wav' };
+    }
   }
 }
 

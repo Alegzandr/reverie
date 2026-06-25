@@ -91,11 +91,27 @@
   "settings": {
     "open": "Einstellungen",
     "title": "Einstellungen",
-    "subtitle": "Darstellung und Sprache",
-    "appearance": "Darstellung",
-    "light": "Hell",
-    "dark": "Dunkel",
+    "subtitle": "Themes und Sprache",
+    "themes": "Themes",
+    "theme": {
+      "light": "Hell",
+      "dark": "Void Bloom",
+      "tidal": "Cosmic Wave",
+      "nocturne": "Midnight Pulse",
+      "aurora": "Nebula Drift",
+      "horizon": "Lunar Haze"
+    },
     "language": "Sprache",
     "close": "Einstellungen schließen"
+  },
+  "studio": {
+    "effects": "Effekte",
+    "adjustments": "Einstellungen",
+    "mood": "Stimmung",
+    "themes": "Themes",
+    "moreThemes": "Weitere Themes",
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "levels": "Pegel"
   }
 }

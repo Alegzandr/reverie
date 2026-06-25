@@ -7,12 +7,15 @@ import type { EffectSettings } from './components/EffectControls';
 import { PlaybackControls } from './components/PlaybackControls';
 import { ProgressBar } from './components/ProgressBar';
 import { SettingsMenu } from './components/SettingsMenu';
+import { AmbientScene } from './components/AmbientScene';
 import { WaveformTimeline } from './components/WaveformTimeline';
+import { ThemeRail } from './components/ThemeRail';
 import { Card } from './components/ui/card';
 import { Badge } from './components/ui/badge';
 import { Tooltip, TooltipTrigger, TooltipContent } from './components/ui/tooltip';
 import { useAudioProcessor } from './hooks/useAudioProcessor';
-import { EFFECT_EXPORT_LABELS } from './constants';
+import { useAudioReactivity } from './hooks/useAudioReactivity';
+import { EFFECT_EXPORT_LABELS, EFFECT_DEFAULTS } from './constants';
 import type { AudioProcessingOptions } from './utils/audioProcessor';
 
 const toOptions = (s: EffectSettings): AudioProcessingOptions => ({
@@ -44,7 +47,12 @@ function App() {
     updateVolume,
     seekTo,
     reset,
+    getAnalyser,
   } = useAudioProcessor();
+
+  // The signature: let the whole interface breathe with the music. Reads the
+  // live analyser and publishes audio-energy CSS vars the scene + panels consume.
+  useAudioReactivity({ getAnalyser, isPlaying: state.isPlaying });
 
   // Update document meta tags when language changes
   useEffect(() => {
@@ -70,10 +78,12 @@ function App() {
     updateMetaTag('twitter:description', t('meta.description'));
   }, [i18n.language, t]);
 
+  // Slow + Reverb is the default mood (matches EffectControls' initial mode); this
+  // seed is replaced the moment EffectControls fires its first onChange on mount.
   const [effectSettings, setEffectSettings] = useState<EffectSettings>({
-    mode: 'speed-up',
-    speedMultiplier: 1.2,
-    reverbAmount: 0,
+    mode: 'slow-reverb',
+    speedMultiplier: EFFECT_DEFAULTS.SLOW_REVERB.SPEED_DEFAULT,
+    reverbAmount: EFFECT_DEFAULTS.SLOW_REVERB.REVERB_DEFAULT,
   });
   // Drives both the live graph and the waveform's effect preview.
   const effectOptions = useMemo(() => toOptions(effectSettings), [effectSettings]);
@@ -145,6 +155,7 @@ function App() {
   if (!hasSession) {
     return (
       <div className="min-h-screen flex flex-col">
+        <AmbientScene />
         <div className="flex items-center justify-end gap-2 px-4 sm:px-6 py-4">
           <SettingsMenu />
         </div>
@@ -228,9 +239,11 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <AmbientScene />
       {/* Header / toolbar */}
-      <header className="sticky top-0 z-40 bg-[rgba(var(--color-surface),0.78)] backdrop-blur-xl border-b border-[rgba(var(--color-border),0.5)]">
-        <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      <header className="hud-rail hud-rail-top sticky top-0 z-40 bg-[rgba(var(--color-surface),0.78)] backdrop-blur-xl border-b border-[rgba(var(--color-border),0.5)]">
+        <div className="hud-bow">
+        <div className="hud-bow-inner mx-auto w-full max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           <Tooltip>
             <TooltipTrigger asChild>
               <button
@@ -256,19 +269,25 @@ function App() {
             <SettingsMenu />
           </div>
         </div>
+        </div>
       </header>
 
-      {/* Working area */}
-      <main className="flex-1 mx-auto w-full max-w-6xl px-4 sm:px-6 py-6 sm:py-8 flex flex-col gap-6">
+      {/* Working area — centred on large screens but biased upward (bottom padding
+          larger than top), so the content sits in the upper-middle rather than
+          dead-centre or stranded at the top. gap-10 gives the title strip and the
+          panel grid clear, even breathing room. */}
+      <main className="flex-1 mx-auto w-full max-w-6xl px-4 sm:px-6 pt-6 sm:pt-8 pb-24 sm:pb-40 flex flex-col gap-8 sm:gap-10 lg:justify-center">
         {errorBanner}
 
+        {/* Track title + a quiet metadata strip (values in body text, labels
+            secondary) — the now-loaded source, read at a glance. */}
         {originalFile && (
-          <div>
+          <div className="space-y-4">
             <h2 className="font-display text-2xl sm:text-3xl font-normal text-[rgb(var(--color-text))] truncate">
               {originalFile.name}
             </h2>
             {metaItems.length > 0 && (
-              <dl className="mt-3 flex flex-wrap gap-x-7 gap-y-2">
+              <dl className="flex flex-wrap gap-x-8 gap-y-3">
                 {metaItems.map((item) => (
                   <div key={item.label}>
                     <dt className="text-[11px] uppercase tracking-wide text-[rgb(var(--color-text-secondary))]">
@@ -284,12 +303,14 @@ function App() {
           </div>
         )}
 
-        <div className="grid gap-6 items-start lg:grid-cols-[minmax(320px,360px)_1fr]">
-          {/* Control panel — the machinery, grouped on one glass surface */}
+        {/* Cockpit — effects rail on the left, the waveform centrepiece in the
+            middle, the mood rail on the right. Flat glass panels (the mockup's
+            spatial console), each in its own HUD frame. */}
+        <div className="grid gap-5 items-start lg:grid-cols-[minmax(300px,340px)_minmax(0,1fr)_minmax(240px,280px)]">
+          {/* Effects — live: moving a control reshapes the sound as it plays. */}
           {originalFile && (
-            <Card asChild className="p-5 sm:p-6">
-              <aside className="flex flex-col gap-6">
-                {/* Effects are live: moving a control reshapes the sound as it plays. */}
+            <Card asChild className="hud-frame p-4 sm:p-5 audio-drift-a">
+              <aside>
                 <EffectControls onChange={handleEffectChange} disabled={state.isExporting} />
               </aside>
             </Card>
@@ -308,13 +329,17 @@ function App() {
               />
             )}
           </section>
+
+          {/* Mood rail — switch the whole atmosphere in one tap. */}
+          <ThemeRail />
         </div>
       </main>
 
       {/* Transport bar */}
       {(processedBuffer || originalFile) && (
-        <div className="sticky bottom-0 z-30 bg-[rgba(var(--color-surface),0.85)] backdrop-blur-xl border-t border-[rgba(var(--color-border),0.5)] shadow-[0_-14px_40px_-28px_rgba(var(--color-accent),0.5)]">
-          <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-3">
+        <div className="hud-rail hud-rail-bottom sticky bottom-0 z-30 bg-[rgba(var(--color-surface),0.85)] backdrop-blur-xl border-t border-[rgba(var(--color-border),0.5)] shadow-[0_-14px_40px_-28px_rgba(var(--color-accent),0.5)]">
+          <div className="hud-bow">
+          <div className="hud-bow-inner mx-auto w-full max-w-6xl px-4 sm:px-6 py-3">
             <PlaybackControls
               isPlaying={state.isPlaying}
               onPlay={handlePlay}
@@ -329,7 +354,9 @@ function App() {
               canExport={!!(originalBuffer || processedBuffer)}
               isExporting={state.isExporting}
               disabled={state.isExporting}
+              getAnalyser={getAnalyser}
             />
+          </div>
           </div>
         </div>
       )}

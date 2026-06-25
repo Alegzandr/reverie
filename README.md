@@ -18,7 +18,7 @@ Reverie is a **free online audio editor** with one promise: dreamy edits for you
 - **📊 Audio Metadata Display**: View technical details including bitrate, sample rate, bit depth (for lossless formats), and channel information
 - **🎨 Waveform Visualization**: Real-time waveform display showing both original and processed audio
 - **🎧 Track Comparison**: Switch between original and processed versions with synchronized playback
-- **💾 Smart Format Export**: Exports match your original format where possible (MP3→MP3, WAV→WAV, AIFF→AIFF, WebM→WebM, OGG→OGG, M4A→M4A, FLAC→WAV)
+- **💾 Smart Format Export**: Exports match your original format where possible (MP3→MP3, WAV→WAV, AIFF→AIFF, FLAC→FLAC, WebM→WebM, OGG→OGG, M4A→M4A)
 - **🌍 Multi-Language Support**: Available in 10 languages (English, French, Spanish, German, Portuguese, Russian, Chinese, Japanese, Korean, Hindi)
 - **🌓 Dark/Light Mode**: Automatic theme detection with manual toggle
 - **📱 PWA Support**: Install as a standalone app on mobile and desktop
@@ -108,7 +108,7 @@ npm run dev
    - **MP3** → MP3 (preserves bitrate)
    - **WAV** → WAV (lossless)
    - **AIFF** → AIFF (lossless)
-   - **FLAC** → WAV (lossless preservation)
+   - **FLAC** → FLAC (lossless, encoded via libFLAC; falls back to WAV if unavailable)
    - **WebM** → WebM (browser-native encoding with fallback to MP3)
    - **OGG/Opus** → OGG (browser-native encoding with fallback to MP3)
    - **AAC/M4A** → M4A (browser-native encoding with fallback to MP3)
@@ -149,6 +149,7 @@ reverie/
 │   │   ├── audioMetadataExtractor.ts # Extract metadata from file headers
 │   │   ├── mp3Encoder.ts           # MP3 encoding (LAME.js)
 │   │   ├── aiffEncoder.ts          # AIFF encoding (manual implementation)
+│   │   ├── flacEncoder.ts          # FLAC encoding (libFLAC WASM, lazy-loaded)
 │   │   ├── mediaRecorderEncoder.ts # WebM/OGG/AAC encoding (MediaRecorder API)
 │   │   ├── exportStrategies.ts     # Strategy pattern for exports
 │   │   ├── formatters.ts           # UI value formatting utilities
@@ -191,7 +192,7 @@ reverie/
    - **MP3**: LAME.js encoder with matched bitrate
    - **WAV**: Manual PCM encoder (lossless)
    - **AIFF**: Manual AIFF encoder (lossless, big-endian)
-   - **FLAC**: Exports as WAV (both lossless)
+   - **FLAC**: libFLAC (WASM) lossless encoder, lazy-loaded; falls back to WAV
    - **WebM/OGG/M4A**: MediaRecorder API with fallback to MP3
 5. **Download**: Triggers browser download with custom filename including effect label and "ver. by Reverie" suffix
 

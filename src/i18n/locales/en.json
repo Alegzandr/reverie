@@ -91,11 +91,27 @@
   "settings": {
     "open": "Settings",
     "title": "Settings",
-    "subtitle": "Appearance and language",
-    "appearance": "Appearance",
-    "light": "Light",
-    "dark": "Dark",
+    "subtitle": "Themes and language",
+    "themes": "Themes",
+    "theme": {
+      "light": "Light",
+      "dark": "Void Bloom",
+      "tidal": "Cosmic Wave",
+      "nocturne": "Midnight Pulse",
+      "aurora": "Nebula Drift",
+      "horizon": "Lunar Haze"
+    },
     "language": "Language",
     "close": "Close settings"
+  },
+  "studio": {
+    "effects": "Effects",
+    "adjustments": "Adjustments",
+    "mood": "Mood",
+    "themes": "Themes",
+    "moreThemes": "More themes",
+    "active": "Active",
+    "inactive": "Inactive",
+    "levels": "Levels"
   }
 }

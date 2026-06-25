@@ -91,11 +91,27 @@
   "settings": {
     "open": "设置",
     "title": "设置",
-    "subtitle": "外观和语言",
-    "appearance": "外观",
-    "light": "浅色",
-    "dark": "深色",
+    "subtitle": "主题和语言",
+    "themes": "主题",
+    "theme": {
+      "light": "浅色",
+      "dark": "Void Bloom",
+      "tidal": "Cosmic Wave",
+      "nocturne": "Midnight Pulse",
+      "aurora": "Nebula Drift",
+      "horizon": "Lunar Haze"
+    },
     "language": "语言",
     "close": "关闭设置"
+  },
+  "studio": {
+    "effects": "效果",
+    "adjustments": "调节",
+    "mood": "氛围",
+    "themes": "主题",
+    "moreThemes": "更多主题",
+    "active": "启用",
+    "inactive": "停用",
+    "levels": "电平"
   }
 }

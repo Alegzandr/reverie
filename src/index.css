@@ -41,6 +41,14 @@
 
 /* Reverie — dreamy in-browser audio studio */
 @layer base {
+  /* Tailwind v4's preflight no longer sets `cursor: pointer` on native buttons,
+     so hoverable controls read as non-interactive. Restore it for enabled
+     buttons; disabled ones keep their `cursor-not-allowed`. */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+
   :root {
     --color-background: 244, 245, 249;
     --color-surface: 253, 253, 255;
@@ -55,6 +63,15 @@
     --aurora-violet: 167, 139, 250;
     --aurora-pink: 244, 114, 182;
     --aurora-cyan: 56, 224, 232;
+
+    /* Audio-reactivity bus — published live by useAudioReactivity while a track
+       plays, consumed by the scene + HUD panels to breathe with the music.
+       Default 0 so everything is perfectly calm until sound arrives. */
+    --audio-level: 0;
+    --audio-bass: 0;
+    --audio-mid: 0;
+    --audio-treble: 0;
+    --audio-pulse: 0;
 
     /* ── shadcn semantic layer ──────────────────────────────────────────
        Full-color tokens derived from the Aurora triplets above. They use
@@ -165,14 +182,18 @@
     filter: brightness(1.08);
   }
 
-  /* Aurora signature surface (Export). The full three-stop gradient sits on an
-     oversized canvas and pans gently on hover for a slow, dreamy shimmer —
-     a one-shot transition, not a loop, so it stays calm. */
+  /* Aurora signature surface (Export). The gradient sits on an oversized canvas
+     and pans gently on hover for a slow, dreamy shimmer — a one-shot transition,
+     not a loop, so it stays calm. Rebalanced violet↔cyan: violet owns the first
+     third, cyan the last third, and pink is only a thin transition peak — the
+     surface reads holographic and cool, not candy-pink. */
   .btn-aurora {
     background-image: linear-gradient(
-      120deg,
+      115deg,
       rgb(var(--aurora-violet)) 0%,
-      rgb(var(--aurora-pink)) 52%,
+      rgb(var(--aurora-violet)) 32%,
+      rgb(var(--aurora-pink)) 50%,
+      rgb(var(--aurora-cyan)) 70%,
       rgb(var(--aurora-cyan)) 100%
     );
     background-size: 150% 150%;
@@ -211,12 +232,31 @@
       opacity: 0.9;
     }
     70% {
-      box-shadow: 0 0 0 13px rgba(var(--aurora-pink), 0);
+      box-shadow: 0 0 0 13px rgba(var(--aurora-cyan), 0);
       opacity: 0;
     }
     100% {
-      box-shadow: 0 0 0 0 rgba(var(--aurora-pink), 0);
+      box-shadow: 0 0 0 0 rgba(var(--aurora-cyan), 0);
       opacity: 0;
+    }
+  }
+
+  /* Audio-reactive halo on the play orb — the rhythmic HEART of the interface,
+     so this is the one surface that punches with the kick: a glow that swells
+     with bass weight and flashes on each onset. Separate layer from .play-pulse
+     and the button's own shadow, so it augments rather than clobbers. */
+  .audio-orb-glow {
+    border-radius: 9999px;
+    box-shadow:
+      0 0 calc(8px + var(--audio-bass) * 26px + var(--audio-pulse) * 22px)
+        calc(var(--audio-bass) * 5px)
+        rgba(var(--color-accent), calc(0.2 + var(--audio-bass) * 0.5 + var(--audio-pulse) * 0.45));
+    transition: box-shadow 70ms linear;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .audio-orb-glow {
+      box-shadow: none;
     }
   }
 
@@ -367,5 +407,866 @@
 
   ::-webkit-scrollbar-thumb:hover {
     background: rgba(var(--color-text-secondary), 0.6);
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   THEME PALETTES + HUD TOKENS
+   The futuristic HUD is the one interface, present for every theme; a theme
+   only swaps the colour palette and the animated background. light/dark are the
+   two calm palettes (daybreak / dusk scenes); the rest are vibey ambiances.
+   Each block sets the colour triplets plus the HUD + scene-veil tokens that
+   drive the holographic chrome. These [data-theme] blocks follow `:root`/`.dark`
+   in source order, so at equal specificity they win.
+   ════════════════════════════════════════════════════════════════════════ */
+@layer base {
+  /* Light-palette defaults (the `light` theme inherits these). --scene-veil is
+     the colour the legibility veil washes the chrome bands with: light here so
+     it lifts the bright daybreak scene, dark on every dark theme. */
+  :root {
+    --hud-curve: 26px;
+    --hud-line: 150, 170, 205;
+    --hud-glow: var(--color-ambient);
+    --scene-veil: 248, 250, 255;
+  }
+
+  /* Dark palette — brighter cool hairline + a deep veil. */
+  [data-theme='dark'] {
+    --hud-line: 150, 165, 210;
+    --hud-glow: var(--color-ambient);
+    --scene-veil: 8, 10, 24;
+  }
+
+  /* Every dark-based ambiance shares the deep veil. */
+  [data-theme='tidal'],
+  [data-theme='nocturne'],
+  [data-theme='aurora'],
+  [data-theme='horizon'] {
+    --scene-veil: 8, 10, 24;
+  }
+
+  /* Tidal — moonlit water. Cool teal/cyan, the reference immersive scene. */
+  [data-theme='tidal'] {
+    --color-background: 7, 13, 36;
+    --color-surface: 16, 34, 58;
+    --color-text: 226, 244, 252;
+    --color-text-secondary: 150, 188, 208;
+    --color-border: 64, 122, 142;
+    --color-accent: 94, 222, 226;
+    --color-accent-hover: 138, 234, 236;
+    --color-ambient: 56, 189, 248;
+    --hud-line: 132, 224, 232;
+    --hud-glow: 56, 224, 232;
+  }
+
+  /* Nocturne — deep starfield. Indigo/violet with cool starlight. */
+  [data-theme='nocturne'] {
+    --color-background: 6, 5, 18;
+    --color-surface: 19, 17, 42;
+    --color-text: 233, 236, 252;
+    --color-text-secondary: 160, 167, 202;
+    --color-border: 78, 76, 124;
+    --color-accent: 172, 148, 252;
+    --color-accent-hover: 192, 174, 255;
+    --color-ambient: 124, 92, 230;
+    --hud-line: 158, 178, 255;
+    --hud-glow: 124, 92, 230;
+  }
+
+  /* Aurora (Nebula Drift) — deep cosmic black with a saturated violet/magenta
+     focal light. Step 1 of the art-direction pass: drop the background to a
+     near-black violet, resaturate the accent off the washed-out lilac, and kill
+     the cyan ambient drift so a single light dominates (the waveform). Surface
+     is pulled darker so the panels recede beneath that focal point. The glass
+     hairline/glow (--hud-line/--hud-glow) are deliberately left for the glass
+     pass. */
+  [data-theme='aurora'] {
+    --color-background: 9, 6, 18;
+    --color-surface: 19, 14, 36;
+    --color-text: 236, 234, 250;
+    --color-text-secondary: 168, 160, 196;
+    --color-border: 70, 58, 110;
+    --color-accent: 178, 92, 248;
+    --color-accent-hover: 198, 130, 252;
+    --color-ambient: 190, 96, 236;
+    --hud-line: 168, 196, 244;
+    --hud-glow: 120, 100, 240;
+  }
+
+  /* Horizon — dawn/dusk. The warm home: amber/coral over an indigo sky. */
+  [data-theme='horizon'] {
+    --color-background: 26, 17, 52;
+    --color-surface: 49, 29, 66;
+    --color-text: 252, 240, 244;
+    --color-text-secondary: 216, 186, 198;
+    --color-border: 122, 80, 112;
+    --color-accent: 255, 170, 122;
+    --color-accent-hover: 255, 190, 150;
+    --color-ambient: 255, 122, 150;
+    --hud-line: 255, 202, 156;
+    --hud-glow: 255, 150, 120;
+  }
+}
+
+@layer utilities {
+  /* ── Holographic glass ──────────────────────────────────────────────────
+     In immersive themes the floating panels read as translucent HUD plates:
+     thinner fill, a luminous hairline in --hud-line, and an inner + outer
+     glow in --hud-glow. Follows `.dark .glass`, so it wins at equal weight. */
+  .immersive .glass {
+    background: linear-gradient(
+      160deg,
+      rgba(var(--color-surface), 0.5),
+      rgba(var(--color-surface), 0.26)
+    );
+    border: 1px solid rgba(var(--hud-line), 0.42);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.14),
+      inset 0 0 26px -14px rgba(var(--hud-glow), 0.6),
+      0 26px 64px -32px rgba(var(--hud-glow), 0.55);
+    -webkit-backdrop-filter: saturate(150%) blur(18px);
+    backdrop-filter: saturate(150%) blur(18px);
+  }
+
+  /* ── Curved chrome rails (fisheye visor) ────────────────────────────────
+     The top and bottom bars bow outward like a cockpit visor. The bar's own
+     utilities (bg/border/blur) are suppressed in immersive mode and replaced
+     by a taller pseudo-plate whose elliptical corner radii sum to 100% across
+     the width, producing one smooth convex arc. The plate overhangs the bar by
+     --hud-curve so the bulge floats over the scene; pointer-events stay off it.
+     Content sits in normal flow above the plate, never clipped. */
+  .immersive .hud-rail {
+    background: transparent;
+    border: 0;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .immersive .hud-rail::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    z-index: -1;
+    height: calc(100% + var(--hud-curve));
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      rgba(var(--color-surface), 0.58),
+      rgba(var(--color-surface), 0.2)
+    );
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.16),
+      inset 0 0 30px -16px rgba(var(--hud-glow), 0.7);
+    -webkit-backdrop-filter: saturate(160%) blur(16px);
+    backdrop-filter: saturate(160%) blur(16px);
+  }
+
+  .immersive .hud-rail-top::after {
+    top: -1px;
+    border-bottom: 1px solid rgba(var(--hud-line), 0.5);
+    border-radius: 0 0 50% 50% / 0 0 calc(var(--hud-curve) + 10px) calc(var(--hud-curve) + 10px);
+  }
+
+  .immersive .hud-rail-bottom::after {
+    bottom: -1px;
+    border-top: 1px solid rgba(var(--hud-line), 0.5);
+    border-radius: 50% 50% 0 0 / calc(var(--hud-curve) + 10px) calc(var(--hud-curve) + 10px) 0 0;
+  }
+
+  /* Header/footer content stays flat: a 3D tilt there distorts text and turns
+     the round play orb into an ellipse. The curve lives only in the glass plate
+     (the bowed ::after). The 3D belongs on the main side consoles instead. */
+
+  /* ── Ambient scene scaffold ─────────────────────────────────────────────
+     A fixed full-viewport layer painted behind the app content (negative
+     z-index sits above the body background but under the shell). Mounted only
+     for immersive themes by <AmbientScene>. */
+  .scene {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .scene > * {
+    position: absolute;
+  }
+
+  /* Legibility veil: darken the top + bottom bands where the chrome lives,
+     leave the middle (waveform glass) clear. Keeps text AA over any scene. */
+  .scene-veil {
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      rgba(var(--scene-veil), 0.44) 0%,
+      rgba(var(--scene-veil), 0.07) 26%,
+      rgba(var(--scene-veil), 0) 52%,
+      rgba(var(--scene-veil), 0.12) 76%,
+      rgba(var(--scene-veil), 0.42) 100%
+    );
+  }
+
+  /* POV lens vignette + faint CRT scanlines — the retrofuturist HUD framing. */
+  .hud-vignette {
+    inset: 0;
+    background: radial-gradient(132% 122% at 50% 44%, transparent 54%, rgba(3, 5, 14, 0.6) 100%);
+  }
+
+  .hud-scanlines {
+    inset: 0;
+    opacity: 0.5;
+    mix-blend-mode: overlay;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.03) 0 1px,
+      transparent 1px 3px
+    );
+  }
+
+  /* ── Audio breath ───────────────────────────────────────────────────────
+     Environmental light that swells with the track. Two soft glows — a warm
+     accent rising from below (bloom follows loudness) and a cool wash from the
+     top (kick flash) — composited with `screen` so they only ever lighten the
+     scene. Sits in the backdrop layer (z-index -1 via `.scene`), so it brightens
+     the world *behind* the glass panels rather than tinting over text. The short
+     transition keeps fast onsets snappy while smoothing the per-frame steps. */
+  .scene-breath {
+    inset: 0;
+    mix-blend-mode: screen;
+    /* Environment = overall dynamics, NOT the kick (the kick lives on the orb).
+       Bloom from below swells with loudness + mids; a cool wash from the top
+       brightens with treble air. */
+    opacity: calc(0.1 + var(--audio-level) * 0.5 + var(--audio-mid) * 0.18);
+    background:
+      radial-gradient(
+        120% 85% at 50% 102%,
+        rgba(var(--color-accent), calc(0.12 + var(--audio-level) * 0.26)),
+        transparent 62%
+      ),
+      radial-gradient(
+        110% 75% at 50% -4%,
+        rgba(var(--color-ambient), calc(0.06 + var(--audio-treble) * 0.24)),
+        transparent 58%
+      );
+    transition: opacity 90ms linear;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scene-breath {
+      opacity: 0.1;
+      transition: none;
+    }
+  }
+
+  /* ── Audio dust ─────────────────────────────────────────────────────────
+     A sparse particle field in the backdrop layer. Overall opacity tracks
+     treble, so highs/air make the air "sparkle" and quiet passages go still.
+     Two depths (::before far/small/slow, ::after near/large/fast) give parallax.
+     Drift is gated to desktop + no-reduce (matches the scene-motion strategy);
+     the opacity reaction itself is cheap and always on. */
+  .scene-particles {
+    inset: 0;
+    opacity: calc(0.04 + var(--audio-treble) * 0.6);
+    transition: opacity 110ms linear;
+  }
+
+  .scene-particles::before,
+  .scene-particles::after {
+    content: '';
+    position: absolute;
+    inset: -25% 0;
+    background-repeat: repeat;
+  }
+
+  .scene-particles::before {
+    background-image:
+      radial-gradient(1px 1px at 12% 30%, rgba(var(--hud-line), 0.9), transparent),
+      radial-gradient(1px 1px at 47% 70%, rgba(var(--hud-line), 0.7), transparent),
+      radial-gradient(1px 1px at 78% 18%, rgba(var(--hud-line), 0.8), transparent),
+      radial-gradient(1px 1px at 64% 52%, rgba(var(--hud-line), 0.6), transparent);
+    background-size: 200px 200px;
+  }
+
+  .scene-particles::after {
+    background-image:
+      radial-gradient(2px 2px at 22% 60%, rgba(var(--color-ambient), 0.9), transparent),
+      radial-gradient(2px 2px at 82% 40%, rgba(var(--color-accent), 0.8), transparent),
+      radial-gradient(1.5px 1.5px at 55% 12%, rgba(var(--color-ambient), 0.8), transparent);
+    background-size: 340px 340px;
+  }
+
+  @media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (pointer: fine) {
+    .scene-particles::before {
+      animation: dust-drift-far 46s linear infinite;
+    }
+    .scene-particles::after {
+      animation: dust-drift-near 30s linear infinite;
+    }
+  }
+
+  @keyframes dust-drift-far {
+    from { transform: translate3d(0, 0, 0); }
+    to { transform: translate3d(2%, -25%, 0); }
+  }
+
+  @keyframes dust-drift-near {
+    from { transform: translate3d(0, 0, 0); }
+    to { transform: translate3d(-3%, -25%, 0); }
+  }
+
+  /* ── Scene: Tidal (moonlit water) ───────────────────────────────────────
+     CSS paints the still parts: a night sky with a clear horizon glow band at
+     50%, stars, a soft moon, and drifting clouds. The water surface + the
+     moonglade (the moon's broken, shimmering reflection) are drawn on a light
+     canvas (<TidalScene>) because a believable reflection needs wobbling
+     horizontal segments, not a CSS bar. Reduced-motion freezes the canvas on a
+     still frame. */
+  .scene-tidal {
+    background: linear-gradient(
+      180deg,
+      #060b20 0%,
+      #0a1430 33%,
+      #133a5a 47%,
+      #0f2f4c 51%,
+      #0a2438 70%,
+      #06182a 100%
+    );
+  }
+
+  .tidal-stars {
+    inset: 0 0 52% 0;
+    background-repeat: no-repeat;
+    background-image:
+      radial-gradient(1.4px 1.4px at 14% 18%, rgba(255, 255, 255, 0.9), transparent),
+      radial-gradient(1px 1px at 26% 40%, rgba(214, 230, 255, 0.7), transparent),
+      radial-gradient(1.2px 1.2px at 38% 12%, rgba(255, 255, 255, 0.8), transparent),
+      radial-gradient(1px 1px at 52% 30%, rgba(220, 235, 255, 0.65), transparent),
+      radial-gradient(1.5px 1.5px at 70% 20%, rgba(255, 255, 255, 0.85), transparent),
+      radial-gradient(1px 1px at 84% 36%, rgba(214, 230, 255, 0.6), transparent),
+      radial-gradient(1.2px 1.2px at 90% 14%, rgba(255, 255, 255, 0.75), transparent),
+      radial-gradient(1px 1px at 46% 44%, rgba(255, 255, 255, 0.55), transparent);
+  }
+
+  .tidal-moon {
+    left: 62%;
+    top: 12%;
+    width: 92px;
+    height: 92px;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    background: radial-gradient(
+      circle at 50% 45%,
+      rgba(236, 250, 255, 0.98),
+      rgba(196, 232, 255, 0.5) 40%,
+      rgba(150, 210, 245, 0.12) 62%,
+      transparent 72%
+    );
+    box-shadow: 0 0 64px 20px rgba(150, 220, 250, 0.26);
+  }
+
+  .tidal-horizon {
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 2px;
+    background: linear-gradient(to right, transparent, rgba(178, 242, 255, 0.85), transparent);
+    filter: blur(1px);
+    box-shadow: 0 0 44px 8px rgba(132, 226, 255, 0.42);
+  }
+
+  .tidal-cloud-a,
+  .tidal-cloud-b {
+    border-radius: 50%;
+    filter: blur(34px);
+    opacity: 0.4;
+  }
+
+  .tidal-cloud-a {
+    width: 42%;
+    height: 11%;
+    left: 4%;
+    top: 24%;
+    background: radial-gradient(circle, rgba(120, 180, 230, 0.45), transparent 70%);
+  }
+
+  .tidal-cloud-b {
+    width: 32%;
+    height: 9%;
+    right: 8%;
+    top: 33%;
+    background: radial-gradient(circle, rgba(150, 175, 225, 0.36), transparent 70%);
+  }
+
+  .tidal-canvas,
+  .scene-canvas {
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* ── Scene: Nocturne (starfield) — V2 baseline ──────────────────────────── */
+  .scene-nocturne {
+    background: radial-gradient(120% 100% at 70% 16%, #2a1b5e 0%, #130c30 46%, #060414 100%);
+  }
+
+  .noct-stars,
+  .noct-stars-2 {
+    inset: 0;
+    background-repeat: no-repeat;
+    background-image:
+      radial-gradient(1.4px 1.4px at 12% 22%, rgba(255, 255, 255, 0.9), transparent),
+      radial-gradient(1.2px 1.2px at 28% 64%, rgba(220, 230, 255, 0.8), transparent),
+      radial-gradient(1.6px 1.6px at 44% 34%, rgba(255, 255, 255, 0.85), transparent),
+      radial-gradient(1px 1px at 58% 72%, rgba(210, 222, 255, 0.7), transparent),
+      radial-gradient(1.5px 1.5px at 70% 26%, rgba(255, 255, 255, 0.9), transparent),
+      radial-gradient(1.1px 1.1px at 82% 58%, rgba(225, 232, 255, 0.75), transparent),
+      radial-gradient(1.3px 1.3px at 90% 38%, rgba(255, 255, 255, 0.8), transparent),
+      radial-gradient(1px 1px at 36% 12%, rgba(255, 255, 255, 0.7), transparent);
+  }
+
+  .noct-stars-2 {
+    background-image:
+      radial-gradient(1px 1px at 18% 48%, rgba(255, 255, 255, 0.6), transparent),
+      radial-gradient(1.2px 1.2px at 50% 18%, rgba(200, 215, 255, 0.7), transparent),
+      radial-gradient(1px 1px at 64% 52%, rgba(255, 255, 255, 0.6), transparent),
+      radial-gradient(1.3px 1.3px at 76% 70%, rgba(220, 230, 255, 0.7), transparent),
+      radial-gradient(1px 1px at 88% 20%, rgba(255, 255, 255, 0.6), transparent);
+    opacity: 0.7;
+  }
+
+  .noct-glow-a,
+  .noct-glow-b {
+    border-radius: 50%;
+    filter: blur(46px);
+    mix-blend-mode: screen;
+  }
+
+  .noct-glow-a {
+    width: 50%;
+    height: 40%;
+    left: 8%;
+    top: 14%;
+    background: radial-gradient(circle, rgba(124, 92, 230, 0.4), transparent 70%);
+  }
+
+  .noct-glow-b {
+    width: 44%;
+    height: 36%;
+    right: 6%;
+    bottom: 8%;
+    background: radial-gradient(circle, rgba(56, 200, 232, 0.3), transparent 70%);
+  }
+
+  /* ── Scene: Nebula Drift (cosmic depth) ─────────────────────────────────────
+     The WebGL nebula shader (<NebulaScene>) paints the live scene on desktop.
+     This base gradient shows behind it / when it falls back to the CSS veils: a
+     near-black violet with a faint lift top-right, where the focal astre sits.
+     The veils are the still fallback (no-WebGL / touch / reduced-motion); they
+     read the theme tokens so they recolour with the palette and carry no cyan. */
+  .scene-aurora {
+    background: radial-gradient(120% 110% at 78% 16%, #1d0f3a 0%, #0c0720 48%, #070411 100%);
+  }
+
+  .aurora-veil-a,
+  .aurora-veil-b,
+  .aurora-veil-c {
+    inset: -20%;
+    filter: blur(50px);
+    mix-blend-mode: screen;
+  }
+
+  .aurora-veil-a {
+    background: radial-gradient(46% 40% at 76% 24%, rgba(var(--color-accent), 0.42), transparent 70%);
+  }
+
+  .aurora-veil-b {
+    background: radial-gradient(44% 38% at 30% 58%, rgba(var(--color-ambient), 0.28), transparent 72%);
+  }
+
+  .aurora-veil-c {
+    background: radial-gradient(50% 44% at 58% 88%, rgba(var(--color-accent), 0.18), transparent 74%);
+  }
+
+  /* ── Scene: Horizon (dawn/dusk) — V2 baseline ───────────────────────────── */
+  .scene-horizon {
+    background: linear-gradient(180deg, #1a1140 0%, #432065 38%, #8a3a66 64%, #c75b7a 82%, #ffb487 100%);
+  }
+
+  .horizon-sun {
+    left: 50%;
+    bottom: 6%;
+    width: 200px;
+    height: 200px;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 226, 180, 0.95), rgba(255, 170, 122, 0.4) 45%, transparent 70%);
+    filter: blur(6px);
+  }
+
+  .horizon-glow-a,
+  .horizon-glow-b {
+    border-radius: 50%;
+    filter: blur(48px);
+    mix-blend-mode: screen;
+  }
+
+  .horizon-glow-a {
+    width: 60%;
+    height: 30%;
+    left: 4%;
+    bottom: 16%;
+    background: radial-gradient(circle, rgba(255, 150, 120, 0.4), transparent 70%);
+  }
+
+  .horizon-glow-b {
+    width: 44%;
+    height: 26%;
+    right: 6%;
+    top: 22%;
+    background: radial-gradient(circle, rgba(176, 120, 220, 0.34), transparent 70%);
+  }
+
+  /* ── Scene: Daybreak (the `light` theme) — bright airy sky ──────────────── */
+  .scene-daybreak {
+    background: linear-gradient(180deg, #bfe0ff 0%, #d6ecff 46%, #eaf3ff 72%, #fff6ef 100%);
+  }
+
+  .day-sun {
+    right: 16%;
+    top: 12%;
+    width: 26%;
+    height: 26%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 248, 232, 0.95), rgba(255, 226, 170, 0.4) 42%, transparent 70%);
+    filter: blur(6px);
+  }
+
+  .day-cloud-a,
+  .day-cloud-b,
+  .day-cloud-c {
+    border-radius: 50%;
+    filter: blur(36px);
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.9), transparent 70%);
+  }
+
+  .day-cloud-a {
+    width: 46%;
+    height: 16%;
+    left: 6%;
+    top: 30%;
+    opacity: 0.85;
+  }
+
+  .day-cloud-b {
+    width: 38%;
+    height: 13%;
+    right: 8%;
+    top: 52%;
+    opacity: 0.7;
+  }
+
+  .day-cloud-c {
+    width: 30%;
+    height: 11%;
+    left: 30%;
+    top: 68%;
+    opacity: 0.6;
+  }
+
+  /* ── Scene: Dusk (the `dark` theme) — calm deep nightfall ───────────────── */
+  .scene-dusk {
+    background: radial-gradient(120% 100% at 50% 12%, #1a1638 0%, #0d0a24 52%, #07061a 100%);
+  }
+
+  .dusk-glow-a,
+  .dusk-glow-b {
+    border-radius: 50%;
+    filter: blur(50px);
+    mix-blend-mode: screen;
+  }
+
+  .dusk-glow-a {
+    width: 54%;
+    height: 42%;
+    left: 6%;
+    top: 10%;
+    background: radial-gradient(circle, rgba(124, 92, 230, 0.32), transparent 70%);
+  }
+
+  .dusk-glow-b {
+    width: 46%;
+    height: 36%;
+    right: 4%;
+    bottom: 6%;
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.24), transparent 70%);
+  }
+
+  .dusk-stars {
+    inset: 0;
+    background-repeat: no-repeat;
+    background-image:
+      radial-gradient(1.3px 1.3px at 16% 24%, rgba(255, 255, 255, 0.8), transparent),
+      radial-gradient(1px 1px at 34% 56%, rgba(214, 220, 255, 0.6), transparent),
+      radial-gradient(1.4px 1.4px at 52% 20%, rgba(255, 255, 255, 0.75), transparent),
+      radial-gradient(1px 1px at 68% 64%, rgba(214, 220, 255, 0.55), transparent),
+      radial-gradient(1.3px 1.3px at 80% 30%, rgba(255, 255, 255, 0.7), transparent),
+      radial-gradient(1px 1px at 90% 52%, rgba(214, 220, 255, 0.5), transparent);
+  }
+
+  /* ── Scene motion — desktop only ("le paquet"); mobile + touch keep a still
+     frame to spare the battery, and reduced-motion always wins. The JS scenes
+     gate on the same predicate (scenes/motion.ts). ─────────────────────────── */
+  @media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (pointer: fine) {
+    .day-cloud-a {
+      animation: tidal-cloud-a 80s ease-in-out infinite alternate;
+    }
+    .day-cloud-b {
+      animation: tidal-cloud-b 104s ease-in-out infinite alternate;
+    }
+    .day-cloud-c {
+      animation: tidal-cloud-a 132s ease-in-out infinite alternate;
+    }
+    .dusk-glow-a {
+      animation: noct-drift-a 46s ease-in-out infinite alternate;
+    }
+    .dusk-glow-b {
+      animation: noct-drift-b 58s ease-in-out infinite alternate;
+    }
+    .dusk-stars {
+      animation: noct-twinkle 7s ease-in-out infinite alternate;
+    }
+    .tidal-cloud-a {
+      animation: tidal-cloud-a 70s ease-in-out infinite alternate;
+    }
+    .tidal-cloud-b {
+      animation: tidal-cloud-b 92s ease-in-out infinite alternate;
+    }
+    .noct-stars {
+      animation: noct-twinkle 6s ease-in-out infinite alternate;
+    }
+    .noct-stars-2 {
+      animation: noct-twinkle 8s ease-in-out infinite alternate-reverse;
+    }
+    .noct-glow-a {
+      animation: noct-drift-a 40s ease-in-out infinite alternate;
+    }
+    .noct-glow-b {
+      animation: noct-drift-b 52s ease-in-out infinite alternate;
+    }
+    .aurora-veil-a {
+      animation: aurora-veil-a 30s ease-in-out infinite alternate;
+    }
+    .aurora-veil-b {
+      animation: aurora-veil-b 38s ease-in-out infinite alternate;
+    }
+    .aurora-veil-c {
+      animation: aurora-veil-c 46s ease-in-out infinite alternate;
+    }
+    .horizon-glow-a {
+      animation: horizon-drift-a 44s ease-in-out infinite alternate;
+    }
+    .horizon-glow-b {
+      animation: horizon-drift-b 56s ease-in-out infinite alternate;
+    }
+  }
+
+  @keyframes tidal-cloud-a {
+    from { transform: translateX(-8%); }
+    to { transform: translateX(10%); }
+  }
+  @keyframes tidal-cloud-b {
+    from { transform: translateX(6%); }
+    to { transform: translateX(-10%); }
+  }
+  @keyframes noct-twinkle {
+    from { opacity: 0.55; }
+    to { opacity: 1; }
+  }
+  @keyframes noct-drift-a {
+    from { transform: translate3d(-3%, 0, 0); }
+    to { transform: translate3d(5%, 3%, 0); }
+  }
+  @keyframes noct-drift-b {
+    from { transform: translate3d(3%, 0, 0); }
+    to { transform: translate3d(-4%, -3%, 0); }
+  }
+  @keyframes aurora-veil-a {
+    from { transform: translate3d(-3%, -2%, 0) scale(1); }
+    to { transform: translate3d(4%, 3%, 0) scale(1.12); }
+  }
+  @keyframes aurora-veil-b {
+    from { transform: translate3d(2%, 0, 0) scale(1.05); }
+    to { transform: translate3d(-4%, 2%, 0) scale(0.95); }
+  }
+  @keyframes aurora-veil-c {
+    from { transform: translate3d(0, 2%, 0) scale(1); }
+    to { transform: translate3d(3%, -3%, 0) scale(1.1); }
+  }
+  @keyframes horizon-drift-a {
+    from { transform: translate3d(-4%, 0, 0); }
+    to { transform: translate3d(5%, -2%, 0); }
+  }
+  @keyframes horizon-drift-b {
+    from { transform: translate3d(3%, 0, 0); }
+    to { transform: translate3d(-5%, 2%, 0); }
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   HUD INSTRUMENT DETAILING (immersive themes)
+   Inspired by holographic cockpit/visor interfaces — Iron Man's lab, the
+   S.H.I.E.L.D. glass slabs, the curved gunship HUD: edge-lit translucent
+   panels framed by thin corner brackets. Kept calm and cool in Reverie's
+   palette, never the gritty red/neon of a game HUD.
+   ════════════════════════════════════════════════════════════════════════ */
+@layer utilities {
+  /* Brighter, edge-lit rim on the floating panels (the S.H.I.E.L.D. glass look).
+     Overrides the earlier `.immersive .glass` shadow at equal weight. */
+  .immersive .glass {
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
+      inset 0 0 0 1px rgba(var(--hud-line), 0.16),
+      inset 0 0 30px -14px rgba(var(--hud-glow), 0.7),
+      0 26px 64px -32px rgba(var(--hud-glow), 0.6);
+  }
+
+  .immersive .hud-frame {
+    position: relative;
+  }
+
+  /* Inner hairline frame — a concentric second border that follows the panel's
+     rounding (was square corner brackets, which clashed with the rounded
+     corners). Inset 9px inside the rounded-3xl (24px) corner → 15px inner
+     radius keeps it parallel to the edge. Reads as a clean HUD slab frame. */
+  .immersive .hud-frame::after {
+    content: '';
+    position: absolute;
+    inset: 9px;
+    z-index: 1;
+    pointer-events: none;
+    /* Panels breathe with the MIDRANGE (harmony/body), never the kick — the edge
+       firms with mids, the inner bloom swells with overall loudness. Keeps the
+       UI calm and continuous while the orb carries the rhythm. Flat when idle. */
+    border: 1px solid rgba(var(--hud-line), calc(0.2 + var(--audio-mid) * 0.22));
+    border-radius: 15px;
+    box-shadow: inset 0 0 calc(16px + var(--audio-level) * 30px) -12px
+      rgba(var(--hud-glow), calc(var(--audio-level) * 0.45 + var(--audio-mid) * 0.2));
+    transition: box-shadow 90ms linear, border-color 90ms linear;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .immersive .hud-frame::after {
+      box-shadow: none;
+      border-color: rgba(var(--hud-line), 0.2);
+      transition: none;
+    }
+  }
+
+  /* Waveform aura — the holographic stage's glow brightens with overall energy
+     and shimmers with treble (harmonics/air), per the vision's "waveform glow
+     reacts to harmonics". Just opacity on the existing radial wash; calm at idle. */
+  .immersive .wf-aura {
+    opacity: calc(0.7 + var(--audio-level) * 0.5 + var(--audio-treble) * 0.5);
+    transition: opacity 90ms linear;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .immersive .wf-aura {
+      opacity: 0.7;
+      transition: none;
+    }
+  }
+
+  /* Panel parallax drift — the side consoles float a few px with the spectrum
+     (left = mids, right = treble), the stable waveform stays the anchor between
+     them. A tiny 2D translate (no 3D/perspective) so the glass backdrop-filter
+     keeps working. Desktop + no-reduce only; nothing moves on touch/mobile. */
+  @media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (pointer: fine) {
+    .immersive .audio-drift-a {
+      transform: translate(calc(var(--audio-mid) * -2.5px), calc(var(--audio-level) * -2px));
+      transition: transform 130ms ease-out;
+    }
+    .immersive .audio-drift-b {
+      transform: translate(calc(var(--audio-treble) * 2.5px), calc(var(--audio-level) * -2px));
+      transition: transform 130ms ease-out;
+    }
+  }
+
+  /* ── Instrument dial (HudDial) ──────────────────────────────────────────
+     Concentric rings + a graduated rim + an accent arc. The rings spin only
+     while active (`.is-spinning`), and never under reduced-motion. */
+  .hud-dial .hud-spin,
+  .hud-dial .hud-spin-rev {
+    transform-box: view-box;
+    transform-origin: 50% 50%;
+  }
+
+  .hud-dial.is-spinning .hud-spin {
+    animation: hud-spin 26s linear infinite;
+  }
+
+  .hud-dial.is-spinning .hud-spin-rev {
+    animation: hud-spin 18s linear infinite reverse;
+  }
+
+  @keyframes hud-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hud-dial.is-spinning .hud-spin,
+    .hud-dial.is-spinning .hud-spin-rev {
+      animation: none;
+    }
+  }
+
+  /* ── Corner readout — small uppercase instrument label in the hairline hue. */
+  .hud-readout {
+    font-size: 9px;
+    line-height: 1;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: rgb(var(--hud-line));
+    opacity: 0.6;
+  }
+
+  /* ── Graduated tick ruler — a thin instrument scale, faded at both ends. */
+  .hud-ruler {
+    height: 7px;
+    opacity: 0.5;
+    background: repeating-linear-gradient(
+      to right,
+      rgba(var(--hud-line), 0.7) 0 1px,
+      transparent 1px 9px
+    );
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+    mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+  }
+
+  /* ── Side-console 3D ────────────────────────────────────────────────────
+     A real HUD puts the readable info on angled side consoles and keeps the
+     centre flat to look through. The control rail (side) tilts in on its inner
+     edge; the waveform (centre) stays flat — the part you watch. The perspective
+     sits on a wrapper around ONLY the control rail, so it never becomes a
+     backdrop-root for the waveform (which would flatten its glass blur).
+     Two-column layout only (lg+); the stacked mobile layout stays flat. */
+  @media (min-width: 1024px) {
+    .hud-console {
+      perspective: 2000px;
+    }
+    /* Both side consoles hinge on their inner edge (the one facing the central
+       waveform) and swing their outer edge forward — a cockpit "V" wrapping
+       toward the viewer, mirrored left/right. */
+    .hud-console-left {
+      transform: rotateY(9deg);
+      transform-origin: right center;
+    }
+    .hud-console-right {
+      transform: rotateY(-9deg);
+      transform-origin: left center;
+    }
   }
 }

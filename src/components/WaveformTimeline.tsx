@@ -85,28 +85,33 @@ export function WaveformTimeline({
   }, [ratio, stretch, isPlaying]);
 
   return (
-    <div className="glass rounded-3xl p-5 sm:p-6 flex flex-col gap-5 h-full">
-      {/* Slim header: now-playing status + elapsed clock */}
-      <div className="flex items-center justify-between gap-3">
-        <span
-          className={`inline-flex items-center gap-2 text-xs font-medium px-2.5 py-1 rounded-full ${
-            isPlaying
-              ? 'text-[rgb(var(--color-accent))] bg-[rgba(var(--color-accent),0.12)]'
-              : 'text-[rgb(var(--color-text-secondary))] bg-[rgba(var(--color-border),0.35)]'
-          }`}
-        >
+    <div className="relative glass hud-frame rounded-3xl p-5 sm:p-6 flex flex-col gap-5 h-full">
+      {/* Slim header (now-playing status + clock) with the HUD scale tucked
+          right under it, on a shared header height so it lines up with the
+          control rail's header across the grid. */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between gap-3 min-h-7">
           <span
-            className={`w-1.5 h-1.5 rounded-full ${
-              isPlaying ? 'bg-[rgb(var(--color-accent))] animate-pulse' : 'bg-[rgb(var(--color-text-secondary))]'
+            className={`inline-flex items-center gap-2 text-xs font-medium px-2.5 py-1 rounded-full ${
+              isPlaying
+                ? 'text-[rgb(var(--color-accent))] bg-[rgba(var(--color-accent),0.12)]'
+                : 'text-[rgb(var(--color-text-secondary))] bg-[rgba(var(--color-border),0.35)]'
             }`}
-            aria-hidden="true"
-          />
-          {isPlaying ? t('waveform.playing') : t('waveform.idle')}
-        </span>
-        <p className="text-sm font-semibold tabular-nums text-[rgb(var(--color-text))]" aria-live="polite">
-          {formatClock(currentTime)}
-          <span className="text-[rgb(var(--color-text-secondary))] font-normal"> / {formatClock(duration)}</span>
-        </p>
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                isPlaying ? 'bg-[rgb(var(--color-accent))] animate-pulse' : 'bg-[rgb(var(--color-text-secondary))]'
+              }`}
+              aria-hidden="true"
+            />
+            {isPlaying ? t('waveform.playing') : t('waveform.idle')}
+          </span>
+          <p className="text-sm font-semibold tabular-nums text-[rgb(var(--color-text))]" aria-live="polite">
+            {formatClock(currentTime)}
+            <span className="text-[rgb(var(--color-text-secondary))] font-normal"> / {formatClock(duration)}</span>
+          </p>
+        </div>
+        <div className="hud-ruler" aria-hidden="true" />
       </div>
 
       {/* Scroll viewport: the ambient glow stays put while the waveform pans inside it.
@@ -117,7 +122,7 @@ export function WaveformTimeline({
         className="relative h-52 sm:h-60 rounded-2xl overflow-x-auto overflow-y-hidden overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         <div
-          className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_30%_20%,rgba(var(--color-ambient),0.10),transparent_50%),radial-gradient(circle_at_80%_0%,rgba(var(--color-accent),0.08),transparent_45%)]"
+          className="wf-aura pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_30%_20%,rgba(var(--color-ambient),0.10),transparent_50%),radial-gradient(circle_at_80%_0%,rgba(var(--color-accent),0.08),transparent_45%)]"
           aria-hidden="true"
         />
 
@@ -174,6 +179,14 @@ export function WaveformTimeline({
             aria-hidden="true"
           />
         </div>
+      </div>
+
+      {/* HUD corner readouts: live status + the active speed / reverb values */}
+      <div className="flex items-center justify-between">
+        <span className="hud-readout">{isPlaying ? '● Live' : '○ Standby'}</span>
+        <span className="hud-readout tabular-nums">
+          {rate.toFixed(2)}× · {Math.round((options?.reverbAmount ?? 0) * 100)}% RV
+        </span>
       </div>
     </div>
   );

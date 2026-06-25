@@ -1,4 +1,4 @@
-import { AUDIO_EFFECTS } from '../constants';
+import { AUDIO_EFFECTS, AUDIO_SIGNAL } from '../constants';
 import type { AudioProcessingOptions } from './audioProcessor';
 
 /**
@@ -11,8 +11,13 @@ import type { AudioProcessingOptions } from './audioProcessor';
  *
  * Signal path:
  *   source -> highpass -> lowshelf -> peaking -> (dry + convolver/wet) -> mix
- *          -> stereo panner -> [caller's volume gain] -> destination
+ *          -> stereo panner -> out -> [caller's volume gain] -> destination
  * 8D motion: oscillator -> panDepth gain -> panner.pan
+ * 8D bed:    mix -> eightDConvolver -> eightDBed -> out  (un-panned, constant)
+ *
+ * The 8D bed taps the pre-pan mix and bypasses the panner, so a quiet reverb
+ * ambience stays in both ears while the dry signal orbits. Without it, the panner
+ * sweeps the whole signal and a complete silence rotates opposite the music.
  */
 export interface EffectChain {
   input: AudioNode;
@@ -27,14 +32,20 @@ export interface EffectChain {
   panner: StereoPannerNode;
   panDepth: GainNode;
   osc: OscillatorNode;
+  eightDConvolver: ConvolverNode;
+  eightDBed: GainNode;
+  out: GainNode;
 }
 
 /** Smooth-transition time constant (~150 ms perceived), DAW-like, no zipper noise. */
 const RAMP_TIME_CONSTANT = 0.04;
 /** Fixed reverb tail length in seconds; wetness is controlled by the wet gain. */
 const REVERB_SECONDS = 3;
+/** Short tail for the constant 8D ambience bed — tight enough to sit under the music. */
+const EIGHT_D_BED_SECONDS = 0.5;
 
 let cachedImpulse: { sampleRate: number; buffer: AudioBuffer } | null = null;
+let cachedBedImpulse: { sampleRate: number; buffer: AudioBuffer } | null = null;
 
 function getReverbImpulse(ctx: BaseAudioContext): AudioBuffer {
   if (cachedImpulse && cachedImpulse.sampleRate === ctx.sampleRate) {
@@ -51,6 +62,29 @@ function getReverbImpulse(ctx: BaseAudioContext): AudioBuffer {
     }
   }
   cachedImpulse = { sampleRate, buffer: impulse };
+  return impulse;
+}
+
+/**
+ * Short, slightly stereo-widened impulse for the 8D ambience bed. A small L/R
+ * variation gives the constant reverb some width so it reads as spatial, not mono.
+ */
+function getEightDBedImpulse(ctx: BaseAudioContext): AudioBuffer {
+  if (cachedBedImpulse && cachedBedImpulse.sampleRate === ctx.sampleRate) {
+    return cachedBedImpulse.buffer;
+  }
+  const sampleRate = ctx.sampleRate;
+  const length = Math.max(1, Math.floor(sampleRate * EIGHT_D_BED_SECONDS));
+  const impulse = ctx.createBuffer(2, length, sampleRate);
+  for (let channel = 0; channel < 2; channel++) {
+    const data = impulse.getChannelData(channel);
+    const stereoVariation = channel === 0 ? 1.0 : 0.9;
+    for (let i = 0; i < length; i++) {
+      const decay = Math.exp(-i / (sampleRate * 0.1));
+      data[i] = (Math.random() * 2 - 1) * decay * stereoVariation;
+    }
+  }
+  cachedBedImpulse = { sampleRate, buffer: impulse };
   return impulse;
 }
 
@@ -79,6 +113,12 @@ export function createEffectChain(ctx: AudioContext): EffectChain {
   const osc = ctx.createOscillator();
   osc.type = 'sine';
 
+  const eightDConvolver = ctx.createConvolver();
+  eightDConvolver.buffer = getEightDBedImpulse(ctx);
+  const eightDBed = ctx.createGain();
+  eightDBed.gain.value = 0;
+  const out = ctx.createGain();
+
   highpass.connect(lowshelf);
   lowshelf.connect(peak);
   peak.connect(dryGain);
@@ -87,12 +127,19 @@ export function createEffectChain(ctx: AudioContext): EffectChain {
   dryGain.connect(mix);
   wetGain.connect(mix);
   mix.connect(panner);
+  panner.connect(out);
+
+  // 8D ambience bed: a constant, un-panned reverb tapped from the pre-pan mix so
+  // both ears keep a quiet presence while the dry signal orbits via the panner.
+  mix.connect(eightDConvolver);
+  eightDConvolver.connect(eightDBed);
+  eightDBed.connect(out);
 
   osc.connect(panDepth);
   panDepth.connect(panner.pan);
   osc.start();
 
-  return { input: highpass, output: panner, highpass, lowshelf, peak, dryGain, wetGain, convolver, mix, panner, panDepth, osc };
+  return { input: highpass, output: out, highpass, lowshelf, peak, dryGain, wetGain, convolver, mix, panner, panDepth, osc, eightDConvolver, eightDBed, out };
 }
 
 function setParam(param: AudioParam, value: number, ctx: AudioContext, ramp: boolean) {
@@ -125,6 +172,8 @@ export function applyEffectOptions(
   const eightD = !!options.audio8D;
   setParam(chain.panDepth.gain, eightD ? 1 : 0, ctx, ramp);
   setParam(chain.panner.pan, 0, ctx, ramp);
+  // Constant ambience bed keeps both ears filled while the dry signal orbits.
+  setParam(chain.eightDBed.gain, eightD ? AUDIO_SIGNAL.EIGHT_D_MIX.WET_GAIN : 0, ctx, ramp);
   // Offline maps one full rotation to 4 / rotationSpeed seconds → frequency = rotationSpeed / 4.
   setParam(chain.osc.frequency, eightD ? Math.max(0.01, (options.rotationSpeed || 0.4) / 4) : 0.01, ctx, ramp);
 }
@@ -135,7 +184,7 @@ export function disconnectEffectChain(chain: EffectChain) {
   } catch {
     // already stopped
   }
-  for (const node of [chain.osc, chain.panDepth, chain.panner, chain.mix, chain.wetGain, chain.dryGain, chain.convolver, chain.peak, chain.lowshelf, chain.highpass]) {
+  for (const node of [chain.osc, chain.panDepth, chain.panner, chain.eightDConvolver, chain.eightDBed, chain.out, chain.mix, chain.wetGain, chain.dryGain, chain.convolver, chain.peak, chain.lowshelf, chain.highpass]) {
     try {
       node.disconnect();
     } catch {

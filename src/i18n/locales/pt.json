@@ -91,11 +91,27 @@
   "settings": {
     "open": "Definições",
     "title": "Definições",
-    "subtitle": "Aparência e idioma",
-    "appearance": "Aparência",
-    "light": "Claro",
-    "dark": "Escuro",
+    "subtitle": "Temas e idioma",
+    "themes": "Temas",
+    "theme": {
+      "light": "Claro",
+      "dark": "Void Bloom",
+      "tidal": "Cosmic Wave",
+      "nocturne": "Midnight Pulse",
+      "aurora": "Nebula Drift",
+      "horizon": "Lunar Haze"
+    },
     "language": "Idioma",
     "close": "Fechar definições"
+  },
+  "studio": {
+    "effects": "Efeitos",
+    "adjustments": "Ajustes",
+    "mood": "Ambiente",
+    "themes": "Temas",
+    "moreThemes": "Mais temas",
+    "active": "Ativo",
+    "inactive": "Inativo",
+    "levels": "Níveis"
   }
 }

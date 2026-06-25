@@ -6,14 +6,14 @@ import { TooltipProvider } from './ui/tooltip';
 
 const mockChangeLanguage = vi.fn();
 const mockI18n = { language: 'en', changeLanguage: mockChangeLanguage };
-const mockToggleTheme = vi.fn();
+const mockSetTheme = vi.fn();
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: mockI18n }),
 }));
 
 vi.mock('../contexts/ThemeContext', () => ({
-  useTheme: () => ({ theme: 'light', toggleTheme: mockToggleTheme }),
+  useTheme: () => ({ theme: 'light', def: { kind: 'workspace' }, setTheme: mockSetTheme }),
 }));
 
 const renderMenu = () =>
@@ -39,11 +39,14 @@ describe('SettingsMenu', () => {
     expect(mockChangeLanguage).toHaveBeenCalledWith('es');
   });
 
-  it('switches theme from the appearance options', async () => {
+  it('selects a theme from the gallery', async () => {
     renderMenu();
 
     await userEvent.click(screen.getByLabelText('settings.open'));
-    await userEvent.click(screen.getByLabelText('settings.dark'));
-    expect(mockToggleTheme).toHaveBeenCalled();
+    await userEvent.click(screen.getByLabelText('settings.theme.dark'));
+    expect(mockSetTheme).toHaveBeenCalledWith('dark');
+
+    await userEvent.click(screen.getByLabelText('settings.theme.tidal'));
+    expect(mockSetTheme).toHaveBeenCalledWith('tidal');
   });
 });

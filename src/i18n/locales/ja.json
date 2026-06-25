@@ -91,11 +91,27 @@
   "settings": {
     "open": "設定",
     "title": "設定",
-    "subtitle": "外観と言語",
-    "appearance": "外観",
-    "light": "ライト",
-    "dark": "ダーク",
+    "subtitle": "テーマと言語",
+    "themes": "テーマ",
+    "theme": {
+      "light": "ライト",
+      "dark": "Void Bloom",
+      "tidal": "Cosmic Wave",
+      "nocturne": "Midnight Pulse",
+      "aurora": "Nebula Drift",
+      "horizon": "Lunar Haze"
+    },
     "language": "言語",
     "close": "設定を閉じる"
+  },
+  "studio": {
+    "effects": "エフェクト",
+    "adjustments": "調整",
+    "mood": "ムード",
+    "themes": "テーマ",
+    "moreThemes": "他のテーマ",
+    "active": "オン",
+    "inactive": "オフ",
+    "levels": "レベル"
   }
 }

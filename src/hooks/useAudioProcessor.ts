@@ -61,6 +61,7 @@ export function useAudioProcessor() {
     setEffects: setPlaybackEffects,
     attachBuffer,
     resetPlayback,
+    getAnalyser,
   } = useAudioPlayback({
     getAudioContext,
     getBufferDuration,
@@ -159,5 +160,6 @@ export function useAudioProcessor() {
     updateVolume,
     seekTo,
     reset,
+    getAnalyser,
   };
 }

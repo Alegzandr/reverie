@@ -1,33 +1,52 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
+import { THEMES, DEFAULT_THEME, isThemeId } from './themes';
+import type { ThemeId, ThemeDef } from './themes';
 
-type Theme = 'light' | 'dark';
+const STORAGE_KEY = 'theme';
 
 interface ThemeContextType {
-  theme: Theme;
+  theme: ThemeId;
+  def: ThemeDef;
+  setTheme: (id: ThemeId) => void;
+  /** Convenience: flip between the two workspace faces. */
   toggleTheme: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    const saved = localStorage.getItem('theme');
-    return (saved as Theme) || 'light';
+  const [theme, setThemeState] = useState<ThemeId>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return isThemeId(saved) ? saved : DEFAULT_THEME;
   });
 
   useEffect(() => {
-    localStorage.setItem('theme', theme);
-    document.documentElement.classList.toggle('dark', theme === 'dark');
+    const def = THEMES[theme];
+    localStorage.setItem(STORAGE_KEY, def.id);
+
+    const root = document.documentElement;
+    root.setAttribute('data-theme', def.id);
+    // Dark-based themes keep the `.dark` class so every existing `dark:` utility
+    // and `.dark` rule keeps working without a rewrite.
+    root.classList.toggle('dark', def.base === 'dark');
+    // The futuristic HUD is the one interface, present for every theme; a theme
+    // only swaps the palette + the animated background. So `.immersive` is
+    // always on (it gates the holographic chrome + ambient scene).
+    root.classList.add('immersive');
   }, [theme]);
 
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
-  };
+  const setTheme = useCallback((id: ThemeId) => {
+    if (isThemeId(id)) setThemeState(id);
+  }, []);
+
+  const toggleTheme = useCallback(() => {
+    setThemeState((prev) => (prev === 'light' ? 'dark' : 'light'));
+  }, []);
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, def: THEMES[theme], setTheme, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );

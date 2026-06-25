@@ -91,11 +91,27 @@
   "settings": {
     "open": "Réglages",
     "title": "Réglages",
-    "subtitle": "Apparence et langue",
-    "appearance": "Apparence",
-    "light": "Clair",
-    "dark": "Sombre",
+    "subtitle": "Thèmes et langue",
+    "themes": "Thèmes",
+    "theme": {
+      "light": "Clair",
+      "dark": "Void Bloom",
+      "tidal": "Cosmic Wave",
+      "nocturne": "Midnight Pulse",
+      "aurora": "Nebula Drift",
+      "horizon": "Lunar Haze"
+    },
     "language": "Langue",
     "close": "Fermer les réglages"
+  },
+  "studio": {
+    "effects": "Effets",
+    "adjustments": "Réglages",
+    "mood": "Ambiance",
+    "themes": "Thèmes",
+    "moreThemes": "Plus de thèmes",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "levels": "Niveaux"
   }
 }

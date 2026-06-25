@@ -85,6 +85,9 @@ export function TransportTimeline({
           if (e.key === 'ArrowLeft') onSeek(Math.max(0, currentTime - 5));
         }}
       >
+        {/* Faint HUD graduations above the track */}
+        <div className="hud-ruler pointer-events-none absolute inset-x-0 top-0 opacity-30" aria-hidden="true" />
+
         <div className="relative w-full h-1.5 rounded-full bg-[rgba(var(--color-border),0.55)] overflow-hidden">
           <div
             className="absolute inset-y-0 left-0 rounded-full bg-[rgb(var(--color-accent))]"
