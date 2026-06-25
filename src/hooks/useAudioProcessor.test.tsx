@@ -449,6 +449,33 @@ describe('useAudioProcessor', () => {
     expect(result.current.playbackTime).toBeCloseTo(0.5);
   });
 
+  // Regression: an inline `getAudioContext` passed to useAudioPlayback used to change
+  // identity every render, cascading through captureProgress → setEffects into App's
+  // handleEffectChange. EffectControls lists that onChange in a useEffect dependency
+  // array, so an unstable identity re-ran the effect every render — an infinite
+  // re-render loop in the editor that surfaced as "Maximum update depth exceeded"
+  // the moment a dialog mounted. The returned callbacks must stay referentially stable.
+  it('returns referentially stable callbacks across re-renders', () => {
+    const { result, rerender } = renderHook(() => useAudioProcessor());
+
+    const first = {
+      setEffects: result.current.setEffects,
+      playAudio: result.current.playAudio,
+      stopAudio: result.current.stopAudio,
+      seekTo: result.current.seekTo,
+      updateVolume: result.current.updateVolume,
+    };
+
+    rerender();
+    rerender();
+
+    expect(result.current.setEffects).toBe(first.setEffects);
+    expect(result.current.playAudio).toBe(first.playAudio);
+    expect(result.current.stopAudio).toBe(first.stopAudio);
+    expect(result.current.seekTo).toBe(first.seekTo);
+    expect(result.current.updateVolume).toBe(first.updateVolume);
+  });
+
   it('resets processing state and buffer', async () => {
     const { result } = renderHook(() => useAudioProcessor());
 

@@ -44,6 +44,14 @@ export function useAudioProcessor() {
     [processedBuffer, originalBuffer],
   );
 
+  // Stable accessor: a fresh inline arrow here would change identity every render,
+  // which cascades through useAudioPlayback's memoised callbacks (captureProgress →
+  // setEffects) into App's handleEffectChange. EffectControls lists that onChange in
+  // a useEffect dependency array, so an unstable identity re-runs the effect every
+  // render — an infinite re-render loop in the editor (only visible once a dialog
+  // injects a synchronous setState into the storm: "Maximum update depth exceeded").
+  const getAudioContext = useCallback(() => audioProcessor.getAudioContext(), []);
+
   const {
     state: playbackState,
     playAudio,
@@ -54,7 +62,7 @@ export function useAudioProcessor() {
     attachBuffer,
     resetPlayback,
   } = useAudioPlayback({
-    getAudioContext: () => audioProcessor.getAudioContext(),
+    getAudioContext,
     getBufferDuration,
     getFallbackBuffer: getPlaybackBuffer,
     onError: setError,
