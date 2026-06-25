@@ -33,7 +33,7 @@ const buttonVariants = cva(
         // Selected / active affordance — accent tint with a soft halo that deepens
         // on hover so even a chosen mode stays responsive to the pointer.
         accent:
-          'border border-[rgba(var(--color-accent),0.5)] bg-[rgba(var(--color-accent),0.12)] text-[rgb(var(--color-accent))] shadow-[0_10px_30px_-22px_rgba(var(--color-accent),0.9)] hover:border-[rgba(var(--color-accent),0.7)] hover:bg-[rgba(var(--color-accent),0.18)]',
+          'border border-[rgba(var(--color-accent),0.5)] bg-[rgba(var(--color-accent),0.12)] text-[rgb(var(--color-accent-text))] shadow-[0_10px_30px_-22px_rgba(var(--color-accent),0.9)] hover:border-[rgba(var(--color-accent),0.7)] hover:bg-[rgba(var(--color-accent),0.18)]',
         // Neutral chrome — icon controls, secondary actions. Hover lifts an accent
         // wash in (the old brightness-only hover read as dead on transparent fills).
         outline:

@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Zap, Waves, Radio, Volume2, Power } from "lucide-react";
+import { Zap, Waves, Radio, Volume2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { EffectSlider } from "./EffectSlider";
+import { EffectRow } from "./EffectRow";
 import { LevelMeter } from "./LevelMeter";
 import { EFFECT_DEFAULTS } from "../constants";
-import { cn } from "@/lib/utils";
 import {
     formatSpeedMultiplier,
     formatPercentage,
@@ -27,68 +27,13 @@ interface EffectControlsProps {
     disabled?: boolean;
 }
 
-interface EffectRowProps {
-    icon: LucideIcon;
-    label: string;
-    active: boolean;
-    disabled?: boolean;
-    onSelect: () => void;
-    statusLabel: string;
-}
-
-/**
- * One effect as a list row (icon + name + live status + power lamp). The effects
- * are exclusive modes, so selecting a row makes it the Active one and the rest
- * read Inactive — state is never carried by colour alone (a Power lamp + a text
- * status back it up). The whole row is the hit target.
- */
-function EffectRow({ icon: Icon, label, active, disabled, onSelect, statusLabel }: EffectRowProps) {
-    return (
-        <button
-            type="button"
-            onClick={onSelect}
-            disabled={disabled}
-            aria-pressed={active}
-            className={cn(
-                "ios-button group flex w-full items-center gap-3 rounded-2xl border px-3 py-2.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-background))] disabled:opacity-50",
-                active
-                    ? "border-[rgba(var(--color-accent),0.55)] bg-[rgba(var(--color-accent),0.12)] shadow-[0_10px_30px_-22px_rgba(var(--color-accent),0.9)]"
-                    : "border-[rgba(var(--color-border),0.55)] hover:border-[rgba(var(--color-accent),0.4)] hover:bg-[rgba(var(--color-surface),0.5)]"
-            )}
-        >
-            <span
-                className={cn(
-                    "grid h-10 w-10 shrink-0 place-items-center rounded-xl transition-colors",
-                    active
-                        ? "bg-[rgba(var(--color-accent),0.18)] text-[rgb(var(--color-accent))]"
-                        : "bg-[rgba(var(--color-border),0.35)] text-[rgb(var(--color-text-secondary))]"
-                )}
-            >
-                <Icon className="h-5 w-5" aria-hidden="true" />
-            </span>
-            <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-semibold text-[rgb(var(--color-text))]">
-                    {label}
-                </span>
-                <span
-                    className={cn(
-                        "block truncate text-xs",
-                        active ? "text-[rgb(var(--color-accent))]" : "text-[rgb(var(--color-text-secondary))]"
-                    )}
-                >
-                    {statusLabel}
-                </span>
-            </span>
-            <Power
-                className={cn(
-                    "h-4 w-4 shrink-0 transition-colors",
-                    active ? "text-[rgb(var(--color-accent))]" : "text-[rgb(var(--color-text-secondary))] opacity-50"
-                )}
-                aria-hidden="true"
-            />
-        </button>
-    );
-}
+// Listed order; Slow + Reverb leads as the signature late-night mood.
+const EFFECT_DEFS: { mode: EffectMode; icon: LucideIcon; labelKey: string }[] = [
+    { mode: "slow-reverb", icon: Waves, labelKey: "effects.slowReverb" },
+    { mode: "speed-up", icon: Zap, labelKey: "effects.speedUp" },
+    { mode: "8d-audio", icon: Radio, labelKey: "effects.8dAudio" },
+    { mode: "bass-boost", icon: Volume2, labelKey: "effects.bassBoost" },
+];
 
 export function EffectControls({ onChange, disabled }: EffectControlsProps) {
     const { t } = useTranslation();
@@ -145,13 +90,6 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
         onChange,
     ]);
 
-    const effects: { mode: EffectMode; icon: LucideIcon; label: string }[] = [
-        { mode: "slow-reverb", icon: Waves, label: t("effects.slowReverb") },
-        { mode: "speed-up", icon: Zap, label: t("effects.speedUp") },
-        { mode: "8d-audio", icon: Radio, label: t("effects.8dAudio") },
-        { mode: "bass-boost", icon: Volume2, label: t("effects.bassBoost") },
-    ];
-
     const bassIntensityLabel = formatBassIntensityLabel(
         bassBoostIntensity,
         EFFECT_DEFAULTS.BASS_BOOST_UI.LIGHT_THRESHOLD,
@@ -183,14 +121,15 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
             <div className="space-y-2.5">
                 <span className="hud-readout block">{t("studio.effects")}</span>
                 <div className="space-y-2">
-                    {effects.map((fx) => (
+                    {EFFECT_DEFS.map((fx) => (
                         <EffectRow
                             key={fx.mode}
                             icon={fx.icon}
-                            label={fx.label}
+                            label={t(fx.labelKey)}
+                            mode={fx.mode}
                             active={mode === fx.mode}
                             disabled={disabled}
-                            onSelect={() => setMode(fx.mode)}
+                            onSelect={setMode}
                             statusLabel={mode === fx.mode ? t("studio.active") : t("studio.inactive")}
                         />
                     ))}

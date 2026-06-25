@@ -122,21 +122,19 @@ export function useAudioFile(): UseAudioFileReturn {
 
   const processAudio = useCallback(async (options: AudioProcessingOptions) => {
     setState((prev) => ({ ...prev, isProcessing: true, error: null, progress: 0 }));
+
+    // Animates the progress bar while the (non-reporting) offline render runs.
+    const progressInterval = setInterval(() => {
+      setState((prev) => ({
+        ...prev,
+        progress: Math.min(prev.progress + 10, AUDIO_PROCESSING.PROGRESS_MAX_BEFORE_COMPLETE),
+      }));
+    }, AUDIO_PROCESSING.PROGRESS_UPDATE_INTERVAL_MS);
+
     try {
-      // Simulate progress updates
-      const progressInterval = setInterval(() => {
-        setState((prev) => ({
-          ...prev,
-          progress: Math.min(prev.progress + 10, AUDIO_PROCESSING.PROGRESS_MAX_BEFORE_COMPLETE),
-        }));
-      }, AUDIO_PROCESSING.PROGRESS_UPDATE_INTERVAL_MS);
-
       const buffer = await audioProcessor.processAudio(options);
-      clearInterval(progressInterval);
-
       setProcessedBuffer(buffer);
       setState((prev) => ({ ...prev, isProcessing: false, progress: 100 }));
-
       return buffer;
     } catch (error) {
       setState((prev) => ({
@@ -145,6 +143,8 @@ export function useAudioFile(): UseAudioFileReturn {
         error: error instanceof Error ? error.message : ERROR_MESSAGES.PROCESS_FAILED,
       }));
       throw error;
+    } finally {
+      clearInterval(progressInterval);
     }
   }, []);
 

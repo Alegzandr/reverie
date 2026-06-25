@@ -9,7 +9,7 @@
     "dragDrop": "オーディオファイルをここにドラッグ＆ドロップ",
     "or": "または",
     "browse": "ファイルを参照",
-    "formats": "MP3、WAV、OGG、M4A",
+    "formats": "MP3、WAV、FLAC、OGG、M4A、AAC、AIFF、WebM",
     "loading": "読み込み中..."
   },
   "effects": {

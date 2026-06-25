@@ -122,7 +122,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <button
                 onClick={this.handleReset}
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-[rgb(var(--color-accent))] text-white font-semibold text-[15px] hover:opacity-90 transition-opacity ios-button"
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-[rgb(var(--color-text))] text-[rgb(var(--color-background))] font-semibold text-[15px] hover:opacity-90 transition-opacity ios-button"
               >
                 <RefreshCw className="w-5 h-5" />
                 Try Again

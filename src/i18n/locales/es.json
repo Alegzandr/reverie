@@ -9,7 +9,7 @@
     "dragDrop": "Arrastra y suelta un archivo de audio aquí",
     "or": "o",
     "browse": "Explorar archivos",
-    "formats": "MP3, WAV, OGG, M4A",
+    "formats": "MP3, WAV, FLAC, OGG, M4A, AAC, AIFF, WebM",
     "loading": "Cargando..."
   },
   "effects": {

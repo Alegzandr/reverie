@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface SpectrumMeterProps {
@@ -18,7 +18,7 @@ const BAR_GAP = 2; // device-independent px between bars
  * prefers-reduced-motion) it settles to a calm, static baseline rather than
  * faking motion.
  */
-export function SpectrumMeter({ getAnalyser, isPlaying, className }: SpectrumMeterProps) {
+export const SpectrumMeter = memo(function SpectrumMeter({ getAnalyser, isPlaying, className }: SpectrumMeterProps) {
   const { t } = useTranslation();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -121,4 +121,4 @@ export function SpectrumMeter({ getAnalyser, isPlaying, className }: SpectrumMet
       className={className}
     />
   );
-}
+});

@@ -34,21 +34,6 @@ describe('ThemeContext', () => {
     expect(document.documentElement.classList.contains('dark')).toBe(true);
   });
 
-  it('toggles between the workspace faces and persists', () => {
-    const { result } = renderThemeHook();
-
-    // Start from a known workspace face (the default is now the immersive
-    // Nebula Drift), then verify the light<->dark toggle contract.
-    act(() => result.current.setTheme('light'));
-    expect(result.current.theme).toBe('light');
-
-    act(() => result.current.toggleTheme());
-
-    expect(result.current.theme).toBe('dark');
-    expect(localStorage.getItem('theme')).toBe('dark');
-    expect(document.documentElement.classList.contains('dark')).toBe(true);
-  });
-
   it('selects an immersive theme: sets data-theme, .dark and .immersive', () => {
     const { result } = renderThemeHook();
 

@@ -1,4 +1,5 @@
 import { AUDIO_EFFECTS, AUDIO_SIGNAL } from '../constants';
+import { createDecayingNoiseImpulse } from './impulse';
 import type { AudioProcessingOptions } from './audioProcessor';
 
 /**
@@ -51,41 +52,22 @@ function getReverbImpulse(ctx: BaseAudioContext): AudioBuffer {
   if (cachedImpulse && cachedImpulse.sampleRate === ctx.sampleRate) {
     return cachedImpulse.buffer;
   }
-  const sampleRate = ctx.sampleRate;
-  const length = Math.max(1, Math.floor(sampleRate * REVERB_SECONDS));
-  const impulse = ctx.createBuffer(2, length, sampleRate);
-  for (let channel = 0; channel < 2; channel++) {
-    const data = impulse.getChannelData(channel);
-    for (let i = 0; i < length; i++) {
-      const decay = Math.exp(-i / (sampleRate * 0.9));
-      data[i] = (Math.random() * 2 - 1) * decay;
-    }
-  }
-  cachedImpulse = { sampleRate, buffer: impulse };
-  return impulse;
+  const buffer = createDecayingNoiseImpulse(ctx, REVERB_SECONDS, 0.9);
+  cachedImpulse = { sampleRate: ctx.sampleRate, buffer };
+  return buffer;
 }
 
 /**
- * Short, slightly stereo-widened impulse for the 8D ambience bed. A small L/R
- * variation gives the constant reverb some width so it reads as spatial, not mono.
+ * Short, slightly stereo-widened impulse for the 8D ambience bed: the asymmetric
+ * channel gain gives the constant reverb width so it reads as spatial, not mono.
  */
 function getEightDBedImpulse(ctx: BaseAudioContext): AudioBuffer {
   if (cachedBedImpulse && cachedBedImpulse.sampleRate === ctx.sampleRate) {
     return cachedBedImpulse.buffer;
   }
-  const sampleRate = ctx.sampleRate;
-  const length = Math.max(1, Math.floor(sampleRate * EIGHT_D_BED_SECONDS));
-  const impulse = ctx.createBuffer(2, length, sampleRate);
-  for (let channel = 0; channel < 2; channel++) {
-    const data = impulse.getChannelData(channel);
-    const stereoVariation = channel === 0 ? 1.0 : 0.9;
-    for (let i = 0; i < length; i++) {
-      const decay = Math.exp(-i / (sampleRate * 0.1));
-      data[i] = (Math.random() * 2 - 1) * decay * stereoVariation;
-    }
-  }
-  cachedBedImpulse = { sampleRate, buffer: impulse };
-  return impulse;
+  const buffer = createDecayingNoiseImpulse(ctx, EIGHT_D_BED_SECONDS, 0.1, [1.0, 0.9]);
+  cachedBedImpulse = { sampleRate: ctx.sampleRate, buffer };
+  return buffer;
 }
 
 export function createEffectChain(ctx: AudioContext): EffectChain {
@@ -197,7 +179,6 @@ export function disconnectEffectChain(chain: EffectChain) {
 export const NEUTRAL_OPTIONS: AudioProcessingOptions = {
   speedMultiplier: 1,
   reverbAmount: 0,
-  preservePitch: false,
   audio8D: false,
   bassBoost: false,
 };

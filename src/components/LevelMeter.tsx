@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { cn } from '@/lib/utils';
 
 interface LevelMeterProps {
@@ -18,7 +19,7 @@ interface LevelMeterProps {
  * the always-alive instruments. Decorative, so it's hidden from assistive tech.
  * Both variants freeze flat under `prefers-reduced-motion` (handled in CSS).
  */
-export function LevelMeter({
+export const LevelMeter = memo(function LevelMeter({
   value = 0,
   variant = 'reactive',
   segments = 18,
@@ -40,4 +41,4 @@ export function LevelMeter({
       ))}
     </div>
   );
-}
+});

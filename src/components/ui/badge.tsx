@@ -12,7 +12,7 @@ const badgeVariants = cva(
         default:
           'px-3 py-1 border border-[rgba(var(--color-border),0.6)] bg-[rgba(var(--color-surface),0.5)] text-[rgb(var(--color-text-secondary))]',
         accent:
-          'px-3 py-1 border border-[rgba(var(--color-accent),0.4)] bg-[rgba(var(--color-accent),0.1)] text-[rgb(var(--color-accent))]',
+          'px-3 py-1 border border-[rgba(var(--color-accent),0.4)] bg-[rgba(var(--color-accent),0.1)] text-[rgb(var(--color-accent-text))]',
         ghost: 'text-[rgb(var(--color-text-secondary))]',
       },
     },

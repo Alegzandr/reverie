@@ -100,7 +100,6 @@ describe('App', () => {
     expect(mockApi.setEffects).toHaveBeenLastCalledWith({
       speedMultiplier: 1,
       reverbAmount: 0,
-      preservePitch: false,
       audio8D: true,
       rotationSpeed: 0.4,
       bassBoost: false,

@@ -43,6 +43,17 @@ export async function encodeWithMediaRecorder(
   const chunks: Blob[] = [];
 
   return new Promise((resolve, reject) => {
+    // The context is per-export and must be released on every exit path, including
+    // a synchronous throw from start(); close once so the browser's context budget
+    // isn't exhausted across repeated exports.
+    let closed = false;
+    const close = () => {
+      if (!closed) {
+        closed = true;
+        audioContext.close();
+      }
+    };
+
     mediaRecorder.ondataavailable = (event) => {
       if (event.data.size > 0) {
         chunks.push(event.data);
@@ -51,30 +62,32 @@ export async function encodeWithMediaRecorder(
 
     mediaRecorder.onstop = () => {
       const blob = new Blob(chunks, { type: mimeType });
-      audioContext.close();
+      close();
       resolve(blob);
     };
 
     mediaRecorder.onerror = (event) => {
-      audioContext.close();
+      close();
       reject(new Error(ERROR_MESSAGES.MEDIA_RECORDER_ERROR(event)));
     };
 
-    // Start recording
-    mediaRecorder.start();
-
-    // Play the buffer
-    source.start(0);
-
-    // Stop recording when the buffer finishes playing
+    // Stop recording when the buffer finishes playing.
     source.onended = () => {
-      // Add a small delay to ensure all data is captured
+      // Small delay so the recorder flushes the final chunk before stopping.
       setTimeout(() => {
         if (mediaRecorder.state !== 'inactive') {
           mediaRecorder.stop();
         }
       }, AUDIO_PROCESSING.MEDIA_RECORDER_STOP_DELAY_MS);
     };
+
+    try {
+      mediaRecorder.start();
+      source.start(0);
+    } catch (error) {
+      close();
+      reject(error instanceof Error ? error : new Error(ERROR_MESSAGES.MEDIA_RECORDER_ERROR(error)));
+    }
   });
 }
 

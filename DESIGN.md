@@ -91,6 +91,8 @@ Implemented as CSS tokens in `:root` (shared across themes): `--aurora-violet` `
 
 Usage rule: apply Aurora to **strokes, fills, the mark, and active-state indicators**. Never to body text. `background-clip: text` on a gradient is banned here; emphasize with weight and size instead.
 
+**Accent as type — `--color-accent-text`.** The bright accent reads as a fill/stroke colour; on the light workspace it is far too pale to use as text (~2.2:1). So accent-coloured **type and icons** (slider values, the upload link, the processing %, active labels, active mode/theme labels) use a dedicated `--color-accent-text` token instead of `--color-accent`. In light it is a deep rose (`178, 30, 81`) brought to AA on both the surface and the pale accent tints; on dark palettes it tracks `--color-accent` (already AA), except `aurora`, which lifts it to a brighter lilac (`196, 140, 252`) so it clears AA on the active-chip tints. `--color-accent` itself stays the bright value for fills, borders, strokes, the slider track, and the focus ring.
+
 ### Workspace tokens (implemented, `src/index.css`)
 
 RGB triplets, consumed as `rgb(var(--token))` / `rgba(var(--token), a)`.

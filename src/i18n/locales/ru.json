@@ -9,7 +9,7 @@
     "dragDrop": "Перетащите аудиофайл сюда",
     "or": "или",
     "browse": "Выбрать файлы",
-    "formats": "MP3, WAV, OGG, M4A",
+    "formats": "MP3, WAV, FLAC, OGG, M4A, AAC, AIFF, WebM",
     "loading": "Загрузка..."
   },
   "effects": {

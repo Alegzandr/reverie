@@ -102,9 +102,6 @@ export const THEME_ORDER: ThemeId[] = ['light', 'dark', 'tidal', 'nocturne', 'au
  */
 export const RAIL_THEME_ORDER: ThemeId[] = ['aurora', 'nocturne', 'tidal', 'dark', 'horizon'];
 
-export const WORKSPACE_THEMES = THEME_ORDER.filter((id) => THEMES[id].kind === 'workspace');
-export const IMMERSIVE_THEMES = THEME_ORDER.filter((id) => THEMES[id].kind === 'immersive');
-
 export const DEFAULT_THEME: ThemeId = 'aurora';
 
 export function isThemeId(value: unknown): value is ThemeId {

@@ -94,7 +94,7 @@ export function WaveformTimeline({
           <span
             className={`inline-flex items-center gap-2 text-xs font-medium px-2.5 py-1 rounded-full ${
               isPlaying
-                ? 'text-[rgb(var(--color-accent))] bg-[rgba(var(--color-accent),0.12)]'
+                ? 'text-[rgb(var(--color-accent-text))] bg-[rgba(var(--color-accent),0.12)]'
                 : 'text-[rgb(var(--color-text-secondary))] bg-[rgba(var(--color-border),0.35)]'
             }`}
           >

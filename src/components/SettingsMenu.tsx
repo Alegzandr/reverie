@@ -71,12 +71,12 @@ export function SettingsMenu({ trigger }: SettingsMenuProps = {}) {
         <span className="flex items-center justify-between gap-2 px-3 py-2 bg-[rgba(var(--color-surface),0.6)]">
           <span className="flex items-center gap-2 min-w-0">
             <Icon
-              className={cn('w-4 h-4 shrink-0', active ? 'text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-text-secondary))]')}
+              className={cn('w-4 h-4 shrink-0', active ? 'text-[rgb(var(--color-accent-text))]' : 'text-[rgb(var(--color-text-secondary))]')}
               aria-hidden="true"
             />
             <span className="text-sm font-semibold truncate text-[rgb(var(--color-text))]">{label}</span>
           </span>
-          {active && <Check className="w-4 h-4 shrink-0 text-[rgb(var(--color-accent))]" aria-hidden="true" />}
+          {active && <Check className="w-4 h-4 shrink-0 text-[rgb(var(--color-accent-text))]" aria-hidden="true" />}
         </span>
       </button>
     );

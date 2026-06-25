@@ -141,7 +141,7 @@ export function FileUploader({ onFileSelect, isLoading, hasFile }: FileUploaderP
         </p>
         <p className="mt-2 text-sm text-[rgb(var(--color-text-secondary))]">
           {t('upload.or')}{' '}
-          <span className="font-medium text-[rgb(var(--color-accent))] underline-offset-4 group-hover:underline">
+          <span className="font-medium text-[rgb(var(--color-accent-text))] underline-offset-4 group-hover:underline">
             {t('upload.browse')}
           </span>
         </p>

@@ -19,11 +19,16 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      'no-debugger': 'error',
+    },
   },
   // Relaxed rules for test files
   {
     files: ['**/*.test.{ts,tsx}', '**/setupTests.ts'],
     rules: {
+      'no-console': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': 'off',
     },

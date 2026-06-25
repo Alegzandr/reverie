@@ -186,11 +186,7 @@ Object.defineProperty(globalThis, 'OfflineAudioContext', {
   value: MockOfflineAudioContext,
 });
 
-// URL helpers used by downloadBlob
-if (!URL.createObjectURL) {
-  URL.createObjectURL = vi.fn(() => 'blob:mock-url');
-}
-
-if (!URL.revokeObjectURL) {
-  URL.revokeObjectURL = vi.fn();
-}
+// URL helpers used by downloadBlob — always spies so tests can assert on them
+// (recent jsdom ships real implementations, so a presence guard would skip these).
+URL.createObjectURL = vi.fn(() => 'blob:mock-url');
+URL.revokeObjectURL = vi.fn();

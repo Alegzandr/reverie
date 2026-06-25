@@ -9,7 +9,7 @@
     "dragDrop": "Glissez-déposez un fichier audio ici",
     "or": "ou",
     "browse": "Parcourir les fichiers",
-    "formats": "MP3, WAV, OGG, M4A",
+    "formats": "MP3, WAV, FLAC, OGG, M4A, AAC, AIFF, WebM",
     "loading": "Chargement..."
   },
   "effects": {

@@ -10,8 +10,6 @@ interface ThemeContextType {
   theme: ThemeId;
   def: ThemeDef;
   setTheme: (id: ThemeId) => void;
-  /** Convenience: flip between the two workspace faces. */
-  toggleTheme: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -41,12 +39,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (isThemeId(id)) setThemeState(id);
   }, []);
 
-  const toggleTheme = useCallback(() => {
-    setThemeState((prev) => (prev === 'light' ? 'dark' : 'light'));
-  }, []);
-
   return (
-    <ThemeContext.Provider value={{ theme, def: THEMES[theme], setTheme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, def: THEMES[theme], setTheme }}>
       {children}
     </ThemeContext.Provider>
   );

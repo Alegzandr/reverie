@@ -19,18 +19,11 @@ export function clearWaveformCache() {
 }
 
 /**
- * Retrieve a cached waveform if it exists
- */
-export function getCachedWaveform(buffer: AudioBuffer, bars: number): number[] | undefined {
-  return waveformCache.get(buffer)?.get(bars);
-}
-
-/**
  * Compute and cache waveform bar data for an AudioBuffer
  */
 export function getOrCreateWaveform(buffer: AudioBuffer, bars: number = WAVEFORM.BAR_COUNT): number[] {
   const normalizedBars = Math.max(1, Math.floor(bars));
-  const existing = getCachedWaveform(buffer, normalizedBars);
+  const existing = waveformCache.get(buffer)?.get(normalizedBars);
   if (existing) return existing;
 
   const computed = computeWaveform(buffer, normalizedBars);

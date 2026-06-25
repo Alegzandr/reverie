@@ -4,21 +4,14 @@ import type { SceneId } from '../contexts/themes';
 import { animatedBackdropAllowed } from './scenes/motion';
 
 /**
- * Full-viewport ambient backdrop for the immersive themes — the living scene
- * you can lose yourself in while a track plays. Mounted only when an immersive
- * theme is active; it composites on the GPU and never competes with the Web
- * Audio graph. All motion is silenced under `prefers-reduced-motion` (the scene
- * freezes on a still frame).
+ * Full-viewport ambient backdrop for the active theme: a cosmic photo base
+ * (`.scene-photo`) brought alive by pointer parallax, autonomous drift and
+ * colour haze. Composites on the GPU; never touches the Web Audio graph; freezes
+ * on a still frame under `prefers-reduced-motion`.
  *
- * Wallpaper-Engine approach: each immersive scene is a real cosmic image as the
- * full-bleed base layer (<div.scene-photo>), made alive by light layers on top:
- * pointer parallax at several depths + slow autonomous drift + drifting colour
- * haze. To avoid conflicts, parallax drives `transform` (via the --px/--py vars,
- * smoothed by a CSS transition) while autonomous drift drives `background-position`
- * (keyframes) — the two never fight over the same property.
- * The former procedural scenes (NebulaScene/nebulaShader, TidalScene/waterShader)
- * are retired from the render but kept orphaned. `light` (daybreak) has no dropped
- * image, so it keeps its CSS layers and gets no parallax/haze.
+ * Key constraint: parallax drives `transform` (via --px/--py) while drift drives
+ * `background-position`, so the two animations never fight over one property.
+ * `daybreak` has no photo, so it keeps pure CSS layers and gets no parallax/haze.
  */
 const SCENES: Record<SceneId, React.ReactNode> = {
   daybreak: (
@@ -41,11 +34,8 @@ export function AmbientScene() {
   const sceneRef = useRef<HTMLDivElement>(null);
   const isPhoto = def.scene !== 'daybreak';
 
-  // Pointer parallax — the Wallpaper-Engine "depth" feel. Publishes a normalised
-  // cursor offset (--px/--py, roughly -1..1) on the scene root; each layer reads
-  // it and translates by its own depth factor. rAF-throttled, written straight to
-  // the element's style; the layers' CSS transition does the smoothing. Desktop +
-  // fine pointer + no-reduce only (matches the rest of the scene-motion strategy).
+  // Pointer parallax: publish a normalised cursor offset (--px/--py, ~-1..1) that
+  // each layer translates by its own depth factor. rAF-throttled; CSS smooths it.
   useEffect(() => {
     const el = sceneRef.current;
     if (!el || !animatedBackdropAllowed()) return;
@@ -69,14 +59,10 @@ export function AmbientScene() {
     };
   }, []);
 
-  // Every theme has an animated background — the HUD is the one interface.
   // `def.scene` keys both the layer markup and the `.scene-<id>` CSS.
   return (
     <div ref={sceneRef} className={`scene scene-${def.scene}`} aria-hidden="true">
       {SCENES[def.scene]}
-      {/* Drifting colour haze — two soft, blurred blobs at different depths that
-          parallax with the pointer and drift on their own. The atmosphere that
-          sells the image as a living place. Photo scenes only. */}
       {isPhoto && (
         <>
           <div className="scene-haze scene-haze-a" />
@@ -84,14 +70,18 @@ export function AmbientScene() {
         </>
       )}
       <div className="scene-veil" />
-      {/* Environmental light that swells with the music — the bloom lives in the
-          backdrop layer so it brightens the scene behind the glass rather than
-          tinting over the UI. Cut on photo scenes (see CSS) so it never washes
-          out the image. */}
+      {/* Bloom that swells with the music; lives behind the glass, not over the UI. */}
       <div className="scene-breath" />
-      {/* Drifting dust whose brightness/density rises with treble (the air/highs).
-          Two parallax depths via ::before/::after; motion gated to desktop. */}
+      {/* Drifting dust whose density rises with treble. */}
       <div className="scene-particles" />
+      {isPhoto && (
+        <div className="scene-meteors">
+          <span className="meteor" />
+          <span className="meteor" />
+          <span className="meteor" />
+          <span className="meteor" />
+        </div>
+      )}
       <div className="hud-scanlines" />
       <div className="hud-vignette" />
     </div>

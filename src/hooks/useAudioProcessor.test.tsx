@@ -74,7 +74,7 @@ vi.mock('../utils/audioMetadataExtractor', () => ({
   })),
 }));
 
-vi.mock('../utils/mp3Encoder', () => ({
+vi.mock('../utils/download', () => ({
   downloadBlob: mockDownload,
 }));
 
@@ -174,7 +174,7 @@ describe('useAudioProcessor', () => {
     const { result } = renderHook(() => useAudioProcessor());
 
     await act(async () => {
-      const promise = result.current.processAudio({ speedMultiplier: 1, reverbAmount: 0, preservePitch: false });
+      const promise = result.current.processAudio({ speedMultiplier: 1, reverbAmount: 0 });
       await vi.advanceTimersByTimeAsync(250);
       await promise;
     });
@@ -194,7 +194,7 @@ describe('useAudioProcessor', () => {
 
     await act(async () => {
       try {
-        await result.current.processAudio({ speedMultiplier: 1, reverbAmount: 0, preservePitch: false });
+        await result.current.processAudio({ speedMultiplier: 1, reverbAmount: 0 });
       } catch (e) {
         // expected
       }
@@ -211,7 +211,7 @@ describe('useAudioProcessor', () => {
 
     await act(async () => {
       try {
-        await result.current.processAudio({ speedMultiplier: 1, reverbAmount: 0, preservePitch: false });
+        await result.current.processAudio({ speedMultiplier: 1, reverbAmount: 0 });
       } catch (e) {
         // expected
       }
@@ -346,7 +346,7 @@ describe('useAudioProcessor', () => {
     const { result } = renderHook(() => useAudioProcessor());
 
     await act(async () => {
-      await result.current.processAudio({ speedMultiplier: 1, reverbAmount: 0, preservePitch: false });
+      await result.current.processAudio({ speedMultiplier: 1, reverbAmount: 0 });
     });
 
     await act(async () => {
@@ -370,7 +370,7 @@ describe('useAudioProcessor', () => {
     const { result } = renderHook(() => useAudioProcessor());
 
     await act(async () => {
-      await result.current.processAudio({ speedMultiplier: 1, reverbAmount: 0, preservePitch: false });
+      await result.current.processAudio({ speedMultiplier: 1, reverbAmount: 0 });
     });
 
     await act(async () => {
@@ -389,7 +389,7 @@ describe('useAudioProcessor', () => {
     const { result } = renderHook(() => useAudioProcessor());
 
     await act(async () => {
-      await result.current.processAudio({ speedMultiplier: 1, reverbAmount: 0, preservePitch: false });
+      await result.current.processAudio({ speedMultiplier: 1, reverbAmount: 0 });
     });
 
     await act(async () => {
@@ -481,7 +481,7 @@ describe('useAudioProcessor', () => {
 
     await act(async () => {
       await result.current.loadAudioFile(new File(['data'], 'clip.mp3', { type: 'audio/mp3' }));
-      await result.current.processAudio({ speedMultiplier: 1, reverbAmount: 0, preservePitch: false });
+      await result.current.processAudio({ speedMultiplier: 1, reverbAmount: 0 });
     });
 
     act(() => {

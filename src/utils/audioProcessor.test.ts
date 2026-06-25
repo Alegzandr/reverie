@@ -143,7 +143,7 @@ describe('audioProcessor utils', () => {
 
   it('throws when processing without buffer', async () => {
     const processor = new AudioProcessor();
-    await expect(processor.processAudio({ speedMultiplier: 1, reverbAmount: 0, preservePitch: false })).rejects.toThrow('No audio file loaded');
+    await expect(processor.processAudio({ speedMultiplier: 1, reverbAmount: 0 })).rejects.toThrow('No audio file loaded');
   });
 
   it('applies effects and 8D audio through offline context', async () => {
@@ -153,7 +153,6 @@ describe('audioProcessor utils', () => {
     const rendered = await processor.processAudio({
       speedMultiplier: 1.5,
       reverbAmount: 0.4,
-      preservePitch: false,
       audio8D: true,
       rotationSpeed: 1.0,
     });
@@ -174,7 +173,6 @@ describe('audioProcessor utils', () => {
     const rendered = await processor.processAudio({
       speedMultiplier: 1,
       reverbAmount: 0,
-      preservePitch: false,
     });
 
     const offline = InspectableOfflineAudioContext.lastInstance!;
@@ -190,7 +188,6 @@ describe('audioProcessor utils', () => {
     await processor.processAudio({
       speedMultiplier: 1,
       reverbAmount: 0,
-      preservePitch: false,
       audio8D: true,
       rotationSpeed: 0.5,
     });
@@ -207,7 +204,6 @@ describe('audioProcessor utils', () => {
     await processor.processAudio({
       speedMultiplier: 1,
       reverbAmount: 0,
-      preservePitch: false,
       audio8D: true,
     });
 

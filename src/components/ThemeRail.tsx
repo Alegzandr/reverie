@@ -90,13 +90,13 @@ export function ThemeRail() {
                     <span
                       className={cn(
                         'min-w-0 flex-1 truncate text-sm font-medium',
-                        active ? 'text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-text))]'
+                        active ? 'text-[rgb(var(--color-accent-text))]' : 'text-[rgb(var(--color-text))]'
                       )}
                     >
                       {label}
                     </span>
                     {active ? (
-                      <Check className="h-4 w-4 shrink-0 text-[rgb(var(--color-accent))]" aria-hidden="true" />
+                      <Check className="h-4 w-4 shrink-0 text-[rgb(var(--color-accent-text))]" aria-hidden="true" />
                     ) : (
                       <Icon className="h-4 w-4 shrink-0 text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
                     )}

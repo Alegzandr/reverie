@@ -57,6 +57,12 @@
     --color-border: 217, 217, 231;
     --color-accent: 255, 138, 163;
     --color-accent-hover: 255, 159, 183;
+    /* Accent as TEXT/icon. The bright pink accent (used for fills, strokes, and
+       active indicators) is too light to read as type on the bright workspace
+       (~2.2:1). This deep rose is the same hue brought to AA (≥4.5:1) on both the
+       surface and the pale accent tints, so emphasis text stays on-brand and
+       legible. Dark palettes alias it back to the accent (which already passes). */
+    --color-accent-text: 178, 30, 81;
     --color-ambient: 72, 199, 236;
 
     /* Aurora brand signature (violet, pink, cyan), shared across themes */
@@ -111,6 +117,9 @@
     --color-border: 74, 73, 106;
     --color-accent: 255, 151, 178;
     --color-accent-hover: 255, 174, 194;
+    /* On every dark palette the accent already clears AA as text, so accent-text
+       just tracks the accent (late-bound: each [data-theme] sets its own accent). */
+    --color-accent-text: var(--color-accent);
     --color-ambient: 56, 189, 248;
   }
 
@@ -522,6 +531,9 @@
     --color-border: 70, 58, 110;
     --color-accent: 178, 92, 248;
     --color-accent-hover: 198, 130, 252;
+    /* The aurora accent is the one dark palette whose accent dips below AA as text
+       on the active-chip tints (~4.3:1); lift accent-text to a brighter lilac. */
+    --color-accent-text: 196, 140, 252;
     --color-ambient: 190, 96, 236;
     --hud-line: 168, 196, 244;
     --hud-glow: 120, 100, 240;
@@ -716,8 +728,12 @@
      the opacity reaction itself is cheap and always on. */
   .scene-particles {
     inset: 0;
-    opacity: calc(0.04 + var(--audio-treble) * 0.6);
-    transition: opacity 110ms linear;
+    opacity: calc(0.08 + var(--audio-treble) * 0.7);
+    /* Foreground parallax — the nearest plane, so it travels the most with the
+       pointer and reads as depth in front of the photo/haze. */
+    transform: translate3d(calc(var(--px, 0) * -52px), calc(var(--py, 0) * -42px), 0);
+    transition: opacity 110ms linear, transform 260ms ease-out;
+    will-change: opacity, transform;
   }
 
   .scene-particles::before,
@@ -746,11 +762,15 @@
   }
 
   @media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (pointer: fine) {
+    /* Two independent animations per layer: a slow positional drift (transform)
+       and a faster twinkle (opacity) at a different rate — they animate different
+       properties so they compose cleanly. The mismatched periods make the field
+       shimmer unevenly, like real stars catching the light. */
     .scene-particles::before {
-      animation: dust-drift-far 46s linear infinite;
+      animation: dust-drift-far 46s linear infinite, dust-twinkle-far 3.6s ease-in-out infinite;
     }
     .scene-particles::after {
-      animation: dust-drift-near 30s linear infinite;
+      animation: dust-drift-near 30s linear infinite, dust-twinkle-near 2.7s ease-in-out infinite;
     }
   }
 
@@ -762,6 +782,87 @@
   @keyframes dust-drift-near {
     from { transform: translate3d(0, 0, 0); }
     to { transform: translate3d(-3%, -25%, 0); }
+  }
+
+  @keyframes dust-twinkle-far {
+    0%, 100% { opacity: 0.65; }
+    50% { opacity: 1; }
+  }
+
+  @keyframes dust-twinkle-near {
+    0%, 100% { opacity: 1; }
+    40% { opacity: 0.7; }
+    70% { opacity: 0.95; }
+  }
+
+  /* ── Shooting stars ──────────────────────────────────────────────────────
+     Occasional meteors that streak across the deep field — the cosmic answer to
+     Wallpaper-Engine's rain/snow particles. Each is a tapered light streak that
+     slides along its own axis (rotate + translateX in the local frame), bright
+     head leading. The streak only occupies the first slice of each cycle, then the
+     meteor stays invisible — with mismatched durations + delays per meteor they
+     read as rare and random, never a synchronised volley. Photo scenes only,
+     behind the legibility veil; motion gated to desktop + no-reduce. */
+  .scene-meteors {
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .meteor {
+    position: absolute;
+    width: 300px;
+    height: 2px;
+    border-radius: 9999px;
+    /* long faint tail → crisp white head at the leading (right) end */
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(var(--color-ambient), 0) 28%,
+      rgba(var(--color-ambient), 0.4) 72%,
+      rgba(255, 255, 255, 0.75) 92%,
+      #ffffff 100%
+    );
+    filter: drop-shadow(0 0 7px rgba(255, 255, 255, 0.85))
+      drop-shadow(0 0 16px rgba(var(--color-ambient), 0.7));
+    opacity: 0;
+    will-change: transform, opacity;
+  }
+
+  @media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (pointer: fine) {
+    .meteor:nth-child(1) {
+      top: 6%;
+      left: 8%;
+      width: 280px;
+      animation: meteor-shoot 11s linear infinite;
+    }
+    .meteor:nth-child(2) {
+      top: 2%;
+      left: 30%;
+      width: 340px;
+      animation: meteor-shoot 15s linear 6s infinite;
+    }
+    .meteor:nth-child(3) {
+      top: 15%;
+      left: 4%;
+      width: 240px;
+      animation: meteor-shoot 19s linear 12s infinite;
+    }
+    /* 4th left in the markup but kept dormant — three feels rarer/calmer. */
+    .meteor:nth-child(4) {
+      display: none;
+    }
+  }
+
+  /* Slides the streak along its own (rotated) axis: a shallow down-right descent
+     (head leads, tail trails). Visible only for the first ~16% of the cycle; the
+     long invisible tail of the cycle makes each pass feel rare. */
+  @keyframes meteor-shoot {
+    0% { transform: rotate(28deg) translateX(0); opacity: 0; }
+    3% { opacity: 1; }
+    13% { opacity: 1; }
+    16% { transform: rotate(28deg) translateX(940px); opacity: 0; }
+    100% { transform: rotate(28deg) translateX(940px); opacity: 0; }
   }
 
   /* ── Scene: Tidal (moonlit water) ───────────────────────────────────────
@@ -926,11 +1027,12 @@
     background-position: 50% 50%;
     background-size: cover;
     background-repeat: no-repeat;
-    /* scale = overscan (1.08) + a gentle audio "breathe" (swells with loudness,
-       a touch more on the bass); translate = pointer parallax. Both live in one
-       transform; the audio terms are 0 at rest, so the image is dead-still then. */
+    /* scale = overscan (1.08) + a gentle audio "breathe"; translate = pointer
+       parallax. Both live in one transform; the audio terms are 0 at rest, so the
+       image is dead-still then. (The real depth feel comes from the depth-map
+       parallax layer, not from cranking this.) */
     transform: scale(calc(1.08 + var(--audio-level, 0) * 0.035 + var(--audio-bass, 0) * 0.02))
-      translate3d(calc(var(--px, 0) * -8px), calc(var(--py, 0) * -6px), 0);
+      translate3d(calc(var(--px, 0) * -10px), calc(var(--py, 0) * -8px), 0);
     transition: transform 500ms ease-out;
     will-change: transform, background-position;
   }
@@ -963,17 +1065,18 @@
   }
 
   /* The colour atmosphere brightens with the music — localised blobs, not a
-     full-screen veil, so it never washes the photo. Base low → calm at rest. */
+     full-screen veil, so it never washes the photo. Base low → calm at rest;
+     deep parallax (-a near, -b nearest) for plane separation. */
   .scene-haze-a {
     opacity: calc(0.16 + var(--audio-level, 0) * 0.24 + var(--audio-bass, 0) * 0.16);
     background-image: radial-gradient(40% 48% at 50% 50%, rgba(var(--color-accent), 0.55), transparent 70%);
-    transform: translate3d(calc(var(--px, 0) * -18px), calc(var(--py, 0) * -14px), 0);
+    transform: translate3d(calc(var(--px, 0) * -40px), calc(var(--py, 0) * -32px), 0);
   }
 
   .scene-haze-b {
     opacity: calc(0.12 + var(--audio-level, 0) * 0.18 + var(--audio-treble, 0) * 0.18);
     background-image: radial-gradient(44% 42% at 50% 50%, rgba(var(--color-ambient), 0.5), transparent 72%);
-    transform: translate3d(calc(var(--px, 0) * -30px), calc(var(--py, 0) * -24px), 0);
+    transform: translate3d(calc(var(--px, 0) * -66px), calc(var(--py, 0) * -52px), 0);
   }
 
   @media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (pointer: fine) {

@@ -211,7 +211,7 @@ describe('useAudioPlayback', () => {
     const source = mockAudioContext.createBufferSource.mock.results[0].value;
 
     act(() => {
-      result.current.setEffects({ speedMultiplier: 1.5, reverbAmount: 0.4, preservePitch: false });
+      result.current.setEffects({ speedMultiplier: 1.5, reverbAmount: 0.4 });
     });
 
     expect(source.playbackRate.setTargetAtTime).toHaveBeenCalled();
@@ -222,7 +222,7 @@ describe('useAudioPlayback', () => {
 
     expect(() =>
       act(() => {
-        result.current.setEffects({ speedMultiplier: 1.2, reverbAmount: 0, preservePitch: false });
+        result.current.setEffects({ speedMultiplier: 1.2, reverbAmount: 0 });
       })
     ).not.toThrow();
   });

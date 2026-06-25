@@ -1,18 +1,6 @@
 import { fileURLToPath, URL } from 'node:url';
-import { defineConfig } from 'vite';
-import type { UserConfig as VitestUserConfig } from 'vitest/config';
+import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react-swc';
-
-const testConfig: VitestUserConfig['test'] = {
-  environment: 'jsdom',
-  globals: true,
-  setupFiles: './src/setupTests.ts',
-  coverage: {
-    provider: 'v8',
-    reporter: ['text', 'json', 'html'],
-    include: ['src/**/*.{ts,tsx}'],
-  },
-};
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -24,22 +12,29 @@ export default defineConfig({
   },
   base: process.env.NODE_ENV === 'production' ? '/reverie/' : '/',
   build: {
-    // Generate sourcemaps for production debugging
     sourcemap: false,
-    // Optimize chunk size
     rollupOptions: {
+      // Split vendor code into stable chunks for long-term caching. i18n is matched
+      // before react so react-i18next lands in the i18n chunk, not the react one.
       output: {
-        manualChunks: {
-          // Split vendor code for better caching
-          'react-vendor': ['react', 'react-dom'],
-          'i18n-vendor': ['i18next', 'react-i18next', 'i18next-browser-languagedetector'],
-          'audio-vendor': ['@breezystack/lamejs'],
+        manualChunks: (id) => {
+          if (!id.includes('node_modules')) return;
+          if (id.includes('i18next')) return 'i18n-vendor';
+          if (id.includes('react')) return 'react-vendor';
+          if (id.includes('lamejs')) return 'audio-vendor';
         },
       },
     },
-    // Increase chunk size warning limit (audio processing requires larger chunks)
     chunkSizeWarningLimit: 1000,
   },
-  // @ts-expect-error - Vitest config field not in Vite types
-  test: testConfig,
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: './src/setupTests.ts',
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      include: ['src/**/*.{ts,tsx}'],
+    },
+  },
 });

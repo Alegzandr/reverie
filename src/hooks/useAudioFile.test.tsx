@@ -133,7 +133,6 @@ describe('useAudioFile', () => {
       const options: AudioProcessingOptions = {
         speedMultiplier: 1.5,
         reverbAmount: 0.3,
-        preservePitch: false,
       };
 
       await act(async () => {
@@ -159,7 +158,6 @@ describe('useAudioFile', () => {
         result.current.processAudio({
           speedMultiplier: 1.0,
           reverbAmount: 0,
-          preservePitch: false,
         });
       });
 
@@ -177,7 +175,6 @@ describe('useAudioFile', () => {
           await result.current.processAudio({
             speedMultiplier: 1.0,
             reverbAmount: 0,
-            preservePitch: false,
           });
         } catch (error) {
           // Expected

@@ -21,7 +21,6 @@ import type { AudioProcessingOptions } from './utils/audioProcessor';
 const toOptions = (s: EffectSettings): AudioProcessingOptions => ({
   speedMultiplier: s.speedMultiplier,
   reverbAmount: s.reverbAmount,
-  preservePitch: false,
   audio8D: s.mode === '8d-audio',
   rotationSpeed: s.rotationSpeed,
   bassBoost: s.mode === 'bass-boost',
@@ -50,11 +49,10 @@ function App() {
     getAnalyser,
   } = useAudioProcessor();
 
-  // The signature: let the whole interface breathe with the music. Reads the
-  // live analyser and publishes audio-energy CSS vars the scene + panels consume.
+  // The signature: the whole interface breathes with the music. Publishes live
+  // audio-energy CSS vars that the scene and panels consume.
   useAudioReactivity({ getAnalyser, isPlaying: state.isPlaying });
 
-  // Update document meta tags when language changes
   useEffect(() => {
     document.title = t('meta.title');
     document.documentElement.lang = i18n.language;
@@ -78,14 +76,12 @@ function App() {
     updateMetaTag('twitter:description', t('meta.description'));
   }, [i18n.language, t]);
 
-  // Slow + Reverb is the default mood (matches EffectControls' initial mode); this
-  // seed is replaced the moment EffectControls fires its first onChange on mount.
+  // Seed matches EffectControls' initial mode; replaced by its first onChange on mount.
   const [effectSettings, setEffectSettings] = useState<EffectSettings>({
     mode: 'slow-reverb',
     speedMultiplier: EFFECT_DEFAULTS.SLOW_REVERB.SPEED_DEFAULT,
     reverbAmount: EFFECT_DEFAULTS.SLOW_REVERB.REVERB_DEFAULT,
   });
-  // Drives both the live graph and the waveform's effect preview.
   const effectOptions = useMemo(() => toOptions(effectSettings), [effectSettings]);
 
   const [uploadRevision, setUploadRevision] = useState(0);
@@ -112,9 +108,11 @@ function App() {
   );
 
   const handlePlay = useCallback(() => {
-    if (originalBuffer) playAudio(originalBuffer, playbackTime);
-    else if (processedBuffer) playAudio(processedBuffer, playbackTime);
-  }, [playAudio, originalBuffer, processedBuffer, playbackTime]);
+    // When the track has reached the end, pressing play replays from the start.
+    const startAt = duration > 0 && playbackTime >= duration ? 0 : playbackTime;
+    if (originalBuffer) playAudio(originalBuffer, startAt);
+    else if (processedBuffer) playAudio(processedBuffer, startAt);
+  }, [playAudio, originalBuffer, processedBuffer, playbackTime, duration]);
 
   // Speed changes the listening length: a 3:00 clip at 0.5x lasts 6:00. We track time
   // internally in source-buffer time, but the transport speaks in effective (output)
@@ -200,7 +198,7 @@ function App() {
               ].map(({ icon: Icon, label }) => (
                 <li key={label}>
                   <Badge variant="ghost" className="gap-2">
-                    <Icon className="w-4 h-4 text-[rgb(var(--color-accent))]" aria-hidden="true" />
+                    <Icon className="w-4 h-4 text-[rgb(var(--color-accent-text))]" aria-hidden="true" />
                     {label}
                   </Badge>
                 </li>
@@ -240,7 +238,6 @@ function App() {
   return (
     <div className="min-h-screen flex flex-col">
       <AmbientScene />
-      {/* Header / toolbar */}
       <header className="hud-rail hud-rail-top sticky top-0 z-40 bg-[rgba(var(--color-surface),0.78)] backdrop-blur-xl border-b border-[rgba(var(--color-border),0.5)]">
         <div className="hud-bow">
         <div className="hud-bow-inner mx-auto w-full max-w-[1700px] px-6 sm:px-10 h-16 flex items-center justify-between gap-4">
@@ -272,15 +269,10 @@ function App() {
         </div>
       </header>
 
-      {/* Working area — centred on large screens but biased upward (bottom padding
-          larger than top), so the content sits in the upper-middle rather than
-          dead-centre or stranded at the top. gap-10 gives the title strip and the
-          panel grid clear, even breathing room. */}
+      {/* Biased upward (bottom padding > top) so content sits in the upper-middle. */}
       <main className="flex-1 mx-auto w-full max-w-[1700px] px-6 sm:px-10 pt-6 sm:pt-8 pb-24 sm:pb-40 flex flex-col gap-8 sm:gap-10 lg:justify-center">
         {errorBanner}
 
-        {/* Track title + a quiet metadata strip (values in body text, labels
-            secondary) — the now-loaded source, read at a glance. */}
         {originalFile && (
           <div className="space-y-4">
             <h2 className="font-display text-2xl sm:text-3xl font-normal text-[rgb(var(--color-text))] truncate">
@@ -303,11 +295,8 @@ function App() {
           </div>
         )}
 
-        {/* Cockpit — effects rail on the left, the waveform centrepiece in the
-            middle, the mood rail on the right. Flat glass panels (the mockup's
-            spatial console), each in its own HUD frame. */}
+        {/* Cockpit: effects rail | waveform centrepiece | mood rail. */}
         <div className="grid gap-6 lg:gap-12 xl:gap-16 items-start lg:grid-cols-[minmax(320px,400px)_minmax(0,1fr)_minmax(280px,340px)]">
-          {/* Effects — live: moving a control reshapes the sound as it plays. */}
           {originalFile && (
             <Card asChild className="hud-frame p-4 sm:p-5 audio-drift-a">
               <aside>
@@ -316,7 +305,6 @@ function App() {
             </Card>
           )}
 
-          {/* Stage — the waveform centerpiece */}
           <section className="min-w-0">
             {stageBuffer && (
               <WaveformTimeline
@@ -330,12 +318,10 @@ function App() {
             )}
           </section>
 
-          {/* Mood rail — switch the whole atmosphere in one tap. */}
           <ThemeRail />
         </div>
       </main>
 
-      {/* Transport bar */}
       {(processedBuffer || originalFile) && (
         <div className="hud-rail hud-rail-bottom sticky bottom-0 z-30 bg-[rgba(var(--color-surface),0.85)] backdrop-blur-xl border-t border-[rgba(var(--color-border),0.5)] shadow-[0_-14px_40px_-28px_rgba(var(--color-accent),0.5)]">
           <div className="hud-bow">

@@ -9,7 +9,7 @@
     "dragDrop": "将音频文件拖放到此处",
     "or": "或",
     "browse": "浏览文件",
-    "formats": "MP3、WAV、OGG、M4A",
+    "formats": "MP3、WAV、FLAC、OGG、M4A、AAC、AIFF、WebM",
     "loading": "加载中..."
   },
   "effects": {

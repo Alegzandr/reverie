@@ -19,7 +19,7 @@ vi.mock('../utils/exportStrategies', () => ({
   estimateBitrate: mockEstimateBitrate,
 }));
 
-vi.mock('../utils/mp3Encoder', () => ({
+vi.mock('../utils/download', () => ({
   downloadBlob: mockDownload,
 }));
 

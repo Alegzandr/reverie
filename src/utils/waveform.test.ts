@@ -5,7 +5,6 @@ import type { AudioProcessingOptions } from './audioProcessor';
 const base: AudioProcessingOptions = {
   speedMultiplier: 1,
   reverbAmount: 0,
-  preservePitch: false,
 };
 
 describe('shapeEnvelope', () => {

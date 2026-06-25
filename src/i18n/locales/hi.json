@@ -9,7 +9,7 @@
     "dragDrop": "ऑडियो फ़ाइल को यहाँ ड्रैग और ड्रॉप करें",
     "or": "या",
     "browse": "फ़ाइलें ब्राउज़ करें",
-    "formats": "MP3, WAV, OGG, M4A",
+    "formats": "MP3, WAV, FLAC, OGG, M4A, AAC, AIFF, WebM",
     "loading": "लोड हो रहा है..."
   },
   "effects": {

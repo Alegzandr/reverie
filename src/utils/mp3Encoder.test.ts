@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { audioBufferToMp3, downloadBlob } from './mp3Encoder';
+import { audioBufferToMp3 } from './mp3Encoder';
 
 const { encodeBuffer, flush } = vi.hoisted(() => ({
   encodeBuffer: vi.fn(() => [1, 2]),
@@ -42,22 +42,5 @@ describe('mp3Encoder utils', () => {
     await audioBufferToMp3(stereo as any);
     expect(encodeBuffer).toHaveBeenCalledWith(expect.any(Int16Array), expect.any(Int16Array));
     expect(flush).toHaveBeenCalled();
-  });
-
-  it('downloads blob via anchor element', () => {
-    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
-    const appendSpy = vi.spyOn(document.body, 'appendChild');
-    const removeSpy = vi.spyOn(document.body, 'removeChild');
-    const blob = new Blob(['data'], { type: 'text/plain' });
-
-    downloadBlob(blob, 'file.txt');
-
-    expect(clickSpy).toHaveBeenCalled();
-    expect(appendSpy).toHaveBeenCalled();
-    expect(removeSpy).toHaveBeenCalled();
-    expect(URL.createObjectURL).toHaveBeenCalledWith(blob);
-    expect(URL.revokeObjectURL).toHaveBeenCalled();
-
-    clickSpy.mockRestore();
   });
 });

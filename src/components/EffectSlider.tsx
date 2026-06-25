@@ -10,7 +10,6 @@ interface EffectSliderProps {
     disabled?: boolean;
     onChange: (value: number) => void;
     formatValue: (value: number) => string;
-    showMarkers?: boolean;
     markers?: string[];
 }
 
@@ -29,7 +28,6 @@ export function EffectSlider({
     disabled,
     onChange,
     formatValue,
-    showMarkers = true,
     markers,
 }: EffectSliderProps) {
     const formattedValue = formatValue(value);
@@ -44,7 +42,7 @@ export function EffectSlider({
                     {label}
                 </label>
                 <span
-                    className="text-2xl font-semibold tabular-nums text-[rgb(var(--color-accent))]"
+                    className="text-2xl font-semibold tabular-nums text-[rgb(var(--color-accent-text))]"
                     aria-live="polite"
                 >
                     {formattedValue}
@@ -60,7 +58,7 @@ export function EffectSlider({
                 disabled={disabled}
                 aria-label={`${label}: ${formattedValue}`}
             />
-            {showMarkers && markers && (
+            {markers && (
                 <div className="flex justify-between text-xs text-[rgb(var(--color-text-secondary))]">
                     {markers.map((marker, index) => (
                         <span key={index}>{marker}</span>

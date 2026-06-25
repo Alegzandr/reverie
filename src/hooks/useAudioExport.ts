@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { getExportStrategy, estimateBitrate } from '../utils/exportStrategies';
-import { downloadBlob } from '../utils/mp3Encoder';
+import { downloadBlob } from '../utils/download';
 import { ERROR_MESSAGES } from '../constants';
 import type { AudioMetadata } from './useAudioFile';
 
