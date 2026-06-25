@@ -1,7 +1,7 @@
 {
   "app": {
-    "title": "PitchSongs",
-    "subtitle": "Audio-Manipulation",
+    "title": "Reverie",
+    "subtitle": "Verträumte Edits für deine Lieblingstracks",
     "description": "Verwandeln Sie Ihre Musik mit professionellen Audio-Effekten. Beschleunigen, verlangsamen, Hall hinzufügen oder immersive 8D-Audio-Versionen Ihrer Tracks erstellen und automatisch im ursprünglichen Format und in der ursprünglichen Qualität exportieren."
   },
   "upload": {
@@ -48,20 +48,20 @@
   },
   "features": {
     "webAudio": {
-      "title": "Web Audio API",
-      "desc": "Professionelle Qualität"
+      "title": "Studio-Effekte",
+      "desc": "Tempo, langsam + Hall, 8D, Bass"
     },
     "private": {
       "title": "100% Privat",
-      "desc": "Lokale Verarbeitung"
+      "desc": "Deine Dateien verlassen nie dein Gerät"
     },
     "export": {
       "title": "Sofort-Export",
-      "desc": "Automatischer Export im Ursprungsformat/-qualität"
+      "desc": "Gleiches Format und Qualität wie das Original"
     }
   },
   "footer": {
-    "built": "Erstellt mit React • TypeScript • Web Audio API"
+    "built": "Gemacht für späte Hörstunden"
   },
   "accessibility": {
     "themeToggle": "Dunkelmodus umschalten",
@@ -84,7 +84,7 @@
     "notice": "Alle Übersetzungen bleiben mit Englisch synchron für 100 % Abdeckung."
   },
   "meta": {
-    "title": "PitchSongs - Online Audio-Editor Kostenlos | Professionelles Werkzeug",
+    "title": "Reverie - Langsam + Hall, 8D & Tempo | Online Audio-Editor Kostenlos",
     "description": "Kostenloser Online-Audio-Editor - Verwandeln Sie Ihre Musik mit professionellen Effekten sofort in Ihrem Browser. Erstellen Sie beschleunigte Versionen, langsame + Hall-Remixe, immersives 8D-Audio oder Bass-verstärkte Tracks. Kein Download erforderlich. 100% kostenloses Online-Tool mit lokaler Verarbeitung.",
     "keywords": "Online-Audio-Editor, Audio-Manipulation online, Audio beschleunigen online, Slow Reverb online, 8D-Audio online, Bass-Boost online, Audio-Effekte online, Musik-Editor online, Audio-Prozessor online, kostenloses Audio-Tool online, Browser-Audio-Editor, Bassverstärkung online"
   }

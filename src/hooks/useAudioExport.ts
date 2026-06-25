@@ -18,14 +18,14 @@ interface UseAudioExportParams {
   onError?: (message: string | null) => void;
 }
 
-const stripPitchSongsSuffix = (name: string) =>
-  name.replace(/\s*(ver\.)?\s*by\s+PitchSongs$/i, '').trim();
+const stripReverieSuffix = (name: string) =>
+  name.replace(/\s*(ver\.)?\s*by\s+Reverie$/i, '').trim();
 
-const buildPitchSongsName = (base: string, effectLabel?: string) => {
-  const cleaned = stripPitchSongsSuffix(base);
+const buildReverieName = (base: string, effectLabel?: string) => {
+  const cleaned = stripReverieSuffix(base);
   const label = effectLabel?.trim();
   const labelPart = label ? ` ${label}` : '';
-  return `${cleaned}${labelPart} ver. by PitchSongs`.trim().replace(/\s+/g, ' ');
+  return `${cleaned}${labelPart} ver. by Reverie`.trim().replace(/\s+/g, ' ');
 };
 
 type ExportArg = string | { filename?: string; effectLabel?: string };
@@ -85,7 +85,7 @@ export function useAudioExport({
           ? `${originalFile.name.replace(/\.[^/.]+$/, '')}_processed`
           : 'processed_audio';
 
-      const finalName = buildPitchSongsName(baseName, label);
+      const finalName = buildReverieName(baseName, label);
       downloadBlob(blob, `${finalName}.${targetExtension}`);
       setState((prev) => ({ ...prev, isExporting: false }));
     } catch (error) {

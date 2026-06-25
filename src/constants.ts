@@ -12,7 +12,7 @@ export const AUDIO_PROCESSING = {
   DEFAULT_VOLUME: 0.7,
 
   /** Storage key for persisting volume preference */
-  VOLUME_STORAGE_KEY: 'pitchsongs:volume',
+  VOLUME_STORAGE_KEY: 'reverie:volume',
 
   /** Progress update interval in milliseconds */
   PROGRESS_UPDATE_INTERVAL_MS: 100,

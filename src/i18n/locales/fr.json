@@ -1,7 +1,7 @@
 {
   "app": {
-    "title": "PitchSongs",
-    "subtitle": "Manipulation Audio",
+    "title": "Reverie",
+    "subtitle": "Des remixes oniriques pour vos morceaux préférés",
     "description": "Transformez votre musique avec des effets audio professionnels. Accélérez, ralentissez, ajoutez de la réverbération ou créez des versions audio 8D immersives de vos morceaux et exportez automatiquement dans le format et la qualité d'origine."
   },
   "upload": {
@@ -48,20 +48,20 @@
   },
   "features": {
     "webAudio": {
-      "title": "Web Audio API",
-      "desc": "Qualité professionnelle"
+      "title": "Effets de studio",
+      "desc": "Vitesse, ralenti + reverb, 8D, basses"
     },
     "private": {
       "title": "100% Privé",
-      "desc": "Traitement côté client"
+      "desc": "Vos fichiers ne quittent jamais votre appareil"
     },
     "export": {
       "title": "Export Instantané",
-      "desc": "Export automatique au format/qualité d'origine"
+      "desc": "Même format et qualité que l'original"
     }
   },
   "footer": {
-    "built": "Créé avec React • TypeScript • Web Audio API"
+    "built": "Pensé pour les nuits au casque"
   },
   "accessibility": {
     "themeToggle": "Basculer le mode sombre",
@@ -84,7 +84,7 @@
     "notice": "Toutes les traductions sont synchronisées avec l'anglais pour garantir une couverture à 100 %."
   },
   "meta": {
-    "title": "PitchSongs - Éditeur Audio en Ligne Gratuit | Outil Professionnel",
+    "title": "Reverie - Ralenti + Reverb, 8D & Vitesse | Éditeur Audio en Ligne Gratuit",
     "description": "Éditeur audio en ligne gratuit - Transformez votre musique avec des effets professionnels instantanément dans votre navigateur. Créez des versions accélérées, remixes ralentis + reverb, audio 8D immersif ou pistes avec boost des basses. Sans téléchargement. Outil en ligne 100% gratuit avec traitement côté client.",
     "keywords": "éditeur audio en ligne, manipulation audio en ligne, accélérer audio en ligne, slow reverb en ligne, audio 8D en ligne, boost basses en ligne, effets audio en ligne, éditeur musical en ligne, processeur audio en ligne, outil audio gratuit en ligne, éditeur audio navigateur, bass boost en ligne"
   }

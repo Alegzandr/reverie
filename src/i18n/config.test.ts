@@ -7,7 +7,8 @@ describe('i18n configuration', () => {
     expect(Object.keys(resources)).toEqual(['en', 'fr', 'es', 'de', 'pt', 'ru', 'zh', 'ja', 'ko', 'hi']);
     expect(i18n.options.fallbackLng).toContain('en');
     expect(i18n.options.interpolation?.escapeValue).toBe(false);
-    expect((i18n.options.detection as any).order).toEqual(['path', 'localStorage', 'navigator']);
+    // Automatic detection is disabled — language is handled via routing
+    expect((i18n.options.detection as any).order).toEqual([]);
     expect(i18n.language).toBeDefined();
   });
 });

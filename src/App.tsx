@@ -308,7 +308,7 @@ function App() {
                   ios-button transition-all duration-200
                   ${
                     !state.isProcessing && !state.isPlaying
-                      ? 'bg-[linear-gradient(120deg,rgba(var(--color-accent),1),rgba(var(--color-ambient),0.92))] text-white shadow-[0_14px_30px_-18px_rgba(var(--color-accent),0.7)] cursor-pointer'
+                      ? 'bg-[linear-gradient(120deg,rgba(var(--aurora-violet),1),rgba(var(--aurora-pink),0.95)_55%,rgba(var(--aurora-cyan),0.9))] text-white shadow-[0_14px_30px_-18px_rgba(var(--aurora-pink),0.7)] cursor-pointer'
                       : 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                   }
                 `}

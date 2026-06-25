@@ -9,7 +9,7 @@ import { LanguageRouter } from './components/LanguageRouter'
 import { ErrorBoundary } from './components/ErrorBoundary'
 
 // Use base path for GitHub Pages in production
-const basename = import.meta.env.PROD ? '/pitch-songs' : '';
+const basename = import.meta.env.PROD ? '/reverie' : '';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

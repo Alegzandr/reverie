@@ -1,7 +1,7 @@
 {
   "app": {
-    "title": "PitchSongs",
-    "subtitle": "Manipulación de Audio",
+    "title": "Reverie",
+    "subtitle": "Remixes de ensueño para tus canciones favoritas",
     "description": "Transforma tu música con efectos de audio profesionales. Acelera, ralentiza, añade reverberación o crea versiones de audio 8D inmersivo de tus pistas y exporta automáticamente en el formato y la calidad originales."
   },
   "upload": {
@@ -48,20 +48,20 @@
   },
   "features": {
     "webAudio": {
-      "title": "Web Audio API",
-      "desc": "Calidad profesional"
+      "title": "Efectos de estudio",
+      "desc": "Velocidad, lento + reverb, 8D, graves"
     },
     "private": {
       "title": "100% Privado",
-      "desc": "Procesamiento local"
+      "desc": "Tus archivos nunca salen de tu dispositivo"
     },
     "export": {
       "title": "Exportación Instantánea",
-      "desc": "Exportación automática en formato/calidad original"
+      "desc": "Mismo formato y calidad que tu original"
     }
   },
   "footer": {
-    "built": "Construido con React • TypeScript • Web Audio API"
+    "built": "Hecho para escuchar de madrugada"
   },
   "accessibility": {
     "themeToggle": "Cambiar modo oscuro",
@@ -84,7 +84,7 @@
     "notice": "Todas las traducciones se sincronizan con el inglés para garantizar una cobertura del 100 %."
   },
   "meta": {
-    "title": "PitchSongs - Editor de Audio Online Gratis | Herramienta Profesional",
+    "title": "Reverie - Lento + Reverb, 8D y Velocidad | Editor de Audio Online Gratis",
     "description": "Editor de audio online gratis - Transforma tu música con efectos profesionales al instante en tu navegador. Crea versiones aceleradas, remixes lentos + reverb, audio 8D inmersivo o pistas con graves potenciados. Sin descargas. Herramienta online 100% gratis con procesamiento local.",
     "keywords": "editor de audio online, manipulación de audio online, acelerar audio online, slow reverb online, audio 8D online, realce de graves online, efectos de audio online, editor musical online, procesador de audio online, herramienta audio gratis online, editor audio navegador, bass boost online"
   }

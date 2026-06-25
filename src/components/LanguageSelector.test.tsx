@@ -13,6 +13,13 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
+const mockNavigate = vi.fn();
+
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => mockNavigate,
+  useLocation: () => ({ pathname: '/' }),
+}));
+
 describe('LanguageSelector modal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -27,7 +34,7 @@ describe('LanguageSelector modal', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: /Español/ }));
-    expect(mockChangeLanguage).toHaveBeenCalledWith('es');
+    expect(mockNavigate).toHaveBeenCalledWith('/es/', { replace: false });
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

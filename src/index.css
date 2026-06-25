@@ -3,14 +3,19 @@
 /* Apple-style iOS Glass Design */
 @layer base {
   :root {
-    --color-background: 243, 245, 248;
-    --color-surface: 255, 255, 255;
+    --color-background: 244, 245, 249;
+    --color-surface: 253, 253, 255;
     --color-text: 18, 23, 44;
     --color-text-secondary: 94, 105, 130;
-    --color-border: 210, 220, 235;
+    --color-border: 217, 217, 231;
     --color-accent: 255, 138, 163;
     --color-accent-hover: 255, 159, 183;
     --color-ambient: 72, 199, 236;
+
+    /* Aurora brand signature (violet, pink, cyan), shared across themes */
+    --aurora-violet: 167, 139, 250;
+    --aurora-pink: 244, 114, 182;
+    --aurora-cyan: 56, 224, 232;
 
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -18,11 +23,11 @@
   }
 
   .dark {
-    --color-background: 10, 12, 24;
-    --color-surface: 20, 24, 36;
+    --color-background: 13, 9, 31;
+    --color-surface: 27, 24, 45;
     --color-text: 236, 240, 252;
     --color-text-secondary: 162, 175, 197;
-    --color-border: 70, 86, 114;
+    --color-border: 74, 73, 106;
     --color-accent: 255, 151, 178;
     --color-accent-hover: 255, 174, 194;
     --color-ambient: 56, 189, 248;

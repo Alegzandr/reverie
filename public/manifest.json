@@ -1,27 +1,27 @@
 {
-  "name": "PitchSongs - Audio Manipulation Tool",
-  "short_name": "PitchSongs",
-  "description": "Transform your music with audio effects. Create sped up versions, slow + reverb remixes, or immersive 8D audio with exports that match your original format and quality.",
-  "start_url": "/pitch-songs/",
+  "name": "Reverie - Slowed + Reverb, 8D & Speed",
+  "short_name": "Reverie",
+  "description": "Dreamy edits for your favorite tracks. Create sped up versions, slowed + reverb remixes, immersive 8D audio, or bass boosted tracks, with exports that match your original format and quality.",
+  "start_url": "/reverie/",
   "display": "standalone",
-  "background_color": "#f5f5f7",
-  "theme_color": "#007aff",
+  "background_color": "#0D091F",
+  "theme_color": "#0D091F",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/pitch-songs/icon-192.png",
+      "src": "/reverie/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/pitch-songs/icon-512.png",
+      "src": "/reverie/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/pitch-songs/icon-512.png",
+      "src": "/reverie/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

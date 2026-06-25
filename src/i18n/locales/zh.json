@@ -1,7 +1,7 @@
 {
   "app": {
-    "title": "PitchSongs",
-    "subtitle": "音频处理",
+    "title": "Reverie",
+    "subtitle": "为你喜爱的歌曲打造梦境般的混音",
     "description": "使用专业音频效果转换您的音乐。加速、减速、添加混响或创建沉浸式 8D 音频，并自动按原始格式和音质导出。"
   },
   "upload": {
@@ -48,20 +48,20 @@
   },
   "features": {
     "webAudio": {
-      "title": "Web Audio API",
-      "desc": "专业品质"
+      "title": "录音室级效果",
+      "desc": "变速、慢速 + 混响、8D、低音"
     },
     "private": {
       "title": "100% 私密",
-      "desc": "客户端处理"
+      "desc": "你的文件从不离开你的设备"
     },
     "export": {
       "title": "即时导出",
-      "desc": "自动按源格式/音质导出"
+      "desc": "与原文件相同的格式和音质"
     }
   },
   "footer": {
-    "built": "使用 React • TypeScript • Web Audio API 构建"
+    "built": "为深夜聆听而生"
   },
   "accessibility": {
     "themeToggle": "切换深色模式",
@@ -84,7 +84,7 @@
     "notice": "所有翻译都与英语保持同步，以确保 100% 覆盖。"
   },
   "meta": {
-    "title": "PitchSongs - 在线音频编辑器免费 | 专业工具",
+    "title": "Reverie - 慢速 + 混响、8D 和变速 | 免费在线音频编辑器",
     "description": "免费在线音频编辑器 - 在浏览器中即时使用专业效果转换您的音乐。创建加速版本、慢速 + 混响混音、沉浸式 8D 音频或低音增强曲目。无需下载。100% 免费在线工具，客户端处理。",
     "keywords": "在线音频编辑器, 在线音频处理, 在线加速音频, 在线慢速混响, 在线8D音频, 在线低音增强, 在线音频效果, 在线音乐编辑器, 在线音频处理器, 免费在线音频工具, 浏览器音频编辑器, bass boost在线"
   }

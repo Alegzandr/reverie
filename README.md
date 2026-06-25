@@ -1,8 +1,8 @@
-# PitchSongs 🎵
+# Reverie 🎵
 
-A modern **free online audio editor** for transforming your music with audio effects. Create sped-up versions, slow+reverb remixes, immersive 8D audio, or bass boosted tracks - all directly in your browser with complete privacy and exports that mirror your original format and quality. **No download or installation required** - works 100% online.
+Reverie is a **free online audio editor** with one promise: dreamy edits for your favorite tracks. Create sped-up versions, slowed + reverb remixes, immersive 8D audio, or bass boosted tracks, all directly in your browser with complete privacy and exports that mirror your original format and quality. **No download or installation required**, it works 100% online.
 
-**🌐 Live Demo:** [alegzandr.github.io/pitch-songs](https://alegzandr.github.io/pitch-songs/)
+**🌐 Live Demo:** [alegzandr.github.io/reverie](https://alegzandr.github.io/reverie/)
 
 ## ✨ Features
 
@@ -71,8 +71,8 @@ A modern **free online audio editor** for transforming your music with audio eff
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/Alegzandr/pitch-songs.git
-cd pitch-songs
+git clone https://github.com/Alegzandr/reverie.git
+cd reverie
 ```
 
 2. Install dependencies:
@@ -116,7 +116,7 @@ npm run dev
 ## 📁 Project Structure
 
 ```
-pitch-songs/
+reverie/
 ├── .github/
 │   └── workflows/
 │       └── deploy.yml          # CI/CD pipeline
@@ -192,7 +192,7 @@ pitch-songs/
    - **AIFF**: Manual AIFF encoder (lossless, big-endian)
    - **FLAC**: Exports as WAV (both lossless)
    - **WebM/OGG/M4A**: MediaRecorder API with fallback to MP3
-5. **Download**: Triggers browser download with custom filename including effect label and "ver. by PitchSongs" suffix
+5. **Download**: Triggers browser download with custom filename including effect label and "ver. by Reverie" suffix
 
 ### State Management
 
@@ -220,7 +220,7 @@ Generate coverage report:
 npm run test:coverage
 ```
 
-**Current Coverage**: See `npm test` output (116 tests passing as of latest run)
+**Current Coverage**: See `npm test` output (117 tests across hooks, utils, and components as of latest run)
 
 ## 🏗 Build for Production
 
@@ -242,14 +242,14 @@ This project uses GitHub Actions for automated deployment:
    - Go to repository Settings → Pages
    - Under "Build and deployment", select **GitHub Actions**
 3. **Push to main branch** - deployment happens automatically
-4. **Access your app** at: `https://YOUR_USERNAME.github.io/pitch-songs/`
+4. **Access your app** at: `https://YOUR_USERNAME.github.io/reverie/`
 
 ### CI/CD Pipeline
 
 Every push to main runs:
 - ✅ ESLint code linting
 - ✅ TypeScript type checking
-- ✅ Full test suite (68 tests)
+- ✅ Full test suite
 - ✅ Production build
 - ✅ Deployment to GitHub Pages
 
@@ -286,14 +286,15 @@ Requires: Web Audio API, ES2022, IndexedDB
 - Sitemap and robots.txt
 - Semantic HTML with proper headings
 
-## 🎨 Design System
+The product vision lives in [PRODUCT.md](PRODUCT.md); the full visual system lives in [DESIGN.md](DESIGN.md).
 
-- **Color Palette**: iOS-inspired with blue accent (#007aff)
-- **Typography**: System fonts with fallbacks
-- **Components**: Modular, reusable components with glass-morphism effects
-- **Responsive**: Mobile-first design with breakpoints
-- **Accessibility**: WCAG 2.1 AA compliant
-- **Code Quality**: Zero magic numbers, centralized constants, DRY principles
+- **Identity**: a dreamy, dark-first "Dream field" in deep indigo and violet, tied together by the **Aurora** gradient (violet → pink → cyan) carried on the brand mark and the primary action button.
+- **Color**: OKLCH tokens, tinted neutrals (no pure black or white), Aurora reserved for strokes, fills, and active states, never body text.
+- **Typography**: system font stack with a lowercase `reverie` wordmark in a light weight.
+- **Components**: modular, reusable components with purposeful glass-morphism surfaces.
+- **Responsive**: mobile-first design with breakpoints.
+- **Accessibility**: WCAG 2.1 AA compliant.
+- **Code Quality**: zero magic numbers, centralized constants, DRY principles.
 
 ## 🤝 Contributing
 
@@ -326,8 +327,8 @@ MIT License - feel free to use this project for personal or commercial purposes.
 
 ## 📞 Support
 
-Found a bug or have a feature request? [Open an issue](https://github.com/Alegzandr/pitch-songs/issues)
+Found a bug or have a feature request? [Open an issue](https://github.com/Alegzandr/reverie/issues)
 
 ---
 
-Made with ❤️ using React and Web Audio API
+Reverie, crafted for late-night listening 🎧

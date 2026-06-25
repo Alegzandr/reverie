@@ -304,7 +304,7 @@ describe('useAudioProcessor', () => {
       originalFile: file,
       estimatedBitrate: 192,
     });
-    expect(mockDownload).toHaveBeenCalledWith(expect.any(Blob), 'demo_processed ver. by PitchSongs.mp3');
+    expect(mockDownload).toHaveBeenCalledWith(expect.any(Blob), 'demo_processed ver. by Reverie.mp3');
     expect(result.current.state.isExporting).toBe(false);
   });
 
@@ -325,7 +325,7 @@ describe('useAudioProcessor', () => {
     });
 
     expect(mockGetExportStrategy).toHaveBeenCalledWith('wav');
-    expect(mockDownload).toHaveBeenCalledWith(expect.any(Blob), 'demo_processed ver. by PitchSongs.wav');
+    expect(mockDownload).toHaveBeenCalledWith(expect.any(Blob), 'demo_processed ver. by Reverie.wav');
   });
 
   it('exports with fallback filename when no original file', async () => {
@@ -339,7 +339,7 @@ describe('useAudioProcessor', () => {
       await result.current.exportProcessedAudio();
     });
 
-    expect(mockDownload).toHaveBeenCalledWith(expect.any(Blob), 'processed_audio ver. by PitchSongs.mp3');
+    expect(mockDownload).toHaveBeenCalledWith(expect.any(Blob), 'processed_audio ver. by Reverie.mp3');
   });
 
   it('throws when exporting without audio and records error', async () => {

@@ -55,7 +55,7 @@ describe('useAudioExport', () => {
       originalFile: expect.any(File),
       estimatedBitrate: 192,
     });
-    expect(mockDownload).toHaveBeenCalledWith(mockBlob, 'demo_processed FX ver. by PitchSongs.mp3');
+    expect(mockDownload).toHaveBeenCalledWith(mockBlob, 'demo_processed FX ver. by Reverie.mp3');
     expect(result.current.state.isExporting).toBe(false);
   });
 
@@ -66,7 +66,7 @@ describe('useAudioExport', () => {
       await result.current.exportProcessedAudio('custom.wav');
     });
 
-    expect(mockDownload).toHaveBeenCalledWith(mockBlob, 'custom FX ver. by PitchSongs.mp3');
+    expect(mockDownload).toHaveBeenCalledWith(mockBlob, 'custom FX ver. by Reverie.mp3');
   });
 
   it('throws and records error when no buffer is available', async () => {
@@ -102,10 +102,10 @@ describe('useAudioExport', () => {
     const { result } = renderExportHook();
 
     await act(async () => {
-      await result.current.exportProcessedAudio('demo by PitchSongs.mp3');
+      await result.current.exportProcessedAudio('demo by Reverie.mp3');
     });
 
-    expect(mockDownload).toHaveBeenCalledWith(mockBlob, 'demo FX ver. by PitchSongs.mp3');
+    expect(mockDownload).toHaveBeenCalledWith(mockBlob, 'demo FX ver. by Reverie.mp3');
   });
 
   it('falls back to default message for non-error failures', async () => {

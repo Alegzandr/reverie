@@ -1,7 +1,7 @@
 {
   "app": {
-    "title": "PitchSongs",
-    "subtitle": "Audio Manipulation",
+    "title": "Reverie",
+    "subtitle": "Dreamy edits for your favorite tracks",
     "description": "Transform your music with audio effects. Speed up, slow down, add reverb, or create immersive 8D audio versions of your tracks with exports that match your original format and quality."
   },
   "upload": {
@@ -48,20 +48,20 @@
   },
   "features": {
     "webAudio": {
-      "title": "Web Audio API",
-      "desc": "Browser-native processing"
+      "title": "Studio effects",
+      "desc": "Speed, slowed + reverb, 8D, bass"
     },
     "private": {
       "title": "100% Private",
-      "desc": "Client-side processing"
+      "desc": "Your files never leave your device"
     },
     "export": {
       "title": "Instant Export",
-      "desc": "Auto-export in source format/quality"
+      "desc": "Same format and quality as your original"
     }
   },
   "footer": {
-    "built": "Built with React • TypeScript • Web Audio API"
+    "built": "Crafted for late-night listening"
   },
   "accessibility": {
     "themeToggle": "Toggle dark mode",
@@ -84,7 +84,7 @@
     "notice": "All translations are kept in sync with English to guarantee 100% coverage."
   },
   "meta": {
-    "title": "PitchSongs - Audio Manipulation Tool | Free Online Audio Editor",
+    "title": "Reverie - Slowed + Reverb, 8D & Speed | Free Online Audio Editor",
     "description": "Free online audio editor - Transform your music with audio effects instantly in your browser. Create sped up versions, slow + reverb remixes, immersive 8D audio, or bass boosted tracks. No download required. 100% free online tool with client-side processing.",
     "keywords": "online audio editor, audio manipulation online, speed up audio online, slow reverb online, 8D audio online, bass boost online, online audio effects, online music editor, free audio tool online, browser audio editor, no download audio editor, bass booster online"
   }
