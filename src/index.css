@@ -214,10 +214,44 @@
     }
   }
 
+  /* Theme orb (play / pause). A glossy sphere coloured by the ACTIVE theme's
+     accent so it belongs to the scene rather than wearing the fixed Aurora
+     gradient. The body is lit at the crown (full accent) and eases to a deep
+     Dream-Indigo jewel base: that dark anchor is shared by every theme — light
+     palettes included — so the white glyph keeps AA contrast no matter how
+     bright the accent is. Vibrancy comes from the lit crown, the accent rim
+     (inset shadow on the .play variant) and the --hud-glow halo, not from a
+     bright flat fill. */
+  .btn-orb {
+    --orb-deep: 13, 9, 31;
+    background-image:
+      radial-gradient(118% 82% at 32% 2%, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 46%),
+      linear-gradient(
+        180deg,
+        rgb(var(--color-accent-hover)) 0%,
+        rgb(var(--color-accent)) 16%,
+        color-mix(in oklab, rgb(var(--color-accent)) 50%, rgb(var(--orb-deep))) 46%,
+        color-mix(in oklab, rgb(var(--color-accent)) 36%, rgb(var(--orb-deep))) 100%
+      );
+    transition: box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+      transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+      filter 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .btn-orb:hover {
+    filter: brightness(1.08);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn-orb:hover {
+      filter: none;
+    }
+  }
+
   /* Soft Aurora ring breathing outward from the play orb while a track plays.
      A pure box-shadow pulse (no layout), silenced under reduced motion. */
   .play-pulse {
-    box-shadow: 0 0 0 0 rgba(var(--aurora-violet), 0.45);
+    box-shadow: 0 0 0 0 rgba(var(--color-accent), 0.45);
   }
 
   @media (prefers-reduced-motion: no-preference) {
@@ -228,15 +262,15 @@
 
   @keyframes play-pulse {
     0% {
-      box-shadow: 0 0 0 0 rgba(var(--aurora-violet), 0.45);
+      box-shadow: 0 0 0 0 rgba(var(--color-accent), 0.45);
       opacity: 0.9;
     }
     70% {
-      box-shadow: 0 0 0 13px rgba(var(--aurora-cyan), 0);
+      box-shadow: 0 0 0 13px rgba(var(--hud-glow), 0);
       opacity: 0;
     }
     100% {
-      box-shadow: 0 0 0 0 rgba(var(--aurora-cyan), 0);
+      box-shadow: 0 0 0 0 rgba(var(--hud-glow), 0);
       opacity: 0;
     }
   }
@@ -516,16 +550,18 @@
   .immersive .glass {
     background: linear-gradient(
       160deg,
-      rgba(var(--color-surface), 0.5),
-      rgba(var(--color-surface), 0.26)
+      rgba(var(--color-surface), 0.3),
+      rgba(var(--color-surface), 0.13)
     );
     border: 1px solid rgba(var(--hud-line), 0.42);
     box-shadow:
       inset 0 1px 0 0 rgba(255, 255, 255, 0.14),
       inset 0 0 26px -14px rgba(var(--hud-glow), 0.6),
       0 26px 64px -32px rgba(var(--hud-glow), 0.55);
-    -webkit-backdrop-filter: saturate(150%) blur(18px);
-    backdrop-filter: saturate(150%) blur(18px);
+    /* More see-through to the scene; lean on a stronger blur + saturation so text
+       stays legible over even the brightest backdrops. */
+    -webkit-backdrop-filter: saturate(160%) blur(22px);
+    backdrop-filter: saturate(160%) blur(22px);
   }
 
   /* ── Curved chrome rails (fisheye visor) ────────────────────────────────
@@ -552,14 +588,14 @@
     pointer-events: none;
     background: linear-gradient(
       to bottom,
-      rgba(var(--color-surface), 0.58),
-      rgba(var(--color-surface), 0.2)
+      rgba(var(--color-surface), 0.4),
+      rgba(var(--color-surface), 0.12)
     );
     box-shadow:
       inset 0 1px 0 0 rgba(255, 255, 255, 0.16),
       inset 0 0 30px -16px rgba(var(--hud-glow), 0.7);
-    -webkit-backdrop-filter: saturate(160%) blur(16px);
-    backdrop-filter: saturate(160%) blur(16px);
+    -webkit-backdrop-filter: saturate(165%) blur(20px);
+    backdrop-filter: saturate(165%) blur(20px);
   }
 
   .immersive .hud-rail-top::after {
@@ -577,6 +613,18 @@
   /* Header/footer content stays flat: a 3D tilt there distorts text and turns
      the round play orb into an ellipse. The curve lives only in the glass plate
      (the bowed ::after). The 3D belongs on the main side consoles instead. */
+
+  /* Optical centring inside the bow: the glass plate bulges past the flat content
+     row by --hud-curve, so centring on the row alone leaves the text/buttons too
+     high (top rail) / too low (bottom rail). Nudge the content toward the plate's
+     true centre. ~half the curve overhang. */
+  .immersive .hud-rail-top .hud-bow-inner {
+    transform: translateY(calc(var(--hud-curve) * 0.46));
+  }
+
+  .immersive .hud-rail-bottom .hud-bow-inner {
+    transform: translateY(calc(var(--hud-curve) * -0.46));
+  }
 
   /* ── Ambient scene scaffold ─────────────────────────────────────────────
      A fixed full-viewport layer painted behind the app content (negative
@@ -859,14 +907,121 @@
     background: radial-gradient(circle, rgba(56, 200, 232, 0.3), transparent 70%);
   }
 
-  /* ── Scene: Nebula Drift (cosmic depth) ─────────────────────────────────────
-     The WebGL nebula shader (<NebulaScene>) paints the live scene on desktop.
-     This base gradient shows behind it / when it falls back to the CSS veils: a
-     near-black violet with a faint lift top-right, where the focal astre sits.
-     The veils are the still fallback (no-WebGL / touch / reduced-motion); they
-     read the theme tokens so they recolour with the palette and carry no cyan. */
+  /* ── Scene: Nebula Drift (photo backdrop) ───────────────────────────────────
+     Wallpaper-Engine approach: a real cosmic image as the full-bleed base layer
+     (<div.scene-photo> in AmbientScene), with only a slow drift on top. The
+     procedural nebula shader is retired here (kept orphaned for the future
+     animated layer). The base colour shows only in the brief moment before the
+     image paints / behind its scaled edges. */
   .scene-aurora {
-    background: radial-gradient(120% 110% at 78% 16%, #1d0f3a 0%, #0c0720 48%, #070411 100%);
+    background: #070411;
+  }
+
+  /* Full-bleed photo base. `transform` carries ONLY the pointer parallax (a deep,
+     small shift) plus a slight overscan scale; the autonomous slow pan rides on
+     `background-position` so the two never fight. Kept clean and sharp — the bloom
+     is cut on photo scenes so nothing washes it out. */
+  .scene-photo {
+    inset: 0;
+    background-position: 50% 50%;
+    background-size: cover;
+    background-repeat: no-repeat;
+    /* scale = overscan (1.08) + a gentle audio "breathe" (swells with loudness,
+       a touch more on the bass); translate = pointer parallax. Both live in one
+       transform; the audio terms are 0 at rest, so the image is dead-still then. */
+    transform: scale(calc(1.08 + var(--audio-level, 0) * 0.035 + var(--audio-bass, 0) * 0.02))
+      translate3d(calc(var(--px, 0) * -8px), calc(var(--py, 0) * -6px), 0);
+    transition: transform 500ms ease-out;
+    will-change: transform, background-position;
+  }
+
+  @media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (pointer: fine) {
+    .scene-photo {
+      animation: scene-photo-pan 52s ease-in-out infinite alternate;
+    }
+  }
+
+  @keyframes scene-photo-pan {
+    from { background-position: 47% 52%; }
+    to { background-position: 53% 47%; }
+  }
+
+  /* Drifting colour haze — soft blurred blobs in the theme hues, blended to
+     lighten (screen). Two depths: -a nearer-ish, -b nearest (bigger parallax).
+     transform = parallax, background-position = autonomous drift. Kept low-opacity
+     so it reads as atmosphere, never a wash over the photo. */
+  .scene-haze {
+    inset: -12%;
+    pointer-events: none;
+    background-repeat: no-repeat;
+    background-size: 150% 150%;
+    mix-blend-mode: screen;
+    filter: blur(44px);
+    /* transform = parallax (slow), opacity = audio swell (snappy). */
+    transition: transform 600ms ease-out, opacity 110ms linear;
+    will-change: transform, background-position, opacity;
+  }
+
+  /* The colour atmosphere brightens with the music — localised blobs, not a
+     full-screen veil, so it never washes the photo. Base low → calm at rest. */
+  .scene-haze-a {
+    opacity: calc(0.16 + var(--audio-level, 0) * 0.24 + var(--audio-bass, 0) * 0.16);
+    background-image: radial-gradient(40% 48% at 50% 50%, rgba(var(--color-accent), 0.55), transparent 70%);
+    transform: translate3d(calc(var(--px, 0) * -18px), calc(var(--py, 0) * -14px), 0);
+  }
+
+  .scene-haze-b {
+    opacity: calc(0.12 + var(--audio-level, 0) * 0.18 + var(--audio-treble, 0) * 0.18);
+    background-image: radial-gradient(44% 42% at 50% 50%, rgba(var(--color-ambient), 0.5), transparent 72%);
+    transform: translate3d(calc(var(--px, 0) * -30px), calc(var(--py, 0) * -24px), 0);
+  }
+
+  @media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (pointer: fine) {
+    .scene-haze-a {
+      animation: haze-drift-a 38s ease-in-out infinite alternate;
+    }
+    .scene-haze-b {
+      animation: haze-drift-b 50s ease-in-out infinite alternate;
+    }
+  }
+
+  @keyframes haze-drift-a {
+    from { background-position: 22% 32%; }
+    to { background-position: 44% 56%; }
+  }
+
+  @keyframes haze-drift-b {
+    from { background-position: 70% 60%; }
+    to { background-position: 48% 38%; }
+  }
+
+  .scene-photo-nebula {
+    background-image: url('/backgrounds/nebula-drift.jpg');
+  }
+
+  .scene-photo-tidal {
+    background-image: url('/backgrounds/cosmic-wave.jpg');
+  }
+
+  .scene-photo-nocturne {
+    background-image: url('/backgrounds/midnight-pulse.jpg');
+  }
+
+  .scene-photo-horizon {
+    background-image: url('/backgrounds/lunar-haze.jpg');
+  }
+
+  .scene-photo-dusk {
+    background-image: url('/backgrounds/void-bloom.jpg');
+  }
+
+  /* On any photo backdrop the music-reactive bloom is silenced: the image must
+     read clean and sharp, with no luminous band crossing it. Reactivity returns
+     later, finely tuned, when the audio pillar is reopened. Scoped via :has so
+     it applies to every scene that uses a photo, leaving the CSS scenes (light)
+     with their breath. */
+  .scene:has(.scene-photo) .scene-breath {
+    display: none;
   }
 
   .aurora-veil-a,
@@ -1244,6 +1399,76 @@
     );
     -webkit-mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
     mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+  }
+
+  /* The ruler tape slowly scrolls in immersive mode — ambient telemetry that's
+     always alive (one tick period = 9px, so the loop is seamless). Desktop +
+     no-reduce only; the tape is dead-still otherwise. */
+  @media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (pointer: fine) {
+    .immersive .hud-ruler {
+      animation: hud-ruler-scroll 7s linear infinite;
+    }
+  }
+
+  @keyframes hud-ruler-scroll {
+    to { background-position-x: -9px; }
+  }
+
+  /* ── Segmented VU-meter (LevelMeter) ────────────────────────────────────
+     Hardware-module readout. `reactive` segments fill to a setting value;
+     `scroll` segments run a staggered travelling wave (free ambient telemetry).
+     Both freeze flat under reduced-motion. */
+  /* Height comes from the consumer (e.g. `h-4`); segments size in % against it. */
+  .level-meter {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+  }
+
+  .level-seg {
+    flex: 1 1 0;
+    min-width: 1px;
+    height: 22%;
+    border-radius: 1px;
+    background: rgba(var(--hud-line), 0.18);
+    transition: height 180ms ease-out, background-color 180ms ease-out,
+      box-shadow 180ms ease-out, opacity 180ms ease-out;
+  }
+
+  /* Reactive: lit segments rise toward the head and glow; the fill count tracks
+     the value, so turning a control visibly drives the meter. */
+  .level-seg.is-lit {
+    height: calc(42% + var(--i) * 3.2%);
+    background: linear-gradient(
+      to top,
+      rgba(var(--color-ambient), 0.85),
+      rgba(var(--color-accent), 0.95)
+    );
+    box-shadow: 0 0 8px -2px rgba(var(--hud-glow), 0.7);
+  }
+
+  .level-meter-scroll .level-seg {
+    background: linear-gradient(
+      to top,
+      rgba(var(--color-ambient), 0.7),
+      rgba(var(--color-accent), 0.9)
+    );
+    animation: level-wave 1.8s ease-in-out infinite;
+    animation-delay: calc(var(--i) * -0.09s);
+  }
+
+  @keyframes level-wave {
+    0%, 100% { height: 20%; opacity: 0.4; }
+    50% { height: 88%; opacity: 1; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .immersive .hud-ruler { animation: none; }
+    .level-meter-scroll .level-seg {
+      animation: none;
+      height: 40%;
+      opacity: 0.6;
+    }
   }
 
   /* ── Side-console 3D ────────────────────────────────────────────────────

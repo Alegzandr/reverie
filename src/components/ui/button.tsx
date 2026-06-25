@@ -20,11 +20,13 @@ const buttonVariants = cva(
         // glossy iOS matter, the coloured shadow lets it float over the backdrop.
         default:
           'btn-aurora text-white shadow-[inset_0_1px_0_0_rgba(255,255,255,0.45),inset_0_0_0_1px_rgba(255,255,255,0.12),0_10px_24px_-12px_rgba(var(--aurora-violet),0.65),0_14px_34px_-16px_rgba(var(--aurora-cyan),0.6)] hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.5),inset_0_0_0_1px_rgba(255,255,255,0.16),0_14px_30px_-12px_rgba(var(--aurora-violet),0.7),0_20px_44px_-16px_rgba(var(--aurora-cyan),0.72)]',
-        // Focal transport control (play / pause) — the Aurora orb. The brand
-        // gradient now lives on the action you take all night long, not on export.
-        // Glossy inner highlight + a deep coloured glow seat it in the dream field.
+        // Focal transport control (play / pause) — the theme orb. It wears the
+        // ACTIVE theme's accent (not the fixed Aurora gradient), so it recolours
+        // with the rest of the HUD instead of reading as a foreign body. A deep
+        // Dream-Indigo base keeps the white glyph legible in every palette; the
+        // inset accent hairline + a --hud-glow halo seat it in the scene.
         play:
-          'btn-aurora text-white shadow-[inset_0_1.5px_0_0_rgba(255,255,255,0.55),inset_0_0_0_1px_rgba(255,255,255,0.2),0_4px_10px_-2px_rgba(13,9,31,0.45),0_12px_30px_-8px_rgba(var(--aurora-cyan),0.55)] hover:shadow-[inset_0_1.5px_0_0_rgba(255,255,255,0.6),inset_0_0_0_1px_rgba(255,255,255,0.26),0_4px_10px_-2px_rgba(13,9,31,0.45),0_16px_40px_-8px_rgba(var(--aurora-cyan),0.72)]',
+          'btn-orb text-white shadow-[inset_0_1.5px_0_0_rgba(255,255,255,0.42),inset_0_0_0_1px_rgba(var(--color-accent),0.5),0_4px_10px_-2px_rgba(13,9,31,0.5),0_12px_30px_-8px_rgba(var(--hud-glow),0.5)] hover:shadow-[inset_0_1.5px_0_0_rgba(255,255,255,0.5),inset_0_0_0_1px_rgba(var(--color-accent),0.65),0_4px_10px_-2px_rgba(13,9,31,0.5),0_16px_40px_-8px_rgba(var(--hud-glow),0.72)]',
         // High-contrast solid — generic inverse surface.
         inverse:
           'bg-[rgb(var(--color-text))] text-[rgb(var(--color-background))] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.25),0_10px_24px_-10px_rgba(var(--color-text),0.45)] hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.32),0_16px_34px_-10px_rgba(var(--color-accent),0.6)]',

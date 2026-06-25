@@ -139,7 +139,14 @@ export function initGLScene(
       gl.deleteShader(vs);
       gl.deleteShader(fs);
       gl.deleteBuffer(buffer);
-      gl.getExtension('WEBGL_lose_context')?.loseContext();
+      // NB: do NOT call WEBGL_lose_context.loseContext() here. A canvas keeps the
+      // same context object for its lifetime, so a force-lost context is handed
+      // straight back on the next getContext() — which is exactly what happens
+      // under React StrictMode (mount → cleanup → remount on the SAME canvas):
+      // the remount would get a dead context and every shader compile fails with
+      // `shader-compile: null`, silently dropping the scene to the CSS fallback.
+      // The delete* calls above already release the GL objects; the context dies
+      // with its canvas. (Diagnosed 2026-06-25 — Nebula/Tidal never ran in dev.)
     },
   };
 }

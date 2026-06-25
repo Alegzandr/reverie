@@ -28,7 +28,7 @@ Dreamy, immersive, calm. Three words: oneiric, enveloping, effortless. Using Rev
 1. **Two clicks to delight.** The path from upload to a downloadable result is the product. Every screen serves that flow, and nothing competes with it.
 2. **Hide the machinery, show the magic.** Surface one clear control per effect. Keep technical detail (bitrate, sample rate, bit depth) available but secondary. Power without intimidation.
 3. **Privacy you can feel.** Client-side processing is a promise, not a footnote. State it plainly, and never betray it with trackers or uploads.
-4. **Atmosphere over chrome.** The dreamy mood is a feature, not decoration. Motion, color, and the waveform should make transforming audio feel immersive.
+4. **Atmosphere over chrome.** The dreamy mood is a feature, not decoration. The interface is a holographic HUD floating over a living ambient scene, and it breathes with the music — the bloom, the chrome, and the play orb pulse to the audio. Listeners pick a mood/theme to reskin the whole atmosphere in one tap. Motion, color, and the waveform should make transforming audio feel immersive — and all of it has a calm, static fallback under reduced motion.
 5. **Respect the source.** Exports match the original format and quality. We transform the track, we never degrade it.
 
 ## Accessibility & Inclusion

@@ -243,7 +243,7 @@ function App() {
       {/* Header / toolbar */}
       <header className="hud-rail hud-rail-top sticky top-0 z-40 bg-[rgba(var(--color-surface),0.78)] backdrop-blur-xl border-b border-[rgba(var(--color-border),0.5)]">
         <div className="hud-bow">
-        <div className="hud-bow-inner mx-auto w-full max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+        <div className="hud-bow-inner mx-auto w-full max-w-[1700px] px-6 sm:px-10 h-16 flex items-center justify-between gap-4">
           <Tooltip>
             <TooltipTrigger asChild>
               <button
@@ -276,7 +276,7 @@ function App() {
           larger than top), so the content sits in the upper-middle rather than
           dead-centre or stranded at the top. gap-10 gives the title strip and the
           panel grid clear, even breathing room. */}
-      <main className="flex-1 mx-auto w-full max-w-6xl px-4 sm:px-6 pt-6 sm:pt-8 pb-24 sm:pb-40 flex flex-col gap-8 sm:gap-10 lg:justify-center">
+      <main className="flex-1 mx-auto w-full max-w-[1700px] px-6 sm:px-10 pt-6 sm:pt-8 pb-24 sm:pb-40 flex flex-col gap-8 sm:gap-10 lg:justify-center">
         {errorBanner}
 
         {/* Track title + a quiet metadata strip (values in body text, labels
@@ -306,7 +306,7 @@ function App() {
         {/* Cockpit — effects rail on the left, the waveform centrepiece in the
             middle, the mood rail on the right. Flat glass panels (the mockup's
             spatial console), each in its own HUD frame. */}
-        <div className="grid gap-5 items-start lg:grid-cols-[minmax(300px,340px)_minmax(0,1fr)_minmax(240px,280px)]">
+        <div className="grid gap-6 lg:gap-12 xl:gap-16 items-start lg:grid-cols-[minmax(320px,400px)_minmax(0,1fr)_minmax(280px,340px)]">
           {/* Effects — live: moving a control reshapes the sound as it plays. */}
           {originalFile && (
             <Card asChild className="hud-frame p-4 sm:p-5 audio-drift-a">
@@ -339,7 +339,7 @@ function App() {
       {(processedBuffer || originalFile) && (
         <div className="hud-rail hud-rail-bottom sticky bottom-0 z-30 bg-[rgba(var(--color-surface),0.85)] backdrop-blur-xl border-t border-[rgba(var(--color-border),0.5)] shadow-[0_-14px_40px_-28px_rgba(var(--color-accent),0.5)]">
           <div className="hud-bow">
-          <div className="hud-bow-inner mx-auto w-full max-w-6xl px-4 sm:px-6 py-3">
+          <div className="hud-bow-inner mx-auto w-full max-w-[1700px] px-6 sm:px-10 py-3">
             <PlaybackControls
               isPlaying={state.isPlaying}
               onPlay={handlePlay}

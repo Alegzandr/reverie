@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Zap, Waves, Radio, Volume2, Power } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { EffectSlider } from "./EffectSlider";
+import { LevelMeter } from "./LevelMeter";
 import { EFFECT_DEFAULTS } from "../constants";
 import { cn } from "@/lib/utils";
 import {
@@ -162,6 +163,20 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
         }
     );
 
+    // Normalised 0..1 level of the active effect's primary parameter — drives the
+    // reactive VU-meter so the readout tracks the setting as you turn it.
+    const D = EFFECT_DEFAULTS;
+    const norm = (val: number, min: number, max: number) =>
+        max > min ? (val - min) / (max - min) : 0;
+    const activeLevel =
+        mode === "speed-up"
+            ? norm(speedMultiplier, D.SPEED_UP.MIN, D.SPEED_UP.MAX)
+            : mode === "slow-reverb"
+              ? norm(reverbAmount, D.SLOW_REVERB.REVERB_MIN, D.SLOW_REVERB.REVERB_MAX)
+              : mode === "8d-audio"
+                ? norm(rotationSpeed, D.EIGHT_D_AUDIO.ROTATION_MIN, D.EIGHT_D_AUDIO.ROTATION_MAX)
+                : norm(bassBoostIntensity, D.BASS_BOOST_UI.INTENSITY_MIN, D.BASS_BOOST_UI.INTENSITY_MAX);
+
     return (
         <div className="flex flex-col gap-5">
             {/* Effects — exclusive modes listed as rows; the chosen one is Active. */}
@@ -186,7 +201,11 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
                Keyed on `mode` so switching re-mounts and the new control eases in:
                motion that signals the state change, not decoration. */}
             <div className="space-y-3">
-                <span className="hud-readout block">{t("studio.adjustments")}</span>
+                <div className="flex items-center justify-between gap-4">
+                    <span className="hud-readout">{t("studio.adjustments")}</span>
+                    {/* Reactive VU-meter: fills to the active effect's parameter. */}
+                    <LevelMeter value={activeLevel} variant="reactive" className="h-4 w-24" />
+                </div>
                 <div className="hud-ruler" aria-hidden="true" />
                 <div
                     key={mode}

@@ -41,7 +41,7 @@ export function SpectrumMeter({ getAnalyser, isPlaying, className }: SpectrumMet
       return v ? `rgb(${v})` : fallback;
     };
 
-    const draw = () => {
+    const draw = (now: number) => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const cssW = canvas.clientWidth;
       const cssH = canvas.clientHeight;
@@ -66,9 +66,18 @@ export function SpectrumMeter({ getAnalyser, isPlaying, className }: SpectrumMet
           const target = (freq[idx] ?? 0) / 255;
           levels[i] += (target - levels[i]) * 0.35;
         }
-      } else {
+      } else if (reduceMotion) {
+        // Reduced motion: settle to a calm static baseline (no faked motion).
         for (let i = 0; i < BAR_COUNT; i++) {
           levels[i] += (0.12 - levels[i]) * 0.15;
+        }
+      } else {
+        // Idle telemetry: a slow travelling wave so the instrument stays alive
+        // between tracks (the "scrolling" meter — tied to nothing, just breathing).
+        const tsec = now * 0.001;
+        for (let i = 0; i < BAR_COUNT; i++) {
+          const wave = 0.16 + 0.14 * (0.5 + 0.5 * Math.sin(tsec * 1.7 - i * 0.5));
+          levels[i] += (wave - levels[i]) * 0.2;
         }
       }
 
@@ -90,14 +99,17 @@ export function SpectrumMeter({ getAnalyser, isPlaying, className }: SpectrumMet
         ctx.fill();
       }
 
-      // Keep animating while playing; settle to one static frame otherwise.
-      const settling = levels.some((l) => Math.abs(l - 0.12) > 0.01);
-      if (!reduceMotion && (isPlaying || settling)) {
+      // No-reduce: always keep animating (live spectrum or the idle wave).
+      // Reduced motion: run only until the bars settle to the static baseline.
+      if (!reduceMotion) {
         raf = requestAnimationFrame(draw);
+      } else {
+        const settling = levels.some((l) => Math.abs(l - 0.12) > 0.01);
+        if (settling) raf = requestAnimationFrame(draw);
       }
     };
 
-    draw();
+    raf = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(raf);
   }, [getAnalyser, isPlaying]);
 
