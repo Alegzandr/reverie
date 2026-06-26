@@ -34,6 +34,10 @@ i18n
     fallbackLng: 'en',
     supportedLngs: supportedLanguages,
     interpolation: {
+      // Safe because React escapes all rendered values. SECURITY GUARDRAIL: never
+      // render a translation as raw HTML (no `dangerouslySetInnerHTML`, no
+      // `<Trans>` returning HTML) while interpolating user-controlled data such as
+      // a filename — that would reintroduce an XSS sink this setting can't catch.
       escapeValue: false,
     },
     // Language lives in localStorage, not the URL. Detect from a stored choice

@@ -85,6 +85,13 @@ export const BIT_DEPTH = {
 // ============================================================================
 
 export const FILE_FORMATS = {
+  /**
+   * Maximum accepted upload size in bytes. Decoding happens in-memory via the
+   * Web Audio API, so an oversized file can exhaust the tab's memory. This caps
+   * it with a clear error instead of crashing the tab (resilience + UX).
+   */
+  MAX_FILE_SIZE_BYTES: 200 * 1024 * 1024, // 200 MB
+
   /** Accepted audio MIME types for file upload */
   ACCEPTED_MIME_TYPES: [
     'audio/mpeg',     // MP3
@@ -203,6 +210,7 @@ export const ERROR_MESSAGES = {
   /** File loading errors */
   LOAD_FAILED: 'Failed to load audio file',
   NO_AUDIO_TO_PLAY: 'No audio to play',
+  FILE_TOO_LARGE: (maxMb: number) => `File is too large. Maximum size is ${maxMb} MB`,
 
   /** Processing errors */
   PROCESS_FAILED: 'Failed to process audio',

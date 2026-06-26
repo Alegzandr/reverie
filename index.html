@@ -3,6 +3,16 @@
   <head>
     <meta charset="UTF-8" />
 
+    <!-- Security headers (defense-in-depth). This app is 100% client-side: no
+         backend, no network egress. `connect-src 'self'` enforces that promise,
+         `object-src 'none'` + `frame-ancestors 'none'` block plugin/clickjacking
+         vectors. `'unsafe-inline'` is required for the two inline scripts below
+         (GitHub Pages SPA redirect + JSON-LD) and Vite's injected styles; if those
+         are ever hashed, tighten this to `'self' 'sha256-…'`. -->
+    <meta http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'" />
+    <meta name="referrer" content="no-referrer" />
+
     <!-- GitHub Pages SPA Redirect Script -->
     <script>
       // Single Page Apps for GitHub Pages
@@ -96,9 +106,6 @@
     <link rel="alternate" hreflang="ko" href="https://alegzandr.github.io/reverie/" />
     <link rel="alternate" hreflang="hi" href="https://alegzandr.github.io/reverie/" />
     <link rel="alternate" hreflang="x-default" href="https://alegzandr.github.io/reverie/" />
-
-    <!-- Preconnect for performance -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
 
     <!-- Schema.org Structured Data for SEO -->
     <script type="application/ld+json">

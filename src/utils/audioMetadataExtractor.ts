@@ -156,7 +156,9 @@ async function extractFlacMetadata(file: File): Promise<RawAudioMetadata> {
 
   const sampleRate = (byte18 << 12) | (byte19 << 4) | (byte20 >> 4);
   const channels = ((byte20 & 0x0e) >> 1) + 1;
-  const bitDepth = ((byte20 & 0x01) << 4) | ((byte21 & 0xf0) >> 4) + 1;
+  // Bit depth is a 5-bit field stored as (bitsPerSample - 1). The `+ 1` must apply
+  // to the whole reconstructed value, not just the low nibble — hence the parens.
+  const bitDepth = (((byte20 & 0x01) << 4) | ((byte21 & 0xf0) >> 4)) + 1;
 
   return { sampleRate, channels, bitDepth };
 }

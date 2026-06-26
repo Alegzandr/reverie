@@ -9,7 +9,7 @@ import { useState, useCallback } from 'react';
 import { audioProcessor } from '../utils/audioProcessor';
 import type { AudioProcessingOptions } from '../utils/audioProcessor';
 import { extractAudioMetadata } from '../utils/audioMetadataExtractor';
-import { AUDIO_PROCESSING, BIT_DEPTH, ERROR_MESSAGES } from '../constants';
+import { AUDIO_PROCESSING, BIT_DEPTH, ERROR_MESSAGES, FILE_FORMATS } from '../constants';
 
 export interface AudioFileState {
   isLoading: boolean;
@@ -80,6 +80,15 @@ export function useAudioFile(): UseAudioFileReturn {
   }, []);
 
   const loadAudioFile = useCallback(async (file: File) => {
+    // Reject oversized files up front: decoding is in-memory, so a huge file can
+    // OOM the tab. Guarded here (the single choke point for both the drag-drop
+    // and browse paths) rather than per UI surface.
+    if (file.size > FILE_FORMATS.MAX_FILE_SIZE_BYTES) {
+      const maxMb = Math.round(FILE_FORMATS.MAX_FILE_SIZE_BYTES / (1024 * 1024));
+      setState((prev) => ({ ...prev, isLoading: false, error: ERROR_MESSAGES.FILE_TOO_LARGE(maxMb) }));
+      return;
+    }
+
     setState((prev) => ({ ...prev, isLoading: true, error: null, progress: 0 }));
     try {
       // Extract metadata from file headers BEFORE decoding
