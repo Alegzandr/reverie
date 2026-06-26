@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useReducer, useRef } from 'react';
 import { useMood } from '../contexts/MoodContext';
 import type { SceneId } from '../contexts/moods';
 import { animatedBackdropAllowed } from './scenes/motion';
@@ -76,9 +76,11 @@ export function AmbientScene() {
   const photoSrc = PHOTO_SRC[scene];
 
   // The photo fades in only once its bitmap is decoded; until then we'd otherwise
-  // be staring at the near-black scene floor (the "black blink"). Seed from the
-  // decoded cache so a warm backdrop is visible on the very first paint.
-  const [ready, setReady] = useState(() => !photoSrc || decoded.has(photoSrc));
+  // be staring at the near-black scene floor (the "black blink"). `decoded` is a
+  // module cache, so a warm backdrop is visible on the very first paint and
+  // `ready` is derived straight from it — no synced state to fall out of date.
+  const [, onDecoded] = useReducer((n: number) => n + 1, 0);
+  const ready = !photoSrc || decoded.has(photoSrc);
 
   // Warm ALL backdrops once, up front, so switching mood never lands on an
   // undecoded image (the switch flash). Fire-and-forget; the cache does the rest.
@@ -86,24 +88,17 @@ export function AmbientScene() {
     for (const src of Object.values(PHOTO_SRC)) if (src) warm(src);
   }, []);
 
-  // Gate the current photo's reveal on its own decode. Resets on every scene
-  // change; the cancelled flag drops a late decode if the mood moved on.
+  // Kick off the current photo's decode when it isn't cached yet, then force a
+  // re-render so `ready` flips. Reruns on every scene change; the cancelled flag
+  // drops a late decode if the mood moved on.
   useEffect(() => {
-    if (!photoSrc) {
-      setReady(true);
-      return;
-    }
-    if (decoded.has(photoSrc)) {
-      setReady(true);
-      return;
-    }
-    setReady(false);
+    if (!photoSrc || decoded.has(photoSrc)) return;
     let cancelled = false;
     const img = new Image();
     img.src = photoSrc;
     const reveal = () => {
       decoded.add(photoSrc);
-      if (!cancelled) setReady(true);
+      if (!cancelled) onDecoded();
     };
     if (img.decode) img.decode().then(reveal, reveal);
     else {
