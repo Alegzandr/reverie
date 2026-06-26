@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Zap, Waves, Radio, Volume2 } from "lucide-react";
+import { Zap, Waves, Radio, Volume2, Disc3 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { EffectSlider } from "./EffectSlider";
 import { EffectRow } from "./EffectRow";
@@ -12,7 +12,12 @@ import {
     formatBassIntensityLabel,
 } from "../utils/formatters";
 
-export type EffectMode = "speed-up" | "slow-reverb" | "8d-audio" | "bass-boost";
+export type EffectMode =
+    | "none"
+    | "speed-up"
+    | "slow-reverb"
+    | "8d-audio"
+    | "bass-boost";
 
 export interface EffectSettings {
     speedMultiplier: number;
@@ -27,8 +32,10 @@ interface EffectControlsProps {
     disabled?: boolean;
 }
 
-// Listed order; Slow + Reverb leads as the signature late-night mood.
+// Listed order; "Original" leads as the clean baseline (the escape hatch back to
+// the untouched track), then Slow + Reverb as the signature late-night mood.
 const EFFECT_DEFS: { mode: EffectMode; icon: LucideIcon; labelKey: string }[] = [
+    { mode: "none", icon: Disc3, labelKey: "effects.none" },
     { mode: "slow-reverb", icon: Waves, labelKey: "effects.slowReverb" },
     { mode: "speed-up", icon: Zap, labelKey: "effects.speedUp" },
     { mode: "8d-audio", icon: Radio, labelKey: "effects.8dAudio" },
@@ -57,7 +64,10 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
     );
 
     useEffect(() => {
-        if (mode === "speed-up") {
+        if (mode === "none") {
+            // Bypass: play the untouched track — no time-stretch, no reverb, no spatialiser.
+            onChange({ mode: "none", speedMultiplier: 1, reverbAmount: 0 });
+        } else if (mode === "speed-up") {
             onChange({ mode: "speed-up", speedMultiplier, reverbAmount: 0 });
         } else if (mode === "slow-reverb") {
             onChange({
@@ -107,7 +117,9 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
     const norm = (val: number, min: number, max: number) =>
         max > min ? (val - min) / (max - min) : 0;
     const activeLevel =
-        mode === "speed-up"
+        mode === "none"
+            ? 0
+            : mode === "speed-up"
             ? norm(speedMultiplier, D.SPEED_UP.MIN, D.SPEED_UP.MAX)
             : mode === "slow-reverb"
               ? norm(reverbAmount, D.SLOW_REVERB.REVERB_MIN, D.SLOW_REVERB.REVERB_MAX)
@@ -150,11 +162,16 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
                     key={mode}
                     className="pt-1 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-1 motion-safe:duration-300"
                 >
-                    {mode === "speed-up" ? (
+                    {mode === "none" ? (
+                        <p className="py-2 text-sm text-[rgb(var(--color-text-secondary))]">
+                            {t("effects.originalHint")}
+                        </p>
+                    ) : mode === "speed-up" ? (
                         <EffectSlider
                             id="speed-slider"
                             label={t("effects.speed")}
                             value={speedMultiplier}
+                            defaultValue={EFFECT_DEFAULTS.SPEED_UP.DEFAULT}
                             min={EFFECT_DEFAULTS.SPEED_UP.MIN}
                             max={EFFECT_DEFAULTS.SPEED_UP.MAX}
                             step={EFFECT_DEFAULTS.SPEED_UP.STEP}
@@ -172,6 +189,7 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
                                 id="slow-speed-slider"
                                 label={t("effects.slowSpeed")}
                                 value={slowSpeed}
+                                defaultValue={EFFECT_DEFAULTS.SLOW_REVERB.SPEED_DEFAULT}
                                 min={EFFECT_DEFAULTS.SLOW_REVERB.SPEED_MIN}
                                 max={EFFECT_DEFAULTS.SLOW_REVERB.SPEED_MAX}
                                 step={EFFECT_DEFAULTS.SLOW_REVERB.SPEED_STEP}
@@ -188,6 +206,7 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
                                 id="reverb-slider"
                                 label={t("effects.reverb")}
                                 value={reverbAmount}
+                                defaultValue={EFFECT_DEFAULTS.SLOW_REVERB.REVERB_DEFAULT}
                                 min={EFFECT_DEFAULTS.SLOW_REVERB.REVERB_MIN}
                                 max={EFFECT_DEFAULTS.SLOW_REVERB.REVERB_MAX}
                                 step={EFFECT_DEFAULTS.SLOW_REVERB.REVERB_STEP}
@@ -205,6 +224,7 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
                             id="rotation-slider"
                             label={t("effects.rotationSpeed")}
                             value={rotationSpeed}
+                            defaultValue={EFFECT_DEFAULTS.EIGHT_D_AUDIO.ROTATION_DEFAULT}
                             min={EFFECT_DEFAULTS.EIGHT_D_AUDIO.ROTATION_MIN}
                             max={EFFECT_DEFAULTS.EIGHT_D_AUDIO.ROTATION_MAX}
                             step={EFFECT_DEFAULTS.EIGHT_D_AUDIO.ROTATION_STEP}
@@ -221,6 +241,7 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
                             id="bass-slider"
                             label={t("effects.bassIntensity")}
                             value={bassBoostIntensity}
+                            defaultValue={EFFECT_DEFAULTS.BASS_BOOST_UI.INTENSITY_DEFAULT}
                             min={EFFECT_DEFAULTS.BASS_BOOST_UI.INTENSITY_MIN}
                             max={EFFECT_DEFAULTS.BASS_BOOST_UI.INTENSITY_MAX}
                             step={EFFECT_DEFAULTS.BASS_BOOST_UI.INTENSITY_STEP}

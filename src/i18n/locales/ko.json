@@ -13,6 +13,9 @@
     "loading": "로딩 중..."
   },
   "effects": {
+    "none": "원본",
+    "resetHint": "두 번 클릭하여 초기화",
+    "originalHint": "원본 트랙 재생 중 — 적용된 효과 없음.",
     "speedUp": "속도 증가",
     "slowReverb": "느리게 + 리버브",
     "8dAudio": "8D 오디오",
@@ -109,7 +112,8 @@
     "adjustments": "조절",
     "mood": "무드",
     "themes": "테마",
-    "moreThemes": "테마 더 보기",
+    "recentThemes": "최근 사용",
+    "allThemes": "모든 테마",
     "active": "켜짐",
     "inactive": "꺼짐",
     "levels": "레벨"

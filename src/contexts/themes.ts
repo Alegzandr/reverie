@@ -94,14 +94,6 @@ export const THEMES: Record<ThemeId, ThemeDef> = {
 
 export const THEME_ORDER: ThemeId[] = ['light', 'dark', 'tidal', 'nocturne', 'aurora', 'horizon'];
 
-/**
- * Order the moods appear in the workspace theme rail (the inline picker beside
- * the waveform). Mirrors the cosmic gallery from the mockup — Nebula Drift first,
- * the featured mood — and surfaces the five vibey ambiances; the calm `light`
- * face stays one tap away under "More themes" (the settings dialog).
- */
-export const RAIL_THEME_ORDER: ThemeId[] = ['aurora', 'nocturne', 'tidal', 'dark', 'horizon'];
-
 export const DEFAULT_THEME: ThemeId = 'aurora';
 
 export function isThemeId(value: unknown): value is ThemeId {

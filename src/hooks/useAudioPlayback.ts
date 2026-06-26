@@ -203,9 +203,12 @@ export function useAudioPlayback({
     rateRef.current = rate;
     source.playbackRate.value = rate;
 
-    // A pass-through analyser tees off the master gain so the UI can draw a live
-    // spectrum without altering the signal (gain -> analyser -> destination).
-    // Optional: skipped when the context can't create one (older engines, tests).
+    // The analyser tees off the effect chain *before* the volume gain so the live
+    // spectrum (and the UI's "breathe with the music" reactivity) tracks the music
+    // and its effects, never the user's listening volume. It sits on a parallel
+    // branch and doesn't need to reach the destination — an AnalyserNode reads its
+    // input whether or not it's connected onward. Optional: skipped when the context
+    // can't create one (older engines, tests).
     const analyser =
       typeof audioContext.createAnalyser === 'function' ? audioContext.createAnalyser() : null;
     if (analyser) {
@@ -216,11 +219,9 @@ export function useAudioPlayback({
 
     source.connect(chain.input);
     chain.output.connect(gainNode);
+    gainNode.connect(audioContext.destination);
     if (analyser) {
-      gainNode.connect(analyser);
-      analyser.connect(audioContext.destination);
-    } else {
-      gainNode.connect(audioContext.destination);
+      chain.output.connect(analyser);
     }
     applyEffectOptions(chain, optionsRef.current, audioContext, false);
 

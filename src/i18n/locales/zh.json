@@ -13,6 +13,9 @@
     "loading": "加载中..."
   },
   "effects": {
+    "none": "原始",
+    "resetHint": "双击以重置",
+    "originalHint": "正在播放原始音轨 — 未应用任何效果。",
     "speedUp": "加速",
     "slowReverb": "慢速 + 混响",
     "8dAudio": "8D 音频",
@@ -109,7 +112,8 @@
     "adjustments": "调节",
     "mood": "氛围",
     "themes": "主题",
-    "moreThemes": "更多主题",
+    "recentThemes": "最近使用",
+    "allThemes": "所有主题",
     "active": "启用",
     "inactive": "停用",
     "levels": "电平"

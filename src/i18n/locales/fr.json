@@ -8,11 +8,14 @@
     "title": "Téléverser un fichier audio",
     "dragDrop": "Glissez-déposez un fichier audio ici",
     "or": "ou",
-    "browse": "Parcourir les fichiers",
+    "browse": "Sélectionner un fichier",
     "formats": "MP3, WAV, FLAC, OGG, M4A, AAC, AIFF, WebM",
     "loading": "Chargement..."
   },
   "effects": {
+    "none": "Original",
+    "resetHint": "Double-cliquez pour réinitialiser",
+    "originalHint": "Lecture de la piste originale — aucun effet appliqué.",
     "speedUp": "Accélérer",
     "slowReverb": "Ralenti + Reverb",
     "8dAudio": "Audio 8D",
@@ -109,7 +112,8 @@
     "adjustments": "Réglages",
     "mood": "Ambiance",
     "themes": "Thèmes",
-    "moreThemes": "Plus de thèmes",
+    "recentThemes": "Récemment utilisés",
+    "allThemes": "Tous les thèmes",
     "active": "Actif",
     "inactive": "Inactif",
     "levels": "Niveaux"

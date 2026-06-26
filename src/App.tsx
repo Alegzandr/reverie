@@ -167,6 +167,9 @@ function App() {
 
   const handleExport = useCallback(async () => {
     try {
+      // Pause playback before exporting so the offline render isn't fighting the
+      // live graph and the user isn't left hearing audio during the export.
+      if (state.isPlaying) stopAudio();
       const baseName = originalFile ? originalFile.name.replace(/\.[^/.]+$/, '') : 'track';
       // Use English-only labels for filenames (not translated)
       const fxLabel = EFFECT_EXPORT_LABELS[effectSettings.mode];
@@ -174,7 +177,7 @@ function App() {
     } catch (error) {
       console.error('Export error:', error);
     }
-  }, [exportProcessedAudio, originalFile, effectSettings.mode]);
+  }, [exportProcessedAudio, originalFile, effectSettings.mode, state.isPlaying, stopAudio]);
 
   const hasSession = !!(originalFile || originalBuffer || processedBuffer);
   const stageBuffer = originalBuffer || processedBuffer;

@@ -13,6 +13,9 @@
     "loading": "लोड हो रहा है..."
   },
   "effects": {
+    "none": "मूल",
+    "resetHint": "रीसेट करने के लिए डबल-क्लिक करें",
+    "originalHint": "मूल ट्रैक चल रहा है — कोई प्रभाव लागू नहीं।",
     "speedUp": "तेज करें",
     "slowReverb": "धीमा + रीवर्ब",
     "8dAudio": "8D ऑडियो",
@@ -109,7 +112,8 @@
     "adjustments": "समायोजन",
     "mood": "मूड",
     "themes": "थीम",
-    "moreThemes": "और थीम",
+    "recentThemes": "हाल में उपयोग किए गए",
+    "allThemes": "सभी थीम",
     "active": "सक्रिय",
     "inactive": "निष्क्रिय",
     "levels": "स्तर"

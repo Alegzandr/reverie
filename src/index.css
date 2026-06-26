@@ -839,10 +839,16 @@
       rgba(255, 255, 255, 0.75) 92%,
       #ffffff 100%
     );
-    filter: drop-shadow(0 0 7px rgba(255, 255, 255, 0.85))
-      drop-shadow(0 0 16px rgba(var(--color-ambient), 0.7));
+    /* Glow via box-shadow, NOT filter: a `filter` promotes the meteor to its own
+       composited layer, and a filtered layer moving behind the glass panels'
+       `backdrop-filter` makes Chromium mis-sample the backdrop and flash the whole
+       panel rectangle brighter for a frame. box-shadow paints inline in the scene
+       layer, so the backdrop samples a stable image. Same reason `will-change` is
+       omitted — the transform animation composites fine without forcing promotion. */
+    box-shadow:
+      0 0 7px rgba(255, 255, 255, 0.85),
+      0 0 16px rgba(var(--color-ambient), 0.7);
     opacity: 0;
-    will-change: transform, opacity;
   }
 
   @media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (pointer: fine) {
@@ -1453,17 +1459,17 @@
     }
   }
 
-  /* Panel parallax drift — the side consoles float a few px with the spectrum
-     (left = mids, right = treble), the stable waveform stays the anchor between
-     them. A tiny 2D translate (no 3D/perspective) so the glass backdrop-filter
-     keeps working. Desktop + no-reduce only; nothing moves on touch/mobile. */
+  /* Panel parallax drift — the side consoles breathe a few px with the music,
+     the stable waveform stays the anchor between them. Vertical only: a gentle
+     bob driven by the smoothed overall loudness (--audio-level). The horizontal
+     axis was driven by the jittery per-band energy (mids/treble), which slid the
+     text panels side-to-side and read as a shake — so the float is now purely up.
+     A tiny 2D translate (no 3D/perspective) so the glass backdrop-filter keeps
+     working. Desktop + no-reduce only; nothing moves on touch/mobile. */
   @media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (pointer: fine) {
-    .immersive .audio-drift-a {
-      transform: translate(calc(var(--audio-mid) * -2.5px), calc(var(--audio-level) * -2px));
-      transition: transform 130ms ease-out;
-    }
+    .immersive .audio-drift-a,
     .immersive .audio-drift-b {
-      transform: translate(calc(var(--audio-treble) * 2.5px), calc(var(--audio-level) * -2px));
+      transform: translateY(calc(var(--audio-level) * -2px));
       transition: transform 130ms ease-out;
     }
   }

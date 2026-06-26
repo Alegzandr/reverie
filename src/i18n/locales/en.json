@@ -13,6 +13,9 @@
     "loading": "Loading..."
   },
   "effects": {
+    "none": "Original",
+    "resetHint": "Double-click to reset",
+    "originalHint": "Playing the original track — no effects applied.",
     "speedUp": "Speed Up",
     "slowReverb": "Slow + Reverb",
     "8dAudio": "8D Audio",
@@ -109,7 +112,8 @@
     "adjustments": "Adjustments",
     "mood": "Mood",
     "themes": "Themes",
-    "moreThemes": "More themes",
+    "recentThemes": "Recently used",
+    "allThemes": "All themes",
     "active": "Active",
     "inactive": "Inactive",
     "levels": "Levels"

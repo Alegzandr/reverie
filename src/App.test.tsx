@@ -48,6 +48,7 @@ vi.mock('./contexts/ThemeContext', () => ({
     theme: 'light',
     def: { kind: 'workspace', scene: 'daybreak' },
     setTheme: mockSetTheme,
+    recentThemes: ['light', 'dark'],
   }),
 }));
 

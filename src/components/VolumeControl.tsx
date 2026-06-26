@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Volume2, Volume1, VolumeX } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
+import { AUDIO_PROCESSING } from '@/constants';
 
 interface VolumeControlProps {
   volume: number;
@@ -67,8 +68,12 @@ export function VolumeControl({ volume, onVolumeChange, disabled, className = ''
         step={0.01}
         value={volume}
         onValueChange={(v) => onVolumeChange(round2(v))}
+        onDoubleClick={() => {
+          if (!disabled) onVolumeChange(AUDIO_PROCESSING.DEFAULT_VOLUME);
+        }}
         disabled={disabled}
         aria-label={`${t('playback.volume')}: ${percent}%`}
+        title={t('effects.resetHint')}
         className="w-20 sm:w-24"
       />
     </div>

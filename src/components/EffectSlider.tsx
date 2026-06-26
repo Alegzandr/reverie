@@ -1,9 +1,12 @@
+import { useTranslation } from "react-i18next";
 import { Slider } from "@/components/ui/slider";
 
 interface EffectSliderProps {
     id: string;
     label: string;
     value: number;
+    /** Factory-set value; double-clicking the slider snaps back to it. */
+    defaultValue: number;
     min: number;
     max: number;
     step: number;
@@ -17,11 +20,15 @@ interface EffectSliderProps {
  * One clear control per effect. The track fills with the Aurora accent up to the
  * current value (driven by the --range custom property), and the value is rendered
  * large so the result, not the mechanism, leads.
+ *
+ * Double-clicking the track restores the default value — a quick escape from a
+ * dialed-in setting without nudging the thumb back by hand.
  */
 export function EffectSlider({
     id,
     label,
     value,
+    defaultValue,
     min,
     max,
     step,
@@ -30,6 +37,7 @@ export function EffectSlider({
     formatValue,
     markers,
 }: EffectSliderProps) {
+    const { t } = useTranslation();
     const formattedValue = formatValue(value);
 
     return (
@@ -55,8 +63,12 @@ export function EffectSlider({
                 step={step}
                 value={value}
                 onValueChange={onChange}
+                onDoubleClick={() => {
+                    if (!disabled) onChange(defaultValue);
+                }}
                 disabled={disabled}
                 aria-label={`${label}: ${formattedValue}`}
+                title={t("effects.resetHint")}
             />
             {markers && (
                 <div className="flex justify-between text-xs text-[rgb(var(--color-text-secondary))]">

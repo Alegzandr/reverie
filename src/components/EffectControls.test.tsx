@@ -35,6 +35,22 @@ describe('EffectControls', () => {
     const rotationSlider = screen.getByLabelText(/effects\.rotationSpeed/);
     fireEvent.change(rotationSlider, { target: { value: '1.2' } });
     expect(onChange).toHaveBeenLastCalledWith({ mode: '8d-audio', speedMultiplier: 1, reverbAmount: 0, rotationSpeed: 1.2 });
+
+    // "Original" bypasses every effect — the untouched track plays through.
+    await userEvent.click(screen.getByText('effects.none'));
+    expect(onChange).toHaveBeenLastCalledWith({ mode: 'none', speedMultiplier: 1, reverbAmount: 0 });
+  });
+
+  it('restores a slider to its default on double-click', async () => {
+    const onChange = vi.fn();
+    render(<EffectControls onChange={onChange} />);
+
+    const slowSpeedSlider = screen.getByLabelText(/effects\.slowSpeed/);
+    fireEvent.change(slowSpeedSlider, { target: { value: '0.6' } });
+    expect(onChange).toHaveBeenLastCalledWith({ mode: 'slow-reverb', speedMultiplier: 0.6, reverbAmount: 0.5 });
+
+    fireEvent.doubleClick(slowSpeedSlider);
+    expect(onChange).toHaveBeenLastCalledWith({ mode: 'slow-reverb', speedMultiplier: 0.7, reverbAmount: 0.5 });
   });
 
   it('ignores interactions when disabled', async () => {

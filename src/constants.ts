@@ -302,6 +302,7 @@ export const EFFECT_DEFAULTS = {
  * These should NOT be translated to maintain consistent naming across languages
  */
 export const EFFECT_EXPORT_LABELS = {
+  'none': 'original',
   'speed-up': 'sped-up',
   'slow-reverb': 'slow+reverb',
   '8d-audio': '8D',
