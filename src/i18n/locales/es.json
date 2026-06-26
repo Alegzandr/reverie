@@ -15,7 +15,8 @@
     "or": "o",
     "browse": "Explorar archivos",
     "formats": "MP3, WAV, FLAC, OGG, M4A, AAC, AIFF, WebM",
-    "loading": "Cargando..."
+    "loading": "Cargando...",
+    "dropToReplace": "Suelta para cambiar de pista"
   },
   "effects": {
     "none": "Original",

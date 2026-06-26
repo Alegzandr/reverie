@@ -1463,20 +1463,10 @@
     }
   }
 
-  /* Panel parallax drift — the side consoles breathe a few px with the music,
-     the stable waveform stays the anchor between them. Vertical only: a gentle
-     bob driven by the smoothed overall loudness (--audio-level). The horizontal
-     axis was driven by the jittery per-band energy (mids/treble), which slid the
-     text panels side-to-side and read as a shake — so the float is now purely up.
-     A tiny 2D translate (no 3D/perspective) so the glass backdrop-filter keeps
-     working. Desktop + no-reduce only; nothing moves on touch/mobile. */
-  @media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (pointer: fine) {
-    .immersive .audio-drift-a,
-    .immersive .audio-drift-b {
-      transform: translateY(calc(var(--audio-level) * -2px));
-      transition: transform 130ms ease-out;
-    }
-  }
+  /* Panel positional drift removed — the side consoles must stay anchored.
+     They used to bob a few px vertically with the music (--audio-level); the
+     section positions must not move, so the transform is gone. Audio reactivity
+     now lives only in non-positional cues (glows, borders, breath). */
 
   /* ── Instrument dial (HudDial) ──────────────────────────────────────────
      Concentric rings + a graduated rim + an accent arc. The rings spin only

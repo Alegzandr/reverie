@@ -15,7 +15,8 @@
     "or": "या",
     "browse": "फ़ाइलें ब्राउज़ करें",
     "formats": "MP3, WAV, FLAC, OGG, M4A, AAC, AIFF, WebM",
-    "loading": "लोड हो रहा है..."
+    "loading": "लोड हो रहा है...",
+    "dropToReplace": "ट्रैक बदलने के लिए छोड़ें"
   },
   "effects": {
     "none": "मूल",

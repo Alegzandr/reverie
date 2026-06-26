@@ -15,7 +15,8 @@
     "or": "oder",
     "browse": "Dateien durchsuchen",
     "formats": "MP3, WAV, FLAC, OGG, M4A, AAC, AIFF, WebM",
-    "loading": "Lädt..."
+    "loading": "Lädt...",
+    "dropToReplace": "Ablegen, um den Titel zu wechseln"
   },
   "effects": {
     "none": "Original",

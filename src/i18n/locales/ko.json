@@ -15,7 +15,8 @@
     "or": "또는",
     "browse": "파일 찾아보기",
     "formats": "MP3, WAV, FLAC, OGG, M4A, AAC, AIFF, WebM",
-    "loading": "로딩 중..."
+    "loading": "로딩 중...",
+    "dropToReplace": "놓아서 트랙 교체"
   },
   "effects": {
     "none": "원본",

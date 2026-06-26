@@ -15,7 +15,8 @@
     "or": "或",
     "browse": "浏览文件",
     "formats": "MP3、WAV、FLAC、OGG、M4A、AAC、AIFF、WebM",
-    "loading": "加载中..."
+    "loading": "加载中...",
+    "dropToReplace": "放下以更换音轨"
   },
   "effects": {
     "none": "原始",

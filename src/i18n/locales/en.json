@@ -15,7 +15,8 @@
     "or": "or",
     "browse": "Browse Files",
     "formats": "MP3, WAV, FLAC, OGG, M4A, AAC, AIFF, WebM",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "dropToReplace": "Drop to swap the track"
   },
   "effects": {
     "none": "Original",

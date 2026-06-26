@@ -15,7 +15,8 @@
     "or": "ou",
     "browse": "Sélectionner un fichier",
     "formats": "MP3, WAV, FLAC, OGG, M4A, AAC, AIFF, WebM",
-    "loading": "Chargement..."
+    "loading": "Chargement...",
+    "dropToReplace": "Déposez pour changer de piste"
   },
   "effects": {
     "none": "Original",
@@ -115,7 +116,7 @@
   "studio": {
     "effects": "Effets",
     "adjustments": "Réglages",
-    "mood": "Ambiance",
+    "mood": "Mood",
     "themes": "Thèmes",
     "recentThemes": "Récemment utilisés",
     "allThemes": "Tous les thèmes",

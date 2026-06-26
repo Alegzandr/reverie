@@ -62,15 +62,11 @@ export function FileUploader({ onFileSelect, isLoading, hasFile }: FileUploaderP
   );
 
   // Compact variant — lives in the workspace chrome to swap the current track.
+  // Drag-and-drop is handled window-wide by FileDropOverlay, so this is just the
+  // browse button (no local drop handlers, which would double-fire onFileSelect).
   if (hasFile) {
     return (
-      <div
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        role="region"
-        aria-label={t('upload.title')}
-      >
+      <div role="region" aria-label={t('upload.title')}>
         {input}
         <Button
           asChild

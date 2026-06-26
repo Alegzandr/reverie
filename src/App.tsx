@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Zap, Waves, Radio, Volume2, ShieldCheck } from 'lucide-react';
 import { FileUploader } from './components/FileUploader';
+import { FileDropOverlay } from './components/FileDropOverlay';
 import { EffectControls } from './components/EffectControls';
 import type { EffectSettings } from './components/EffectControls';
 import { PlaybackControls } from './components/PlaybackControls';
@@ -288,6 +289,7 @@ function App() {
   return (
     <div className="min-h-screen flex flex-col">
       <AmbientScene />
+      <FileDropOverlay onFileSelect={handleFileSelect} disabled={state.isExporting} />
       <header className="hud-rail hud-rail-top sticky top-0 z-40 bg-[rgba(var(--color-surface),0.78)] backdrop-blur-xl border-b border-[rgba(var(--color-border),0.5)]">
         <div className="hud-bow">
         <div className="hud-bow-inner mx-auto w-full max-w-[1700px] px-6 sm:px-10 h-16 flex items-center justify-between gap-4">

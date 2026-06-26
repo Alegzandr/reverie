@@ -15,7 +15,8 @@
     "or": "или",
     "browse": "Выбрать файлы",
     "formats": "MP3, WAV, FLAC, OGG, M4A, AAC, AIFF, WebM",
-    "loading": "Загрузка..."
+    "loading": "Загрузка...",
+    "dropToReplace": "Отпустите, чтобы сменить трек"
   },
   "effects": {
     "none": "Оригинал",

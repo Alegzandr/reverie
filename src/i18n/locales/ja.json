@@ -15,7 +15,8 @@
     "or": "または",
     "browse": "ファイルを参照",
     "formats": "MP3、WAV、FLAC、OGG、M4A、AAC、AIFF、WebM",
-    "loading": "読み込み中..."
+    "loading": "読み込み中...",
+    "dropToReplace": "ドロップしてトラックを差し替え"
   },
   "effects": {
     "none": "オリジナル",
