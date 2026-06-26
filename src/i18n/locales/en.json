@@ -1,4 +1,9 @@
 {
+  "performance": {
+    "title": "Software rendering detected",
+    "body": "Your browser is drawing Reverie without the GPU. Turn on hardware acceleration in your browser settings for the full, fluid scene.",
+    "dismiss": "Dismiss"
+  },
   "gate": {
     "title": "Made for the big screen",
     "description": "Reverie's cockpit — the effects, the living waveform and the mood — needs room to breathe. Open it on a computer to enjoy the full experience.",
@@ -100,9 +105,9 @@
   "settings": {
     "open": "Settings",
     "title": "Settings",
-    "subtitle": "Themes and language",
-    "themes": "Themes",
-    "theme": {
+    "subtitle": "Moods and language",
+    "moods": "Moods",
+    "mood": {
       "light": "Light",
       "dark": "Void Bloom",
       "tidal": "Cosmic Wave",
@@ -117,9 +122,9 @@
     "effects": "Effects",
     "adjustments": "Adjustments",
     "mood": "Mood",
-    "themes": "Themes",
-    "recentThemes": "Recently used",
-    "allThemes": "All themes",
+    "moods": "Moods",
+    "recentMoods": "Recently used",
+    "allMoods": "All moods",
     "active": "Active",
     "inactive": "Inactive",
     "levels": "Levels"

@@ -30,6 +30,10 @@ export interface EffectSettings {
 interface EffectControlsProps {
     onChange: (settings: EffectSettings) => void;
     disabled?: boolean;
+    // Seeds the internal state on mount. Lets a parent restore the live settings
+    // when this component is remounted (e.g. the desktop gate flips during a
+    // window drag), instead of snapping back to the slow-reverb defaults.
+    initialSettings?: EffectSettings;
 }
 
 // Listed effects — Slow + Reverb leads as the signature late-night mood. There is
@@ -42,25 +46,37 @@ const EFFECT_DEFS: { mode: EffectMode; icon: LucideIcon; labelKey: string }[] = 
     { mode: "bass-boost", icon: Volume2, labelKey: "effects.bassBoost" },
 ];
 
-export function EffectControls({ onChange, disabled }: EffectControlsProps) {
+export function EffectControls({ onChange, disabled, initialSettings }: EffectControlsProps) {
     const { t } = useTranslation();
     // Slow + Reverb leads — the brand's signature late-night mood, and the first
-    // effect listed, so the Active row sits at the top on load.
-    const [mode, setMode] = useState<EffectMode>("slow-reverb");
+    // effect listed, so the Active row sits at the top on load. `initialSettings`
+    // (when provided) overrides these seeds for the active mode's parameters so a
+    // remount restores the live values instead of resetting to defaults.
+    const [mode, setMode] = useState<EffectMode>(
+        initialSettings?.mode ?? "slow-reverb"
+    );
     const [speedMultiplier, setSpeedMultiplier] = useState<number>(
-        EFFECT_DEFAULTS.SPEED_UP.DEFAULT
+        initialSettings?.mode === "speed-up"
+            ? initialSettings.speedMultiplier
+            : EFFECT_DEFAULTS.SPEED_UP.DEFAULT
     );
     const [slowSpeed, setSlowSpeed] = useState<number>(
-        EFFECT_DEFAULTS.SLOW_REVERB.SPEED_DEFAULT
+        initialSettings?.mode === "slow-reverb"
+            ? initialSettings.speedMultiplier
+            : EFFECT_DEFAULTS.SLOW_REVERB.SPEED_DEFAULT
     );
     const [reverbAmount, setReverbAmount] = useState<number>(
-        EFFECT_DEFAULTS.SLOW_REVERB.REVERB_DEFAULT
+        initialSettings?.mode === "slow-reverb"
+            ? initialSettings.reverbAmount
+            : EFFECT_DEFAULTS.SLOW_REVERB.REVERB_DEFAULT
     );
     const [rotationSpeed, setRotationSpeed] = useState<number>(
-        EFFECT_DEFAULTS.EIGHT_D_AUDIO.ROTATION_DEFAULT
+        initialSettings?.rotationSpeed ??
+            EFFECT_DEFAULTS.EIGHT_D_AUDIO.ROTATION_DEFAULT
     );
     const [bassBoostIntensity, setBassBoostIntensity] = useState<number>(
-        EFFECT_DEFAULTS.BASS_BOOST_UI.INTENSITY_DEFAULT
+        initialSettings?.bassBoostIntensity ??
+            EFFECT_DEFAULTS.BASS_BOOST_UI.INTENSITY_DEFAULT
     );
 
     useEffect(() => {

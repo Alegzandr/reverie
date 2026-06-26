@@ -20,8 +20,8 @@ const buttonVariants = cva(
         // glossy iOS matter, the coloured shadow lets it float over the backdrop.
         default:
           'btn-aurora text-white shadow-[inset_0_1px_0_0_rgba(255,255,255,0.45),inset_0_0_0_1px_rgba(255,255,255,0.12),0_10px_24px_-12px_rgba(var(--aurora-violet),0.65),0_14px_34px_-16px_rgba(var(--aurora-cyan),0.6)] hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.5),inset_0_0_0_1px_rgba(255,255,255,0.16),0_14px_30px_-12px_rgba(var(--aurora-violet),0.7),0_20px_44px_-16px_rgba(var(--aurora-cyan),0.72)]',
-        // Focal transport control (play / pause) — the theme orb. It wears the
-        // ACTIVE theme's accent (not the fixed Aurora gradient), so it recolours
+        // Focal transport control (play / pause) — the mood orb. It wears the
+        // ACTIVE mood's accent (not the fixed Aurora gradient), so it recolours
         // with the rest of the HUD instead of reading as a foreign body. A deep
         // Dream-Indigo base keeps the white glyph legible in every palette; the
         // inset accent hairline + a --hud-glow halo seat it in the scene.

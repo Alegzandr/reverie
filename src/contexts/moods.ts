@@ -2,40 +2,40 @@ import { Sun, Moon, Waves, Star, Sparkles, Sunrise } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 /**
- * Theme registry. `light` and `dark` are the quiet "workspace" faces (the calm
- * app shell); the immersive themes turn the interface into a translucent,
+ * Mood registry. `light` and `dark` are the quiet "workspace" faces (the calm
+ * app shell); the immersive moods turn the interface into a translucent,
  * curved heads-up display floating over a living ambient scene you can lose
  * yourself in while the track plays.
  *
- * Each theme drives three things on <html>: `data-theme="<id>"` (selects the
+ * Each mood drives three things on <html>: `data-mood="<id>"` (selects the
  * colour-token block in index.css), the `.dark` class (kept so every existing
- * `dark:` utility and `.dark` rule still applies — immersive themes are
+ * `dark:` utility and `.dark` rule still applies — immersive moods are
  * dark-based), and the `.immersive` class (switches the chrome to the HUD skin
  * and mounts the ambient scene).
  */
-export type ThemeId = 'light' | 'dark' | 'tidal' | 'nocturne' | 'aurora' | 'horizon';
-export type ThemeKind = 'workspace' | 'immersive';
+export type MoodId = 'light' | 'dark' | 'tidal' | 'nocturne' | 'aurora' | 'horizon';
+export type MoodKind = 'workspace' | 'immersive';
 export type SceneId = 'daybreak' | 'dusk' | 'tidal' | 'nocturne' | 'aurora' | 'horizon';
 
-export interface ThemeDef {
-  id: ThemeId;
-  /** i18n key under `settings.theme.<key>` for the label. */
+export interface MoodDef {
+  id: MoodId;
+  /** i18n key under `settings.mood.<key>` for the label. */
   labelKey: string;
   icon: LucideIcon;
   /** Visual family — `light`/`dark` are the calm palettes, the rest are vibey
-   *  ambiances. The HUD chrome is on for every theme; kind is only a grouping
+   *  atmospheres. The HUD chrome is on for every mood; kind is only a grouping
    *  hint. */
-  kind: ThemeKind;
-  /** Which base the theme sits on — toggles the `.dark` root class. */
+  kind: MoodKind;
+  /** Which base the mood sits on — toggles the `.dark` root class. */
   base: 'light' | 'dark';
-  /** Animated ambient scene to mount. Every theme has one (the interface is
-   *  always the immersive HUD; a theme = palette + animated background). */
+  /** Animated ambient scene to mount. Every mood has one (the interface is
+   *  always the immersive HUD; a mood = palette + animated background). */
   scene: SceneId;
   /** CSS gradient for the settings gallery thumbnail. */
   preview: string;
 }
 
-export const THEMES: Record<ThemeId, ThemeDef> = {
+export const MOODS: Record<MoodId, MoodDef> = {
   light: {
     id: 'light',
     labelKey: 'light',
@@ -92,10 +92,10 @@ export const THEMES: Record<ThemeId, ThemeDef> = {
   },
 };
 
-export const THEME_ORDER: ThemeId[] = ['light', 'dark', 'tidal', 'nocturne', 'aurora', 'horizon'];
+export const MOOD_ORDER: MoodId[] = ['light', 'dark', 'tidal', 'nocturne', 'aurora', 'horizon'];
 
-export const DEFAULT_THEME: ThemeId = 'aurora';
+export const DEFAULT_MOOD: MoodId = 'aurora';
 
-export function isThemeId(value: unknown): value is ThemeId {
-  return typeof value === 'string' && value in THEMES;
+export function isMoodId(value: unknown): value is MoodId {
+  return typeof value === 'string' && value in MOODS;
 }

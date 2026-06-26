@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Slider } from "@/components/ui/slider";
+import { useDoubleClickReset } from "@/hooks/useDoubleClickReset";
 
 interface EffectSliderProps {
     id: string;
@@ -39,6 +40,10 @@ export function EffectSlider({
 }: EffectSliderProps) {
     const { t } = useTranslation();
     const formattedValue = formatValue(value);
+    const handleDoubleClickReset = useDoubleClickReset(
+        () => onChange(defaultValue),
+        !disabled,
+    );
 
     return (
         <div className="space-y-3">
@@ -63,9 +68,7 @@ export function EffectSlider({
                 step={step}
                 value={value}
                 onValueChange={onChange}
-                onDoubleClick={() => {
-                    if (!disabled) onChange(defaultValue);
-                }}
+                onClick={handleDoubleClickReset}
                 disabled={disabled}
                 aria-label={`${label}: ${formattedValue}`}
                 title={t("effects.resetHint")}

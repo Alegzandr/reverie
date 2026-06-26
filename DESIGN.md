@@ -4,19 +4,19 @@ The visual system for Reverie. It has two layers that share one accent: a satura
 
 Source of truth for implemented tokens: `src/index.css` (CSS custom properties). Brand tokens below extend that system toward the indigo/violet identity introduced with the Reverie rename.
 
-## Theme
+## Mood
 
-Dark-first, with a clean light mode — but theming has grown past a binary toggle into a **mood system** (see "Themes & moods" below).
+Dark-first, with a clean light mode — but theming has grown past a binary toggle into a **mood system** (see "Moods" below).
 
-Scene that forces the choice: a music fan at night, headphones on, lights dimmed, losing themselves in a slowed + reverb edit. That is the home of the brand, so the identity surfaces (icon, OG card, ambient backdrop) live in deep indigo. The in-app workspace still offers a polished light mode for daytime and bright rooms. The interface is always the immersive HUD; a theme only swaps the palette and the animated background.
+Scene that forces the choice: a music fan at night, headphones on, lights dimmed, losing themselves in a slowed + reverb edit. That is the home of the brand, so the identity surfaces (icon, OG card, ambient backdrop) live in deep indigo. The in-app workspace still offers a polished light mode for daytime and bright rooms. The interface is always the immersive HUD; a mood only swaps the palette and the animated background.
 
-## Themes & moods
+## Moods
 
-Theming is a first-class, always-visible control, not a buried setting. The registry lives in `src/contexts/themes.ts`; `ThemeContext` writes three things to `<html>` per active theme: `data-theme="<id>"` (selects the colour-token block in `index.css`), `.dark` (kept on every dark-based theme so existing `dark:` utilities and `.dark` rules keep working), and `.immersive` (always on — gates the holographic chrome and mounts the ambient scene). The choice persists to `localStorage` under `theme`; default is **Aurora**.
+The mood system is a first-class, always-visible control, not a buried setting. The registry lives in `src/contexts/moods.ts`; `MoodContext` writes three things to `<html>` per active mood: `data-mood="<id>"` (selects the colour-token block in `index.css`), `.dark` (kept on every dark-based mood so existing `dark:` utilities and `.dark` rules keep working), and `.immersive` (always on — gates the holographic chrome and mounts the ambient scene). The choice persists to `localStorage` under `mood`; default is **Aurora**.
 
-A theme = **palette + animated ambient scene**, over the one shared HUD. Six themes in two families:
+A mood = **palette + animated ambient scene**, over the one shared HUD. Six moods in two families:
 
-| Theme | Family (`kind`) | Base | Scene |
+| Mood | Family (`kind`) | Base | Scene |
 | --- | --- | --- | --- |
 | Light | workspace (calm) | light | daybreak (CSS sun + clouds) |
 | Dark | workspace (calm) | dark | dusk |
@@ -25,16 +25,16 @@ A theme = **palette + animated ambient scene**, over the one shared HUD. Six the
 | Aurora *(default)* | immersive (vibey) | dark | aurora/nebula |
 | Horizon | immersive (vibey) | dark | horizon |
 
-Each `ThemeDef` carries an `id`, an i18n `labelKey`, a Lucide `icon`, its `kind`, `base`, `scene`, and a `preview` CSS gradient (the gallery thumbnail / live swatch). Two surfaces let users switch it:
+Each `MoodDef` carries an `id`, an i18n `labelKey`, a Lucide `icon`, its `kind`, `base`, `scene`, and a `preview` CSS gradient (the gallery thumbnail / live swatch). Two surfaces let users switch it:
 
-- **Mood rail (`ThemeRail`)** — inline in the workspace cockpit (right column). A featured **Mood** chip (opens the full gallery), then the five vibey ambiances one tap away (`RAIL_THEME_ORDER`: aurora, nocturne, tidal, dark, horizon), then **More themes** → the settings dialog. The fastest way to re-skin the whole atmosphere mid-listen.
-- **Settings gallery (`SettingsMenu`)** — a 2-column gallery of all six themes (`THEME_ORDER`) plus the ten-locale language grid.
+- **Mood rail (`MoodRail`)** — inline in the workspace cockpit (right column). A featured **Mood** chip (opens the full gallery), then the five vibey ambiances one tap away (`MOOD_ORDER`: aurora, nocturne, tidal, dark, horizon), then **More moods** → the settings dialog. The fastest way to re-skin the whole atmosphere mid-listen.
+- **Settings gallery (`SettingsMenu`)** — a 2-column gallery of all six moods (`MOOD_ORDER`) plus the ten-locale language grid.
 
 ## HUD language
 
-The immersive chrome borrows a holographic heads-up-display register (curved rails, instrument dials, scanlines). It is driven by per-theme tokens and a set of `hud-*` classes in `index.css`:
+The immersive chrome borrows a holographic heads-up-display register (curved rails, instrument dials, scanlines). It is driven by per-mood tokens and a set of `hud-*` classes in `index.css`:
 
-- **`--hud-line`** (RGB hairline) and **`--hud-glow`** are set in each `[data-theme]` block, so the chrome recolours with the mood.
+- **`--hud-line`** (RGB hairline) and **`--hud-glow`** are set in each `[data-mood]` block, so the chrome recolours with the mood.
 - **`.hud-rail` / `.hud-rail-top` / `.hud-rail-bottom`** — the sticky header and transport, skinned as curved HUD bars; **`.hud-bow` / `.hud-bow-inner`** give them the bowed edge.
 - **`.hud-frame`** — the panel framing for the control rail and mood rail; its `::after` glow and border breathe with the audio (see below).
 - **`.hud-readout`** — small monospaced telemetry labels (e.g. "Mood", "FX").
@@ -57,7 +57,7 @@ Stylesheets consume them so different surfaces react to different parts of the m
 
 ## Ambient scene
 
-`AmbientScene` mounts the active theme's `scene` full-viewport behind the glass. The current "wallpaper-engine" approach paints a real cosmic image as the full-bleed base (`.scene-photo`, from `public/backgrounds/*.jpg`) with only a slow CSS drift; `light`/daybreak keeps CSS sun + cloud layers instead. The orphaned procedural scenes (`scenes/NebulaScene`, `scenes/TidalScene`, and the `scenes/webgl/*` shaders) are retired from the render but kept for a future animated layer. Over the base sit `.scene-veil`, `.scene-breath`, `.scene-particles`, and the HUD overlays — all silenced to a still frame under `prefers-reduced-motion`. The cockpit's open centre column exists precisely so this scene can breathe through the interface.
+`AmbientScene` mounts the active mood's `scene` full-viewport behind the glass. The current "wallpaper-engine" approach paints a real cosmic image as the full-bleed base (`.scene-photo`, from `public/backgrounds/*.jpg`) with only a slow CSS drift; `light`/daybreak keeps CSS sun + cloud layers instead. The orphaned procedural scenes (`scenes/NebulaScene`, `scenes/TidalScene`, and the `scenes/webgl/*` shaders) are retired from the render but kept for a future animated layer. Over the base sit `.scene-veil`, `.scene-breath`, `.scene-particles`, and the HUD overlays — all silenced to a still frame under `prefers-reduced-motion`. The cockpit's open centre column exists precisely so this scene can breathe through the interface.
 
 ## Color
 
@@ -87,11 +87,11 @@ The gradient that runs across the brand mark, active controls, and the waveform.
 | Aurora Pink | `oklch(0.73 0.17 351)` | `#F472B6` |
 | Aurora Cyan | `oklch(0.84 0.12 195)` | `#38E0E8` |
 
-Implemented as CSS tokens in `:root` (shared across themes): `--aurora-violet` `167, 139, 250`, `--aurora-pink` `244, 114, 182`, `--aurora-cyan` `56, 224, 232`. The Aurora gradient still signs the brand mark, the waveform stroke, and the `default` button (welcome CTA). The transport **play orb** (the action you take all night long in a listening session) used to wear that fixed gradient, but under the immersive-themes system it stayed violet/pink/cyan in every palette and read as a foreign body. It now wears the **active theme's accent** (`.btn-orb`): a glossy sphere lit at the crown in `--color-accent`, easing to a deep Dream-Indigo base, with an accent hairline rim and a `--hud-glow` halo, plus the soft ring that breathes outward while playing. The Dream-Indigo anchor (`13, 9, 31`, shared by every palette, light included) keeps the white play/pause glyph at AA contrast however bright the accent is, so the orb recolours with the rest of the HUD while staying the focal control. The breathing ring (`.play-pulse`) and the audio-reactive halo are accent-tinted too. Export, a quiet secondary action, deliberately does **not** wear a fill: it is a dark glass pill whose identity comes from an Aurora-tinted icon.
+Implemented as CSS tokens in `:root` (shared across moods): `--aurora-violet` `167, 139, 250`, `--aurora-pink` `244, 114, 182`, `--aurora-cyan` `56, 224, 232`. The Aurora gradient still signs the brand mark, the waveform stroke, and the `default` button (welcome CTA). The transport **play orb** (the action you take all night long in a listening session) used to wear that fixed gradient, but under the immersive-moods system it stayed violet/pink/cyan in every palette and read as a foreign body. It now wears the **active mood's accent** (`.btn-orb`): a glossy sphere lit at the crown in `--color-accent`, easing to a deep Dream-Indigo base, with an accent hairline rim and a `--hud-glow` halo, plus the soft ring that breathes outward while playing. The Dream-Indigo anchor (`13, 9, 31`, shared by every palette, light included) keeps the white play/pause glyph at AA contrast however bright the accent is, so the orb recolours with the rest of the HUD while staying the focal control. The breathing ring (`.play-pulse`) and the audio-reactive halo are accent-tinted too. Export, a quiet secondary action, deliberately does **not** wear a fill: it is a dark glass pill whose identity comes from an Aurora-tinted icon.
 
 Usage rule: apply Aurora to **strokes, fills, the mark, and active-state indicators**. Never to body text. `background-clip: text` on a gradient is banned here; emphasize with weight and size instead.
 
-**Accent as type — `--color-accent-text`.** The bright accent reads as a fill/stroke colour; on the light workspace it is far too pale to use as text (~2.2:1). So accent-coloured **type and icons** (slider values, the upload link, the processing %, active labels, active mode/theme labels) use a dedicated `--color-accent-text` token instead of `--color-accent`. In light it is a deep rose (`178, 30, 81`) brought to AA on both the surface and the pale accent tints; on dark palettes it tracks `--color-accent` (already AA), except `aurora`, which lifts it to a brighter lilac (`196, 140, 252`) so it clears AA on the active-chip tints. `--color-accent` itself stays the bright value for fills, borders, strokes, the slider track, and the focus ring.
+**Accent as type — `--color-accent-text`.** The bright accent reads as a fill/stroke colour; on the light workspace it is far too pale to use as text (~2.2:1). So accent-coloured **type and icons** (slider values, the upload link, the processing %, active labels, active mode/mood labels) use a dedicated `--color-accent-text` token instead of `--color-accent`. In light it is a deep rose (`178, 30, 81`) brought to AA on both the surface and the pale accent tints; on dark palettes it tracks `--color-accent` (already AA), except `aurora`, which lifts it to a brighter lilac (`196, 140, 252`) so it clears AA on the active-chip tints. `--color-accent` itself stays the bright value for fills, borders, strokes, the slider track, and the focus ring.
 
 ### Workspace tokens (implemented, `src/index.css`)
 
@@ -177,7 +177,7 @@ The tinted secondary shadow (accent in light, ambient in dark) is what makes sur
 
 - **Easing**: button feedback uses `cubic-bezier(0.4, 0, 0.2, 1)` at ~200ms. For entrances and reveals prefer ease-out-expo/quint. No bounce, no elastic.
 - **Press**: `.ios-button:active` scales to `0.96`; hover lifts brightness (1.05 light, 1.15 dark).
-- **Theme switch**: background and color transition at 300ms ease.
+- **Mood switch**: background and color transition at 300ms ease.
 - **Never** animate layout properties (width, height, top, left). Animate transform and opacity.
 - **Reduced motion**: honor `prefers-reduced-motion`. The waveform and any ambient drift must fall back to a static state; the app stays fully usable without motion.
 
@@ -190,25 +190,25 @@ Once the viewport is wide enough, a single decision point, `hasSession` (true on
 Both stages mount the `AmbientScene` behind everything; the chrome (header + transport) is the HUD-skinned `.hud-rail`.
 
 - **Welcome stage** (no track): centered and atmospheric. Brand mark, lowercase wordmark, tagline, the hero dropzone, a row previewing the four effects, and the privacy promise on one line. A subtle ambient Aurora drift (`.aurora-stage`, disabled under `prefers-reduced-motion`) sits behind it. This stage teaches the effects, so there is no separate marketing feature grid.
-- **Workspace** (track loaded): a sticky top HUD rail (brand, replace-track, settings; the brand mark doubles as start-over), then a track title with a quiet metadata strip (values in body text, labels secondary, never the accent), then a **three-column cockpit** (`lg:grid-cols-[minmax(320px,400px)_minmax(0,1fr)_minmax(280px,340px)]`): the effects control rail on the left, an **open centre** that lets the ambient scene breathe through, and the **mood rail** (`ThemeRail`) on the right. The left and right columns are `.hud-frame` panels; the waveform is no longer a column here — it has moved into the transport bar as the scrub track. A sticky HUD transport bar is pinned to the bottom.
+- **Workspace** (track loaded): a sticky top HUD rail (brand, replace-track, settings; the brand mark doubles as start-over), then a track title with a quiet metadata strip (values in body text, labels secondary, never the accent), then a **three-column cockpit** (`lg:grid-cols-[minmax(320px,400px)_minmax(0,1fr)_minmax(280px,340px)]`): the effects control rail on the left, an **open centre** that lets the ambient scene breathe through, and the **mood rail** (`MoodRail`) on the right. The left and right columns are `.hud-frame` panels; the waveform is no longer a column here — it has moved into the transport bar as the scrub track. A sticky HUD transport bar is pinned to the bottom.
 
 ## Interaction model
 
-The product is a late-night listening experience, not an export funnel. Effects are **live**: there is no "apply/bake" step. Moving any control calls `setEffects`, which ramps a persistent Web Audio graph (`utils/effectGraph.ts`) on the playing source with a ~40 ms time constant, so the sound reshapes smoothly as you drift through settings, DAW-style. A speed change rebases the position clock so the playhead stays accurate. Export renders the current settings offline on demand, so download is a quiet secondary action, available whenever a track is loaded. Language and theme live behind a single settings menu in the chrome; language persists to `localStorage` (never the URL), so switching never reloads or loses the session.
+The product is a late-night listening experience, not an export funnel. Effects are **live**: there is no "apply/bake" step. Moving any control calls `setEffects`, which ramps a persistent Web Audio graph (`utils/effectGraph.ts`) on the playing source with a ~40 ms time constant, so the sound reshapes smoothly as you drift through settings, DAW-style. A speed change rebases the position clock so the playhead stays accurate. Export renders the current settings offline on demand, so download is a quiet secondary action, available whenever a track is loaded. Language and mood live behind a single settings menu in the chrome; language persists to `localStorage` (never the URL), so switching never reloads or loses the session.
 
 ## Components
 
-- **Glass surface (`.glass`)**: `rgba(surface, ~0.8)` with `backdrop-filter: saturate(180%) blur(20px)`, a 1px translucent border, and the elevation recipe above. This is the core affordance for panels that float over the ambient backdrop. Use it purposefully for genuine surfaces, not as decoration on every element, and never nest one glass panel inside another. In the workspace cockpit, two `.hud-frame` glass panels flank the open centre: the effects control rail (left) and the mood rail (right). In the immersive themes the glass is reskinned to the HUD treatment (`.immersive .glass`): a thinner fill, a luminous `--hud-line` hairline, and inner + outer glow.
-- **iOS button (`.ios-button` + `buttonVariants`)**: press-scale (0.96) with the lift living in each variant's shadow/fill so transparent buttons react to hover too (not a brightness-only hover). Variants: `play` (the theme-accent orb, `.btn-orb`, recolours per theme over a deep Dream-Indigo base), `glass` (the quiet dark-glass export with an Aurora-tinted icon), `accent` (selected affordance, deepens on hover), `outline`/`secondary` (chrome, Aurora wash on hover), `inverse`, `ghost`, `muted`. The signature `.btn-aurora` gradient pans gently on hover (one-shot, calm); its shadow stacks a violet and a pink glow.
+- **Glass surface (`.glass`)**: `rgba(surface, ~0.8)` with `backdrop-filter: saturate(180%) blur(20px)`, a 1px translucent border, and the elevation recipe above. This is the core affordance for panels that float over the ambient backdrop. Use it purposefully for genuine surfaces, not as decoration on every element, and never nest one glass panel inside another. In the workspace cockpit, two `.hud-frame` glass panels flank the open centre: the effects control rail (left) and the mood rail (right). In the immersive moods the glass is reskinned to the HUD treatment (`.immersive .glass`): a thinner fill, a luminous `--hud-line` hairline, and inner + outer glow.
+- **iOS button (`.ios-button` + `buttonVariants`)**: press-scale (0.96) with the lift living in each variant's shadow/fill so transparent buttons react to hover too (not a brightness-only hover). Variants: `play` (the mood-accent orb, `.btn-orb`, recolours per mood over a deep Dream-Indigo base), `glass` (the quiet dark-glass export with an Aurora-tinted icon), `accent` (selected affordance, deepens on hover), `outline`/`secondary` (chrome, Aurora wash on hover), `inverse`, `ghost`, `muted`. The signature `.btn-aurora` gradient pans gently on hover (one-shot, calm); its shadow stacks a violet and a pink glow.
 - **Effect mode button (`EffectModeButton`)**: one button per effect (Speed Up, Slowed + Reverb, 8D, Bass Boost), in a 2x2 grid. Not a glass surface (it lives inside the glass rail): a bordered tile that, when selected, pairs an Aurora-tinted fill and border with a Lucide icon and label, so mode is never communicated by color alone.
 - **Effect slider (`EffectSlider`)**: a single clear control per effect (speed multiplier, reverb amount, rotation speed, bass intensity). Built on the `.slider` class, whose track fills with the Aurora accent up to the current value via the `--range` custom property, with a soft-halo white thumb. Value rendered large and tabular; formatted for humans (see `utils/formatters.ts`).
 - **Waveform scrubber (`WaveformScrubber`)**: a compact centered waveform of the loaded track that lives inline in the transport bar and *is* the scrub track — elapsed time on the left, the mirrored Aurora-stroked envelope filling the centre with a glowing white playhead thumb riding the progress point, total time on the right. Click or drag anywhere, plus arrow keys (`role="slider"`); the bars are non-interactive so they never intercept a seek, and played bars glow with the accent while the rest stay faint. Reshapes live to preview the active effect. With the waveform moved here, the cockpit's centre column is left open so the ambient scene can breathe through it.
-- **Transport bar (`PlaybackControls`)**: the sticky bottom HUD rail, laid out as a classic player: the play/pause orb leads on the left, the waveform scrubber (`WaveformScrubber`) fills the centre, then a compact live spectrum (`SpectrumMeter`, `lg`+ only), the volume, and the Export action on the right. The play/pause is the theme-accent orb (the hero of a listening session, recoloured per theme), wrapped in a holographic instrument dial (`HudDial`) whose rings spin while playing and whose halo punches with the beat; Export is the quiet dark-glass pill, available whenever a track is loaded. Start-over lives once, on the toolbar brand mark, not here.
-- **Mood rail (`ThemeRail`)**: the right column of the cockpit — an always-visible theme picker (see "Themes & moods"). A featured Mood chip opens the full gallery; the five vibey ambiances sit one tap below; "More themes" drops into the settings dialog for the calm faces + language.
+- **Transport bar (`PlaybackControls`)**: the sticky bottom HUD rail, laid out as a classic player: the play/pause orb leads on the left, the waveform scrubber (`WaveformScrubber`) fills the centre, then a compact live spectrum (`SpectrumMeter`, `lg`+ only), the volume, and the Export action on the right. The play/pause is the mood-accent orb (the hero of a listening session, recoloured per mood), wrapped in a holographic instrument dial (`HudDial`) whose rings spin while playing and whose halo punches with the beat; Export is the quiet dark-glass pill, available whenever a track is loaded. Start-over lives once, on the toolbar brand mark, not here.
+- **Mood rail (`MoodRail`)**: the right column of the cockpit — an always-visible mood picker (see "Moods"). A featured Mood chip opens the full gallery; the five vibey ambiances sit one tap below; "More moods" drops into the settings dialog for the calm faces + language.
 - **HUD dial (`HudDial`)**: a memoised SVG instrument dial (concentric rings, graduated tick rim, accent arc) decorating the play orb; coloured by `--hud-line` / `--color-accent`, rings spin under `is-spinning` while playing, frozen under reduced-motion.
 - **Spectrum meter (`SpectrumMeter`)**: a small Canvas-2D live spectrum (28 bars, ambient→accent vertical gradient) in the transport. Draws real frequency data while playing; settles to a calm static baseline when idle or under reduced-motion (never fakes motion).
 - **Volume control (`VolumeControl`)**: a compact icon-plus-short-slider on the right of the transport. The icon reflects the level (mute/low/high). The whole control is a wheel target with a generous hit area, so scrolling over it nudges the volume (and prevents the page from scrolling). Persists to `localStorage` (`reverie:volume`).
-- **Settings menu (`SettingsMenu`)**: a single gear button in the chrome opens a dialog with a 2-column gallery of all six themes (`THEME_ORDER`, each a live `preview` swatch) and the ten-locale language grid. Selecting a theme drives `data-theme` + `.dark` + `.immersive` on the root (see "Themes & moods").
+- **Settings menu (`SettingsMenu`)**: a single gear button in the chrome opens a dialog with a 2-column gallery of all six moods (`MOOD_ORDER`, each a live `preview` swatch) and the ten-locale language grid. Selecting a mood drives `data-mood` + `.dark` + `.immersive` on the root (see "Moods").
 - **Focus & scrollbar**: a global `:focus-visible` accent outline on every control; custom scrollbar 8px, transparent track, border-tinted thumb (dark/light aware).
 
 ## Iconography & Brand Assets
@@ -220,7 +220,7 @@ The product is a late-night listening experience, not an export funnel. Effects 
 
 ## Accessibility
 
-- WCAG 2.1 AA contrast for text and interactive states in both themes. Validate Aurora-on-Dream combinations; reserve the gradient for non-text elements where contrast is harder to guarantee.
+- WCAG 2.1 AA contrast for text and interactive states in both moods. Validate Aurora-on-Dream combinations; reserve the gradient for non-text elements where contrast is harder to guarantee.
 - Visible focus states on every interactive control; full keyboard operability.
 - Meaning never by color alone: effect modes and states pair hue with labels and icons.
 - `prefers-reduced-motion` respected throughout (see Motion).

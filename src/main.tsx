@@ -10,18 +10,22 @@ import '@fontsource-variable/hanken-grotesk/index.css'
 import './index.css'
 import './i18n/config'
 import App from './App.tsx'
-import { ThemeProvider } from './contexts/ThemeContext'
+import { MoodProvider } from './contexts/MoodContext'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { TooltipProvider } from './components/ui/tooltip'
+import { PerformanceHint } from './components/PerformanceHint'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
-      <ThemeProvider>
+      <MoodProvider>
         <TooltipProvider delayDuration={300}>
           <App />
+          {/* Fixed-position overlay: self-gates to software rendering, so it sits
+              outside App's branch logic and shows on both welcome and workspace. */}
+          <PerformanceHint />
         </TooltipProvider>
-      </ThemeProvider>
+      </MoodProvider>
     </ErrorBoundary>
   </StrictMode>,
 )

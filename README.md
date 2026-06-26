@@ -14,7 +14,7 @@ Reverie is a **free online audio editor** with one promise: dreamy edits for you
 - **Bass Boost Mode**: Enhance low frequencies with adjustable intensity (Light, Normal, Strong)
 
 ### Immersive Experience
-- **🪐 Mood/Theme system**: Six themes, each a palette + an animated ambient background over one curved heads-up display (HUD). Two calm "workspace" faces (Light, Dark) plus four immersive ambiances (Tidal, Nocturne, Aurora, Horizon). Switch the whole atmosphere in one tap from the inline mood rail, or from the settings gallery. Persisted to `localStorage`.
+- **🪐 Mood system**: Six moods, each a palette + an animated ambient background over one curved heads-up display (HUD). Two calm "workspace" faces (Light, Dark) plus four immersive ambiances (Tidal, Nocturne, Aurora, Horizon). Switch the whole atmosphere in one tap from the inline mood rail, or from the settings gallery. Persisted to `localStorage`.
 - **🌌 Living ambient scene**: A full-viewport backdrop (cosmic imagery + slow GPU-composited drift) that the open centre of the cockpit lets breathe through the glass.
 - **💓 Breathe-with-the-music reactivity**: A live analyser publishes audio-energy CSS variables (`--audio-level/-bass/-mid/-treble/-pulse`) that swell the scene bloom, pulse the HUD frames, and punch the play orb's halo on the beat. A compact live spectrum meter sits in the transport.
 
@@ -25,7 +25,7 @@ Reverie is a **free online audio editor** with one promise: dreamy edits for you
 - **🎨 Waveform Scrubber**: The track's Aurora-stroked envelope lives inline in the transport bar and doubles as the seek track, reshaping live to preview the active effect
 - **💾 Smart Format Export**: Exports match your original format where possible (MP3→MP3, WAV→WAV, AIFF→AIFF, FLAC→FLAC, WebM→WebM, OGG→OGG, M4A→M4A)
 - **🌍 Multi-Language Support**: Available in 10 languages (English, French, Spanish, German, Portuguese, Russian, Chinese, Japanese, Korean, Hindi)
-- **🌓 Theming**: Six selectable themes (Light, Dark, Tidal, Nocturne, Aurora, Horizon), persisted to `localStorage`
+- **🌓 Moods**: Six selectable moods (Light, Dark, Tidal, Nocturne, Aurora, Horizon), persisted to `localStorage`
 - **💻 PWA Support**: Install as a standalone desktop app (Reverie is a desktop-only experience — see below)
 - **♿ Accessible**: Full keyboard navigation and screen reader support
 
@@ -108,7 +108,7 @@ npm run dev
    - **8D Audio**: Adjust rotation speed (0.1x - 2.0x) to control the spatial movement
    - **Bass Boost**: Select intensity level (Light, Normal, Strong)
 4. **Listen**: Press play — moving any control reshapes the sound in real time
-5. **Set the mood** (optional): Pick a theme/atmosphere from the mood rail
+5. **Set the mood** (optional): Pick a mood from the mood rail
 6. **Export**: Download with smart format matching:
    - **MP3** → MP3 (preserves bitrate)
    - **WAV** → WAV (lossless)
@@ -136,10 +136,10 @@ reverie/
 │   │   ├── WaveformScrubber.tsx # Waveform that doubles as the scrub track (transport center)
 │   │   ├── SpectrumMeter.tsx    # Compact live spectrum (Canvas 2D) in the transport
 │   │   ├── VolumeControl.tsx   # Compact volume with scroll-to-adjust
-│   │   ├── ThemeRail.tsx       # Inline "mood rail": one-tap theme/atmosphere picker
-│   │   ├── AmbientScene.tsx    # Full-viewport ambient backdrop per active theme
+│   │   ├── MoodRail.tsx       # Inline "mood rail": one-tap mood picker
+│   │   ├── AmbientScene.tsx    # Full-viewport ambient backdrop per active mood
 │   │   ├── DesktopOnlyGate.tsx # Desktop-only gate: branded "open on a larger screen" stage for narrow viewports
-│   │   ├── SettingsMenu.tsx    # Theme gallery + language menu (localStorage, no URL)
+│   │   ├── SettingsMenu.tsx    # Mood gallery + language menu (localStorage, no URL)
 │   │   ├── ProgressBar.tsx     # Loading progress
 │   │   ├── hud/
 │   │   │   └── HudDial.tsx      # Holographic instrument dial wrapping the play orb
@@ -150,8 +150,8 @@ reverie/
 │   │   │   └── webgl/           # glScene.ts + nebulaShader/waterShader (orphaned WebGL layer)
 │   │   └── ui/                 # Primitives (button, card, dialog, badge, slider, progress, tooltip)
 │   ├── contexts/
-│   │   ├── ThemeContext.tsx    # Active theme: data-theme + .dark + .immersive on <html>
-│   │   └── themes.ts           # Theme registry (6 themes), scene ids, rail order, default
+│   │   ├── MoodContext.tsx    # Active mood: data-mood + .dark + .immersive on <html>
+│   │   └── moods.ts           # Mood registry (6 moods), scene ids, rail order, default
 │   ├── hooks/
 │   │   ├── useAudioProcessor.ts # Orchestrates processing, playback, export
 │   │   ├── useAudioFile.ts      # Loading + metadata + processing
@@ -313,7 +313,7 @@ Requires: Web Audio API, ES2022, IndexedDB
 The product vision lives in [PRODUCT.md](PRODUCT.md); the full visual system lives in [DESIGN.md](DESIGN.md).
 
 - **Identity**: a dreamy, dark-first "Dream field" in deep indigo and violet, tied together by the **Aurora** gradient (violet → pink → cyan) carried on the brand mark and the primary action button.
-- **Interface**: a holographic HUD (curved chrome, instrument dials, glass surfaces) floating over a living ambient scene; the whole atmosphere reskins per theme/mood.
+- **Interface**: a holographic HUD (curved chrome, instrument dials, glass surfaces) floating over a living ambient scene; the whole atmosphere reskins per mood.
 - **Reactivity**: the interface breathes with the music — bloom, HUD frames, and the play orb pulse to the live audio energy.
 - **Color**: OKLCH tokens, tinted neutrals (no pure black or white), Aurora reserved for strokes, fills, and active states, never body text.
 - **Typography**: two self-hosted variable web faces — Hanken Grotesk for UI/body, Fraunces (display serif) for identity and headings; lowercase `reverie` wordmark in a light weight.

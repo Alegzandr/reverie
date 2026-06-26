@@ -12,7 +12,7 @@ interface HudDialProps {
 /**
  * A holographic instrument dial — concentric rings, a graduated tick rim, and a
  * short accent arc — borrowed from the Iron Man / S.H.I.E.L.D. HUD language.
- * Pure decoration (aria-hidden), coloured by the active theme's --hud-line /
+ * Pure decoration (aria-hidden), coloured by the active mood's --hud-line /
  * --color-accent. Memoised: the transport re-renders every frame, but the dial
  * only depends on `spinning`, so it never redraws its ticks mid-playback.
  */

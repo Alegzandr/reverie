@@ -1,0 +1,84 @@
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import type { ReactNode } from 'react';
+import { MOODS, DEFAULT_MOOD, isMoodId } from './moods';
+import type { MoodId, MoodDef } from './moods';
+
+const STORAGE_KEY = 'mood';
+const RECENTS_KEY = 'mood-recents';
+/** How many moods the rail surfaces as "recently used". */
+const MAX_RECENTS = 5;
+
+interface MoodContextType {
+  mood: MoodId;
+  def: MoodDef;
+  setMood: (id: MoodId) => void;
+  /** Most-recently-applied moods, newest first, current mood always at index 0. */
+  recentMoods: MoodId[];
+}
+
+const MoodContext = createContext<MoodContextType | undefined>(undefined);
+
+function readInitialMood(): MoodId {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  return isMoodId(saved) ? saved : DEFAULT_MOOD;
+}
+
+function readRecents(): MoodId[] {
+  try {
+    const raw: unknown = JSON.parse(localStorage.getItem(RECENTS_KEY) ?? '[]');
+    if (Array.isArray(raw)) return raw.filter(isMoodId);
+  } catch {
+    // Corrupt/missing list — start fresh.
+  }
+  return [];
+}
+
+export function MoodProvider({ children }: { children: ReactNode }) {
+  const [mood, setMoodState] = useState<MoodId>(readInitialMood);
+  const [recentMoods, setRecentMoods] = useState<MoodId[]>(() => {
+    const current = readInitialMood();
+    // Pin the active mood to the front so the rail always opens on the mood
+    // you're actually hearing.
+    return [current, ...readRecents().filter((id) => id !== current)].slice(0, MAX_RECENTS);
+  });
+
+  useEffect(() => {
+    const def = MOODS[mood];
+    localStorage.setItem(STORAGE_KEY, def.id);
+
+    const root = document.documentElement;
+    root.setAttribute('data-mood', def.id);
+    // Dark-based moods keep the `.dark` class so every existing `dark:` utility
+    // and `.dark` rule keeps working without a rewrite.
+    root.classList.toggle('dark', def.base === 'dark');
+    // The futuristic HUD is the one interface, present for every mood; a mood
+    // only swaps the palette + the animated background. So `.immersive` is
+    // always on (it gates the holographic chrome + ambient scene).
+    root.classList.add('immersive');
+  }, [mood]);
+
+  useEffect(() => {
+    localStorage.setItem(RECENTS_KEY, JSON.stringify(recentMoods));
+  }, [recentMoods]);
+
+  const setMood = useCallback((id: MoodId) => {
+    if (!isMoodId(id)) return;
+    setMoodState(id);
+    setRecentMoods((prev) => [id, ...prev.filter((t) => t !== id)].slice(0, MAX_RECENTS));
+  }, []);
+
+  return (
+    <MoodContext.Provider value={{ mood, def: MOODS[mood], setMood, recentMoods }}>
+      {children}
+    </MoodContext.Provider>
+  );
+}
+
+export function useMood() {
+  const context = useContext(MoodContext);
+  if (!context) {
+    throw new Error('useMood must be used within MoodProvider');
+  }
+  return context;
+}

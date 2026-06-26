@@ -1,4 +1,9 @@
 {
+  "performance": {
+    "title": "ソフトウェアレンダリングを検出",
+    "body": "お使いのブラウザは GPU を使わずに Reverie を描画しています。ブラウザ設定でハードウェアアクセラレーションを有効にすると、滑らかな完全版のシーンになります。",
+    "dismiss": "閉じる"
+  },
   "gate": {
     "title": "大きな画面のために",
     "description": "Reverie のコックピット——エフェクト、息づく波形、ムード——には広がりが必要です。すべてを味わうにはパソコンで開いてください。",
@@ -100,9 +105,9 @@
   "settings": {
     "open": "設定",
     "title": "設定",
-    "subtitle": "テーマと言語",
-    "themes": "テーマ",
-    "theme": {
+    "subtitle": "ムードと言語",
+    "moods": "ムード",
+    "mood": {
       "light": "ライト",
       "dark": "Void Bloom",
       "tidal": "Cosmic Wave",
@@ -117,9 +122,9 @@
     "effects": "エフェクト",
     "adjustments": "調整",
     "mood": "ムード",
-    "themes": "テーマ",
-    "recentThemes": "最近使用したもの",
-    "allThemes": "すべてのテーマ",
+    "moods": "ムード",
+    "recentMoods": "最近使用したもの",
+    "allMoods": "すべてのムード",
     "active": "オン",
     "inactive": "オフ",
     "levels": "レベル"

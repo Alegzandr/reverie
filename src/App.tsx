@@ -9,10 +9,11 @@ import { PlaybackControls } from './components/PlaybackControls';
 import { ProgressBar } from './components/ProgressBar';
 import { SettingsMenu } from './components/SettingsMenu';
 import { AmbientScene } from './components/AmbientScene';
+import { MoodTransition } from './components/MoodTransition';
 import { DesktopOnlyGate } from './components/DesktopOnlyGate';
 import { useIsViewportTooNarrow } from './hooks/useViewportGate';
 import { WaveformTimeline } from './components/WaveformTimeline';
-import { ThemeRail } from './components/ThemeRail';
+import { MoodRail } from './components/MoodRail';
 import { Card } from './components/ui/card';
 import { Badge } from './components/ui/badge';
 import { Tooltip, TooltipTrigger, TooltipContent } from './components/ui/tooltip';
@@ -83,7 +84,10 @@ function App() {
     updateMetaTag('twitter:description', t('meta.description'));
   }, [i18n.language, t]);
 
-  // Seed matches EffectControls' initial mode; replaced by its first onChange on mount.
+  // Source of truth for the live effect settings. Seeded to match EffectControls'
+  // defaults and kept in sync via its onChange. Passed back as `initialSettings`
+  // so a remount (e.g. the desktop gate flipping mid window-drag) restores these
+  // values instead of snapping back to the slow-reverb defaults.
   const [effectSettings, setEffectSettings] = useState<EffectSettings>({
     mode: 'slow-reverb',
     speedMultiplier: EFFECT_DEFAULTS.SLOW_REVERB.SPEED_DEFAULT,
@@ -205,6 +209,7 @@ function App() {
     return (
       <div className="min-h-screen flex flex-col">
         <AmbientScene />
+        <MoodTransition />
         <div className="flex items-center justify-end gap-2 px-4 sm:px-6 py-4">
           <SettingsMenu />
         </div>
@@ -289,6 +294,7 @@ function App() {
   return (
     <div className="min-h-screen flex flex-col">
       <AmbientScene />
+      <MoodTransition />
       <FileDropOverlay onFileSelect={handleFileSelect} disabled={state.isExporting} />
       <header className="hud-rail hud-rail-top sticky top-0 z-40 bg-[rgba(var(--color-surface),0.78)] backdrop-blur-xl border-b border-[rgba(var(--color-border),0.5)]">
         <div className="hud-bow">
@@ -352,7 +358,11 @@ function App() {
           {originalFile && (
             <Card asChild className="hud-frame p-4 sm:p-5 audio-drift-a">
               <aside>
-                <EffectControls onChange={handleEffectChange} disabled={state.isExporting} />
+                <EffectControls
+                  onChange={handleEffectChange}
+                  disabled={state.isExporting}
+                  initialSettings={effectSettings}
+                />
               </aside>
             </Card>
           )}
@@ -370,7 +380,7 @@ function App() {
             )}
           </section>
 
-          <ThemeRail />
+          <MoodRail />
         </div>
       </main>
 

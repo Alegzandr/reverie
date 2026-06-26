@@ -20,7 +20,7 @@ describe('main entry', () => {
     document.body.innerHTML = '<div id="root"></div>';
   });
 
-  it('mounts app inside ErrorBoundary > ThemeProvider', async () => {
+  it('mounts app inside ErrorBoundary > MoodProvider', async () => {
     await import('./main');
 
     expect(createRootMock).toHaveBeenCalledWith(document.getElementById('root'));
@@ -33,12 +33,12 @@ describe('main entry', () => {
     const errorBoundary = (tree.props as any).children;
     expect(errorBoundary.type.name).toBe('ErrorBoundary');
 
-    // Check ThemeProvider is inside ErrorBoundary (no router: language lives in localStorage)
-    const themeProvider = (errorBoundary.props as any).children;
-    expect(themeProvider.type.name).toBe('ThemeProvider');
+    // Check MoodProvider is inside ErrorBoundary (no router: language lives in localStorage)
+    const moodProvider = (errorBoundary.props as any).children;
+    expect(moodProvider.type.name).toBe('MoodProvider');
 
-    // App is rendered directly inside ThemeProvider
-    const app = (themeProvider.props as any).children;
+    // App is rendered directly inside MoodProvider
+    const app = (moodProvider.props as any).children;
     expect(app).toBeTruthy();
   });
 });

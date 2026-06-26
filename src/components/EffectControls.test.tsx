@@ -55,7 +55,7 @@ describe('EffectControls', () => {
     expect(onChange).toHaveBeenLastCalledWith({ mode: 'slow-reverb', speedMultiplier: 0.7, reverbAmount: 0.5 });
   });
 
-  it('restores a slider to its default on double-click', async () => {
+  it('restores a slider to its default on a quick double-click', async () => {
     const onChange = vi.fn();
     render(<EffectControls onChange={onChange} />);
 
@@ -63,8 +63,32 @@ describe('EffectControls', () => {
     fireEvent.change(slowSpeedSlider, { target: { value: '0.6' } });
     expect(onChange).toHaveBeenLastCalledWith({ mode: 'slow-reverb', speedMultiplier: 0.6, reverbAmount: 0.5 });
 
-    fireEvent.doubleClick(slowSpeedSlider);
+    // Two clicks within the reset window snap back to the default.
+    let now = 1000;
+    const nowSpy = vi.spyOn(performance, 'now').mockImplementation(() => now);
+    fireEvent.click(slowSpeedSlider);
+    now = 1100;
+    fireEvent.click(slowSpeedSlider);
+    nowSpy.mockRestore();
     expect(onChange).toHaveBeenLastCalledWith({ mode: 'slow-reverb', speedMultiplier: 0.7, reverbAmount: 0.5 });
+  });
+
+  it('does not reset a slider when the two clicks are too far apart', async () => {
+    const onChange = vi.fn();
+    render(<EffectControls onChange={onChange} />);
+
+    const slowSpeedSlider = screen.getByLabelText(/effects\.slowSpeed/);
+    fireEvent.change(slowSpeedSlider, { target: { value: '0.6' } });
+    expect(onChange).toHaveBeenLastCalledWith({ mode: 'slow-reverb', speedMultiplier: 0.6, reverbAmount: 0.5 });
+
+    // Two separate, slower clicks must not be read as a reset.
+    let now = 1000;
+    const nowSpy = vi.spyOn(performance, 'now').mockImplementation(() => now);
+    fireEvent.click(slowSpeedSlider);
+    now = 1400;
+    fireEvent.click(slowSpeedSlider);
+    nowSpy.mockRestore();
+    expect(onChange).toHaveBeenLastCalledWith({ mode: 'slow-reverb', speedMultiplier: 0.6, reverbAmount: 0.5 });
   });
 
   it('ignores interactions when disabled', async () => {

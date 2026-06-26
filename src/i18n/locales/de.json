@@ -1,4 +1,9 @@
 {
+  "performance": {
+    "title": "Software-Rendering erkannt",
+    "body": "Dein Browser stellt Reverie ohne GPU dar. Aktiviere die Hardwarebeschleunigung in den Browsereinstellungen für die volle, flüssige Szene.",
+    "dismiss": "Ausblenden"
+  },
   "gate": {
     "title": "Für den großen Bildschirm gemacht",
     "description": "Das Cockpit von Reverie — die Effekte, die lebendige Wellenform und die Stimmung — braucht Platz zum Atmen. Öffne es auf einem Computer, um das volle Erlebnis zu genießen.",
@@ -100,9 +105,9 @@
   "settings": {
     "open": "Einstellungen",
     "title": "Einstellungen",
-    "subtitle": "Themes und Sprache",
-    "themes": "Themes",
-    "theme": {
+    "subtitle": "Stimmungen und Sprache",
+    "moods": "Stimmungen",
+    "mood": {
       "light": "Hell",
       "dark": "Void Bloom",
       "tidal": "Cosmic Wave",
@@ -117,9 +122,9 @@
     "effects": "Effekte",
     "adjustments": "Einstellungen",
     "mood": "Stimmung",
-    "themes": "Themes",
-    "recentThemes": "Zuletzt verwendet",
-    "allThemes": "Alle Themes",
+    "moods": "Stimmungen",
+    "recentMoods": "Zuletzt verwendet",
+    "allMoods": "Alle Stimmungen",
     "active": "Aktiv",
     "inactive": "Inaktiv",
     "levels": "Pegel"

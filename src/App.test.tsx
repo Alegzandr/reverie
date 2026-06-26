@@ -36,19 +36,19 @@ const mockApi = {
   getAnalyser: () => null,
 };
 
-const mockSetTheme = vi.fn();
+const mockSetMood = vi.fn();
 const mockI18n = { language: 'en', changeLanguage: vi.fn() };
 
 vi.mock('./hooks/useAudioProcessor', () => ({
   useAudioProcessor: () => mockApi,
 }));
 
-vi.mock('./contexts/ThemeContext', () => ({
-  useTheme: () => ({
-    theme: 'light',
+vi.mock('./contexts/MoodContext', () => ({
+  useMood: () => ({
+    mood: 'light',
     def: { kind: 'workspace', scene: 'daybreak' },
-    setTheme: mockSetTheme,
-    recentThemes: ['light', 'dark'],
+    setMood: mockSetMood,
+    recentMoods: ['light', 'dark'],
   }),
 }));
 
@@ -156,12 +156,12 @@ describe('App', () => {
     consoleSpy.mockRestore();
   });
 
-  it('selects a theme from the settings menu', async () => {
+  it('selects a mood from the settings menu', async () => {
     renderWithRouter(<App />);
-    // Theme + language now live behind a single settings menu.
+    // Mood + language now live behind a single settings menu.
     await userEvent.click(screen.getByLabelText('settings.open'));
-    await userEvent.click(screen.getByLabelText('settings.theme.dark'));
-    expect(mockSetTheme).toHaveBeenCalledWith('dark');
+    await userEvent.click(screen.getByLabelText('settings.mood.dark'));
+    expect(mockSetMood).toHaveBeenCalledWith('dark');
   });
 
   it('renders waveform timeline and allows seeking', async () => {

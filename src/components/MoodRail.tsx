@@ -1,27 +1,27 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Check, ChevronDown } from 'lucide-react';
-import { useTheme } from '../contexts/ThemeContext';
-import { THEMES, THEME_ORDER } from '../contexts/themes';
-import type { ThemeId } from '../contexts/themes';
+import { useMood } from '../contexts/MoodContext';
+import { MOODS, MOOD_ORDER } from '../contexts/moods';
+import type { MoodId } from '../contexts/moods';
 import { Card } from './ui/card';
 import { cn } from '@/lib/utils';
 
 /**
- * The workspace mood rail — an inline theme picker beside the waveform. Each theme
+ * The workspace mood rail — an inline mood picker beside the waveform. Each mood
  * is a palette + an animated background over the same HUD, so switching it is the
  * fastest way to re-skin the whole atmosphere mid-listen. The featured mood reads
- * out at the top in a dropdown that opens the full mood gallery (every theme),
+ * out at the top in a dropdown that opens the full mood gallery (every mood),
  * and the moods you've reached for recently sit one tap away below. This lifts
  * theming out of a buried menu and makes it a first-class, always-visible control.
  */
 
-/** A small live swatch painted with the theme's own scene gradient. */
-function Swatch({ id, className }: { id: ThemeId; className?: string }) {
+/** A small live swatch painted with the mood's own scene gradient. */
+function Swatch({ id, className }: { id: MoodId; className?: string }) {
   return (
     <span
       className={cn('block rounded-lg ring-1 ring-inset ring-[rgba(var(--hud-line),0.3)]', className)}
-      style={{ background: THEMES[id].preview }}
+      style={{ background: MOODS[id].preview }}
       aria-hidden="true"
     />
   );
@@ -29,14 +29,14 @@ function Swatch({ id, className }: { id: ThemeId; className?: string }) {
 
 /**
  * The Mood dropdown — its trigger reads out the active atmosphere; opening it
- * reveals the exhaustive theme gallery in a popover (not the settings dialog).
+ * reveals the exhaustive mood gallery in a popover (not the settings dialog).
  */
 function MoodGallery() {
   const { t } = useTranslation();
-  const { theme, setTheme } = useTheme();
+  const { mood, setMood } = useMood();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const activeName = t(`settings.theme.${THEMES[theme].labelKey}`);
+  const activeName = t(`settings.mood.${MOODS[mood].labelKey}`);
 
   // Dismiss on outside click or Escape — the lightweight popover contract.
   useEffect(() => {
@@ -64,7 +64,7 @@ function MoodGallery() {
         aria-expanded={open}
         className="ios-button group flex w-full items-center gap-3 rounded-2xl border border-[rgba(var(--color-border),0.7)] bg-[rgba(var(--color-surface),0.45)] px-3 py-2.5 text-left outline-none hover:border-[rgba(var(--color-accent),0.55)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-background))]"
       >
-        <Swatch id={theme} className="h-8 w-8 shrink-0" />
+        <Swatch id={mood} className="h-8 w-8 shrink-0" />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-semibold text-[rgb(var(--color-text))]">
             {activeName}
@@ -82,15 +82,15 @@ function MoodGallery() {
       {open && (
         <div
           role="listbox"
-          aria-label={t('studio.allThemes')}
+          aria-label={t('studio.allMoods')}
           className="glass absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 max-h-[19rem] overflow-y-auto rounded-2xl border border-[rgba(var(--color-border),0.7)] bg-[rgba(var(--color-surface),0.95)] p-1.5 backdrop-blur-xl"
         >
           <ul className="space-y-1">
-            {THEME_ORDER.map((id) => {
-              const tdef = THEMES[id];
+            {MOOD_ORDER.map((id) => {
+              const tdef = MOODS[id];
               const Icon = tdef.icon;
-              const active = theme === id;
-              const label = t(`settings.theme.${tdef.labelKey}`);
+              const active = mood === id;
+              const label = t(`settings.mood.${tdef.labelKey}`);
               return (
                 <li key={id}>
                   <button
@@ -98,7 +98,7 @@ function MoodGallery() {
                     role="option"
                     aria-selected={active}
                     onClick={() => {
-                      setTheme(id);
+                      setMood(id);
                       setOpen(false);
                     }}
                     className={cn(
@@ -133,15 +133,15 @@ function MoodGallery() {
   );
 }
 
-export function ThemeRail() {
+export function MoodRail() {
   const { t } = useTranslation();
-  const { theme, setTheme, recentThemes } = useTheme();
+  const { mood, setMood, recentMoods } = useMood();
 
   return (
     <Card asChild className="hud-frame p-4 sm:p-5 audio-drift-b">
-      <aside className="flex flex-col gap-5" aria-label={t('studio.themes')}>
+      <aside className="flex flex-col gap-5" aria-label={t('studio.moods')}>
         {/* Mood — the featured, currently-playing atmosphere. The dropdown opens
-            the full gallery of every theme. */}
+            the full gallery of every mood. */}
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-2 min-h-7">
             <span className="hud-readout truncate">{t('studio.mood')}</span>
@@ -152,22 +152,22 @@ export function ThemeRail() {
 
         {/* Recently used — quick one-tap return to the moods you've been cycling. */}
         <div className="space-y-2">
-          <span className="hud-readout block">{t('studio.recentThemes')}</span>
+          <span className="hud-readout block">{t('studio.recentMoods')}</span>
           <ul className="space-y-1.5">
-            {recentThemes
-              .map((id) => ({ id, label: t(`settings.theme.${THEMES[id].labelKey}`) }))
+            {recentMoods
+              .map((id) => ({ id, label: t(`settings.mood.${MOODS[id].labelKey}`) }))
               // Stable alphabetical order so switching moods doesn't reshuffle the
               // rail under your finger — only membership changes, never position.
               .sort((a, b) => a.label.localeCompare(b.label))
               .map(({ id, label }) => {
-              const tdef = THEMES[id];
+              const tdef = MOODS[id];
               const Icon = tdef.icon;
-              const active = theme === id;
+              const active = mood === id;
               return (
                 <li key={id}>
                   <button
                     type="button"
-                    onClick={() => setTheme(id)}
+                    onClick={() => setMood(id)}
                     aria-pressed={active}
                     className={cn(
                       'ios-button flex w-full items-center gap-3 rounded-xl border px-2.5 py-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-background))]',

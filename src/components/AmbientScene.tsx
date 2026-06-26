@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react';
-import { useTheme } from '../contexts/ThemeContext';
-import type { SceneId } from '../contexts/themes';
+import { useMood } from '../contexts/MoodContext';
+import type { SceneId } from '../contexts/moods';
 import { animatedBackdropAllowed } from './scenes/motion';
 
 /**
- * Full-viewport ambient backdrop for the active theme: a cosmic photo base
+ * Full-viewport ambient backdrop for the active mood: a cosmic photo base
  * (`.scene-photo`) brought alive by pointer parallax, autonomous drift and
  * colour haze. Composites on the GPU; never touches the Web Audio graph; freezes
  * on a still frame under `prefers-reduced-motion`.
@@ -30,7 +30,7 @@ const SCENES: Record<SceneId, React.ReactNode> = {
 };
 
 export function AmbientScene() {
-  const { def } = useTheme();
+  const { def } = useMood();
   const sceneRef = useRef<HTMLDivElement>(null);
   const isPhoto = def.scene !== 'daybreak';
 

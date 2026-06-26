@@ -1,4 +1,9 @@
 {
+  "performance": {
+    "title": "检测到软件渲染",
+    "body": "您的浏览器未使用 GPU 渲染 Reverie。请在浏览器设置中开启硬件加速，以获得完整流畅的画面。",
+    "dismiss": "关闭"
+  },
   "gate": {
     "title": "为大屏幕而生",
     "description": "Reverie 的操控台——音效、灵动的波形与氛围——需要足够的空间舒展。请在电脑上打开，享受完整体验。",
@@ -100,9 +105,9 @@
   "settings": {
     "open": "设置",
     "title": "设置",
-    "subtitle": "主题和语言",
-    "themes": "主题",
-    "theme": {
+    "subtitle": "氛围和语言",
+    "moods": "氛围",
+    "mood": {
       "light": "浅色",
       "dark": "Void Bloom",
       "tidal": "Cosmic Wave",
@@ -117,9 +122,9 @@
     "effects": "效果",
     "adjustments": "调节",
     "mood": "氛围",
-    "themes": "主题",
-    "recentThemes": "最近使用",
-    "allThemes": "所有主题",
+    "moods": "氛围",
+    "recentMoods": "最近使用",
+    "allMoods": "所有氛围",
     "active": "启用",
     "inactive": "停用",
     "levels": "电平"

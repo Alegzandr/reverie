@@ -1,4 +1,9 @@
 {
+  "performance": {
+    "title": "소프트웨어 렌더링 감지됨",
+    "body": "브라우저가 GPU 없이 Reverie를 그리고 있습니다. 브라우저 설정에서 하드웨어 가속을 켜면 완전하고 부드러운 장면을 즐길 수 있습니다.",
+    "dismiss": "닫기"
+  },
   "gate": {
     "title": "큰 화면을 위한 경험",
     "description": "Reverie의 콕핏 — 이펙트, 살아 있는 파형, 분위기 — 에는 숨 쉴 공간이 필요합니다. 완전한 경험을 위해 컴퓨터에서 열어 주세요.",
@@ -100,9 +105,9 @@
   "settings": {
     "open": "설정",
     "title": "설정",
-    "subtitle": "테마 및 언어",
-    "themes": "테마",
-    "theme": {
+    "subtitle": "무드 및 언어",
+    "moods": "무드",
+    "mood": {
       "light": "라이트",
       "dark": "Void Bloom",
       "tidal": "Cosmic Wave",
@@ -117,9 +122,9 @@
     "effects": "이펙트",
     "adjustments": "조절",
     "mood": "무드",
-    "themes": "테마",
-    "recentThemes": "최근 사용",
-    "allThemes": "모든 테마",
+    "moods": "무드",
+    "recentMoods": "최근 사용",
+    "allMoods": "모든 무드",
     "active": "켜짐",
     "inactive": "꺼짐",
     "levels": "레벨"

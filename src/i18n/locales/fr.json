@@ -1,4 +1,9 @@
 {
+  "performance": {
+    "title": "Rendu logiciel détecté",
+    "body": "Votre navigateur affiche Reverie sans le GPU. Activez l'accélération matérielle dans ses réglages pour retrouver la scène complète et fluide.",
+    "dismiss": "Masquer"
+  },
   "gate": {
     "title": "Pensé pour le grand écran",
     "description": "Le cockpit de Reverie — les effets, la forme d'onde vivante et l'ambiance — a besoin d'espace pour respirer. Ouvre-le sur un ordinateur pour en profiter pleinement.",
@@ -100,9 +105,9 @@
   "settings": {
     "open": "Réglages",
     "title": "Réglages",
-    "subtitle": "Thèmes et langue",
-    "themes": "Thèmes",
-    "theme": {
+    "subtitle": "Moods et langue",
+    "moods": "Moods",
+    "mood": {
       "light": "Clair",
       "dark": "Void Bloom",
       "tidal": "Cosmic Wave",
@@ -117,9 +122,9 @@
     "effects": "Effets",
     "adjustments": "Réglages",
     "mood": "Mood",
-    "themes": "Thèmes",
-    "recentThemes": "Récemment utilisés",
-    "allThemes": "Tous les thèmes",
+    "moods": "Moods",
+    "recentMoods": "Récemment utilisés",
+    "allMoods": "Tous les moods",
     "active": "Actif",
     "inactive": "Inactif",
     "levels": "Niveaux"

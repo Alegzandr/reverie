@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Volume2, Volume1, VolumeX } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
+import { useDoubleClickReset } from '@/hooks/useDoubleClickReset';
 import { AUDIO_PROCESSING } from '@/constants';
 
 interface VolumeControlProps {
@@ -23,6 +24,10 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
 export function VolumeControl({ volume, onVolumeChange, disabled, className = '' }: VolumeControlProps) {
   const { t } = useTranslation();
   const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const handleDoubleClickReset = useDoubleClickReset(
+    () => onVolumeChange(AUDIO_PROCESSING.DEFAULT_VOLUME),
+    !disabled,
+  );
 
   // Keep the latest props in refs so the native wheel listener is attached once.
   const volumeRef = useRef(volume);
@@ -68,9 +73,7 @@ export function VolumeControl({ volume, onVolumeChange, disabled, className = ''
         step={0.01}
         value={volume}
         onValueChange={(v) => onVolumeChange(round2(v))}
-        onDoubleClick={() => {
-          if (!disabled) onVolumeChange(AUDIO_PROCESSING.DEFAULT_VOLUME);
-        }}
+        onClick={handleDoubleClickReset}
         disabled={disabled}
         aria-label={`${t('playback.volume')}: ${percent}%`}
         title={t('effects.resetHint')}

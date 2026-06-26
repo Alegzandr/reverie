@@ -12,9 +12,9 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { useTheme } from '../contexts/ThemeContext';
-import { THEMES, THEME_ORDER } from '../contexts/themes';
-import type { ThemeId } from '../contexts/themes';
+import { useMood } from '../contexts/MoodContext';
+import { MOODS, MOOD_ORDER } from '../contexts/moods';
+import type { MoodId } from '../contexts/moods';
 import { cn } from '@/lib/utils';
 
 const languages = [
@@ -32,26 +32,26 @@ const languages = [
 
 interface SettingsMenuProps {
   /** Optional custom trigger; defaults to the gear icon button in the chrome.
-   *  The theme rail passes its "More themes" row and Mood chip here so they open
+   *  The mood rail passes its "More moods" row and Mood chip here so they open
    *  the same dialog without duplicating it. */
   trigger?: ReactNode;
 }
 
 export function SettingsMenu({ trigger }: SettingsMenuProps = {}) {
   const { i18n, t } = useTranslation();
-  const { theme, setTheme } = useTheme();
+  const { mood, setMood } = useMood();
   const [open, setOpen] = useState(false);
 
-  const renderThemeCard = (id: ThemeId) => {
-    const def = THEMES[id];
+  const renderMoodCard = (id: MoodId) => {
+    const def = MOODS[id];
     const Icon = def.icon;
-    const active = theme === id;
-    const label = t(`settings.theme.${def.labelKey}`);
+    const active = mood === id;
+    const label = t(`settings.mood.${def.labelKey}`);
     return (
       <button
         key={id}
         type="button"
-        onClick={() => setTheme(id)}
+        onClick={() => setMood(id)}
         aria-pressed={active}
         aria-label={label}
         className={cn(
@@ -62,7 +62,7 @@ export function SettingsMenu({ trigger }: SettingsMenuProps = {}) {
             : 'border-[rgba(var(--color-border),0.7)] hover:border-[rgba(var(--color-accent),0.5)]'
         )}
       >
-        {/* Live preview swatch — the theme's own scene/backdrop colours */}
+        {/* Live preview swatch — the mood's own scene/backdrop colours */}
         <span
           className="block h-14 w-full"
           style={{ background: def.preview }}
@@ -106,13 +106,13 @@ export function SettingsMenu({ trigger }: SettingsMenuProps = {}) {
         </DialogHeader>
 
         <div className="max-h-[64vh] overflow-y-auto pr-1 -mr-1">
-          {/* Theme gallery — every theme is a palette + animated background over
+          {/* Mood gallery — every mood is a palette + animated background over
               the same futuristic HUD. */}
           <section className="mb-5">
             <h3 className="text-[11px] uppercase tracking-wide text-[rgb(var(--color-text-secondary))] mb-2">
-              {t('settings.themes')}
+              {t('settings.moods')}
             </h3>
-            <div className="grid grid-cols-2 gap-2.5">{THEME_ORDER.map(renderThemeCard)}</div>
+            <div className="grid grid-cols-2 gap-2.5">{MOOD_ORDER.map(renderMoodCard)}</div>
           </section>
 
           {/* Language */}
