@@ -1535,7 +1535,7 @@
      no-reduce only; the tape is dead-still otherwise. */
   @media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (pointer: fine) {
     .immersive .hud-ruler {
-      animation: hud-ruler-scroll 7s linear infinite;
+      animation: hud-ruler-scroll 0.6s linear infinite;
     }
   }
 

@@ -26,7 +26,7 @@ Reverie is a **free online audio editor** with one promise: dreamy edits for you
 - **💾 Smart Format Export**: Exports match your original format where possible (MP3→MP3, WAV→WAV, AIFF→AIFF, FLAC→FLAC, WebM→WebM, OGG→OGG, M4A→M4A)
 - **🌍 Multi-Language Support**: Available in 10 languages (English, French, Spanish, German, Portuguese, Russian, Chinese, Japanese, Korean, Hindi)
 - **🌓 Theming**: Six selectable themes (Light, Dark, Tidal, Nocturne, Aurora, Horizon), persisted to `localStorage`
-- **📱 PWA Support**: Install as a standalone app on mobile and desktop
+- **💻 PWA Support**: Install as a standalone desktop app (Reverie is a desktop-only experience — see below)
 - **♿ Accessible**: Full keyboard navigation and screen reader support
 
 ### Developer Features
@@ -138,6 +138,7 @@ reverie/
 │   │   ├── VolumeControl.tsx   # Compact volume with scroll-to-adjust
 │   │   ├── ThemeRail.tsx       # Inline "mood rail": one-tap theme/atmosphere picker
 │   │   ├── AmbientScene.tsx    # Full-viewport ambient backdrop per active theme
+│   │   ├── DesktopOnlyGate.tsx # Desktop-only gate: branded "open on a larger screen" stage for narrow viewports
 │   │   ├── SettingsMenu.tsx    # Theme gallery + language menu (localStorage, no URL)
 │   │   ├── ProgressBar.tsx     # Loading progress
 │   │   ├── hud/
@@ -157,7 +158,8 @@ reverie/
 │   │   ├── useAudioPlayback.ts  # Playback, seeking, volume
 │   │   ├── useAudioExport.ts    # Strategy-based exporting and filenames
 │   │   ├── useAudioReactivity.ts # Publishes --audio-* CSS vars from the live analyser
-│   │   └── useWaveform.ts       # Cached waveform generation
+│   │   ├── useWaveform.ts       # Cached waveform generation
+│   │   └── useViewportGate.ts   # matchMedia desktop-width check powering the desktop-only gate
 │   ├── i18n/
 │   │   ├── config.ts           # i18next configuration
 │   │   └── locales/            # Translation files (EN, FR, ES, DE, PT, RU, ZH, JA, KO, HI)
@@ -316,7 +318,7 @@ The product vision lives in [PRODUCT.md](PRODUCT.md); the full visual system liv
 - **Color**: OKLCH tokens, tinted neutrals (no pure black or white), Aurora reserved for strokes, fills, and active states, never body text.
 - **Typography**: two self-hosted variable web faces — Hanken Grotesk for UI/body, Fraunces (display serif) for identity and headings; lowercase `reverie` wordmark in a light weight.
 - **Components**: modular, reusable components with purposeful glass-morphism surfaces.
-- **Responsive**: mobile-first design with breakpoints.
+- **Desktop-only**: the cockpit needs a wide canvas, so viewports under 1024px (`VIEWPORT.MIN_DESKTOP_WIDTH`) are gated to a branded "open on a larger screen" stage (`DesktopOnlyGate`) with no bypass; the gate reacts live to resize via `matchMedia`.
 - **Accessibility**: WCAG 2.1 AA compliant; honors `prefers-reduced-motion` (ambient motion and reactivity fall back to a calm static state).
 - **Code Quality**: zero magic numbers, centralized constants, DRY principles.
 

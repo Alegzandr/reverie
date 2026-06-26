@@ -186,6 +186,22 @@ Object.defineProperty(globalThis, 'OfflineAudioContext', {
   value: MockOfflineAudioContext,
 });
 
+// matchMedia: jsdom omits it. Default to "desktop" (matches: false) so the
+// desktop-only gate stays out of the way; tests can override per-case.
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: (query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  }),
+});
+
 // URL helpers used by downloadBlob — always spies so tests can assert on them
 // (recent jsdom ships real implementations, so a presence guard would skip these).
 URL.createObjectURL = vi.fn(() => 'blob:mock-url');

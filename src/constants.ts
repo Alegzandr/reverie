@@ -81,6 +81,21 @@ export const BIT_DEPTH = {
 } as const;
 
 // ============================================================================
+// VIEWPORT / LAYOUT CONSTANTS
+// ============================================================================
+
+export const VIEWPORT = {
+  /**
+   * Minimum viewport width (px) Reverie is offered at. The cockpit — effects
+   * rail, holographic waveform and mood rail — only lines up on a real desktop
+   * canvas (the 3-column grid activates at Tailwind's `lg`, 1024px). Below this
+   * we gate to a branded "come back on a bigger screen" stage instead of
+   * shipping a cramped mobile layout. Width-based and matched to `lg`.
+   */
+  MIN_DESKTOP_WIDTH: 1024,
+} as const;
+
+// ============================================================================
 // FILE FORMAT CONSTANTS
 // ============================================================================
 

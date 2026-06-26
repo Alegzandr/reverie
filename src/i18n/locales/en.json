@@ -1,4 +1,9 @@
 {
+  "gate": {
+    "title": "Made for the big screen",
+    "description": "Reverie's cockpit — the effects, the living waveform and the mood — needs room to breathe. Open it on a computer to enjoy the full experience.",
+    "hint": "See you on desktop"
+  },
   "app": {
     "title": "Reverie",
     "subtitle": "Dreamy edits for your favorite tracks",

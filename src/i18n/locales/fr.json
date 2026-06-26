@@ -1,4 +1,9 @@
 {
+  "gate": {
+    "title": "Pensé pour le grand écran",
+    "description": "Le cockpit de Reverie — les effets, la forme d'onde vivante et l'ambiance — a besoin d'espace pour respirer. Ouvre-le sur un ordinateur pour en profiter pleinement.",
+    "hint": "On se retrouve sur PC"
+  },
   "app": {
     "title": "Reverie",
     "subtitle": "Des remixes oniriques pour vos morceaux préférés",

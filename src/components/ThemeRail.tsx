@@ -154,11 +154,15 @@ export function ThemeRail() {
         <div className="space-y-2">
           <span className="hud-readout block">{t('studio.recentThemes')}</span>
           <ul className="space-y-1.5">
-            {recentThemes.map((id) => {
+            {recentThemes
+              .map((id) => ({ id, label: t(`settings.theme.${THEMES[id].labelKey}`) }))
+              // Stable alphabetical order so switching moods doesn't reshuffle the
+              // rail under your finger — only membership changes, never position.
+              .sort((a, b) => a.label.localeCompare(b.label))
+              .map(({ id, label }) => {
               const tdef = THEMES[id];
               const Icon = tdef.icon;
               const active = theme === id;
-              const label = t(`settings.theme.${tdef.labelKey}`);
               return (
                 <li key={id}>
                   <button

@@ -1,4 +1,9 @@
 {
+  "gate": {
+    "title": "Feito para a tela grande",
+    "description": "O cockpit do Reverie — os efeitos, a forma de onda viva e o ambiente — precisa de espaço para respirar. Abra-o num computador para aproveitar a experiência completa.",
+    "hint": "Até já no computador"
+  },
   "app": {
     "title": "Reverie",
     "subtitle": "Edições oníricas para suas faixas favoritas",

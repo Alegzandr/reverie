@@ -6,11 +6,11 @@ product
 
 ## Users
 
-Music fans and remixers, not audio engineers. They arrive with a track they love and an idea: a sped-up edit, a slowed + reverb version for a late-night mood, an 8D mix that rotates around the head in headphones, or a bass-boosted cut. Their context is personal and playful: at home, often on headphones, frequently on mobile, in a creative mood. They want a result in a few clicks and a download in the original quality. No DAW knowledge, no install, no account.
+Music fans and remixers, not audio engineers. They arrive with a track they love and an idea: a sped-up edit, a slowed + reverb version for a late-night mood, an 8D mix that rotates around the head in headphones, or a bass-boosted cut. Their context is personal and playful: at home, often on headphones, at a computer, in a creative mood. They want a result in a few clicks and a download in the original quality. No DAW knowledge, no install, no account.
 
 ## Product Purpose
 
-Reverie is a free, fully in-browser audio editor that turns any track into an atmospheric remix. Four effects: Speed Up, Slowed + Reverb, 8D Audio, Bass Boost. All processing runs client-side through the Web Audio API, so files never leave the device (privacy by architecture). Exports mirror the source format and quality. The app ships in 10 languages and installs as a PWA. Success looks like a first-time visitor uploading a track and downloading a transformed version they are proud to share, without ever needing a tutorial.
+Reverie is a free, fully in-browser audio editor that turns any track into an atmospheric remix. Four effects: Speed Up, Slowed + Reverb, 8D Audio, Bass Boost. All processing runs client-side through the Web Audio API, so files never leave the device (privacy by architecture). Exports mirror the source format and quality. The app ships in 10 languages and installs as a PWA. It is a deliberately **desktop-only** experience: the cockpit (effects rail, living waveform, mood rail) needs a wide canvas to feel like itself, so viewports narrower than 1024px are gated to a branded "open on a larger screen" stage with no bypass — we would rather send a phone visitor to a computer than ship a cramped layout. Success looks like a first-time visitor uploading a track and downloading a transformed version they are proud to share, without ever needing a tutorial.
 
 ## Brand Personality
 

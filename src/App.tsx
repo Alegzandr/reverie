@@ -8,6 +8,8 @@ import { PlaybackControls } from './components/PlaybackControls';
 import { ProgressBar } from './components/ProgressBar';
 import { SettingsMenu } from './components/SettingsMenu';
 import { AmbientScene } from './components/AmbientScene';
+import { DesktopOnlyGate } from './components/DesktopOnlyGate';
+import { useIsViewportTooNarrow } from './hooks/useViewportGate';
 import { WaveformTimeline } from './components/WaveformTimeline';
 import { ThemeRail } from './components/ThemeRail';
 import { Card } from './components/ui/card';
@@ -48,6 +50,10 @@ function App() {
     reset,
     getAnalyser,
   } = useAudioProcessor();
+
+  // Desktop-only: Reverie's cockpit needs a wide canvas, so narrow viewports are
+  // gated (no bypass) and pushed to a bigger screen. Width-based, live on resize.
+  const viewportTooNarrow = useIsViewportTooNarrow();
 
   // The signature: the whole interface breathes with the music. Publishes live
   // audio-energy CSS vars that the scene and panels consume.
@@ -187,6 +193,11 @@ function App() {
       <p className="text-sm font-medium text-[rgb(var(--color-text))]">{state.error}</p>
     </div>
   ) : null;
+
+  // ------------------------------------------------------------ Desktop gate
+  if (viewportTooNarrow) {
+    return <DesktopOnlyGate />;
+  }
 
   // ---------------------------------------------------------------- Welcome
   if (!hasSession) {

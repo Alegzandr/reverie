@@ -181,9 +181,11 @@ The tinted secondary shadow (accent in light, ambient in dark) is what makes sur
 - **Never** animate layout properties (width, height, top, left). Animate transform and opacity.
 - **Reduced motion**: honor `prefers-reduced-motion`. The waveform and any ambient drift must fall back to a static state; the app stays fully usable without motion.
 
-## App shell (two states)
+## App shell (desktop gate + two states)
 
-A single decision point, `hasSession` (true once any audio buffer or file exists), governs the whole layout:
+Before either stage, a **desktop gate** guards the whole app. Reverie is desktop-only: the cockpit needs a wide canvas, so viewports under `VIEWPORT.MIN_DESKTOP_WIDTH` (1024px, matching Tailwind's `lg` where the three-column grid activates) render `DesktopOnlyGate` instead — a branded, AmbientScene-backed "open on a larger screen" stage (brand mark, a monitor glyph in the Aurora well, an invitation to switch to a computer). There is **no bypass**: we send phone visitors to a real screen rather than ship a cramped layout. The check (`useIsViewportTooNarrow`) tracks `matchMedia`, so the app reveals or hides itself live as the window is resized — no reload.
+
+Once the viewport is wide enough, a single decision point, `hasSession` (true once any audio buffer or file exists), governs the layout:
 
 Both stages mount the `AmbientScene` behind everything; the chrome (header + transport) is the HUD-skinned `.hud-rail`.
 
