@@ -114,6 +114,42 @@ function App() {
     else if (processedBuffer) playAudio(processedBuffer, startAt);
   }, [playAudio, originalBuffer, processedBuffer, playbackTime, duration]);
 
+  const hasPlayableAudio = !!(originalBuffer || processedBuffer);
+
+  const handleTogglePlay = useCallback(() => {
+    if (state.isPlaying) stopAudio();
+    else handlePlay();
+  }, [state.isPlaying, stopAudio, handlePlay]);
+
+  // Spacebar toggles play/pause, like a classic media player. Ignored while the
+  // user is typing in a field or focused on a control space would already act on,
+  // so we don't hijack the key or fire the transport twice.
+  useEffect(() => {
+    if (!hasPlayableAudio || state.isExporting) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code !== 'Space' && e.key !== ' ') return;
+
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      if (
+        tag === 'INPUT' ||
+        tag === 'TEXTAREA' ||
+        tag === 'BUTTON' ||
+        tag === 'SELECT' ||
+        target?.isContentEditable
+      ) {
+        return;
+      }
+
+      e.preventDefault();
+      handleTogglePlay();
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [hasPlayableAudio, state.isExporting, handleTogglePlay]);
+
   // Speed changes the listening length: a 3:00 clip at 0.5x lasts 6:00. We track time
   // internally in source-buffer time, but the transport speaks in effective (output)
   // time so the duration and clock stretch/compress with the rate, like a real player.
@@ -336,8 +372,8 @@ function App() {
               currentTime={effectiveTime}
               duration={effectiveDuration}
               onSeek={handleSeek}
-              hasAudio={!!(processedBuffer || originalBuffer)}
-              canExport={!!(originalBuffer || processedBuffer)}
+              hasAudio={hasPlayableAudio}
+              canExport={hasPlayableAudio}
               isExporting={state.isExporting}
               disabled={state.isExporting}
               getAnalyser={getAnalyser}
