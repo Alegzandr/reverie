@@ -160,10 +160,10 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
                             step={EFFECT_DEFAULTS.SPEED_UP.STEP}
                             disabled={disabled}
                             onChange={setSpeedMultiplier}
-                            formatValue={formatSpeedMultiplier}
+                            formatValue={(v) => formatSpeedMultiplier(v, 2)}
                             markers={[
-                                `${EFFECT_DEFAULTS.SPEED_UP.MIN}x`,
-                                `${EFFECT_DEFAULTS.SPEED_UP.MAX}x`,
+                                `${EFFECT_DEFAULTS.SPEED_UP.MIN.toFixed(2)}x`,
+                                `${EFFECT_DEFAULTS.SPEED_UP.MAX.toFixed(2)}x`,
                             ]}
                         />
                     ) : mode === "slow-reverb" ? (
