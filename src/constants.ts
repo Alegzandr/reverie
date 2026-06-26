@@ -257,7 +257,7 @@ export const EFFECT_DEFAULTS = {
     DEFAULT: 1.3,
     MIN: 1.1,
     MAX: 2.0,
-    STEP: 0.1,
+    STEP: 0.05,
   },
 
   /** Slow-reverb effect defaults */
