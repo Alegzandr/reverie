@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Zap, Waves, Radio, Volume2, Disc3 } from "lucide-react";
+import { Zap, Waves, Radio, Volume2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { EffectSlider } from "./EffectSlider";
 import { EffectRow } from "./EffectRow";
@@ -32,10 +32,10 @@ interface EffectControlsProps {
     disabled?: boolean;
 }
 
-// Listed order; "Original" leads as the clean baseline (the escape hatch back to
-// the untouched track), then Slow + Reverb as the signature late-night mood.
+// Listed effects — Slow + Reverb leads as the signature late-night mood. There is
+// no "Original" row: the untouched track ("none") is the *absence* of an active
+// effect, reached by powering off whichever effect is currently Active.
 const EFFECT_DEFS: { mode: EffectMode; icon: LucideIcon; labelKey: string }[] = [
-    { mode: "none", icon: Disc3, labelKey: "effects.none" },
     { mode: "slow-reverb", icon: Waves, labelKey: "effects.slowReverb" },
     { mode: "speed-up", icon: Zap, labelKey: "effects.speedUp" },
     { mode: "8d-audio", icon: Radio, labelKey: "effects.8dAudio" },
@@ -100,6 +100,13 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
         onChange,
     ]);
 
+    // Effects are exclusive: selecting an inactive one makes it Active. Clicking the
+    // *already-active* effect powers it off, dropping back to "none" — the untouched
+    // track. "Original" is therefore a state, never a row.
+    const handleSelect = (next: EffectMode) => {
+        setMode((current) => (current === next ? "none" : next));
+    };
+
     const bassIntensityLabel = formatBassIntensityLabel(
         bassBoostIntensity,
         EFFECT_DEFAULTS.BASS_BOOST_UI.LIGHT_THRESHOLD,
@@ -141,7 +148,7 @@ export function EffectControls({ onChange, disabled }: EffectControlsProps) {
                             mode={fx.mode}
                             active={mode === fx.mode}
                             disabled={disabled}
-                            onSelect={setMode}
+                            onSelect={handleSelect}
                             statusLabel={mode === fx.mode ? t("studio.active") : t("studio.inactive")}
                         />
                     ))}

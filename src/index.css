@@ -664,6 +664,12 @@
     z-index: -1;
     overflow: hidden;
     pointer-events: none;
+    /* Flatten the whole scene into one isolated compositing group. Without this,
+       the meteors' filtered (drop-shadow) layer composites separately, and a
+       filtered layer moving behind the panels' `backdrop-filter` makes Chromium
+       mis-sample the backdrop and flash the panel rectangle brighter. Isolating
+       the scene gives the backdrop one stable flat image to sample. */
+    isolation: isolate;
   }
 
   .scene > * {
@@ -839,16 +845,14 @@
       rgba(255, 255, 255, 0.75) 92%,
       #ffffff 100%
     );
-    /* Glow via box-shadow, NOT filter: a `filter` promotes the meteor to its own
-       composited layer, and a filtered layer moving behind the glass panels'
-       `backdrop-filter` makes Chromium mis-sample the backdrop and flash the whole
-       panel rectangle brighter for a frame. box-shadow paints inline in the scene
-       layer, so the backdrop samples a stable image. Same reason `will-change` is
-       omitted — the transform animation composites fine without forcing promotion. */
-    box-shadow:
-      0 0 7px rgba(255, 255, 255, 0.85),
-      0 0 16px rgba(var(--color-ambient), 0.7);
+    /* drop-shadow (not box-shadow) so the glow follows the streak's alpha — a
+       tapered comet halo, not a hard capsule outline. The compositing flash this
+       used to cause behind the glass panels is fixed at the scene level via
+       `isolation: isolate` on `.scene` (the backdrop then samples one flat layer). */
+    filter: drop-shadow(0 0 7px rgba(255, 255, 255, 0.85))
+      drop-shadow(0 0 16px rgba(var(--color-ambient), 0.7));
     opacity: 0;
+    will-change: transform, opacity;
   }
 
   @media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (pointer: fine) {
