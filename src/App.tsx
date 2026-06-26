@@ -14,6 +14,7 @@ import { DesktopOnlyGate } from './components/DesktopOnlyGate';
 import { useIsViewportTooNarrow } from './hooks/useViewportGate';
 import { WaveformTimeline } from './components/WaveformTimeline';
 import { MoodRail } from './components/MoodRail';
+import { Logo } from './components/Logo';
 import { Card } from './components/ui/card';
 import { Badge } from './components/ui/badge';
 import { Tooltip, TooltipTrigger, TooltipContent } from './components/ui/tooltip';
@@ -216,10 +217,7 @@ function App() {
 
         <main className="flex-1 flex items-center justify-center px-4 sm:px-6 pb-16">
           <div className="aurora-stage relative w-full max-w-2xl flex flex-col items-center text-center">
-            <div
-              className="w-16 h-16 rounded-[18px] bg-[url('/favicon.svg')] bg-center bg-cover shadow-[0_18px_50px_-24px_rgba(var(--aurora-pink),0.7)] mb-7"
-              aria-hidden="true"
-            />
+            <Logo className="w-16 h-16 rounded-[18px] shadow-[0_18px_50px_-24px_rgba(var(--aurora-pink),0.7)] mb-7" />
             <h1 className="font-display lowercase text-5xl sm:text-6xl font-light tracking-[0.04em] text-[rgb(var(--color-text))]">
               {t('app.title')}
             </h1>
@@ -306,7 +304,7 @@ function App() {
                 aria-label={t('accessibility.resetApp')}
                 className="flex items-center gap-3 min-w-0 ios-button cursor-pointer rounded-full pr-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-background))] outline-none"
               >
-                <div className="w-9 h-9 rounded-[10px] bg-[url('/favicon.svg')] bg-center bg-cover shrink-0" aria-hidden="true" />
+                <Logo className="w-9 h-9 rounded-[10px] shrink-0" />
                 <span className="font-display lowercase text-xl font-light tracking-[0.04em] text-[rgb(var(--color-text))] hidden sm:inline">
                   {t('app.title')}
                 </span>

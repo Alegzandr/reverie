@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMood } from '../contexts/MoodContext';
 import type { SceneId } from '../contexts/moods';
 import { animatedBackdropAllowed } from './scenes/motion';
@@ -13,26 +13,107 @@ import { animatedBackdropAllowed } from './scenes/motion';
  * `background-position`, so the two animations never fight over one property.
  * `daybreak` has no photo, so it keeps pure CSS layers and gets no parallax/haze.
  */
-const SCENES: Record<SceneId, React.ReactNode> = {
-  daybreak: (
-    <>
-      <div className="day-sun" />
-      <div className="day-cloud-a" />
-      <div className="day-cloud-b" />
-      <div className="day-cloud-c" />
-    </>
-  ),
-  dusk: <div className="scene-photo scene-photo-dusk" />,
-  tidal: <div className="scene-photo scene-photo-tidal" />,
-  nocturne: <div className="scene-photo scene-photo-nocturne" />,
-  aurora: <div className="scene-photo scene-photo-nebula" />,
-  horizon: <div className="scene-photo scene-photo-horizon" />,
+
+/** The CSS class painting each scene's photo (background-image lives in index.css). */
+const PHOTO_CLASS: Record<SceneId, string | null> = {
+  daybreak: null,
+  dusk: 'scene-photo-dusk',
+  tidal: 'scene-photo-tidal',
+  nocturne: 'scene-photo-nocturne',
+  aurora: 'scene-photo-nebula',
+  horizon: 'scene-photo-horizon',
 };
+
+/** The image URL each photo scene loads, matched to the `url()` in index.css.
+ *  Built from BASE_URL so it warms the SAME cache entry the CSS requests (Vite
+ *  rewrites the stylesheet's root-absolute public paths to include the base). */
+const PHOTO_SRC: Record<SceneId, string | null> = {
+  daybreak: null,
+  dusk: `${import.meta.env.BASE_URL}backgrounds/void-bloom.webp`,
+  tidal: `${import.meta.env.BASE_URL}backgrounds/cosmic-wave.webp`,
+  nocturne: `${import.meta.env.BASE_URL}backgrounds/midnight-pulse.webp`,
+  aurora: `${import.meta.env.BASE_URL}backgrounds/nebula-drift.webp`,
+  horizon: `${import.meta.env.BASE_URL}backgrounds/lunar-haze.webp`,
+};
+
+/** Module-scoped memory of which backdrops have finished decoding, so a mood we
+ *  return to (or one warmed by the preloader) shows instantly — no re-fade, and
+ *  crucially no flash of the near-black scene floor while the backdrop decodes. */
+const decoded = new Set<string>();
+
+/** Kick off (and decode) a backdrop fetch once; resolves into `decoded`. The
+ *  browser dedupes against the stylesheet's own request, so this only ever warms
+ *  the cache, it never double-downloads. */
+function warm(src: string) {
+  if (decoded.has(src)) return;
+  const img = new Image();
+  img.src = src;
+  const done = () => decoded.add(src);
+  // decode() resolves once the bitmap is paint-ready; fall back to load/error so
+  // a decode failure (or a browser without Image.decode) can't strand a mood.
+  if (img.decode) img.decode().then(done, done);
+  else {
+    img.onload = done;
+    img.onerror = done;
+  }
+}
+
+const DAYBREAK_LAYERS = (
+  <>
+    <div className="day-sun" />
+    <div className="day-cloud-a" />
+    <div className="day-cloud-b" />
+    <div className="day-cloud-c" />
+  </>
+);
 
 export function AmbientScene() {
   const { def } = useMood();
   const sceneRef = useRef<HTMLDivElement>(null);
-  const isPhoto = def.scene !== 'daybreak';
+  const scene = def.scene;
+  const isPhoto = scene !== 'daybreak';
+  const photoClass = PHOTO_CLASS[scene];
+  const photoSrc = PHOTO_SRC[scene];
+
+  // The photo fades in only once its bitmap is decoded; until then we'd otherwise
+  // be staring at the near-black scene floor (the "black blink"). Seed from the
+  // decoded cache so a warm backdrop is visible on the very first paint.
+  const [ready, setReady] = useState(() => !photoSrc || decoded.has(photoSrc));
+
+  // Warm ALL backdrops once, up front, so switching mood never lands on an
+  // undecoded image (the switch flash). Fire-and-forget; the cache does the rest.
+  useEffect(() => {
+    for (const src of Object.values(PHOTO_SRC)) if (src) warm(src);
+  }, []);
+
+  // Gate the current photo's reveal on its own decode. Resets on every scene
+  // change; the cancelled flag drops a late decode if the mood moved on.
+  useEffect(() => {
+    if (!photoSrc) {
+      setReady(true);
+      return;
+    }
+    if (decoded.has(photoSrc)) {
+      setReady(true);
+      return;
+    }
+    setReady(false);
+    let cancelled = false;
+    const img = new Image();
+    img.src = photoSrc;
+    const reveal = () => {
+      decoded.add(photoSrc);
+      if (!cancelled) setReady(true);
+    };
+    if (img.decode) img.decode().then(reveal, reveal);
+    else {
+      img.onload = reveal;
+      img.onerror = reveal;
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [photoSrc]);
 
   // Pointer parallax: publish a normalised cursor offset (--px/--py, ~-1..1) that
   // each layer translates by its own depth factor. rAF-throttled; CSS smooths it.
@@ -59,10 +140,14 @@ export function AmbientScene() {
     };
   }, []);
 
-  // `def.scene` keys both the layer markup and the `.scene-<id>` CSS.
+  // `scene` keys both the layer markup and the `.scene-<id>` CSS.
   return (
-    <div ref={sceneRef} className={`scene scene-${def.scene}`} aria-hidden="true">
-      {SCENES[def.scene]}
+    <div ref={sceneRef} className={`scene scene-${scene}`} aria-hidden="true">
+      {isPhoto ? (
+        <div className={`scene-photo ${photoClass ?? ''}${ready ? ' is-ready' : ''}`} />
+      ) : (
+        DAYBREAK_LAYERS
+      )}
       {isPhoto && (
         <>
           <div className="scene-haze scene-haze-a" />

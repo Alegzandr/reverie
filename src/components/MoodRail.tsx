@@ -1,10 +1,18 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Check, ChevronDown } from 'lucide-react';
 import { useMood } from '../contexts/MoodContext';
 import { MOODS, MOOD_ORDER } from '../contexts/moods';
 import type { MoodId } from '../contexts/moods';
 import { Card } from './ui/card';
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from './ui/dialog';
 import { cn } from '@/lib/utils';
 
 /**
@@ -28,108 +36,97 @@ function Swatch({ id, className }: { id: MoodId; className?: string }) {
 }
 
 /**
- * The Mood dropdown — its trigger reads out the active atmosphere; opening it
- * reveals the exhaustive mood gallery in a popover (not the settings dialog).
+ * The Mood chip + gallery — the trigger reads out the active atmosphere; opening
+ * it lifts the exhaustive mood gallery into a centred modal. A modal (not an
+ * inline popover) is deliberate: the rail and its card are translucent, so a
+ * translucent dropdown stacked over them turned text illegible — transparent on
+ * transparent. The dialog's opaque overlay severs the gallery from the backdrop
+ * and gives every scene preview room to breathe.
  */
 function MoodGallery() {
   const { t } = useTranslation();
   const { mood, setMood } = useMood();
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
   const activeName = t(`settings.mood.${MOODS[mood].labelKey}`);
 
-  // Dismiss on outside click or Escape — the lightweight popover contract.
-  useEffect(() => {
-    if (!open) return;
-    const onPointerDown = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('mousedown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [open]);
-
   return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        className="ios-button group flex w-full items-center gap-3 rounded-2xl border border-[rgba(var(--color-border),0.7)] bg-[rgba(var(--color-surface),0.45)] px-3 py-2.5 text-left outline-none hover:border-[rgba(var(--color-accent),0.55)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-background))]"
-      >
-        <Swatch id={mood} className="h-8 w-8 shrink-0" />
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-semibold text-[rgb(var(--color-text))]">
-            {activeName}
-          </span>
-        </span>
-        <ChevronDown
-          className={cn(
-            'h-4 w-4 shrink-0 text-[rgb(var(--color-text-secondary))] transition-transform',
-            open && 'rotate-180'
-          )}
-          aria-hidden="true"
-        />
-      </button>
-
-      {open && (
-        <div
-          role="listbox"
-          aria-label={t('studio.allMoods')}
-          className="glass absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 max-h-[19rem] overflow-y-auto rounded-2xl border border-[rgba(var(--color-border),0.7)] bg-[rgba(var(--color-surface),0.95)] p-1.5 backdrop-blur-xl"
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <button
+          type="button"
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          className="ios-button group flex w-full items-center gap-3 rounded-2xl border border-[rgba(var(--color-border),0.7)] bg-[rgba(var(--color-surface),0.45)] px-3 py-2.5 text-left outline-none hover:border-[rgba(var(--color-accent),0.55)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-background))]"
         >
-          <ul className="space-y-1">
+          <Swatch id={mood} className="h-8 w-8 shrink-0" />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-semibold text-[rgb(var(--color-text))]">
+              {activeName}
+            </span>
+          </span>
+          <ChevronDown
+            className={cn(
+              'h-4 w-4 shrink-0 text-[rgb(var(--color-text-secondary))] transition-transform',
+              open && 'rotate-180'
+            )}
+            aria-hidden="true"
+          />
+        </button>
+      </DialogTrigger>
+
+      <DialogContent closeLabel={t('settings.close')}>
+        <DialogHeader>
+          <DialogTitle>{t('studio.allMoods')}</DialogTitle>
+          <DialogDescription>{t('settings.subtitle')}</DialogDescription>
+        </DialogHeader>
+
+        <div className="max-h-[64vh] overflow-y-auto pr-1 -mr-1">
+          <div className="grid grid-cols-2 gap-2.5">
             {MOOD_ORDER.map((id) => {
               const tdef = MOODS[id];
               const Icon = tdef.icon;
               const active = mood === id;
               const label = t(`settings.mood.${tdef.labelKey}`);
               return (
-                <li key={id}>
-                  <button
-                    type="button"
-                    role="option"
-                    aria-selected={active}
-                    onClick={() => {
-                      setMood(id);
-                      setOpen(false);
-                    }}
-                    className={cn(
-                      'ios-button flex w-full items-center gap-3 rounded-xl border px-2.5 py-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-background))]',
-                      active
-                        ? 'border-[rgba(var(--color-accent),0.55)] bg-[rgba(var(--color-accent),0.12)]'
-                        : 'border-transparent hover:border-[rgba(var(--color-border),0.6)] hover:bg-[rgba(var(--color-surface),0.5)]'
-                    )}
-                  >
-                    <Swatch id={id} className="h-7 w-7 shrink-0" />
-                    <span
-                      className={cn(
-                        'min-w-0 flex-1 truncate text-sm font-medium',
-                        active ? 'text-[rgb(var(--color-accent-text))]' : 'text-[rgb(var(--color-text))]'
-                      )}
-                    >
-                      {label}
+                <button
+                  key={id}
+                  type="button"
+                  aria-pressed={active}
+                  aria-label={label}
+                  onClick={() => {
+                    setMood(id);
+                    setOpen(false);
+                  }}
+                  className={cn(
+                    'group ios-button relative overflow-hidden rounded-2xl border text-left outline-none',
+                    'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-background))]',
+                    active
+                      ? 'border-[rgba(var(--color-accent),0.7)] shadow-[0_12px_34px_-22px_rgba(var(--color-accent),0.95)]'
+                      : 'border-[rgba(var(--color-border),0.7)] hover:border-[rgba(var(--color-accent),0.5)]'
+                  )}
+                >
+                  {/* Live preview swatch — the mood's own scene/backdrop colours */}
+                  <span className="block h-14 w-full" style={{ background: tdef.preview }} aria-hidden="true" />
+                  <span className="flex items-center justify-between gap-2 px-3 py-2 bg-[rgba(var(--color-surface),0.6)]">
+                    <span className="flex items-center gap-2 min-w-0">
+                      <Icon
+                        className={cn(
+                          'w-4 h-4 shrink-0',
+                          active ? 'text-[rgb(var(--color-accent-text))]' : 'text-[rgb(var(--color-text-secondary))]'
+                        )}
+                        aria-hidden="true"
+                      />
+                      <span className="text-sm font-semibold truncate text-[rgb(var(--color-text))]">{label}</span>
                     </span>
-                    {active ? (
-                      <Check className="h-4 w-4 shrink-0 text-[rgb(var(--color-accent-text))]" aria-hidden="true" />
-                    ) : (
-                      <Icon className="h-4 w-4 shrink-0 text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
-                    )}
-                  </button>
-                </li>
+                    {active && <Check className="w-4 h-4 shrink-0 text-[rgb(var(--color-accent-text))]" aria-hidden="true" />}
+                  </span>
+                </button>
               );
             })}
-          </ul>
+          </div>
         </div>
-      )}
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

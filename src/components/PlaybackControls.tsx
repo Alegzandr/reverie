@@ -118,7 +118,8 @@ export function PlaybackControls({
         )}
 
         {/* Export — the quiet committing action: a dark glass pill, identity carried
-            by the Aurora-tinted icon rather than a loud fill. */}
+            by the mood-tinted icon (it tracks the active mood's accent) rather than
+            a loud fill. */}
         <Button
           variant={exportEnabled ? 'glass' : 'muted'}
           size="pill"
@@ -128,10 +129,10 @@ export function PlaybackControls({
           className="ml-auto shrink-0 px-4 sm:order-5 sm:ml-0 sm:px-6"
         >
           {isExporting ? (
-            <div className="w-5 h-5 border-2 border-[rgb(var(--aurora-violet))] border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+            <div className="w-5 h-5 border-2 border-[rgb(var(--color-accent))] border-t-transparent rounded-full animate-spin" aria-hidden="true" />
           ) : (
             <Download
-              className={`w-5 h-5 ${exportEnabled ? 'text-[rgb(var(--aurora-violet))]' : ''}`}
+              className={`w-5 h-5 ${exportEnabled ? 'text-[rgb(var(--color-accent))]' : ''}`}
               aria-hidden="true"
             />
           )}

@@ -1119,8 +1119,17 @@
        parallax layer, not from cranking this.) */
     transform: scale(calc(1.08 + var(--audio-level, 0) * 0.035 + var(--audio-bass, 0) * 0.02))
       translate3d(calc(var(--px, 0) * -10px), calc(var(--py, 0) * -8px), 0);
-    transition: transform 500ms ease-out;
-    will-change: transform, background-position;
+    /* Hidden until its bitmap has decoded, then faded up by AmbientScene toggling
+       `.is-ready`. Without this the near-black scene floor shows through for the
+       whole decode and reads as a black blink on load / mood switch. */
+    opacity: 0;
+    transition: transform 500ms ease-out, opacity 600ms ease-out;
+    will-change: transform, background-position, opacity;
+  }
+
+  /* Decoded and paint-ready: the world materialises. */
+  .scene-photo.is-ready {
+    opacity: 1;
   }
 
   @media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (pointer: fine) {
@@ -1185,23 +1194,23 @@
   }
 
   .scene-photo-nebula {
-    background-image: url('/backgrounds/nebula-drift.jpg');
+    background-image: url('/backgrounds/nebula-drift.webp');
   }
 
   .scene-photo-tidal {
-    background-image: url('/backgrounds/cosmic-wave.jpg');
+    background-image: url('/backgrounds/cosmic-wave.webp');
   }
 
   .scene-photo-nocturne {
-    background-image: url('/backgrounds/midnight-pulse.jpg');
+    background-image: url('/backgrounds/midnight-pulse.webp');
   }
 
   .scene-photo-horizon {
-    background-image: url('/backgrounds/lunar-haze.jpg');
+    background-image: url('/backgrounds/lunar-haze.webp');
   }
 
   .scene-photo-dusk {
-    background-image: url('/backgrounds/void-bloom.jpg');
+    background-image: url('/backgrounds/void-bloom.webp');
   }
 
   /* On any photo backdrop the music-reactive bloom is silenced: the image must
@@ -1737,6 +1746,9 @@
     transform: none;
     animation: none;
     transition: none;
+    /* The outgoing copy is shown immediately (no decode gate — its bitmap is
+       already on screen), so it must opt out of `.scene-photo`'s hidden default. */
+    opacity: 1;
   }
 
   /* Leaving the light mood (no photo): a soft daybreak wash to dissolve out. */
@@ -1895,4 +1907,29 @@
       animation: none;
     }
   }
+}
+
+/* ── Mood palette cross-fade ─────────────────────────────────────────────────
+   A mood swaps the whole palette at once: the --color-* / --hud-* tokens flip on
+   <html> the instant `data-mood` changes. The scene dives and the bloom crests
+   to carry the backdrop, and the chrome hairlines bloom once (`hud-warp-*`) —
+   but the cockpit's own palette-driven colours (text, accent fills, borders,
+   icons) would otherwise snap. While <html> carries `.mood-shifting` (added by
+   MoodContext for the length of the switch) every element eases those colours,
+   so the chrome recolours in step with the diving backdrop. This also covers the
+   reduced-motion / touch path, where the dive is withheld and only the colours
+   change — a gentle cross-fade, not motion.
+
+   Unlayered on purpose, so it outranks the layered component styles without
+   `!important`. Only the directly-interpolable colour properties are listed:
+   gradient fills (.glass / .hud-rail) and box-shadow glows can't tween and are
+   left to the bloom + hairline swell to mask. Audio-reactive glows opt out so
+   their per-frame box-shadow keeps its own snappy easing rather than being
+   slowed to the cross-fade duration. */
+.mood-shifting *:not(.audio-orb-glow):not(.wf-aura),
+.mood-shifting *:not(.audio-orb-glow):not(.wf-aura)::before,
+.mood-shifting *:not(.audio-orb-glow):not(.wf-aura)::after {
+  transition-property: color, background-color, border-color, fill, stroke, outline-color;
+  transition-duration: 600ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }

@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { MOODS, DEFAULT_MOOD, isMoodId } from './moods';
 import type { MoodId, MoodDef } from './moods';
@@ -8,6 +8,11 @@ const STORAGE_KEY = 'mood';
 const RECENTS_KEY = 'mood-recents';
 /** How many moods the rail surfaces as "recently used". */
 const MAX_RECENTS = 5;
+/** How long `.mood-shifting` stays on <html> to ease the palette across a switch.
+ *  Slightly longer than the 600ms colour transition in index.css, so the tween
+ *  finishes before the class is pulled (yanking it mid-tween would snap the
+ *  remaining distance). */
+const MOOD_SHIFT_MS = 700;
 
 interface MoodContextType {
   mood: MoodId;
@@ -42,12 +47,30 @@ export function MoodProvider({ children }: { children: ReactNode }) {
     // you're actually hearing.
     return [current, ...readRecents().filter((id) => id !== current)].slice(0, MAX_RECENTS);
   });
+  // Tracks the palette already painted, so we cross-fade only on a real change
+  // (not the first apply). Null until the first effect run.
+  const paintedMood = useRef<MoodId | null>(null);
+  const shiftTimer = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     const def = MOODS[mood];
     localStorage.setItem(STORAGE_KEY, def.id);
 
     const root = document.documentElement;
+    // Ease every palette-driven colour across the swap (text, accent fills,
+    // borders, icons) — see `.mood-shifting` in index.css. Skip the very first
+    // apply: there's no previous palette to cross-fade from. The scene/bloom dive
+    // is orchestrated separately by <MoodTransition>.
+    if (paintedMood.current !== null && paintedMood.current !== mood) {
+      root.classList.add('mood-shifting');
+      window.clearTimeout(shiftTimer.current);
+      shiftTimer.current = window.setTimeout(
+        () => root.classList.remove('mood-shifting'),
+        MOOD_SHIFT_MS
+      );
+    }
+    paintedMood.current = mood;
+
     root.setAttribute('data-mood', def.id);
     // Dark-based moods keep the `.dark` class so every existing `dark:` utility
     // and `.dark` rule keeps working without a rewrite.
@@ -57,6 +80,9 @@ export function MoodProvider({ children }: { children: ReactNode }) {
     // always on (it gates the holographic chrome + ambient scene).
     root.classList.add('immersive');
   }, [mood]);
+
+  // Drop the pending cross-fade cleanup if we unmount mid-switch.
+  useEffect(() => () => window.clearTimeout(shiftTimer.current), []);
 
   useEffect(() => {
     localStorage.setItem(RECENTS_KEY, JSON.stringify(recentMoods));
