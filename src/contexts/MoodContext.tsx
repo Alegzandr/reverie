@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { MOODS, DEFAULT_MOOD, isMoodId } from './moods';
 import type { MoodId, MoodDef } from './moods';
@@ -94,8 +94,15 @@ export function MoodProvider({ children }: { children: ReactNode }) {
     setRecentMoods((prev) => [id, ...prev.filter((t) => t !== id)].slice(0, MAX_RECENTS));
   }, []);
 
+  // Stable value object so memoised consumers (AmbientScene, MoodRail, …) can bail
+  // out when the provider re-renders for an unrelated reason.
+  const value = useMemo(
+    () => ({ mood, def: MOODS[mood], setMood, recentMoods }),
+    [mood, recentMoods, setMood],
+  );
+
   return (
-    <MoodContext.Provider value={{ mood, def: MOODS[mood], setMood, recentMoods }}>
+    <MoodContext.Provider value={value}>
       {children}
     </MoodContext.Provider>
   );

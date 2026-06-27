@@ -47,6 +47,7 @@
     "pause": "일시정지",
     "export": "내보내기",
     "exporting": "내보내는 중...",
+    "repeat": "반복",
     "volume": "볼륨"
   },
   "track": {

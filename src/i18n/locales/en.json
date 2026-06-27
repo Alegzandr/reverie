@@ -47,6 +47,7 @@
     "pause": "Pause",
     "export": "Export",
     "exporting": "Exporting...",
+    "repeat": "Repeat",
     "volume": "Volume"
   },
   "track": {

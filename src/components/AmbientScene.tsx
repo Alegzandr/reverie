@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useRef } from 'react';
+import { memo, useEffect, useReducer, useRef } from 'react';
 import { useMood } from '../contexts/MoodContext';
 import type { SceneId } from '../contexts/moods';
 import { animatedBackdropAllowed } from './scenes/motion';
@@ -67,7 +67,7 @@ const DAYBREAK_LAYERS = (
   </>
 );
 
-export function AmbientScene() {
+export const AmbientScene = memo(function AmbientScene() {
   const { def } = useMood();
   const sceneRef = useRef<HTMLDivElement>(null);
   const scene = def.scene;
@@ -82,10 +82,21 @@ export function AmbientScene() {
   const [, onDecoded] = useReducer((n: number) => n + 1, 0);
   const ready = !photoSrc || decoded.has(photoSrc);
 
-  // Warm ALL backdrops once, up front, so switching mood never lands on an
-  // undecoded image (the switch flash). Fire-and-forget; the cache does the rest.
+  // Warm ALL backdrops once so switching mood never lands on an undecoded image
+  // (the switch flash). Deferred to idle time: the active scene already decodes
+  // immediately via the per-scene effect below, so the bulk warm shouldn't compete
+  // with first paint / decode of the visible backdrop. Fire-and-forget.
   useEffect(() => {
-    for (const src of Object.values(PHOTO_SRC)) if (src) warm(src);
+    const srcs = Object.values(PHOTO_SRC).filter((s): s is string => !!s);
+    const warmAll = () => {
+      for (const src of srcs) warm(src);
+    };
+    if (typeof window.requestIdleCallback === 'function') {
+      const id = window.requestIdleCallback(warmAll, { timeout: 2000 });
+      return () => window.cancelIdleCallback?.(id);
+    }
+    const timer = window.setTimeout(warmAll, 200);
+    return () => window.clearTimeout(timer);
   }, []);
 
   // Kick off the current photo's decode when it isn't cached yet, then force a
@@ -118,10 +129,22 @@ export function AmbientScene() {
     let raf = 0;
     let px = 0;
     let py = 0;
+    // Skip writing a CSS var when the rounded value hasn't changed: a style write
+    // forces a recalc, and tiny sub-millipixel cursor jitter shouldn't pay for it.
+    let lastPx = NaN;
+    let lastPy = NaN;
     const apply = () => {
       raf = 0;
-      el.style.setProperty('--px', px.toFixed(3));
-      el.style.setProperty('--py', py.toFixed(3));
+      const rx = Math.round(px * 1000);
+      const ry = Math.round(py * 1000);
+      if (rx !== lastPx) {
+        el.style.setProperty('--px', (rx / 1000).toString());
+        lastPx = rx;
+      }
+      if (ry !== lastPy) {
+        el.style.setProperty('--py', (ry / 1000).toString());
+        lastPy = ry;
+      }
     };
     const onMove = (e: PointerEvent) => {
       px = (e.clientX / window.innerWidth - 0.5) * 2;
@@ -166,4 +189,4 @@ export function AmbientScene() {
       <div className="hud-vignette" />
     </div>
   );
-}
+});

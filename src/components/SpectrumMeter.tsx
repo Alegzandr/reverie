@@ -41,7 +41,34 @@ export const SpectrumMeter = memo(function SpectrumMeter({ getAnalyser, isPlayin
       return v ? `rgb(${v})` : fallback;
     };
 
+    // Idle-throttle clock.
+    let last = 0;
+    // Cached palette + gradient: getComputedStyle (in resolve) is a synchronous
+    // style flush, so re-resolve only on a mood change or while the palette
+    // cross-fades (.mood-shifting), and reuse the gradient object otherwise.
+    let accent = '';
+    let ambient = '';
+    let grad: CanvasGradient | null = null;
+    let gradH = -1;
+    let gradMood: string | undefined;
+    let colorsRead = false;
+    const readColors = () => {
+      accent = resolve('--color-accent', 'rgb(167,139,250)');
+      ambient = resolve('--color-ambient', 'rgb(56,224,232)');
+      grad = null;
+      colorsRead = true;
+    };
+
     const draw = (now: number) => {
+      // Throttle ONLY the idle travelling-wave (audio loaded but paused) to ~30fps.
+      // The live spectrum and the reduced-motion settle path keep their cadence.
+      const liveNow = isPlaying && !!getAnalyser();
+      if (!liveNow && !reduceMotion && now - last < 33) {
+        raf = requestAnimationFrame(draw);
+        return;
+      }
+      last = now;
+
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const cssW = canvas.clientWidth;
       const cssH = canvas.clientHeight;
@@ -81,11 +108,20 @@ export const SpectrumMeter = memo(function SpectrumMeter({ getAnalyser, isPlayin
         }
       }
 
-      const accent = resolve('--color-accent', 'rgb(167,139,250)');
-      const ambient = resolve('--color-ambient', 'rgb(56,224,232)');
-      const grad = ctx.createLinearGradient(0, cssH, 0, 0);
-      grad.addColorStop(0, ambient);
-      grad.addColorStop(1, accent);
+      const rootEl = document.documentElement;
+      const mood = rootEl.dataset.mood;
+      // Cheap dataset/classList reads gate the costly getComputedStyle: refresh the
+      // palette only on a mood change or while it's cross-fading, else reuse it.
+      if (!colorsRead || mood !== gradMood || rootEl.classList.contains('mood-shifting')) {
+        gradMood = mood;
+        readColors();
+      }
+      if (!grad || gradH !== cssH) {
+        grad = ctx.createLinearGradient(0, cssH, 0, 0);
+        grad.addColorStop(0, ambient);
+        grad.addColorStop(1, accent);
+        gradH = cssH;
+      }
       ctx.fillStyle = grad;
 
       const barW = (cssW - BAR_GAP * (BAR_COUNT - 1)) / BAR_COUNT;

@@ -1,5 +1,4 @@
 import { useCallback, useState } from 'react';
-import { getExportStrategy, estimateBitrate } from '../utils/exportStrategies';
 import { downloadBlob } from '../utils/download';
 import { ERROR_MESSAGES } from '../constants';
 import type { AudioMetadata } from './useAudioFile';
@@ -68,6 +67,12 @@ export function useAudioExport({
     setState((prev) => ({ ...prev, isExporting: true, error: null }));
 
     try {
+      // The export pipeline pulls in heavy encoders (notably the lamejs MP3
+      // encoder, ~163KB). Export is a rare action, so load it on demand here
+      // instead of at module scope — this keeps that chunk off the first-paint
+      // critical path. A chunk-load failure falls through to the catch below.
+      const { getExportStrategy, estimateBitrate } = await import('../utils/exportStrategies');
+
       const durationSeconds = getBufferDuration(buffer);
       const extension = metadata?.originalFormat || originalFile?.name.split('.').pop()?.toLowerCase() || '';
       const strategy = getExportStrategy(extension);

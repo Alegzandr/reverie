@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Zap, Waves, Radio, Volume2, ShieldCheck } from 'lucide-react';
 import { FileUploader } from './components/FileUploader';
@@ -42,6 +42,7 @@ function App() {
     playbackTime,
     duration,
     volume,
+    repeat,
     metadata,
     loadAudioFile,
     setEffects,
@@ -50,6 +51,7 @@ function App() {
     exportProcessedAudio,
     updateVolume,
     seekTo,
+    toggleRepeat,
     reset,
     getAnalyser,
   } = useAudioProcessor();
@@ -119,12 +121,21 @@ function App() {
     [setEffects]
   );
 
+  // playbackTime changes ~60×/s during playback. Reading it through a ref keeps
+  // handlePlay's identity stable across those frames, so the dependent
+  // handleTogglePlay and the spacebar keydown effect don't re-subscribe every frame.
+  const playbackTimeRef = useRef(playbackTime);
+  useEffect(() => {
+    playbackTimeRef.current = playbackTime;
+  }, [playbackTime]);
+
   const handlePlay = useCallback(() => {
     // When the track has reached the end, pressing play replays from the start.
-    const startAt = duration > 0 && playbackTime >= duration ? 0 : playbackTime;
+    const time = playbackTimeRef.current;
+    const startAt = duration > 0 && time >= duration ? 0 : time;
     if (originalBuffer) playAudio(originalBuffer, startAt);
     else if (processedBuffer) playAudio(processedBuffer, startAt);
-  }, [playAudio, originalBuffer, processedBuffer, playbackTime, duration]);
+  }, [playAudio, originalBuffer, processedBuffer, duration]);
 
   const hasPlayableAudio = !!(originalBuffer || processedBuffer);
 
@@ -200,6 +211,28 @@ function App() {
     </div>
   ) : null;
 
+  // Track metadata rows. Hoisted above the early returns (so the hook order stays
+  // stable) and memoised so the 5 objects + t() calls aren't rebuilt on every
+  // render, including the ~60fps playback frames.
+  const metaItems = useMemo(
+    () =>
+      originalFile
+        ? [
+            { label: t('track.size'), value: `${(originalFile.size / 1024 / 1024).toFixed(1)} MB` },
+            metadata?.bitrate ? { label: t('track.bitrate'), value: `${metadata.bitrate} kbps` } : null,
+            metadata?.sampleRate ? { label: t('track.sampleRate'), value: `${(metadata.sampleRate / 1000).toFixed(1)} kHz` } : null,
+            metadata?.channels
+              ? {
+                  label: t('track.channels'),
+                  value: metadata.channels === 1 ? t('track.mono') : metadata.channels === 2 ? t('track.stereo') : `${metadata.channels}ch`,
+                }
+              : null,
+            metadata?.bitDepth ? { label: t('track.bitDepth'), value: `${metadata.bitDepth}-bit` } : null,
+          ].filter((item): item is { label: string; value: string } => item !== null)
+        : [],
+    [originalFile, metadata, t]
+  );
+
   // ------------------------------------------------------------ Desktop gate
   if (viewportTooNarrow) {
     return <DesktopOnlyGate />;
@@ -274,21 +307,6 @@ function App() {
   }
 
   // -------------------------------------------------------------- Workspace
-  const metaItems = originalFile
-    ? [
-        { label: t('track.size'), value: `${(originalFile.size / 1024 / 1024).toFixed(1)} MB` },
-        metadata?.bitrate ? { label: t('track.bitrate'), value: `${metadata.bitrate} kbps` } : null,
-        metadata?.sampleRate ? { label: t('track.sampleRate'), value: `${(metadata.sampleRate / 1000).toFixed(1)} kHz` } : null,
-        metadata?.channels
-          ? {
-              label: t('track.channels'),
-              value: metadata.channels === 1 ? t('track.mono') : metadata.channels === 2 ? t('track.stereo') : `${metadata.channels}ch`,
-            }
-          : null,
-        metadata?.bitDepth ? { label: t('track.bitDepth'), value: `${metadata.bitDepth}-bit` } : null,
-      ].filter((item): item is { label: string; value: string } => item !== null)
-    : [];
-
   return (
     <div className="min-h-screen flex flex-col">
       <AmbientScene />
@@ -391,6 +409,8 @@ function App() {
               onPlay={handlePlay}
               onStop={stopAudio}
               onExport={handleExport}
+              repeat={repeat}
+              onToggleRepeat={toggleRepeat}
               volume={volume}
               onVolumeChange={updateVolume}
               currentTime={effectiveTime}

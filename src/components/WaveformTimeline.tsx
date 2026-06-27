@@ -1,10 +1,18 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { WAVEFORM } from '../constants';
 import { useWaveform } from '../hooks/useWaveform';
 import { shapeEnvelope } from '../utils/waveform';
 import { formatClock } from '../utils/formatters';
 import type { AudioProcessingOptions } from '../utils/audioProcessor';
+
+// Bar gradients are CSS-var driven (constant across moods), so hoist them out of
+// the per-frame render path. Played bars read brighter than not-yet-played ones.
+const BAR_BG_PLAYED =
+  'linear-gradient(180deg, rgba(var(--color-accent),0.95), rgba(var(--color-accent),0.5))';
+const BAR_BG_UNPLAYED =
+  'linear-gradient(180deg, rgba(var(--color-accent),0.4), rgba(var(--color-accent),0.2))';
+const BAR_WRAPPER_STYLE = { minWidth: '2px', maxWidth: '8px' } as const;
 
 interface WaveformTimelineProps {
   buffer?: AudioBuffer | null;
@@ -27,6 +35,12 @@ export function WaveformTimeline({
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const draggingRef = useRef(false);
+  // While scrubbing we move the playhead visually but defer the actual seek to
+  // drag-end, so dragging stops rebuilding the whole audio graph on every
+  // pointermove. `dragRatio` drives the on-screen playhead during a drag.
+  const [dragRatio, setDragRatio] = useState<number | null>(null);
+  const dragRatioRef = useRef(0);
+  const lastSeekedRatioRef = useRef(0);
 
   // DAW-style zoom: a constant pixels-per-second, so the content width and the bar count
   // both scale by the stretch factor (1 / rate) and density stays the same. Slowing down
@@ -42,47 +56,134 @@ export function WaveformTimeline({
   const bars = useMemo(() => shapeEnvelope(sourceBars, options), [sourceBars, options]);
 
   const ratio = duration ? Math.min(1, Math.max(0, currentTime / duration)) : 0;
-  const playhead = ratio * 100;
+  // During a drag the playhead follows the pointer; otherwise it follows playback.
+  const displayRatio = dragRatio ?? ratio;
+  const playhead = displayRatio * 100;
+  const playedCount = Math.min(bars.length, Math.max(0, Math.round(displayRatio * bars.length)));
 
-  const seekFromEvent = (clientX: number) => {
-    if (!duration || !contentRef.current) return;
-    const rect = contentRef.current.getBoundingClientRect();
-    if (!rect.width) return;
-    const r = Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1);
-    onSeek(r * duration);
+  // Pre-shaped, stable per-bar style objects: recomputed only when the bar heights
+  // change (a new waveform / speed step), never on the ~60fps playhead tick.
+  const barStyles = useMemo(
+    () =>
+      bars.map((b) => {
+        const height = `${Math.max(WAVEFORM.MIN_BAR_HEIGHT_PERCENT, b * 100)}%`;
+        return {
+          played: { height, background: BAR_BG_PLAYED },
+          unplayed: { height, background: BAR_BG_UNPLAYED },
+        };
+      }),
+    [bars]
+  );
+
+  // The bar column reconciles only when the heights or the played-count change, so
+  // React bails out of it on the per-frame App re-render (O(1) instead of O(bars)).
+  const barEls = useMemo(
+    () =>
+      barStyles.map((s, index) => (
+        <div
+          key={index}
+          className="flex-1 h-full flex items-center"
+          style={BAR_WRAPPER_STYLE}
+          aria-hidden="true"
+        >
+          <div
+            className="w-full rounded-full transition-[height] duration-150 ease-out"
+            style={index < playedCount ? s.played : s.unplayed}
+          />
+        </div>
+      )),
+    [barStyles, playedCount]
+  );
+
+  const ratioFromEvent = (clientX: number) => {
+    const rect = contentRef.current?.getBoundingClientRect();
+    if (!rect || !rect.width) return null;
+    return Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1);
   };
 
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!duration) return;
+    const r = ratioFromEvent(event.clientX);
+    if (r === null) return;
     draggingRef.current = true;
     try {
       contentRef.current?.setPointerCapture(event.pointerId);
     } catch {
       // setPointerCapture is unavailable in some environments; dragging still works.
     }
-    seekFromEvent(event.clientX);
+    // Seek immediately on press so a plain click still jumps the playhead.
+    setDragRatio(r);
+    dragRatioRef.current = r;
+    lastSeekedRatioRef.current = r;
+    onSeek(r * duration);
   };
 
   const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!draggingRef.current) return;
-    seekFromEvent(event.clientX);
+    if (!draggingRef.current || !duration) return;
+    const r = ratioFromEvent(event.clientX);
+    if (r === null) return;
+    // Visual only — the real seek (and graph rebuild) is deferred to drag-end.
+    setDragRatio(r);
+    dragRatioRef.current = r;
   };
 
   const endDrag = () => {
+    if (!draggingRef.current) return;
     draggingRef.current = false;
+    // Commit the final position once; skip a redundant seek if the pointer never
+    // moved off the press point (a plain click already seeked there).
+    if (duration && dragRatioRef.current !== lastSeekedRatioRef.current) {
+      onSeek(dragRatioRef.current * duration);
+    }
+    setDragRatio(null);
   };
 
-  // Keep the playhead in view as it travels through an overflowing (stretched) waveform.
-  // Skipped while scrubbing so the auto-follow never fights the user's drag.
-  useEffect(() => {
+  // Auto-follow the playhead through an overflowing (stretched) waveform without a
+  // forced reflow each frame: layout metrics are cached and refreshed only when the
+  // content actually resizes (ResizeObserver), not read on the per-frame tick.
+  const metricsRef = useRef({ scrollWidth: 0, clientWidth: 0 });
+  const ratioRef = useRef(ratio);
+
+  const measure = useCallback(() => {
     const viewport = viewportRef.current;
     const content = contentRef.current;
-    if (!viewport || !content || draggingRef.current) return;
-    const overflow = content.scrollWidth - viewport.clientWidth;
+    if (!viewport || !content) return;
+    metricsRef.current = { scrollWidth: content.scrollWidth, clientWidth: viewport.clientWidth };
+  }, []);
+
+  const follow = useCallback(() => {
+    const viewport = viewportRef.current;
+    if (!viewport || draggingRef.current) return;
+    const { scrollWidth, clientWidth } = metricsRef.current;
+    const overflow = scrollWidth - clientWidth;
     if (overflow <= 1) return;
-    const playheadPx = ratio * content.scrollWidth;
-    const target = Math.min(Math.max(playheadPx - viewport.clientWidth / 2, 0), overflow);
+    const playheadPx = ratioRef.current * scrollWidth;
+    const target = Math.min(Math.max(playheadPx - clientWidth / 2, 0), overflow);
     viewport.scrollLeft = target;
-  }, [ratio, stretch, isPlaying]);
+  }, []);
+
+  // Refresh cached metrics on real size changes; the per-frame effect just consumes
+  // them. ResizeObserver is feature-detected (absent under jsdom).
+  useEffect(() => {
+    measure();
+    follow();
+    if (typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => {
+      measure();
+      follow();
+    });
+    const content = contentRef.current;
+    const viewport = viewportRef.current;
+    if (content) ro.observe(content);
+    if (viewport) ro.observe(viewport);
+    return () => ro.disconnect();
+  }, [measure, follow, stretch, bars.length]);
+
+  // Per-frame auto-follow: no layout reads here — follow() uses cached metrics.
+  useEffect(() => {
+    ratioRef.current = ratio;
+    follow();
+  }, [ratio, stretch, isPlaying, follow]);
 
   return (
     <div className="relative glass hud-frame rounded-3xl p-5 sm:p-6 flex flex-col gap-5 h-full">
@@ -151,26 +252,7 @@ export function WaveformTimeline({
           {/* Fill the viewport height so bars and playhead share the same extent.
              h-full on each column is essential: the bars size in % against it. */}
           <div className="relative z-10 w-full flex items-center gap-[3px] h-full py-4 px-1 pointer-events-none">
-            {bars.map((bar, index) => {
-              const barCenter = ((index + 0.5) / bars.length) * 100;
-              const played = barCenter <= playhead;
-              return (
-                <div
-                  key={index}
-                  className="flex-1 h-full flex items-center"
-                  style={{ minWidth: '2px', maxWidth: '8px' }}
-                  aria-hidden="true"
-                >
-                  <div
-                    className="w-full rounded-full transition-[height] duration-150 ease-out"
-                    style={{
-                      height: `${Math.max(WAVEFORM.MIN_BAR_HEIGHT_PERCENT, bar * 100)}%`,
-                      background: `linear-gradient(180deg, rgba(var(--color-accent),${played ? 0.95 : 0.4}), rgba(var(--color-accent),${played ? 0.5 : 0.2}))`,
-                    }}
-                  />
-                </div>
-              );
-            })}
+            {barEls}
           </div>
 
           <div

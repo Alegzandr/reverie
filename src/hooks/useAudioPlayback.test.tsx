@@ -189,6 +189,48 @@ describe('useAudioPlayback', () => {
     expect(result.current.state.playbackTime).toBeCloseTo(0.5);
   });
 
+  it('loops from the top when repeat is armed and the track ends', () => {
+    const { result } = renderPlayback();
+
+    act(() => {
+      result.current.toggleRepeat();
+    });
+    expect(result.current.state.repeat).toBe(true);
+
+    act(() => {
+      result.current.playAudio(mockBuffer);
+    });
+
+    const firstSource = mockAudioContext.createBufferSource.mock.results[0].value;
+
+    // Simulate the buffer reaching its natural end.
+    act(() => {
+      firstSource.onended();
+    });
+
+    // A fresh source is started from offset 0, and playback stays live.
+    const secondSource = mockAudioContext.createBufferSource.mock.results[1].value;
+    expect(secondSource.start).toHaveBeenCalledWith(0, 0);
+    expect(result.current.state.isPlaying).toBe(true);
+  });
+
+  it('stops at the end when repeat is off', () => {
+    const { result } = renderPlayback();
+
+    act(() => {
+      result.current.playAudio(mockBuffer);
+    });
+
+    const source = mockAudioContext.createBufferSource.mock.results[0].value;
+
+    act(() => {
+      source.onended();
+    });
+
+    expect(result.current.state.isPlaying).toBe(false);
+    expect(mockAudioContext.createBufferSource).toHaveBeenCalledTimes(1);
+  });
+
   it('sets error when attempting to play without a buffer', () => {
     const { result } = renderPlayback({
       getFallbackBuffer: () => null,

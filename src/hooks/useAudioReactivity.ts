@@ -38,7 +38,24 @@ export function useAudioReactivity({ getAnalyser, isPlaying, target }: UseAudioR
 
     const e = energy.current;
 
+    // Cache the last published (3-decimal-rounded) values so flat/steady frames
+    // skip the five style writes entirely — each setProperty forces a style recalc.
+    const last = { level: -1, bass: -1, mid: -1, treble: -1, pulse: -1 };
+
     const publish = () => {
+      const rl = Math.round(e.level * 1000);
+      const rb = Math.round(e.bass * 1000);
+      const rm = Math.round(e.mid * 1000);
+      const rt = Math.round(e.treble * 1000);
+      const rp = Math.round(e.pulse * 1000);
+      if (rl === last.level && rb === last.bass && rm === last.mid && rt === last.treble && rp === last.pulse) {
+        return;
+      }
+      last.level = rl;
+      last.bass = rb;
+      last.mid = rm;
+      last.treble = rt;
+      last.pulse = rp;
       root.style.setProperty('--audio-level', e.level.toFixed(3));
       root.style.setProperty('--audio-bass', e.bass.toFixed(3));
       root.style.setProperty('--audio-mid', e.mid.toFixed(3));
@@ -47,6 +64,9 @@ export function useAudioReactivity({ getAnalyser, isPlaying, target }: UseAudioR
     };
 
     const clear = () => {
+      // Reset the cache so the next play republishes (removed props fall back to the
+      // :root defaults of 0).
+      last.level = last.bass = last.mid = last.treble = last.pulse = -1;
       root.style.removeProperty('--audio-level');
       root.style.removeProperty('--audio-bass');
       root.style.removeProperty('--audio-mid');

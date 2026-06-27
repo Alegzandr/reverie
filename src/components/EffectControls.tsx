@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { memo, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Zap, Waves, Radio, Volume2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -46,7 +46,7 @@ const EFFECT_DEFS: { mode: EffectMode; icon: LucideIcon; labelKey: string }[] = 
     { mode: "bass-boost", icon: Volume2, labelKey: "effects.bassBoost" },
 ];
 
-export function EffectControls({ onChange, disabled, initialSettings }: EffectControlsProps) {
+export const EffectControls = memo(function EffectControls({ onChange, disabled, initialSettings }: EffectControlsProps) {
     const { t } = useTranslation();
     // Slow + Reverb leads — the brand's signature late-night mood, and the first
     // effect listed, so the Active row sits at the top on load. `initialSettings`
@@ -281,4 +281,4 @@ export function EffectControls({ onChange, disabled, initialSettings }: EffectCo
             </div>
         </div>
     );
-}
+});

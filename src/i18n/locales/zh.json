@@ -47,6 +47,7 @@
     "pause": "暂停",
     "export": "导出",
     "exporting": "导出中...",
+    "repeat": "循环",
     "volume": "音量"
   },
   "track": {

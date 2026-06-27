@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Play, Pause, Download } from 'lucide-react';
+import { Play, Pause, Download, Repeat } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TransportTimeline } from './TransportTimeline';
 import { VolumeControl } from './VolumeControl';
@@ -11,6 +11,8 @@ interface PlaybackControlsProps {
   onPlay: () => void;
   onStop: () => void;
   onExport: () => void;
+  repeat: boolean;
+  onToggleRepeat: () => void;
   volume: number;
   onVolumeChange: (volume: number) => void;
   currentTime: number;
@@ -32,6 +34,8 @@ export function PlaybackControls({
   onPlay,
   onStop,
   onExport,
+  repeat,
+  onToggleRepeat,
   volume,
   onVolumeChange,
   currentTime,
@@ -95,6 +99,24 @@ export function PlaybackControls({
             )}
           </Button>
         </div>
+
+        {/* Repeat — loops the track from the top when it ends. A quiet toggle next to
+            the orb: ghost when off, accent-tinted with a live glyph when armed. */}
+        <Button
+          variant={repeat ? 'accent' : 'ghost'}
+          size="icon"
+          onClick={onToggleRepeat}
+          disabled={disabled || !hasAudio}
+          aria-pressed={repeat}
+          aria-label={t('playback.repeat')}
+          title={t('playback.repeat')}
+          className="shrink-0 sm:order-1"
+        >
+          <Repeat
+            className={`w-[18px] h-[18px] ${repeat ? 'text-[rgb(var(--color-accent))]' : ''}`}
+            aria-hidden="true"
+          />
+        </Button>
 
         {/* Live spectrum — a small instrument that makes the bar feel alive.
             Hidden on narrow screens where space is tight. */}

@@ -14,6 +14,7 @@ export interface PlaybackState {
   playbackTime: number;
   duration: number;
   volume: number;
+  repeat: boolean;
   error: string | null;
 }
 
@@ -51,6 +52,7 @@ export function useAudioPlayback({
       const parsed = stored ? parseFloat(stored) : NaN;
       return Number.isFinite(parsed) ? parsed : AUDIO_PROCESSING.DEFAULT_VOLUME;
     })(),
+    repeat: false,
     error: null,
   });
 
@@ -66,6 +68,10 @@ export function useAudioPlayback({
   const isPlayingRef = useRef<boolean>(false);
   const optionsRef = useRef<AudioProcessingOptions>(NEUTRAL_OPTIONS);
   const rateRef = useRef<number>(1);
+  const repeatRef = useRef<boolean>(false);
+  // Latest playAudio, captured for the onended loop restart without making the
+  // callback depend on itself.
+  const playAudioRef = useRef<((buffer?: AudioBuffer, startTime?: number) => void) | null>(null);
 
   const setError = useCallback((message: string | null) => {
     setState((prev) => ({ ...prev, error: message }));
@@ -238,6 +244,14 @@ export function useAudioPlayback({
 
     source.onended = () => {
       if (playbackSessionRef.current !== sessionId) return;
+      // Repeat: when the track reaches its end, restart from the top with the same
+      // buffer and live effects instead of stopping. Manual stops/seeks null this
+      // handler before the source ends, so the loop only fires on a natural finish.
+      if (repeatRef.current && activeBufferRef.current) {
+        startOffsetRef.current = 0;
+        playAudioRef.current?.(activeBufferRef.current, 0);
+        return;
+      }
       isPlayingRef.current = false;
       setState((prev) => ({ ...prev, isPlaying: false, playbackTime: totalDuration }));
       teardownGraph();
@@ -260,9 +274,23 @@ export function useAudioPlayback({
     playbackRafRef.current = requestAnimationFrame(tick);
   }, [getAudioContext, getBufferDuration, getFallbackBuffer, setError, state.volume, teardownGraph]);
 
+  // Keep the ref pointing at the latest playAudio so onended can loop without the
+  // callback referencing itself (and without an impossible self-dependency).
+  useEffect(() => {
+    playAudioRef.current = playAudio;
+  }, [playAudio]);
+
   const stopAudio = useCallback(() => {
     stopPlayback();
   }, [stopPlayback]);
+
+  const toggleRepeat = useCallback(() => {
+    setState((prev) => {
+      const next = !prev.repeat;
+      repeatRef.current = next;
+      return { ...prev, repeat: next };
+    });
+  }, []);
 
   const updateVolume = useCallback((newVolume: number) => {
     setState((prev) => ({ ...prev, volume: newVolume }));
@@ -360,6 +388,7 @@ export function useAudioPlayback({
     stopAudio,
     seekTo,
     updateVolume,
+    toggleRepeat,
     setEffects,
     attachBuffer,
     resetPlayback,

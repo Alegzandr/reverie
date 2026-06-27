@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Upload } from 'lucide-react';
 import { FILE_FORMATS } from '../constants';
@@ -16,7 +16,7 @@ interface FileDropOverlayProps {
  * overlay when files are actually being dragged in — so it never gets in the
  * way of ordinary pointer use.
  */
-export function FileDropOverlay({ onFileSelect, disabled }: FileDropOverlayProps) {
+export const FileDropOverlay = memo(function FileDropOverlay({ onFileSelect, disabled }: FileDropOverlayProps) {
   const { t } = useTranslation();
   const [isDragging, setIsDragging] = useState(false);
   // dragenter/dragleave fire for every nested element the cursor crosses, so a
@@ -107,4 +107,4 @@ export function FileDropOverlay({ onFileSelect, disabled }: FileDropOverlayProps
       </div>
     </div>
   );
-}
+});

@@ -58,6 +58,7 @@ export function useAudioProcessor() {
     stopAudio,
     seekTo,
     updateVolume,
+    toggleRepeat,
     setEffects: setPlaybackEffects,
     attachBuffer,
     resetPlayback,
@@ -122,7 +123,14 @@ export function useAudioProcessor() {
         renderedRef.current = source;
       }
     }
-    return baseExport(arg);
+    // Free the full rendered buffer (can be tens of MB) once the encode settles;
+    // `return await` keeps it captured for the whole encode, the next export
+    // re-renders anyway. The error still propagates after the finally.
+    try {
+      return await baseExport(arg);
+    } finally {
+      renderedRef.current = null;
+    }
   }, [baseExport]);
 
   const reset = useCallback(() => {
@@ -150,6 +158,7 @@ export function useAudioProcessor() {
     playbackTime: playbackState.playbackTime,
     duration: playbackState.duration,
     volume: playbackState.volume,
+    repeat: playbackState.repeat,
     metadata,
     loadAudioFile,
     processAudio,
@@ -159,6 +168,7 @@ export function useAudioProcessor() {
     exportProcessedAudio,
     updateVolume,
     seekTo,
+    toggleRepeat,
     reset,
     getAnalyser,
   };

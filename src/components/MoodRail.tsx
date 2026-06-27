@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Check, ChevronDown } from 'lucide-react';
 import { useMood } from '../contexts/MoodContext';
@@ -130,7 +130,7 @@ function MoodGallery() {
   );
 }
 
-export function MoodRail() {
+export const MoodRail = memo(function MoodRail() {
   const { t } = useTranslation();
   const { mood, setMood, recentMoods } = useMood();
 
@@ -196,4 +196,4 @@ export function MoodRail() {
       </aside>
     </Card>
   );
-}
+});

@@ -12,9 +12,11 @@ describe('PlaybackControls', () => {
     onPlay: vi.fn(),
     onStop: vi.fn(),
     onExport: vi.fn(),
+    onToggleRepeat: vi.fn(),
     onVolumeChange: vi.fn(),
     onSeek: vi.fn(),
     isPlaying: false,
+    repeat: false,
     hasAudio: true,
     canExport: true,
     volume: 0.5,
@@ -60,6 +62,25 @@ describe('PlaybackControls', () => {
     const volume = screen.getByLabelText(/playback.volume/);
     fireEvent.change(volume, { target: { value: '0.4' } });
     expect(baseProps.onVolumeChange).toHaveBeenCalledWith(0.4);
+  });
+
+  it('toggles repeat and reflects its armed state', async () => {
+    const props = { ...baseProps, isPlaying: false };
+    const { rerender } = render(
+      <PlaybackControls {...props} isExporting={false} disabled={false} />
+    );
+
+    const repeat = screen.getByRole('button', { name: 'playback.repeat' });
+    expect(repeat).toHaveAttribute('aria-pressed', 'false');
+
+    await userEvent.click(repeat);
+    expect(baseProps.onToggleRepeat).toHaveBeenCalled();
+
+    rerender(<PlaybackControls {...props} repeat isExporting={false} disabled={false} />);
+    expect(screen.getByRole('button', { name: 'playback.repeat' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
   });
 
   it('disables controls when busy', () => {

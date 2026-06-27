@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatClock } from '../utils/formatters';
 
@@ -25,35 +25,57 @@ export function TransportTimeline({
   const { t } = useTranslation();
   const trackRef = useRef<HTMLDivElement | null>(null);
   const draggingRef = useRef(false);
+  // Defer the seek (and its audio-graph rebuild) to drag-end; the fill/thumb track
+  // the pointer visually via `dragRatio` while scrubbing.
+  const [dragRatio, setDragRatio] = useState<number | null>(null);
+  const dragRatioRef = useRef(0);
+  const lastSeekedRatioRef = useRef(0);
 
-  const progress = duration ? Math.min(100, Math.max(0, (currentTime / duration) * 100)) : 0;
+  const baseRatio = duration ? Math.min(1, Math.max(0, currentTime / duration)) : 0;
+  const progress = (dragRatio ?? baseRatio) * 100;
 
-  const seekFromEvent = (clientX: number) => {
-    if (disabled || !duration || !trackRef.current) return;
+  const ratioFromEvent = (clientX: number) => {
+    if (disabled || !duration || !trackRef.current) return null;
     const rect = trackRef.current.getBoundingClientRect();
-    if (!rect.width) return;
-    const ratio = Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1);
-    onSeek(ratio * duration);
+    if (!rect.width) return null;
+    return Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1);
   };
 
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if (disabled) return;
+    const r = ratioFromEvent(event.clientX);
+    if (r === null) return;
     draggingRef.current = true;
     try {
       trackRef.current?.setPointerCapture(event.pointerId);
     } catch {
       // setPointerCapture is unavailable in some environments; dragging still works.
     }
-    seekFromEvent(event.clientX);
+    // Seek immediately on press so a plain click still jumps the playhead.
+    setDragRatio(r);
+    dragRatioRef.current = r;
+    lastSeekedRatioRef.current = r;
+    onSeek(r * duration);
   };
 
   const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
     if (!draggingRef.current) return;
-    seekFromEvent(event.clientX);
+    const r = ratioFromEvent(event.clientX);
+    if (r === null) return;
+    // Visual only — the real seek (and graph rebuild) is deferred to drag-end.
+    setDragRatio(r);
+    dragRatioRef.current = r;
   };
 
   const endDrag = () => {
+    if (!draggingRef.current) return;
     draggingRef.current = false;
+    // Commit the final position once; skip a redundant seek if the pointer never
+    // moved off the press point (a plain click already seeked there).
+    if (!disabled && duration && dragRatioRef.current !== lastSeekedRatioRef.current) {
+      onSeek(dragRatioRef.current * duration);
+    }
+    setDragRatio(null);
   };
 
   return (

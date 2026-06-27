@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { useMood } from '../contexts/MoodContext';
 import { MOODS } from '../contexts/moods';
 import type { SceneId } from '../contexts/moods';
@@ -37,7 +37,7 @@ interface Dive {
   outgoing: SceneId;
 }
 
-export function MoodTransition() {
+export const MoodTransition = memo(function MoodTransition() {
   const { mood } = useMood();
   const prevMood = useRef(mood);
   const counter = useRef(0);
@@ -92,4 +92,4 @@ export function MoodTransition() {
       <div key={`bloom-${dive.id}`} className="warp-bloom" aria-hidden="true" />
     </>
   );
-}
+});

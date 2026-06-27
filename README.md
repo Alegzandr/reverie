@@ -144,10 +144,9 @@ reverie/
 │   │   ├── hud/
 │   │   │   └── HudDial.tsx      # Holographic instrument dial wrapping the play orb
 │   │   ├── scenes/             # Ambient scene building blocks
-│   │   │   ├── NebulaScene.tsx  # Procedural nebula (orphaned — kept for future animated layer)
-│   │   │   ├── TidalScene.tsx   # Procedural water (orphaned — kept for future animated layer)
-│   │   │   ├── motion.ts        # Shared scene motion helpers
-│   │   │   └── webgl/           # glScene.ts + nebulaShader/waterShader (orphaned WebGL layer)
+│   │   │   ├── motion.ts        # Shared scene motion helpers (animatedBackdropAllowed)
+│   │   │   └── webgl/
+│   │   │       └── gpu.ts       # GPU tier detection (software-rendering hint)
 │   │   └── ui/                 # Primitives (button, card, dialog, badge, slider, progress, tooltip)
 │   ├── contexts/
 │   │   ├── MoodContext.tsx    # Active mood: data-mood + .dark + .immersive on <html>

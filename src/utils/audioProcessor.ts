@@ -1,6 +1,14 @@
 import { AUDIO_EFFECTS, AUDIO_SIGNAL } from '../constants';
 import { createDecayingNoiseImpulse } from './impulse';
 
+// Offline impulse-response cache. The IRs are pure noise+decay buffers that only
+// depend on (sampleRate, amount), and AudioBuffers are context-agnostic, so we can
+// reuse them across the per-export OfflineAudioContexts instead of regenerating
+// hundreds of thousands of Math.random samples every export. This also makes
+// successive exports of the same settings deterministic.
+let cachedOfflineReverb: { key: string; buffer: AudioBuffer } | null = null;
+let cachedOffline8DBed: { sampleRate: number; buffer: AudioBuffer } | null = null;
+
 export interface AudioProcessingOptions {
   speedMultiplier: number;
   reverbAmount: number;
@@ -17,12 +25,12 @@ export interface AudioProcessingOptions {
  * and format conversion using the Web Audio API.
  */
 export class AudioProcessor {
-  private audioContext: AudioContext;
+  // Created lazily on first use (see getAudioContext): constructing an AudioContext
+  // at module load spins up the audio hardware on every page visit — including the
+  // welcome/desktop-gate screens where audio never plays — and trips a browser
+  // warning about contexts created before a user gesture.
+  private audioContext: AudioContext | null = null;
   private audioBuffer: AudioBuffer | null = null;
-
-  constructor() {
-    this.audioContext = new AudioContext();
-  }
 
   /**
    * Load an audio file and decode it into an AudioBuffer
@@ -34,7 +42,7 @@ export class AudioProcessor {
   async loadAudioFile(file: File): Promise<AudioBuffer> {
     try {
       const arrayBuffer = await file.arrayBuffer();
-      this.audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+      this.audioBuffer = await this.getAudioContext().decodeAudioData(arrayBuffer);
       return this.audioBuffer;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
@@ -167,12 +175,17 @@ export class AudioProcessor {
 
   /** Short, stereo-widened reverb tail for the offline 8D spatial effect. */
   private create8DReverbImpulse(context: OfflineAudioContext): AudioBuffer {
-    return createDecayingNoiseImpulse(
+    if (cachedOffline8DBed && cachedOffline8DBed.sampleRate === context.sampleRate) {
+      return cachedOffline8DBed.buffer;
+    }
+    const buffer = createDecayingNoiseImpulse(
       context,
       AUDIO_EFFECTS.REVERB.DEFAULT_DURATION_MS / 1000,
       0.1,
       [AUDIO_SIGNAL.EIGHT_D_MIX.STEREO_VARIATION_LEFT, AUDIO_SIGNAL.EIGHT_D_MIX.STEREO_VARIATION_RIGHT],
     );
+    cachedOffline8DBed = { sampleRate: context.sampleRate, buffer };
+    return buffer;
   }
 
   /** Bass boost: highpass (cut rumble) → lowshelf (boost) → peaking (de-mud), with makeup gain. */
@@ -210,9 +223,17 @@ export class AudioProcessor {
     return { input: inputGain, output: outputGain };
   }
 
-  /** Room-reverb impulse whose tail length and decay both scale with `amount` (0–1). */
+  /** Room-reverb impulse whose tail length and decay both scale with `amount` (0–1).
+   *  Keyed on BOTH sampleRate and amount so a re-export at a different reverb amount
+   *  regenerates the correct tail instead of reusing the previous one. */
   private createReverbImpulse(context: OfflineAudioContext, amount: number): AudioBuffer {
-    return createDecayingNoiseImpulse(context, 1 + amount * AUDIO_EFFECTS.REVERB.DECAY_RATE, amount);
+    const key = `${context.sampleRate}:${amount}`;
+    if (cachedOfflineReverb && cachedOfflineReverb.key === key) {
+      return cachedOfflineReverb.buffer;
+    }
+    const buffer = createDecayingNoiseImpulse(context, 1 + amount * AUDIO_EFFECTS.REVERB.DECAY_RATE, amount);
+    cachedOfflineReverb = { key, buffer };
+    return buffer;
   }
 
   /**
@@ -283,6 +304,9 @@ export class AudioProcessor {
   }
 
   getAudioContext(): AudioContext {
+    if (!this.audioContext) {
+      this.audioContext = new AudioContext();
+    }
     return this.audioContext;
   }
 

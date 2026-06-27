@@ -25,6 +25,7 @@ const mockApi = {
   playbackTime: 0,
   duration: 0,
   volume: 0.7,
+  repeat: false,
   loadAudioFile: vi.fn(),
   setEffects: vi.fn(),
   playAudio: vi.fn(),
@@ -32,6 +33,7 @@ const mockApi = {
   exportProcessedAudio: vi.fn(async () => {}),
   updateVolume: vi.fn(),
   seekTo: vi.fn(),
+  toggleRepeat: vi.fn(),
   reset: vi.fn(),
   getAnalyser: () => null,
 };
@@ -177,5 +179,30 @@ describe('App', () => {
     fireEvent.pointerDown(timeline, { clientX: 100 });
 
     expect(mockApi.seekTo).toHaveBeenCalled();
+  });
+
+  it('defers the waveform seek to drag-end (pointermove does not seek)', () => {
+    mockApi.originalFile = new File(['123'], 'song.mp3', { type: 'audio/mp3' });
+    mockApi.originalBuffer = new AudioBuffer({ length: 44100, numberOfChannels: 1, sampleRate: 44100 });
+    mockApi.duration = 2.5;
+
+    renderWithRouter(<App />);
+
+    const timeline = screen.getByTestId('waveform-timeline');
+    timeline.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, right: 200, bottom: 100, width: 200, height: 100, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect;
+
+    // Press seeks immediately (click-to-seek preserved).
+    fireEvent.pointerDown(timeline, { clientX: 50 });
+    expect(mockApi.seekTo).toHaveBeenCalledTimes(1);
+
+    // Dragging only moves the playhead visually — no extra seeks (graph rebuilds) mid-drag.
+    fireEvent.pointerMove(timeline, { clientX: 120 });
+    fireEvent.pointerMove(timeline, { clientX: 160 });
+    expect(mockApi.seekTo).toHaveBeenCalledTimes(1);
+
+    // Drag-end commits the final position once.
+    fireEvent.pointerUp(timeline, { clientX: 160 });
+    expect(mockApi.seekTo).toHaveBeenCalledTimes(2);
   });
 });
