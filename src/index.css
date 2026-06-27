@@ -1759,7 +1759,9 @@
   }
 
   /* Break through it: a gentle scale-up + light blur as it fades, so it reads as
-     passing THROUGH the old world rather than a flat cross-fade. */
+     passing THROUGH the old world rather than a flat cross-fade. The blur is what
+     keeps the dissolving old photo from competing as a sharp image with the new one
+     rising underneath (without it the two backdrops blend messily). */
   @keyframes warp-world-out {
     0% {
       transform: scale(1);
@@ -1796,9 +1798,10 @@
     0% {
       transform: scale(1.14) translate3d(0, 0, 0);
       filter: blur(4px);
-      opacity: 0.62;
-    }
-    55% {
+      /* Opaque from the first frame: the new world is the SOLID base the outgoing
+         copy dissolves away to reveal, instead of a second semi-transparent photo
+         the old one muddily blends with. The reveal reads clean; the focus-pull
+         (scale + de-blur) still carries the "rise into being". */
       opacity: 1;
     }
     /* End EXACTLY on `.scene-photo`'s resting transform (same scale + parallax

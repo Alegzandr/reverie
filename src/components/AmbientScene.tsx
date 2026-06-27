@@ -82,21 +82,14 @@ export const AmbientScene = memo(function AmbientScene() {
   const [, onDecoded] = useReducer((n: number) => n + 1, 0);
   const ready = !photoSrc || decoded.has(photoSrc);
 
-  // Warm ALL backdrops once so switching mood never lands on an undecoded image
-  // (the switch flash). Deferred to idle time: the active scene already decodes
-  // immediately via the per-scene effect below, so the bulk warm shouldn't compete
-  // with first paint / decode of the visible backdrop. Fire-and-forget.
+  // Warm ALL backdrops once, up front, so switching mood never lands on an
+  // undecoded image. This is load-bearing, not a nicety: the mood-dive's
+  // `warp-scene-in` has no `forwards`, so when it ends the incoming photo falls
+  // back to `.scene-photo`'s opacity:0 default until `is-ready` — i.e. a black
+  // flash after every switch unless the backdrop is already decoded. Must stay
+  // eager (do NOT defer to requestIdleCallback). Fire-and-forget; cache does the rest.
   useEffect(() => {
-    const srcs = Object.values(PHOTO_SRC).filter((s): s is string => !!s);
-    const warmAll = () => {
-      for (const src of srcs) warm(src);
-    };
-    if (typeof window.requestIdleCallback === 'function') {
-      const id = window.requestIdleCallback(warmAll, { timeout: 2000 });
-      return () => window.cancelIdleCallback?.(id);
-    }
-    const timer = window.setTimeout(warmAll, 200);
-    return () => window.clearTimeout(timer);
+    for (const src of Object.values(PHOTO_SRC)) if (src) warm(src);
   }, []);
 
   // Kick off the current photo's decode when it isn't cached yet, then force a
