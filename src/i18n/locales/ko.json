@@ -106,7 +106,7 @@
   "settings": {
     "open": "설정",
     "title": "설정",
-    "subtitle": "무드 및 언어",
+    "subtitle": "이퀄라이저 및 언어",
     "moods": "무드",
     "mood": {
       "light": "라이트",
@@ -117,6 +117,12 @@
       "horizon": "Lunar Haze"
     },
     "language": "언어",
+    "equalizer": "이퀄라이저",
+    "eqPreset": "프리셋",
+    "eqCustom": "사용자 지정",
+    "eqReset": "초기화",
+    "eqBand": "{{freq}} 대역",
+    "eqHint": "재생에만 적용되며 내보내기에는 영향을 주지 않습니다.",
     "close": "설정 닫기"
   },
   "studio": {

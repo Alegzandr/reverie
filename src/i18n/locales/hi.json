@@ -106,7 +106,7 @@
   "settings": {
     "open": "सेटिंग्स",
     "title": "सेटिंग्स",
-    "subtitle": "मूड और भाषा",
+    "subtitle": "इक्वलाइज़र और भाषा",
     "moods": "मूड",
     "mood": {
       "light": "लाइट",
@@ -117,6 +117,12 @@
       "horizon": "Lunar Haze"
     },
     "language": "भाषा",
+    "equalizer": "इक्वलाइज़र",
+    "eqPreset": "प्रीसेट",
+    "eqCustom": "कस्टम",
+    "eqReset": "रीसेट",
+    "eqBand": "{{freq}} बैंड",
+    "eqHint": "केवल प्लेबैक पर लागू होता है, निर्यात पर नहीं।",
     "close": "सेटिंग्स बंद करें"
   },
   "studio": {

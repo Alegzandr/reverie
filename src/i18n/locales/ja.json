@@ -106,7 +106,7 @@
   "settings": {
     "open": "設定",
     "title": "設定",
-    "subtitle": "ムードと言語",
+    "subtitle": "イコライザーと言語",
     "moods": "ムード",
     "mood": {
       "light": "ライト",
@@ -117,6 +117,12 @@
       "horizon": "Lunar Haze"
     },
     "language": "言語",
+    "equalizer": "イコライザー",
+    "eqPreset": "プリセット",
+    "eqCustom": "カスタム",
+    "eqReset": "リセット",
+    "eqBand": "{{freq}} バンド",
+    "eqHint": "再生のみに適用され、エクスポートには影響しません。",
     "close": "設定を閉じる"
   },
   "studio": {

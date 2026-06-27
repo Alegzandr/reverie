@@ -60,6 +60,7 @@ export function useAudioProcessor() {
     updateVolume,
     toggleRepeat,
     setEffects: setPlaybackEffects,
+    setEq,
     attachBuffer,
     resetPlayback,
     getAnalyser,
@@ -163,6 +164,9 @@ export function useAudioProcessor() {
     loadAudioFile,
     processAudio,
     setEffects,
+    // Listening EQ — playback-only, never baked into exports, so it bypasses the
+    // optionsRef/render-cache plumbing that setEffects needs.
+    setEq,
     playAudio,
     stopAudio,
     exportProcessedAudio,

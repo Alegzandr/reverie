@@ -268,6 +268,33 @@ export const AUDIO_EFFECTS = {
   EIGHT_D: {
     AUTOMATION_POINTS_PER_SECOND: 60,
   },
+
+  /**
+   * 6-band listening equalizer. Applied to real-time playback only (never baked
+   * into exports). Bands match the classic preset banks: a low shelf, four
+   * peaking mids, and a high shelf. Order here is the canonical band order used
+   * everywhere (preset gains, sliders, filter nodes).
+   */
+  EQUALIZER: {
+    /** Per-band gain bounds in dB. */
+    GAIN_MIN_DB: -12,
+    GAIN_MAX_DB: 12,
+    GAIN_STEP_DB: 1,
+    /** Q for the peaking mids (shelves ignore Q). */
+    PEAKING_Q: 1,
+    /** localStorage keys for the persisted listening EQ. */
+    GAINS_STORAGE_KEY: 'reverie:eq-gains',
+    PRESET_STORAGE_KEY: 'reverie:eq-preset',
+    /** One entry per band, in canonical order. */
+    BANDS: [
+      { label: '60', frequencyHz: 60, type: 'lowshelf' },
+      { label: '150', frequencyHz: 150, type: 'peaking' },
+      { label: '400', frequencyHz: 400, type: 'peaking' },
+      { label: '1K', frequencyHz: 1000, type: 'peaking' },
+      { label: '2.4K', frequencyHz: 2400, type: 'peaking' },
+      { label: '15K', frequencyHz: 15000, type: 'highshelf' },
+    ],
+  },
 } as const;
 
 // ============================================================================

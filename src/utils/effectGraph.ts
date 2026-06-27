@@ -12,7 +12,7 @@ import type { AudioProcessingOptions } from './audioProcessor';
  *
  * Signal path:
  *   source -> highpass -> lowshelf -> peaking -> (dry + convolver/wet) -> mix
- *          -> stereo panner -> out -> [caller's volume gain] -> destination
+ *          -> eq[0..5] -> stereo panner -> out -> [caller's volume gain] -> destination
  * 8D motion: oscillator -> panDepth gain -> panner.pan
  * 8D bed:    mix -> eightDConvolver -> eightDBed -> out  (un-panned, constant)
  *
@@ -30,6 +30,8 @@ export interface EffectChain {
   wetGain: GainNode;
   convolver: ConvolverNode;
   mix: GainNode;
+  /** 6-band listening EQ (peaking/shelf), in canonical band order. Playback only. */
+  eq: BiquadFilterNode[];
   panner: StereoPannerNode;
   panDepth: GainNode;
   osc: OscillatorNode;
@@ -90,6 +92,18 @@ export function createEffectChain(ctx: AudioContext): EffectChain {
   const convolver = ctx.createConvolver();
   convolver.buffer = getReverbImpulse(ctx);
   const mix = ctx.createGain();
+
+  // Listening EQ: one biquad per band, chained in series. Starts flat (0 dB) so
+  // it's transparent until the user dials in a preset. Never part of the export.
+  const eq = AUDIO_EFFECTS.EQUALIZER.BANDS.map((band) => {
+    const filter = ctx.createBiquadFilter();
+    filter.type = band.type;
+    filter.frequency.value = band.frequencyHz;
+    if (band.type === 'peaking') filter.Q.value = AUDIO_EFFECTS.EQUALIZER.PEAKING_Q;
+    filter.gain.value = 0;
+    return filter;
+  });
+
   const panner = ctx.createStereoPanner();
   const panDepth = ctx.createGain();
   const osc = ctx.createOscillator();
@@ -108,7 +122,12 @@ export function createEffectChain(ctx: AudioContext): EffectChain {
   convolver.connect(wetGain);
   dryGain.connect(mix);
   wetGain.connect(mix);
-  mix.connect(panner);
+  // mix -> eq[0] -> eq[1] -> ... -> eq[last] -> panner
+  const eqTail = eq.reduce<AudioNode>((prev, filter) => {
+    prev.connect(filter);
+    return filter;
+  }, mix);
+  eqTail.connect(panner);
   panner.connect(out);
 
   // 8D ambience bed: a constant, un-panned reverb tapped from the pre-pan mix so
@@ -121,7 +140,7 @@ export function createEffectChain(ctx: AudioContext): EffectChain {
   panDepth.connect(panner.pan);
   osc.start();
 
-  return { input: highpass, output: out, highpass, lowshelf, peak, dryGain, wetGain, convolver, mix, panner, panDepth, osc, eightDConvolver, eightDBed, out };
+  return { input: highpass, output: out, highpass, lowshelf, peak, dryGain, wetGain, convolver, mix, eq, panner, panDepth, osc, eightDConvolver, eightDBed, out };
 }
 
 function setParam(param: AudioParam, value: number, ctx: AudioContext, ramp: boolean) {
@@ -160,13 +179,29 @@ export function applyEffectOptions(
   setParam(chain.osc.frequency, eightD ? Math.max(0.01, (options.rotationSpeed || 0.4) / 4) : 0.01, ctx, ramp);
 }
 
+/**
+ * Apply the listening-EQ gains to the live chain. Gains are dB per band, in the
+ * canonical band order; missing bands fall back to 0 dB. With `ramp`, each band
+ * glides to its new gain (no zipper noise); otherwise it's set instantly.
+ */
+export function applyEqGains(
+  chain: EffectChain,
+  gains: number[],
+  ctx: AudioContext,
+  ramp: boolean,
+) {
+  chain.eq.forEach((filter, i) => {
+    setParam(filter.gain, gains[i] ?? 0, ctx, ramp);
+  });
+}
+
 export function disconnectEffectChain(chain: EffectChain) {
   try {
     chain.osc.stop();
   } catch {
     // already stopped
   }
-  for (const node of [chain.osc, chain.panDepth, chain.panner, chain.eightDConvolver, chain.eightDBed, chain.out, chain.mix, chain.wetGain, chain.dryGain, chain.convolver, chain.peak, chain.lowshelf, chain.highpass]) {
+  for (const node of [chain.osc, chain.panDepth, chain.panner, ...chain.eq, chain.eightDConvolver, chain.eightDBed, chain.out, chain.mix, chain.wetGain, chain.dryGain, chain.convolver, chain.peak, chain.lowshelf, chain.highpass]) {
     try {
       node.disconnect();
     } catch {

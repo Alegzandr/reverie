@@ -4,10 +4,12 @@ import type { AudioProcessingOptions } from '../utils/audioProcessor';
 import {
   createEffectChain,
   applyEffectOptions,
+  applyEqGains,
   disconnectEffectChain,
   NEUTRAL_OPTIONS,
   type EffectChain,
 } from '../utils/effectGraph';
+import { EQ_FLAT_GAINS } from '../contexts/eqPresets';
 
 export interface PlaybackState {
   isPlaying: boolean;
@@ -67,6 +69,9 @@ export function useAudioPlayback({
   const playbackSessionRef = useRef<number>(0);
   const isPlayingRef = useRef<boolean>(false);
   const optionsRef = useRef<AudioProcessingOptions>(NEUTRAL_OPTIONS);
+  // Listening EQ gains (dB per band). A separate channel from the export options
+  // above, so the EQ shapes playback only and never reaches the offline renderer.
+  const eqGainsRef = useRef<number[]>(EQ_FLAT_GAINS);
   const rateRef = useRef<number>(1);
   const repeatRef = useRef<boolean>(false);
   // Latest playAudio, captured for the onended loop restart without making the
@@ -230,6 +235,7 @@ export function useAudioPlayback({
       chain.output.connect(analyser);
     }
     applyEffectOptions(chain, optionsRef.current, audioContext, false);
+    applyEqGains(chain, eqGainsRef.current, audioContext, false);
 
     const tick = () => {
       if (playbackSessionRef.current !== sessionId) return;
@@ -350,6 +356,18 @@ export function useAudioPlayback({
     }
   }, [captureProgress, getAudioContext]);
 
+  /**
+   * Update the listening EQ in real time. While playing, every band ramps on the
+   * live graph; otherwise the gains apply the next time playback starts. Export is
+   * unaffected — the EQ lives entirely on the playback graph.
+   */
+  const setEq = useCallback((gains: number[]) => {
+    eqGainsRef.current = gains;
+    const chain = chainRef.current;
+    if (!chain || !isPlayingRef.current) return;
+    applyEqGains(chain, gains, getAudioContext(), true);
+  }, [getAudioContext]);
+
   const resetPlayback = useCallback(() => {
     stopPlayback();
     startOffsetRef.current = 0;
@@ -390,6 +408,7 @@ export function useAudioPlayback({
     updateVolume,
     toggleRepeat,
     setEffects,
+    setEq,
     attachBuffer,
     resetPlayback,
     getAnalyser,

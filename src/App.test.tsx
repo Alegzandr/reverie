@@ -28,6 +28,7 @@ const mockApi = {
   repeat: false,
   loadAudioFile: vi.fn(),
   setEffects: vi.fn(),
+  setEq: vi.fn(),
   playAudio: vi.fn(),
   stopAudio: vi.fn(),
   exportProcessedAudio: vi.fn(async () => {}),
@@ -39,6 +40,7 @@ const mockApi = {
 };
 
 const mockSetMood = vi.fn();
+const mockSetPreset = vi.fn();
 const mockI18n = { language: 'en', changeLanguage: vi.fn() };
 
 vi.mock('./hooks/useAudioProcessor', () => ({
@@ -51,6 +53,16 @@ vi.mock('./contexts/MoodContext', () => ({
     def: { kind: 'workspace', scene: 'daybreak' },
     setMood: mockSetMood,
     recentMoods: ['light', 'dark'],
+  }),
+}));
+
+vi.mock('./contexts/EqContext', () => ({
+  useEq: () => ({
+    gains: [0, 0, 0, 0, 0, 0],
+    presetName: 'Flat',
+    setPreset: mockSetPreset,
+    setBandGain: vi.fn(),
+    reset: vi.fn(),
   }),
 }));
 
@@ -158,12 +170,13 @@ describe('App', () => {
     consoleSpy.mockRestore();
   });
 
-  it('selects a mood from the settings menu', async () => {
+  it('applies an equalizer preset from the settings menu', async () => {
     renderWithRouter(<App />);
-    // Mood + language now live behind a single settings menu.
+    // The settings menu now hosts the listening EQ + language (moods moved to the rail).
     await userEvent.click(screen.getByLabelText('settings.open'));
-    await userEvent.click(screen.getByLabelText('settings.mood.dark'));
-    expect(mockSetMood).toHaveBeenCalledWith('dark');
+    await userEvent.click(screen.getByRole('combobox', { name: 'settings.eqPreset' }));
+    await userEvent.click(screen.getByRole('option', { name: 'Rock' }));
+    expect(mockSetPreset).toHaveBeenCalledWith('Rock');
   });
 
   it('renders waveform timeline and allows seeking', async () => {

@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Settings, Check } from 'lucide-react';
+import { Settings, Check, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -12,9 +12,10 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { useMood } from '../contexts/MoodContext';
-import { MOODS, MOOD_ORDER } from '../contexts/moods';
-import type { MoodId } from '../contexts/moods';
+import { Select } from '@/components/ui/select';
+import { useEq } from '../contexts/EqContext';
+import { EQ_PRESETS, EQ_CUSTOM } from '../contexts/eqPresets';
+import { AUDIO_EFFECTS } from '../constants';
 import { cn } from '@/lib/utils';
 
 const languages = [
@@ -30,6 +31,8 @@ const languages = [
   { code: 'hi', name: 'हिन्दी', flag: '🇮🇳' },
 ];
 
+const EQ = AUDIO_EFFECTS.EQUALIZER;
+
 interface SettingsMenuProps {
   /** Optional custom trigger; defaults to the gear icon button in the chrome.
    *  The mood rail passes its "More moods" row and Mood chip here so they open
@@ -39,48 +42,18 @@ interface SettingsMenuProps {
 
 export function SettingsMenu({ trigger }: SettingsMenuProps = {}) {
   const { i18n, t } = useTranslation();
-  const { mood, setMood } = useMood();
+  const { gains, presetName, setPreset, setBandGain, reset } = useEq();
   const [open, setOpen] = useState(false);
 
-  const renderMoodCard = (id: MoodId) => {
-    const def = MOODS[id];
-    const Icon = def.icon;
-    const active = mood === id;
-    const label = t(`settings.mood.${def.labelKey}`);
-    return (
-      <button
-        key={id}
-        type="button"
-        onClick={() => setMood(id)}
-        aria-pressed={active}
-        aria-label={label}
-        className={cn(
-          'group ios-button relative overflow-hidden rounded-2xl border text-left outline-none',
-          'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-background))]',
-          active
-            ? 'border-[rgba(var(--color-accent),0.7)] shadow-[0_12px_34px_-22px_rgba(var(--color-accent),0.95)]'
-            : 'border-[rgba(var(--color-border),0.7)] hover:border-[rgba(var(--color-accent),0.5)]'
-        )}
-      >
-        {/* Live preview swatch — the mood's own scene/backdrop colours */}
-        <span
-          className="block h-14 w-full"
-          style={{ background: def.preview }}
-          aria-hidden="true"
-        />
-        <span className="flex items-center justify-between gap-2 px-3 py-2 bg-[rgba(var(--color-surface),0.6)]">
-          <span className="flex items-center gap-2 min-w-0">
-            <Icon
-              className={cn('w-4 h-4 shrink-0', active ? 'text-[rgb(var(--color-accent-text))]' : 'text-[rgb(var(--color-text-secondary))]')}
-              aria-hidden="true"
-            />
-            <span className="text-sm font-semibold truncate text-[rgb(var(--color-text))]">{label}</span>
-          </span>
-          {active && <Check className="w-4 h-4 shrink-0 text-[rgb(var(--color-accent-text))]" aria-hidden="true" />}
-        </span>
-      </button>
-    );
-  };
+  const isCustom = presetName === EQ_CUSTOM;
+  const isFlat = presetName === 'Flat';
+
+  // Hand-tuned gains surface a leading "Custom" entry; otherwise the bank is the
+  // built-in presets, each labelled by its own name.
+  const presetOptions = [
+    ...(isCustom ? [{ value: EQ_CUSTOM, label: t('settings.eqCustom') }] : []),
+    ...EQ_PRESETS.map((preset) => ({ value: preset.name, label: preset.name })),
+  ];
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -106,13 +79,82 @@ export function SettingsMenu({ trigger }: SettingsMenuProps = {}) {
         </DialogHeader>
 
         <div className="max-h-[64vh] overflow-y-auto pr-1 -mr-1">
-          {/* Mood gallery — every mood is a palette + animated background over
-              the same futuristic HUD. */}
+          {/* Listening equalizer — shapes playback for comfort only; it is never
+              baked into exports. A preset bank plus six hand-tunable bands. */}
           <section className="mb-5">
-            <h3 className="text-[11px] uppercase tracking-wide text-[rgb(var(--color-text-secondary))] mb-2">
-              {t('settings.moods')}
-            </h3>
-            <div className="grid grid-cols-2 gap-2.5">{MOOD_ORDER.map(renderMoodCard)}</div>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <h3 className="text-[11px] uppercase tracking-wide text-[rgb(var(--color-text-secondary))]">
+                {t('settings.equalizer')}
+              </h3>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={reset}
+                disabled={isFlat}
+                className="h-7 gap-1.5 px-2 text-[rgb(var(--color-text-secondary))]"
+              >
+                <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
+                <span className="text-xs">{t('settings.eqReset')}</span>
+              </Button>
+            </div>
+
+            <div className="rounded-2xl border border-[rgba(var(--color-border),0.7)] bg-[rgba(var(--color-surface),0.5)] p-3.5">
+              {/* Preset picker */}
+              <div className="flex items-center justify-between gap-3 mb-3.5">
+                <span className="hud-readout shrink-0">{t('settings.eqPreset')}</span>
+                <div className="min-w-0 flex-1 max-w-[58%]">
+                  <Select
+                    value={presetName}
+                    onValueChange={setPreset}
+                    options={presetOptions}
+                    aria-label={t('settings.eqPreset')}
+                  />
+                </div>
+              </div>
+
+              {/* Band faders */}
+              <div className="flex items-end justify-between gap-1 pt-1">
+                {EQ.BANDS.map((band, i) => {
+                  const value = gains[i] ?? 0;
+                  const range = ((value - EQ.GAIN_MIN_DB) / (EQ.GAIN_MAX_DB - EQ.GAIN_MIN_DB)) * 100;
+                  const bandLabel = `${band.label}Hz`;
+                  return (
+                    <div key={band.label} className="flex flex-col items-center gap-2 min-w-0">
+                      <span
+                        className={cn(
+                          'text-[11px] font-semibold tabular-nums',
+                          value === 0
+                            ? 'text-[rgb(var(--color-text-secondary))]'
+                            : 'text-[rgb(var(--color-accent-text))]'
+                        )}
+                      >
+                        {value > 0 ? `+${value}` : value}
+                      </span>
+                      <input
+                        type="range"
+                        className="eq-slider"
+                        min={EQ.GAIN_MIN_DB}
+                        max={EQ.GAIN_MAX_DB}
+                        step={EQ.GAIN_STEP_DB}
+                        value={value}
+                        onChange={(e) => setBandGain(i, parseFloat(e.target.value))}
+                        aria-label={t('settings.eqBand', { freq: bandLabel })}
+                        aria-valuetext={`${value > 0 ? `+${value}` : value} dB`}
+                        style={{ '--range': `${range}%` } as CSSProperties}
+                      />
+                      <span className="text-[10px] text-[rgb(var(--color-text-secondary))] truncate max-w-full">
+                        {band.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <p className="mt-3 text-[11px] leading-snug text-[rgb(var(--color-text-secondary))]">
+                {t('settings.eqHint')}
+              </p>
+            </div>
           </section>
 
           {/* Language */}

@@ -400,6 +400,69 @@
       0 0 0 6px rgba(var(--color-accent), 0.4);
   }
 
+  /* Vertical EQ fader. Built on the same native range input as `.slider`, but
+     oriented bottom→top (min→max) so it reads as a classic graphic-EQ band.
+     The accent fill grows from the bottom up to the thumb via `--range`. */
+  .eq-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    writing-mode: vertical-lr;
+    direction: rtl;
+    width: 6px;
+    height: 120px;
+    border-radius: 9999px;
+    cursor: pointer;
+    background: linear-gradient(
+      to top,
+      rgb(var(--color-accent)) 0%,
+      rgb(var(--color-accent)) var(--range, 50%),
+      rgba(var(--color-border), 0.55) var(--range, 50%),
+      rgba(var(--color-border), 0.55) 100%
+    );
+    transition: filter 0.2s ease;
+  }
+
+  .eq-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 9999px;
+    background: #fff;
+    border: none;
+    box-shadow:
+      0 2px 6px -1px rgba(0, 0, 0, 0.35),
+      0 0 0 4px rgba(var(--color-accent), 0.22);
+    transition: box-shadow 0.2s ease, transform 0.1s ease;
+  }
+
+  .eq-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 9999px;
+    background: #fff;
+    border: none;
+    box-shadow:
+      0 2px 6px -1px rgba(0, 0, 0, 0.35),
+      0 0 0 4px rgba(var(--color-accent), 0.22);
+  }
+
+  .eq-slider:hover::-webkit-slider-thumb {
+    box-shadow:
+      0 2px 8px -1px rgba(0, 0, 0, 0.4),
+      0 0 0 6px rgba(var(--color-accent), 0.28);
+  }
+
+  .eq-slider:focus-visible {
+    outline: none;
+  }
+
+  .eq-slider:focus-visible::-webkit-slider-thumb {
+    box-shadow:
+      0 2px 8px -1px rgba(0, 0, 0, 0.4),
+      0 0 0 6px rgba(var(--color-accent), 0.4);
+  }
+
   /* Ambient drift behind the welcome stage — atmosphere, not chrome */
   .aurora-stage::before {
     content: "";

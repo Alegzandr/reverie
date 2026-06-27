@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi, describe, it, beforeEach, expect } from 'vitest';
 import { SettingsMenu } from './SettingsMenu';
@@ -6,14 +6,27 @@ import { TooltipProvider } from './ui/tooltip';
 
 const mockChangeLanguage = vi.fn();
 const mockI18n = { language: 'en', changeLanguage: mockChangeLanguage };
-const mockSetMood = vi.fn();
+const mockSetPreset = vi.fn();
+const mockSetBandGain = vi.fn();
+const mockReset = vi.fn();
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key, i18n: mockI18n }),
+  // Echo the key, folding the interpolated frequency in so each band's
+  // aria-label stays unique (settings.eqBand:60Hz, …).
+  useTranslation: () => ({
+    t: (key: string, opts?: { freq?: string }) => (opts?.freq ? `${key}:${opts.freq}` : key),
+    i18n: mockI18n,
+  }),
 }));
 
-vi.mock('../contexts/MoodContext', () => ({
-  useMood: () => ({ mood: 'light', def: { kind: 'workspace' }, setMood: mockSetMood }),
+vi.mock('../contexts/EqContext', () => ({
+  useEq: () => ({
+    gains: [0, 0, 0, 0, 0, 0],
+    presetName: 'Flat',
+    setPreset: mockSetPreset,
+    setBandGain: mockSetBandGain,
+    reset: mockReset,
+  }),
 }));
 
 const renderMenu = () =>
@@ -39,14 +52,22 @@ describe('SettingsMenu', () => {
     expect(mockChangeLanguage).toHaveBeenCalledWith('es');
   });
 
-  it('selects a mood from the gallery', async () => {
+  it('applies a preset from the equalizer picker', async () => {
     renderMenu();
 
     await userEvent.click(screen.getByLabelText('settings.open'));
-    await userEvent.click(screen.getByLabelText('settings.mood.dark'));
-    expect(mockSetMood).toHaveBeenCalledWith('dark');
+    // Custom combobox: open the listbox, then pick an option.
+    await userEvent.click(screen.getByRole('combobox', { name: 'settings.eqPreset' }));
+    await userEvent.click(screen.getByRole('option', { name: 'Rock' }));
+    expect(mockSetPreset).toHaveBeenCalledWith('Rock');
+  });
 
-    await userEvent.click(screen.getByLabelText('settings.mood.tidal'));
-    expect(mockSetMood).toHaveBeenCalledWith('tidal');
+  it('nudges a single equalizer band', async () => {
+    renderMenu();
+
+    await userEvent.click(screen.getByLabelText('settings.open'));
+    // First band is 60Hz; dragging it sets that band's gain.
+    fireEvent.change(screen.getByLabelText('settings.eqBand:60Hz'), { target: { value: '4' } });
+    expect(mockSetBandGain).toHaveBeenCalledWith(0, 4);
   });
 });

@@ -106,7 +106,7 @@
   "settings": {
     "open": "Definições",
     "title": "Definições",
-    "subtitle": "Ambientes e idioma",
+    "subtitle": "Equalizador e idioma",
     "moods": "Ambientes",
     "mood": {
       "light": "Claro",
@@ -117,6 +117,12 @@
       "horizon": "Lunar Haze"
     },
     "language": "Idioma",
+    "equalizer": "Equalizador",
+    "eqPreset": "Predefinição",
+    "eqCustom": "Personalizado",
+    "eqReset": "Repor",
+    "eqBand": "Banda {{freq}}",
+    "eqHint": "Afeta apenas a reprodução, não as exportações.",
     "close": "Fechar definições"
   },
   "studio": {

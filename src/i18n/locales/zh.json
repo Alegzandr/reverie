@@ -106,7 +106,7 @@
   "settings": {
     "open": "设置",
     "title": "设置",
-    "subtitle": "氛围和语言",
+    "subtitle": "均衡器和语言",
     "moods": "氛围",
     "mood": {
       "light": "浅色",
@@ -117,6 +117,12 @@
       "horizon": "Lunar Haze"
     },
     "language": "语言",
+    "equalizer": "均衡器",
+    "eqPreset": "预设",
+    "eqCustom": "自定义",
+    "eqReset": "重置",
+    "eqBand": "{{freq}} 频段",
+    "eqHint": "仅影响播放，不影响导出。",
     "close": "关闭设置"
   },
   "studio": {

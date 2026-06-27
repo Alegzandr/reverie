@@ -20,6 +20,7 @@ import { Badge } from './components/ui/badge';
 import { Tooltip, TooltipTrigger, TooltipContent } from './components/ui/tooltip';
 import { useAudioProcessor } from './hooks/useAudioProcessor';
 import { useAudioReactivity } from './hooks/useAudioReactivity';
+import { useEq } from './contexts/EqContext';
 import { EFFECT_EXPORT_LABELS, EFFECT_DEFAULTS } from './constants';
 import type { AudioProcessingOptions } from './utils/audioProcessor';
 
@@ -46,6 +47,7 @@ function App() {
     metadata,
     loadAudioFile,
     setEffects,
+    setEq,
     playAudio,
     stopAudio,
     exportProcessedAudio,
@@ -55,6 +57,14 @@ function App() {
     reset,
     getAnalyser,
   } = useAudioProcessor();
+
+  // Listening EQ: a comfort setting kept in its own context (and localStorage).
+  // Push the gains to the playback graph whenever they change — ramped live while
+  // playing, remembered for the next play otherwise. Never touches the export.
+  const { gains: eqGains } = useEq();
+  useEffect(() => {
+    setEq(eqGains);
+  }, [eqGains, setEq]);
 
   // Desktop-only: Reverie's cockpit needs a wide canvas, so narrow viewports are
   // gated (no bypass) and pushed to a bigger screen. Width-based, live on resize.

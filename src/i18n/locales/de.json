@@ -106,7 +106,7 @@
   "settings": {
     "open": "Einstellungen",
     "title": "Einstellungen",
-    "subtitle": "Stimmungen und Sprache",
+    "subtitle": "Equalizer und Sprache",
     "moods": "Stimmungen",
     "mood": {
       "light": "Hell",
@@ -117,6 +117,12 @@
       "horizon": "Lunar Haze"
     },
     "language": "Sprache",
+    "equalizer": "Equalizer",
+    "eqPreset": "Voreinstellung",
+    "eqCustom": "Benutzerdefiniert",
+    "eqReset": "Zurücksetzen",
+    "eqBand": "Band {{freq}}",
+    "eqHint": "Betrifft nur die Wiedergabe, nicht deine Exporte.",
     "close": "Einstellungen schließen"
   },
   "studio": {

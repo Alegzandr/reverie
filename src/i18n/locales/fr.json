@@ -106,7 +106,7 @@
   "settings": {
     "open": "Réglages",
     "title": "Réglages",
-    "subtitle": "Moods et langue",
+    "subtitle": "Égaliseur et langue",
     "moods": "Moods",
     "mood": {
       "light": "Clair",
@@ -117,6 +117,12 @@
       "horizon": "Lunar Haze"
     },
     "language": "Langue",
+    "equalizer": "Égaliseur",
+    "eqPreset": "Préréglage",
+    "eqCustom": "Personnalisé",
+    "eqReset": "Réinitialiser",
+    "eqBand": "Bande {{freq}}",
+    "eqHint": "S'applique uniquement à l'écoute, pas à vos exports.",
     "close": "Fermer les réglages"
   },
   "studio": {
