@@ -86,17 +86,18 @@ export function SettingsMenu({ trigger }: SettingsMenuProps = {}) {
               <h3 className="text-[11px] uppercase tracking-wide text-[rgb(var(--color-text-secondary))]">
                 {t('settings.equalizer')}
               </h3>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={reset}
-                disabled={isFlat}
-                className="h-7 gap-1.5 px-2 text-[rgb(var(--color-text-secondary))]"
-              >
-                <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
-                <span className="text-xs">{t('settings.eqReset')}</span>
-              </Button>
+              {!isFlat && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={reset}
+                  className="h-7 gap-1.5 px-2 text-[rgb(var(--color-text-secondary))]"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span className="text-xs">{t('settings.eqReset')}</span>
+                </Button>
+              )}
             </div>
 
             <div className="rounded-2xl border border-[rgba(var(--color-border),0.7)] bg-[rgba(var(--color-surface),0.5)] p-3.5">
