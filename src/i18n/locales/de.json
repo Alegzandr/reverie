@@ -6,7 +6,7 @@
   },
   "gate": {
     "title": "Für den großen Bildschirm gemacht",
-    "description": "Das Cockpit von Reverie — die Effekte, die lebendige Wellenform und die Stimmung — braucht Platz zum Atmen. Öffne es auf einem Computer, um das volle Erlebnis zu genießen.",
+    "description": "Das Cockpit von Reverie (die Effekte, die lebendige Wellenform und die Stimmung) braucht Platz zum Atmen. Öffne es auf einem Computer, um das volle Erlebnis zu genießen.",
     "hint": "Wir sehen uns am Desktop"
   },
   "app": {
@@ -52,6 +52,7 @@
   },
   "track": {
     "title": "Track",
+    "format": "Format",
     "name": "Name",
     "size": "Größe",
     "bitrate": "Bitrate",

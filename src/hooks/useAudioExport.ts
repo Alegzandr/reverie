@@ -69,7 +69,7 @@ export function useAudioExport({
     try {
       // The export pipeline pulls in heavy encoders (notably the lamejs MP3
       // encoder, ~163KB). Export is a rare action, so load it on demand here
-      // instead of at module scope — this keeps that chunk off the first-paint
+      // instead of at module scope - this keeps that chunk off the first-paint
       // critical path. A chunk-load failure falls through to the catch below.
       const { getExportStrategy, estimateBitrate } = await import('../utils/exportStrategies');
 

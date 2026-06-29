@@ -17,7 +17,7 @@ interface EffectRowProps {
 /**
  * One effect as a list row (icon + name + live status + power lamp). The effects
  * are exclusive modes, so selecting a row makes it the Active one and the rest
- * read Inactive — state is never carried by colour alone (a Power lamp + a text
+ * read Inactive - state is never carried by colour alone (a Power lamp + a text
  * status back it up). The whole row is the hit target.
  *
  * Memoised so adjusting a slider (which re-renders the parent on every tick) never

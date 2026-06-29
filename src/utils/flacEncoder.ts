@@ -3,7 +3,7 @@
  *
  * Encodes an AudioBuffer to a real, lossless FLAC stream using libFLAC compiled
  * to WebAssembly (libflacjs). The WASM module is loaded lazily on first use so it
- * never weighs on the initial bundle — it only ships when the user exports FLAC.
+ * never weighs on the initial bundle - it only ships when the user exports FLAC.
  *
  * NOTE: we drive libFLAC's low-level C API directly rather than the bundled
  * `Encoder` helper. That helper is a CommonJS module that does a runtime
@@ -98,7 +98,7 @@ export async function audioBufferToFlac(
   const chunks: Uint8Array[] = [];
   let totalLength = 0;
   const writeCallback = (data: Uint8Array, numberOfBytes: number) => {
-    // `data` is a view into the WASM heap that may be reused — copy it out.
+    // `data` is a view into the WASM heap that may be reused - copy it out.
     const chunk = new Uint8Array(data.subarray(0, numberOfBytes));
     chunks.push(chunk);
     totalLength += chunk.length;

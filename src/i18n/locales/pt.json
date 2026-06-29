@@ -6,7 +6,7 @@
   },
   "gate": {
     "title": "Feito para a tela grande",
-    "description": "O cockpit do Reverie — os efeitos, a forma de onda viva e o ambiente — precisa de espaço para respirar. Abra-o num computador para aproveitar a experiência completa.",
+    "description": "O cockpit do Reverie (os efeitos, a forma de onda viva e o ambiente) precisa de espaço para respirar. Abra-o num computador para aproveitar a experiência completa.",
     "hint": "Até já no computador"
   },
   "app": {
@@ -26,7 +26,7 @@
   "effects": {
     "none": "Original",
     "resetHint": "Clique duas vezes para redefinir",
-    "originalHint": "Reproduzindo a faixa original — nenhum efeito aplicado.",
+    "originalHint": "Reproduzindo a faixa original, nenhum efeito aplicado.",
     "speedUp": "Acelerar",
     "slowReverb": "Lento + Reverb",
     "8dAudio": "Áudio 8D",
@@ -52,6 +52,7 @@
   },
   "track": {
     "title": "Faixa",
+    "format": "Formato",
     "name": "Nome",
     "size": "Tamanho",
     "bitrate": "Taxa de bits",

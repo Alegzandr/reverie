@@ -48,7 +48,7 @@ export function useAudioProcessor() {
   // which cascades through useAudioPlayback's memoised callbacks (captureProgress →
   // setEffects) into App's handleEffectChange. EffectControls lists that onChange in
   // a useEffect dependency array, so an unstable identity re-runs the effect every
-  // render — an infinite re-render loop in the editor (only visible once a dialog
+  // render - an infinite re-render loop in the editor (only visible once a dialog
   // injects a synchronous setState into the storm: "Maximum update depth exceeded").
   const getAudioContext = useCallback(() => audioProcessor.getAudioContext(), []);
 
@@ -164,7 +164,7 @@ export function useAudioProcessor() {
     loadAudioFile,
     processAudio,
     setEffects,
-    // Listening EQ — playback-only, never baked into exports, so it bypasses the
+    // Listening EQ - playback-only, never baked into exports, so it bypasses the
     // optionsRef/render-cache plumbing that setEffects needs.
     setEq,
     playAudio,

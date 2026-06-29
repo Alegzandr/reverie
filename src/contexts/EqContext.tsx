@@ -44,7 +44,7 @@ function readInitialGains(): number[] {
     const stored = sanitizeGains(JSON.parse(localStorage.getItem(GAINS_STORAGE_KEY) ?? 'null'));
     if (stored) return stored;
   } catch {
-    // Corrupt/missing — fall through to the default preset.
+    // Corrupt/missing - fall through to the default preset.
   }
   const def = EQ_PRESETS.find((p) => p.name === EQ_DEFAULT_PRESET);
   return def ? [...def.gains] : [...EQ_FLAT_GAINS];

@@ -9,7 +9,7 @@
          the base64-embedded webfonts bundled by Vite. `'unsafe-inline'` is required
          for the two inline scripts below (GitHub Pages SPA redirect + JSON-LD) and
          Vite's injected styles; if those are ever hashed, tighten this to
-         `'self' 'sha256-…'`. NB: `frame-ancestors` is intentionally omitted — it
+         `'self' 'sha256-…'`. NB: `frame-ancestors` is intentionally omitted - it
          is ignored when delivered via <meta> and only works as an HTTP header. -->
     <meta http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'" />

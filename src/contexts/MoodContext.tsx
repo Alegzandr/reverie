@@ -34,7 +34,7 @@ function readRecents(): MoodId[] {
     const raw: unknown = JSON.parse(localStorage.getItem(RECENTS_KEY) ?? '[]');
     if (Array.isArray(raw)) return raw.filter(isMoodId);
   } catch {
-    // Corrupt/missing list — start fresh.
+    // Corrupt/missing list - start fresh.
   }
   return [];
 }
@@ -58,7 +58,7 @@ export function MoodProvider({ children }: { children: ReactNode }) {
 
     const root = document.documentElement;
     // Ease every palette-driven colour across the swap (text, accent fills,
-    // borders, icons) — see `.mood-shifting` in index.css. Skip the very first
+    // borders, icons) - see `.mood-shifting` in index.css. Skip the very first
     // apply: there's no previous palette to cross-fade from. The scene/bloom dive
     // is orchestrated separately by <MoodTransition>.
     if (paintedMood.current !== null && paintedMood.current !== mood) {

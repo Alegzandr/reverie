@@ -9,7 +9,7 @@ interface UseAudioReactivityOptions {
 }
 
 /**
- * The "breathe with the music" engine — Reverie's signature.
+ * The "breathe with the music" engine - Reverie's signature.
  *
  * Each frame it reads the live playback analyser and publishes a handful of
  * normalised audio-energy values as CSS custom properties on the target element
@@ -27,7 +27,7 @@ interface UseAudioReactivityOptions {
  * smoothed state lives in a ref so easing stays continuous across play/pause.
  */
 export function useAudioReactivity({ getAnalyser, isPlaying, target }: UseAudioReactivityOptions) {
-  // Smoothed, published energies — kept in a ref so a play/pause toggle eases
+  // Smoothed, published energies - kept in a ref so a play/pause toggle eases
   // from the current value instead of jumping back to zero on effect re-run.
   const energy = useRef({ level: 0, bass: 0, mid: 0, treble: 0, pulse: 0, bassBaseline: 0 });
 
@@ -39,7 +39,7 @@ export function useAudioReactivity({ getAnalyser, isPlaying, target }: UseAudioR
     const e = energy.current;
 
     // Cache the last published (3-decimal-rounded) values so flat/steady frames
-    // skip the five style writes entirely — each setProperty forces a style recalc.
+    // skip the five style writes entirely - each setProperty forces a style recalc.
     const last = { level: -1, bass: -1, mid: -1, treble: -1, pulse: -1 };
 
     const publish = () => {
@@ -96,7 +96,7 @@ export function useAudioReactivity({ getAnalyser, isPlaying, target }: UseAudioR
         analyser.getByteFrequencyData(freq);
         analyser.getByteTimeDomainData(time);
 
-        // Loudness — RMS of the time-domain signal (128 = silence midpoint).
+        // Loudness - RMS of the time-domain signal (128 = silence midpoint).
         let sumSq = 0;
         for (let i = 0; i < time.length; i++) {
           const v = (time[i] - 128) / 128;
@@ -124,13 +124,13 @@ export function useAudioReactivity({ getAnalyser, isPlaying, target }: UseAudioR
         for (let i = trebleStart; i < bins; i++) tSum += freq[i];
         const targetTreble = tSum / (bins - trebleStart) / 255;
 
-        // Fast attack, slower release — reads musical, not jittery.
+        // Fast attack, slower release - reads musical, not jittery.
         e.level += (targetLevel - e.level) * (targetLevel > e.level ? 0.5 : 0.12);
         e.bass += (targetBass - e.bass) * (targetBass > e.bass ? 0.5 : 0.15);
         e.mid += (targetMid - e.mid) * (targetMid > e.mid ? 0.45 : 0.18);
         e.treble += (targetTreble - e.treble) * 0.3;
 
-        // Onset — bass punching above its own slow baseline fires a flash.
+        // Onset - bass punching above its own slow baseline fires a flash.
         e.bassBaseline += (targetBass - e.bassBaseline) * 0.08;
         if (targetBass > e.bassBaseline * 1.35 + 0.06) {
           e.pulse = Math.min(1, Math.max(e.pulse, (targetBass - e.bassBaseline) * 3));
@@ -141,7 +141,7 @@ export function useAudioReactivity({ getAnalyser, isPlaying, target }: UseAudioR
         publish();
         raf = requestAnimationFrame(frame);
       } else {
-        // Stopped (or analyser gone) — ease everything down, then settle + clear.
+        // Stopped (or analyser gone) - ease everything down, then settle + clear.
         e.level *= 0.85;
         e.bass *= 0.85;
         e.mid *= 0.85;

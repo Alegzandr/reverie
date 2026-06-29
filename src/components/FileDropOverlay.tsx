@@ -13,7 +13,7 @@ interface FileDropOverlayProps {
  * Window-wide drop target for swapping the current track. Unlike the compact
  * FileUploader (a single button), this lets the user drop an audio file
  * anywhere over the workspace. It listens on `window` and only reveals its
- * overlay when files are actually being dragged in — so it never gets in the
+ * overlay when files are actually being dragged in - so it never gets in the
  * way of ordinary pointer use.
  */
 export const FileDropOverlay = memo(function FileDropOverlay({ onFileSelect, disabled }: FileDropOverlayProps) {

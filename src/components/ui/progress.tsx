@@ -7,7 +7,7 @@ export interface ProgressProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * Slim track with an Aurora-gradient fill. Determinate only — the audio pipeline
+ * Slim track with an Aurora-gradient fill. Determinate only - the audio pipeline
  * always reports a real percentage, so there's no indeterminate state to model.
  */
 const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(

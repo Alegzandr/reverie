@@ -217,7 +217,7 @@ export function useAudioPlayback({
     // The analyser tees off the effect chain *before* the volume gain so the live
     // spectrum (and the UI's "breathe with the music" reactivity) tracks the music
     // and its effects, never the user's listening volume. It sits on a parallel
-    // branch and doesn't need to reach the destination — an AnalyserNode reads its
+    // branch and doesn't need to reach the destination - an AnalyserNode reads its
     // input whether or not it's connected onward. Optional: skipped when the context
     // can't create one (older engines, tests).
     const analyser =
@@ -359,7 +359,7 @@ export function useAudioPlayback({
   /**
    * Update the listening EQ in real time. While playing, every band ramps on the
    * live graph; otherwise the gains apply the next time playback starts. Export is
-   * unaffected — the EQ lives entirely on the playback graph.
+   * unaffected - the EQ lives entirely on the playback graph.
    */
   const setEq = useCallback((gains: number[]) => {
     eqGainsRef.current = gains;

@@ -8,7 +8,7 @@ import { animatedBackdropAllowed } from './scenes/motion';
  * Mood switch = plunging into a new environment. The cockpit glass stays put
  * (the compositor); the world we're leaving dissolves as we break through it,
  * while the new environment rises out of a slight zoom and settles into focus
- * around us — a centred luminous swell (in the new mood's own colour) cresting
+ * around us - a centred luminous swell (in the new mood's own colour) cresting
  * over the cockpit at the threshold. Spectacular but composed: no lateral slide,
  * no sci-fi chrome, one slow expo curve. All GPU-composited (transform / opacity
  * / filter) and gated by `animatedBackdropAllowed()`, so under
@@ -74,7 +74,7 @@ export const MoodTransition = memo(function MoodTransition() {
 
   return (
     <>
-      {/* The world we're leaving — a full-bleed copy of the outgoing backdrop that
+      {/* The world we're leaving - a full-bleed copy of the outgoing backdrop that
           scales up, blurs and dissolves as we break through it, revealing the new
           environment rising into focus underneath. Isolated so the panels'
           backdrop-filter samples one flat layer while it animates (no flash). */}
@@ -86,7 +86,7 @@ export const MoodTransition = memo(function MoodTransition() {
         )}
       </div>
 
-      {/* The luminous swell — a centred bloom in the NEW mood's colour (its tokens
+      {/* The luminous swell - a centred bloom in the NEW mood's colour (its tokens
           are already live on :root), cresting over the whole cockpit at the
           threshold and clearing. The spectacle, kept classy: no rings, no streaks. */}
       <div key={`bloom-${dive.id}`} className="warp-bloom" aria-hidden="true" />

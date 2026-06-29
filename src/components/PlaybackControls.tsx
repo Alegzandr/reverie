@@ -54,12 +54,12 @@ export function PlaybackControls({
 
   return (
     // On phones the bar splits into two rows: the timeline takes the full width on
-    // top, and the controls (play · volume · export) sit beneath it — otherwise
+    // top, and the controls (play · volume · export) sit beneath it - otherwise
     // everything is crushed onto one line and the clock collides with the volume.
     // On `sm+` the controls wrapper dissolves (`sm:contents`) and every element
     // rejoins a single flex row, ordered play → timeline → spectrum → volume → export.
     <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-4">
-      {/* Classic timeline — full-width first row on mobile, centre flex on desktop. */}
+      {/* Classic timeline - full-width first row on mobile, centre flex on desktop. */}
       <TransportTimeline
         className="order-1 w-full sm:order-2 sm:flex-1"
         currentTime={currentTime}
@@ -69,14 +69,14 @@ export function PlaybackControls({
       />
 
       <div className="order-2 flex items-center gap-3 sm:order-none sm:contents">
-        {/* Play / Pause — the Aurora orb inside a holographic instrument dial whose
+        {/* Play / Pause - the Aurora orb inside a holographic instrument dial whose
             rings rotate while a track plays. A soft ring also pulses outward. */}
         <div className="relative shrink-0 sm:order-1">
           <HudDial
             spinning={playEnabled && isPlaying}
             className="pointer-events-none absolute -inset-[11px] z-0"
           />
-          {/* Audio-reactive halo — punches with the kick (bass + onset). Rendered
+          {/* Audio-reactive halo - punches with the kick (bass + onset). Rendered
               whenever the orb is live so the glow eases back down on pause. */}
           {playEnabled && (
             <span className="audio-orb-glow pointer-events-none absolute inset-0 z-0" aria-hidden="true" />
@@ -100,7 +100,7 @@ export function PlaybackControls({
           </Button>
         </div>
 
-        {/* Repeat — loops the track from the top when it ends. A quiet toggle next to
+        {/* Repeat - loops the track from the top when it ends. A quiet toggle next to
             the orb: ghost when off, accent-tinted with a live glyph when armed. */}
         <Button
           variant={repeat ? 'accent' : 'ghost'}
@@ -118,7 +118,7 @@ export function PlaybackControls({
           />
         </Button>
 
-        {/* Live spectrum — a small instrument that makes the bar feel alive.
+        {/* Live spectrum - a small instrument that makes the bar feel alive.
             Hidden on narrow screens where space is tight. */}
         {hasAudio && (
           <SpectrumMeter
@@ -128,7 +128,7 @@ export function PlaybackControls({
           />
         )}
 
-        {/* Volume — compact, scroll to adjust. Pushed to the right edge on the
+        {/* Volume - compact, scroll to adjust. Pushed to the right edge on the
             mobile controls row; sits inline on desktop. */}
         {hasAudio && (
           <VolumeControl
@@ -139,7 +139,7 @@ export function PlaybackControls({
           />
         )}
 
-        {/* Export — the quiet committing action: a dark glass pill, identity carried
+        {/* Export - the quiet committing action: a dark glass pill, identity carried
             by the mood-tinted icon (it tracks the active mood's accent) rather than
             a loud fill. */}
         <Button

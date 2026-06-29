@@ -26,8 +26,8 @@ export interface AudioProcessingOptions {
  */
 export class AudioProcessor {
   // Created lazily on first use (see getAudioContext): constructing an AudioContext
-  // at module load spins up the audio hardware on every page visit — including the
-  // welcome/desktop-gate screens where audio never plays — and trips a browser
+  // at module load spins up the audio hardware on every page visit - including the
+  // welcome/desktop-gate screens where audio never plays - and trips a browser
   // warning about contexts created before a user gesture.
   private audioContext: AudioContext | null = null;
   private audioBuffer: AudioBuffer | null = null;

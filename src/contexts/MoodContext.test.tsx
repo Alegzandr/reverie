@@ -49,7 +49,7 @@ describe('MoodContext', () => {
   it('keeps the HUD (.immersive) on for every mood, swapping only base + scene', () => {
     const { result } = renderMoodHook();
 
-    // The HUD is the one interface — on even for the calm light palette.
+    // The HUD is the one interface - on even for the calm light palette.
     act(() => result.current.setMood('light'));
     expect(document.documentElement.classList.contains('immersive')).toBe(true);
     expect(document.documentElement.classList.contains('dark')).toBe(false);

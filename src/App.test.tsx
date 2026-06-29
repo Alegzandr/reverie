@@ -209,7 +209,7 @@ describe('App', () => {
     fireEvent.pointerDown(timeline, { clientX: 50 });
     expect(mockApi.seekTo).toHaveBeenCalledTimes(1);
 
-    // Dragging only moves the playhead visually — no extra seeks (graph rebuilds) mid-drag.
+    // Dragging only moves the playhead visually - no extra seeks (graph rebuilds) mid-drag.
     fireEvent.pointerMove(timeline, { clientX: 120 });
     fireEvent.pointerMove(timeline, { clientX: 160 });
     expect(mockApi.seekTo).toHaveBeenCalledTimes(1);

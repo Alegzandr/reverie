@@ -12,7 +12,7 @@ const BAR_COUNT = 28;
 const BAR_GAP = 2; // device-independent px between bars
 
 /**
- * A compact live spectrum read off the playback analyser — the little instrument
+ * A compact live spectrum read off the playback analyser - the little instrument
  * that makes the transport feel alive without competing with the waveform. It
  * draws real frequency data while a track plays; when idle (or under
  * prefers-reduced-motion) it settles to a calm, static baseline rather than
@@ -100,7 +100,7 @@ export const SpectrumMeter = memo(function SpectrumMeter({ getAnalyser, isPlayin
         }
       } else {
         // Idle telemetry: a slow travelling wave so the instrument stays alive
-        // between tracks (the "scrolling" meter — tied to nothing, just breathing).
+        // between tracks (the "scrolling" meter - tied to nothing, just breathing).
         const tsec = now * 0.001;
         for (let i = 0; i < BAR_COUNT; i++) {
           const wave = 0.16 + 0.14 * (0.5 + 0.5 * Math.sin(tsec * 1.7 - i * 0.5));

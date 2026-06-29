@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 
 /**
  * Card surfaces reuse the app's signature `.glass` treatment so panels keep their
- * frosted, floating quality. Glass never nests — keep children flat.
+ * frosted, floating quality. Glass never nests - keep children flat.
  * Pass `asChild` to project the surface onto a semantic element (e.g. <aside>).
  */
 const Card = React.forwardRef<

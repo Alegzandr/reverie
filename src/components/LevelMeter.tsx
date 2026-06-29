@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { cn } from '@/lib/utils';
 
 interface LevelMeterProps {
-  /** 0..1 fill for the `reactive` variant — lights segments up to this level.
+  /** 0..1 fill for the `reactive` variant - lights segments up to this level.
    *  Ignored by the `scroll` variant. */
   value?: number;
   /** `reactive` tracks a setting (the fill follows `value`); `scroll` is free
@@ -13,7 +13,7 @@ interface LevelMeterProps {
 }
 
 /**
- * A compact segmented VU-meter — the HUD's hardware-module readout. Pure
+ * A compact segmented VU-meter - the HUD's hardware-module readout. Pure
  * CSS/markup (no canvas, no rAF): `reactive` fills to a value so it mirrors an
  * effect setting as you turn it; `scroll` runs a staggered travelling wave for
  * the always-alive instruments. Decorative, so it's hidden from assistive tech.

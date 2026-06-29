@@ -26,7 +26,7 @@ interface SelectProps {
  * It lives inside the settings Dialog, so the popup is a plain absolutely-
  * positioned panel (no portal): a body portal would read as "outside" to the
  * Dialog and dismiss it on click. The panel is an opaque HUD surface, never a
- * nested `.glass` — DESIGN.md forbids glass-in-glass. Escape and Enter stop
+ * nested `.glass` - DESIGN.md forbids glass-in-glass. Escape and Enter stop
  * propagating while open so they close the menu, not the Dialog.
  */
 export function Select({ value, onValueChange, options, 'aria-label': ariaLabel, className }: SelectProps) {

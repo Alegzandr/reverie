@@ -61,7 +61,7 @@ export function FileUploader({ onFileSelect, isLoading, hasFile }: FileUploaderP
     />
   );
 
-  // Compact variant — lives in the workspace chrome to swap the current track.
+  // Compact variant - lives in the workspace chrome to swap the current track.
   // Drag-and-drop is handled window-wide by FileDropOverlay, so this is just the
   // browse button (no local drop handlers, which would double-fire onFileSelect).
   if (hasFile) {
@@ -83,7 +83,7 @@ export function FileUploader({ onFileSelect, isLoading, hasFile }: FileUploaderP
     );
   }
 
-  // Hero variant — the welcome stage's primary affordance.
+  // Hero variant - the welcome stage's primary affordance.
   return (
     <div
       onDrop={handleDrop}
@@ -108,7 +108,7 @@ export function FileUploader({ onFileSelect, isLoading, hasFile }: FileUploaderP
         `}
       >
         <div className="relative mb-6 grid place-items-center" aria-hidden="true">
-          {/* Reverberation echoes — the brand's reverb motif (the mark's echo
+          {/* Reverberation echoes - the brand's reverb motif (the mark's echo
               arcs, the play orb's pulse), breathing softly behind the well. */}
           <span className="upload-echo absolute h-[4.75rem] w-[4.75rem] rounded-full border border-[rgba(var(--aurora-violet),0.4)]" />
           <span

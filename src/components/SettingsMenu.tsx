@@ -79,7 +79,7 @@ export function SettingsMenu({ trigger }: SettingsMenuProps = {}) {
         </DialogHeader>
 
         <div className="max-h-[64vh] overflow-y-auto pr-1 -mr-1">
-          {/* Listening equalizer — shapes playback for comfort only; it is never
+          {/* Listening equalizer - shapes playback for comfort only; it is never
               baked into exports. A preset bank plus six hand-tunable bands. */}
           <section className="mb-5">
             <div className="flex items-center justify-between gap-2 mb-2">

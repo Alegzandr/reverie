@@ -37,7 +37,7 @@ const PHOTO_SRC: Record<SceneId, string | null> = {
 };
 
 /** Module-scoped memory of which backdrops have finished decoding, so a mood we
- *  return to (or one warmed by the preloader) shows instantly — no re-fade, and
+ *  return to (or one warmed by the preloader) shows instantly - no re-fade, and
  *  crucially no flash of the near-black scene floor while the backdrop decodes. */
 const decoded = new Set<string>();
 
@@ -78,14 +78,14 @@ export const AmbientScene = memo(function AmbientScene() {
   // The photo fades in only once its bitmap is decoded; until then we'd otherwise
   // be staring at the near-black scene floor (the "black blink"). `decoded` is a
   // module cache, so a warm backdrop is visible on the very first paint and
-  // `ready` is derived straight from it — no synced state to fall out of date.
+  // `ready` is derived straight from it - no synced state to fall out of date.
   const [, onDecoded] = useReducer((n: number) => n + 1, 0);
   const ready = !photoSrc || decoded.has(photoSrc);
 
   // Warm ALL backdrops once, up front, so switching mood never lands on an
   // undecoded image. This is load-bearing, not a nicety: the mood-dive's
   // `warp-scene-in` has no `forwards`, so when it ends the incoming photo falls
-  // back to `.scene-photo`'s opacity:0 default until `is-ready` — i.e. a black
+  // back to `.scene-photo`'s opacity:0 default until `is-ready` - i.e. a black
   // flash after every switch unless the backdrop is already decoded. Must stay
   // eager (do NOT defer to requestIdleCallback). Fire-and-forget; cache does the rest.
   useEffect(() => {

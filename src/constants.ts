@@ -86,8 +86,8 @@ export const BIT_DEPTH = {
 
 export const VIEWPORT = {
   /**
-   * Minimum viewport width (px) Reverie is offered at. The cockpit — effects
-   * rail, holographic waveform and mood rail — only lines up on a real desktop
+   * Minimum viewport width (px) Reverie is offered at. The cockpit - effects
+   * rail, holographic waveform and mood rail - only lines up on a real desktop
    * canvas (the 3-column grid activates at Tailwind's `lg`, 1024px). Below this
    * we gate to a branded "come back on a bigger screen" stage instead of
    * shipping a cramped mobile layout. Width-based and matched to `lg`.
@@ -366,11 +366,11 @@ export const EFFECT_EXPORT_LABELS = {
 export const AUDIO_SIGNAL = {
   /** 8D audio mix ratios */
   EIGHT_D_MIX: {
-    /** Rotating dry signal (panned) — the main music that orbits the head. */
+    /** Rotating dry signal (panned) - the main music that orbits the head. */
     DRY_GAIN: 0.85,
     /**
      * Constant reverb bed (un-panned). Fed from the pre-pan signal so a quiet
-     * ambience stays present in BOTH ears at all times — this prevents a "silent
+     * ambience stays present in BOTH ears at all times - this prevents a "silent
      * void" from rotating opposite the music. Kept low so it sits under the music.
      */
     WET_GAIN: 0.22,

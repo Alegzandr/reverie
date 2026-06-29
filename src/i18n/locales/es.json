@@ -6,7 +6,7 @@
   },
   "gate": {
     "title": "Pensado para la pantalla grande",
-    "description": "El cockpit de Reverie — los efectos, la onda viva y el ambiente — necesita espacio para respirar. Ábrelo en un ordenador para disfrutar de la experiencia completa.",
+    "description": "El cockpit de Reverie (los efectos, la onda viva y el ambiente) necesita espacio para respirar. Ábrelo en un ordenador para disfrutar de la experiencia completa.",
     "hint": "Te esperamos en el ordenador"
   },
   "app": {
@@ -52,6 +52,7 @@
   },
   "track": {
     "title": "Pista",
+    "format": "Formato",
     "name": "Nombre",
     "size": "Tamaño",
     "bitrate": "Bitrate",

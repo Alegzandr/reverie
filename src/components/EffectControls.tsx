@@ -36,7 +36,7 @@ interface EffectControlsProps {
     initialSettings?: EffectSettings;
 }
 
-// Listed effects — Slow + Reverb leads as the signature late-night mood. There is
+// Listed effects - Slow + Reverb leads as the signature late-night mood. There is
 // no "Original" row: the untouched track ("none") is the *absence* of an active
 // effect, reached by powering off whichever effect is currently Active.
 const EFFECT_DEFS: { mode: EffectMode; icon: LucideIcon; labelKey: string }[] = [
@@ -48,7 +48,7 @@ const EFFECT_DEFS: { mode: EffectMode; icon: LucideIcon; labelKey: string }[] = 
 
 export const EffectControls = memo(function EffectControls({ onChange, disabled, initialSettings }: EffectControlsProps) {
     const { t } = useTranslation();
-    // Slow + Reverb leads — the brand's signature late-night mood, and the first
+    // Slow + Reverb leads - the brand's signature late-night mood, and the first
     // effect listed, so the Active row sits at the top on load. `initialSettings`
     // (when provided) overrides these seeds for the active mode's parameters so a
     // remount restores the live values instead of resetting to defaults.
@@ -81,7 +81,7 @@ export const EffectControls = memo(function EffectControls({ onChange, disabled,
 
     useEffect(() => {
         if (mode === "none") {
-            // Bypass: play the untouched track — no time-stretch, no reverb, no spatialiser.
+            // Bypass: play the untouched track - no time-stretch, no reverb, no spatialiser.
             onChange({ mode: "none", speedMultiplier: 1, reverbAmount: 0 });
         } else if (mode === "speed-up") {
             onChange({ mode: "speed-up", speedMultiplier, reverbAmount: 0 });
@@ -117,7 +117,7 @@ export const EffectControls = memo(function EffectControls({ onChange, disabled,
     ]);
 
     // Effects are exclusive: selecting an inactive one makes it Active. Clicking the
-    // *already-active* effect powers it off, dropping back to "none" — the untouched
+    // *already-active* effect powers it off, dropping back to "none" - the untouched
     // track. "Original" is therefore a state, never a row.
     const handleSelect = (next: EffectMode) => {
         setMode((current) => (current === next ? "none" : next));
@@ -134,7 +134,7 @@ export const EffectControls = memo(function EffectControls({ onChange, disabled,
         }
     );
 
-    // Normalised 0..1 level of the active effect's primary parameter — drives the
+    // Normalised 0..1 level of the active effect's primary parameter - drives the
     // reactive VU-meter so the readout tracks the setting as you turn it.
     const D = EFFECT_DEFAULTS;
     const norm = (val: number, min: number, max: number) =>
@@ -152,7 +152,7 @@ export const EffectControls = memo(function EffectControls({ onChange, disabled,
 
     return (
         <div className="flex flex-col gap-5">
-            {/* Effects — exclusive modes listed as rows; the chosen one is Active. */}
+            {/* Effects - exclusive modes listed as rows; the chosen one is Active. */}
             <div className="space-y-2.5">
                 <span className="hud-readout block">{t("studio.effects")}</span>
                 <div className="space-y-2">
@@ -171,7 +171,7 @@ export const EffectControls = memo(function EffectControls({ onChange, disabled,
                 </div>
             </div>
 
-            {/* Adjustments — the single clear control(s) for the Active effect.
+            {/* Adjustments - the single clear control(s) for the Active effect.
                Keyed on `mode` so switching re-mounts and the new control eases in:
                motion that signals the state change, not decoration. */}
             <div className="space-y-3">

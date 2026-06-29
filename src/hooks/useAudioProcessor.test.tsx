@@ -452,7 +452,7 @@ describe('useAudioProcessor', () => {
   // Regression: an inline `getAudioContext` passed to useAudioPlayback used to change
   // identity every render, cascading through captureProgress → setEffects into App's
   // handleEffectChange. EffectControls lists that onChange in a useEffect dependency
-  // array, so an unstable identity re-ran the effect every render — an infinite
+  // array, so an unstable identity re-ran the effect every render - an infinite
   // re-render loop in the editor that surfaced as "Maximum update depth exceeded"
   // the moment a dialog mounted. The returned callbacks must stay referentially stable.
   it('returns referentially stable callbacks across re-renders', () => {

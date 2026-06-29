@@ -6,7 +6,7 @@
   },
   "gate": {
     "title": "Made for the big screen",
-    "description": "Reverie's cockpit — the effects, the living waveform and the mood — needs room to breathe. Open it on a computer to enjoy the full experience.",
+    "description": "Reverie's cockpit (the effects, the living waveform and the mood) needs room to breathe. Open it on a computer to enjoy the full experience.",
     "hint": "See you on desktop"
   },
   "app": {
@@ -26,7 +26,7 @@
   "effects": {
     "none": "Original",
     "resetHint": "Double-click to reset",
-    "originalHint": "Playing the original track — no effects applied.",
+    "originalHint": "Playing the original track, no effects applied.",
     "speedUp": "Speed Up",
     "slowReverb": "Slow + Reverb",
     "8dAudio": "8D Audio",
@@ -52,6 +52,7 @@
   },
   "track": {
     "title": "Track",
+    "format": "Format",
     "name": "Name",
     "size": "Size",
     "bitrate": "Bitrate",
@@ -122,7 +123,7 @@
     "eqCustom": "Custom",
     "eqReset": "Reset",
     "eqBand": "{{freq}} band",
-    "eqHint": "Affects playback only — not your exports.",
+    "eqHint": "Affects playback only, not your exports.",
     "close": "Close settings"
   },
   "studio": {

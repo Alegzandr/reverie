@@ -36,7 +36,7 @@ describe('EffectControls', () => {
     fireEvent.change(rotationSlider, { target: { value: '1.2' } });
     expect(onChange).toHaveBeenLastCalledWith({ mode: '8d-audio', speedMultiplier: 1, reverbAmount: 0, rotationSpeed: 1.2 });
 
-    // Clicking the active effect powers it off — the untouched track plays through.
+    // Clicking the active effect powers it off - the untouched track plays through.
     // "Original" is the absence of an active effect, not a selectable row.
     await userEvent.click(screen.getByText('effects.8dAudio'));
     expect(onChange).toHaveBeenLastCalledWith({ mode: 'none', speedMultiplier: 1, reverbAmount: 0 });

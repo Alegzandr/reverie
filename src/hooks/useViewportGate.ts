@@ -6,7 +6,7 @@ const NARROW_QUERY = `(max-width: ${VIEWPORT.MIN_DESKTOP_WIDTH - 1}px)`;
 /**
  * Width-based desktop check, mirroring Wootility's "your window is too small"
  * gate. Tracks `matchMedia` so the app reveals itself the instant the viewport
- * crosses the threshold (rotate, resize) — no reload needed. SSR-safe default.
+ * crosses the threshold (rotate, resize) - no reload needed. SSR-safe default.
  */
 export function useIsViewportTooNarrow(): boolean {
   const [tooNarrow, setTooNarrow] = useState(

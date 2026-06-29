@@ -6,7 +6,7 @@
   },
   "gate": {
     "title": "为大屏幕而生",
-    "description": "Reverie 的操控台——音效、灵动的波形与氛围——需要足够的空间舒展。请在电脑上打开，享受完整体验。",
+    "description": "Reverie 的操控台（音效、灵动的波形与氛围）需要足够的空间舒展。请在电脑上打开，享受完整体验。",
     "hint": "我们在电脑上见"
   },
   "app": {
@@ -26,7 +26,7 @@
   "effects": {
     "none": "原始",
     "resetHint": "双击以重置",
-    "originalHint": "正在播放原始音轨 — 未应用任何效果。",
+    "originalHint": "正在播放原始音轨，未应用任何效果。",
     "speedUp": "加速",
     "slowReverb": "慢速 + 混响",
     "8dAudio": "8D 音频",
@@ -52,6 +52,7 @@
   },
   "track": {
     "title": "曲目",
+    "format": "格式",
     "name": "名称",
     "size": "大小",
     "bitrate": "比特率",

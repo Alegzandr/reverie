@@ -9,7 +9,7 @@ import type { LucideIcon } from 'lucide-react';
  *
  * Each mood drives three things on <html>: `data-mood="<id>"` (selects the
  * colour-token block in index.css), the `.dark` class (kept so every existing
- * `dark:` utility and `.dark` rule still applies — immersive moods are
+ * `dark:` utility and `.dark` rule still applies - immersive moods are
  * dark-based), and the `.immersive` class (switches the chrome to the HUD skin
  * and mounts the ambient scene).
  */
@@ -22,11 +22,11 @@ export interface MoodDef {
   /** i18n key under `settings.mood.<key>` for the label. */
   labelKey: string;
   icon: LucideIcon;
-  /** Visual family — `light`/`dark` are the calm palettes, the rest are vibey
+  /** Visual family - `light`/`dark` are the calm palettes, the rest are vibey
    *  atmospheres. The HUD chrome is on for every mood; kind is only a grouping
    *  hint. */
   kind: MoodKind;
-  /** Which base the mood sits on — toggles the `.dark` root class. */
+  /** Which base the mood sits on - toggles the `.dark` root class. */
   base: 'light' | 'dark';
   /** Animated ambient scene to mount. Every mood has one (the interface is
    *  always the immersive HUD; a mood = palette + animated background). */

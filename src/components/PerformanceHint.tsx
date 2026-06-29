@@ -9,12 +9,12 @@ const DISMISS_KEY = 'reverie:gpu-hint-dismissed';
  * Discreet, once-only nudge shown when the browser is rendering Reverie in
  * software (hardware acceleration off / GPU blocklisted). It does two things:
  *
- *  1. Auto-degrade — flags `<html>` with `.gpu-software`, which the stylesheet
+ *  1. Auto-degrade - flags `<html>` with `.gpu-software`, which the stylesheet
  *     uses to drop the most expensive backdrop layers (blur, particles, meteors,
  *     haze animation) so the cockpit stays fluid even on the CPU rasterizer. This
  *     happens regardless of whether the hint is dismissed.
- *  2. Suggest — a quiet pill inviting the user to re-enable hardware acceleration
- *     (which the page itself can't toggle — it's a browser setting). Dismissed
+ *  2. Suggest - a quiet pill inviting the user to re-enable hardware acceleration
+ *     (which the page itself can't toggle - it's a browser setting). Dismissed
  *     once, it never returns (remembered in localStorage).
  *
  * On hardware (or when WebGL is simply unavailable, which could be a privacy
@@ -53,7 +53,7 @@ export function PerformanceHint() {
     try {
       localStorage.setItem(DISMISS_KEY, '1');
     } catch {
-      /* private mode — the hint just won't persist its dismissal */
+      /* private mode - the hint just won't persist its dismissal */
     }
     setDismissed(true);
   };

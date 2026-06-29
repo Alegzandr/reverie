@@ -6,7 +6,7 @@
   },
   "gate": {
     "title": "Pensé pour le grand écran",
-    "description": "Le cockpit de Reverie — les effets, la forme d'onde vivante et l'ambiance — a besoin d'espace pour respirer. Ouvre-le sur un ordinateur pour en profiter pleinement.",
+    "description": "Le cockpit de Reverie (les effets, la forme d'onde vivante et l'ambiance) a besoin d'espace pour respirer. Ouvre-le sur un ordinateur pour en profiter pleinement.",
     "hint": "On se retrouve sur PC"
   },
   "app": {
@@ -26,7 +26,7 @@
   "effects": {
     "none": "Original",
     "resetHint": "Double-cliquez pour réinitialiser",
-    "originalHint": "Lecture de la piste originale — aucun effet appliqué.",
+    "originalHint": "Lecture de la piste originale, aucun effet appliqué.",
     "speedUp": "Accélérer",
     "slowReverb": "Ralenti + Reverb",
     "8dAudio": "Audio 8D",
@@ -52,6 +52,7 @@
   },
   "track": {
     "title": "Piste",
+    "format": "Format",
     "name": "Nom",
     "size": "Taille",
     "bitrate": "Débit binaire",

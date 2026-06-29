@@ -16,7 +16,7 @@ import {
 import { cn } from '@/lib/utils';
 
 /**
- * The workspace mood rail — an inline mood picker beside the waveform. Each mood
+ * The workspace mood rail - an inline mood picker beside the waveform. Each mood
  * is a palette + an animated background over the same HUD, so switching it is the
  * fastest way to re-skin the whole atmosphere mid-listen. The featured mood reads
  * out at the top in a dropdown that opens the full mood gallery (every mood),
@@ -36,10 +36,10 @@ function Swatch({ id, className }: { id: MoodId; className?: string }) {
 }
 
 /**
- * The Mood chip + gallery — the trigger reads out the active atmosphere; opening
+ * The Mood chip + gallery - the trigger reads out the active atmosphere; opening
  * it lifts the exhaustive mood gallery into a centred modal. A modal (not an
  * inline popover) is deliberate: the rail and its card are translucent, so a
- * translucent dropdown stacked over them turned text illegible — transparent on
+ * translucent dropdown stacked over them turned text illegible - transparent on
  * transparent. The dialog's opaque overlay severs the gallery from the backdrop
  * and gives every scene preview room to breathe.
  */
@@ -105,7 +105,7 @@ function MoodGallery() {
                       : 'border-[rgba(var(--color-border),0.7)] hover:border-[rgba(var(--color-accent),0.5)]'
                   )}
                 >
-                  {/* Live preview swatch — the mood's own scene/backdrop colours */}
+                  {/* Live preview swatch - the mood's own scene/backdrop colours */}
                   <span className="block h-14 w-full" style={{ background: tdef.preview }} aria-hidden="true" />
                   <span className="flex items-center justify-between gap-2 px-3 py-2 bg-[rgba(var(--color-surface),0.6)]">
                     <span className="flex items-center gap-2 min-w-0">
@@ -137,7 +137,7 @@ export const MoodRail = memo(function MoodRail() {
   return (
     <Card asChild className="hud-frame p-4 sm:p-5 audio-drift-b">
       <aside className="flex flex-col gap-5" aria-label={t('studio.moods')}>
-        {/* Mood — the featured, currently-playing atmosphere. The dropdown opens
+        {/* Mood - the featured, currently-playing atmosphere. The dropdown opens
             the full gallery of every mood. */}
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-2 min-h-7">
@@ -147,14 +147,14 @@ export const MoodRail = memo(function MoodRail() {
           <MoodGallery />
         </div>
 
-        {/* Recently used — quick one-tap return to the moods you've been cycling. */}
+        {/* Recently used - quick one-tap return to the moods you've been cycling. */}
         <div className="space-y-2">
           <span className="hud-readout block">{t('studio.recentMoods')}</span>
           <ul className="space-y-1.5">
             {recentMoods
               .map((id) => ({ id, label: t(`settings.mood.${MOODS[id].labelKey}`) }))
               // Stable alphabetical order so switching moods doesn't reshuffle the
-              // rail under your finger — only membership changes, never position.
+              // rail under your finger - only membership changes, never position.
               .sort((a, b) => a.label.localeCompare(b.label))
               .map(({ id, label }) => {
               const tdef = MOODS[id];

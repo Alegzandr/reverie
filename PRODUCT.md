@@ -10,7 +10,7 @@ Music fans and remixers, not audio engineers. They arrive with a track they love
 
 ## Product Purpose
 
-Reverie is a free, fully in-browser audio editor that turns any track into an atmospheric remix. Four effects: Speed Up, Slowed + Reverb, 8D Audio, Bass Boost. All processing runs client-side through the Web Audio API, so files never leave the device (privacy by architecture). Exports mirror the source format and quality. The app ships in 10 languages and installs as a PWA. It is a deliberately **desktop-only** experience: the cockpit (effects rail, living waveform, mood rail) needs a wide canvas to feel like itself, so viewports narrower than 1024px are gated to a branded "open on a larger screen" stage with no bypass — we would rather send a phone visitor to a computer than ship a cramped layout. Success looks like a first-time visitor uploading a track and downloading a transformed version they are proud to share, without ever needing a tutorial.
+Reverie is a free, fully in-browser audio editor that turns any track into an atmospheric remix. Four effects: Speed Up, Slowed + Reverb, 8D Audio, Bass Boost. All processing runs client-side through the Web Audio API, so files never leave the device (privacy by architecture). Exports mirror the source format and quality. The app ships in 10 languages and installs as a PWA. It is a deliberately **desktop-only** experience: the cockpit (effects rail, living waveform, mood rail) needs a wide canvas to feel like itself, so viewports narrower than 1024px are gated to a branded "open on a larger screen" stage with no bypass - we would rather send a phone visitor to a computer than ship a cramped layout. Success looks like a first-time visitor uploading a track and downloading a transformed version they are proud to share, without ever needing a tutorial.
 
 ## Brand Personality
 
@@ -28,7 +28,7 @@ Dreamy, immersive, calm. Three words: oneiric, enveloping, effortless. Using Rev
 1. **Two clicks to delight.** The path from upload to a downloadable result is the product. Every screen serves that flow, and nothing competes with it.
 2. **Hide the machinery, show the magic.** Surface one clear control per effect. Keep technical detail (bitrate, sample rate, bit depth) available but secondary. Power without intimidation.
 3. **Privacy you can feel.** Client-side processing is a promise, not a footnote. State it plainly, and never betray it with trackers or uploads.
-4. **Atmosphere over chrome.** The dreamy mood is a feature, not decoration. The interface is a holographic HUD floating over a living ambient scene, and it breathes with the music — the bloom, the chrome, and the play orb pulse to the audio. Listeners pick a mood to reskin the whole atmosphere in one tap. Motion, color, and the waveform should make transforming audio feel immersive — and all of it has a calm, static fallback under reduced motion.
+4. **Atmosphere over chrome.** The dreamy mood is a feature, not decoration. The interface is a holographic HUD floating over a living ambient scene, and it breathes with the music - the bloom, the chrome, and the play orb pulse to the audio. Listeners pick a mood to reskin the whole atmosphere in one tap. Motion, color, and the waveform should make transforming audio feel immersive - and all of it has a calm, static fallback under reduced motion.
 5. **Respect the source.** Exports match the original format and quality. We transform the track, we never degrade it.
 
 ## Accessibility & Inclusion

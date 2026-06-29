@@ -44,7 +44,7 @@ export interface EffectChain {
 const RAMP_TIME_CONSTANT = 0.04;
 /** Fixed reverb tail length in seconds; wetness is controlled by the wet gain. */
 const REVERB_SECONDS = 3;
-/** Short tail for the constant 8D ambience bed — tight enough to sit under the music. */
+/** Short tail for the constant 8D ambience bed - tight enough to sit under the music. */
 const EIGHT_D_BED_SECONDS = 0.5;
 
 let cachedImpulse: { sampleRate: number; buffer: AudioBuffer } | null = null;

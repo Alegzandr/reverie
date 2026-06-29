@@ -202,7 +202,19 @@ Object.defineProperty(window, 'matchMedia', {
   }),
 });
 
-// URL helpers used by downloadBlob — always spies so tests can assert on them
+// ResizeObserver: jsdom omits it. A no-op mock lets components that observe
+// their own size (WaveformTimeline auto-follow, MarqueeText overflow) mount.
+class MockResizeObserver {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+}
+Object.defineProperty(globalThis, 'ResizeObserver', {
+  writable: true,
+  value: MockResizeObserver,
+});
+
+// URL helpers used by downloadBlob - always spies so tests can assert on them
 // (recent jsdom ships real implementations, so a presence guard would skip these).
 URL.createObjectURL = vi.fn(() => 'blob:mock-url');
 URL.revokeObjectURL = vi.fn();

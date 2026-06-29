@@ -3,7 +3,7 @@ import { AUDIO_EFFECTS } from '../constants';
 /**
  * Listening-EQ presets. Gains are dB per band, in the canonical band order
  * declared by `AUDIO_EFFECTS.EQUALIZER.BANDS` (60Hz, 150Hz, 400Hz, 1KHz,
- * 2.4KHz, 15KHz). These tune playback comfort only — they are never applied to
+ * 2.4KHz, 15KHz). These tune playback comfort only - they are never applied to
  * exports.
  */
 export interface EqPreset {
@@ -16,7 +16,7 @@ export interface EqPreset {
 /** Number of bands the EQ exposes. */
 export const EQ_BAND_COUNT = AUDIO_EFFECTS.EQUALIZER.BANDS.length;
 
-/** All gains at 0 dB — a transparent, no-op EQ. */
+/** All gains at 0 dB - a transparent, no-op EQ. */
 export const EQ_FLAT_GAINS: number[] = Array.from({ length: EQ_BAND_COUNT }, () => 0);
 
 /** The neutral default preset name. */

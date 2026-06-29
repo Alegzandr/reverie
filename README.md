@@ -7,7 +7,7 @@ Reverie is a **free online audio editor** with one promise: dreamy edits for you
 ## ✨ Features
 
 ### Audio Effects
-- **Live, no-bake editing**: Effects are applied in real time on a persistent Web Audio graph — moving any control reshapes the playing sound instantly (DAW-style ramps), with no "Apply"/"Process" step. Export renders the current settings offline on demand.
+- **Live, no-bake editing**: Effects are applied in real time on a persistent Web Audio graph - moving any control reshapes the playing sound instantly (DAW-style ramps), with no "Apply"/"Process" step. Export renders the current settings offline on demand.
 - **Speed Up Mode**: Create high-energy sped-up versions (1.1x - 2.0x speed multiplier)
 - **Slow + Reverb Mode**: Generate atmospheric slowed + reverb versions (0.8x speed with adjustable reverb)
 - **8D Audio Mode**: Create immersive spatial audio with adjustable rotation speed (0.1x - 2.0x) for a surround-style headphone effect
@@ -26,7 +26,7 @@ Reverie is a **free online audio editor** with one promise: dreamy edits for you
 - **💾 Smart Format Export**: Exports match your original format where possible (MP3→MP3, WAV→WAV, AIFF→AIFF, FLAC→FLAC, WebM→WebM, OGG→OGG, M4A→M4A)
 - **🌍 Multi-Language Support**: Available in 10 languages (English, French, Spanish, German, Portuguese, Russian, Chinese, Japanese, Korean, Hindi)
 - **🌓 Moods**: Six selectable moods (Light, Dark, Tidal, Nocturne, Aurora, Horizon), persisted to `localStorage`
-- **💻 PWA Support**: Install as a standalone desktop app (Reverie is a desktop-only experience — see below)
+- **💻 PWA Support**: Install as a standalone desktop app (Reverie is a desktop-only experience - see below)
 - **♿ Accessible**: Full keyboard navigation and screen reader support
 
 ### Developer Features
@@ -102,12 +102,12 @@ npm run dev
    - Sample rate (e.g., 44.1 kHz, 48 kHz)
    - Bit depth for lossless formats (16-bit, 24-bit)
    - Channel configuration (mono/stereo)
-3. **Select Effect Mode** (changes apply live as you play — no "Apply" step):
+3. **Select Effect Mode** (changes apply live as you play - no "Apply" step):
    - **Speed Up**: Adjust multiplier (1.1x - 2.0x)
    - **Slow + Reverb**: Adjust reverb amount (10% - 100%)
    - **8D Audio**: Adjust rotation speed (0.1x - 2.0x) to control the spatial movement
    - **Bass Boost**: Select intensity level (Light, Normal, Strong)
-4. **Listen**: Press play — moving any control reshapes the sound in real time
+4. **Listen**: Press play - moving any control reshapes the sound in real time
 5. **Set the mood** (optional): Pick a mood from the mood rail
 6. **Export**: Download with smart format matching:
    - **MP3** → MP3 (preserves bitrate)
@@ -313,9 +313,9 @@ The product vision lives in [PRODUCT.md](PRODUCT.md); the full visual system liv
 
 - **Identity**: a dreamy, dark-first "Dream field" in deep indigo and violet, tied together by the **Aurora** gradient (violet → pink → cyan) carried on the brand mark and the primary action button.
 - **Interface**: a holographic HUD (curved chrome, instrument dials, glass surfaces) floating over a living ambient scene; the whole atmosphere reskins per mood.
-- **Reactivity**: the interface breathes with the music — bloom, HUD frames, and the play orb pulse to the live audio energy.
+- **Reactivity**: the interface breathes with the music - bloom, HUD frames, and the play orb pulse to the live audio energy.
 - **Color**: OKLCH tokens, tinted neutrals (no pure black or white), Aurora reserved for strokes, fills, and active states, never body text.
-- **Typography**: two self-hosted variable web faces — Hanken Grotesk for UI/body, Fraunces (display serif) for identity and headings; lowercase `reverie` wordmark in a light weight.
+- **Typography**: two self-hosted variable web faces - Hanken Grotesk for UI/body, Fraunces (display serif) for identity and headings; lowercase `reverie` wordmark in a light weight.
 - **Components**: modular, reusable components with purposeful glass-morphism surfaces.
 - **Desktop-only**: the cockpit needs a wide canvas, so viewports under 1024px (`VIEWPORT.MIN_DESKTOP_WIDTH`) are gated to a branded "open on a larger screen" stage (`DesktopOnlyGate`) with no bypass; the gate reacts live to resize via `matchMedia`.
 - **Accessibility**: WCAG 2.1 AA compliant; honors `prefers-reduced-motion` (ambient motion and reactivity fall back to a calm static state).

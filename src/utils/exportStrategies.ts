@@ -72,8 +72,8 @@ class AiffExportStrategy implements ExportStrategy {
 
 /**
  * FLAC Export Strategy
- * Encodes a true lossless FLAC stream via libFLAC (WASM). Falls back to WAV —
- * also lossless — if the encoder fails to load or run.
+ * Encodes a true lossless FLAC stream via libFLAC (WASM). Falls back to WAV -
+ * also lossless - if the encoder fails to load or run.
  */
 class FlacExportStrategy implements ExportStrategy {
   async export({ buffer }: ExportOptions): Promise<ExportResult> {

@@ -39,7 +39,7 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* Reverie — dreamy in-browser audio studio */
+/* Reverie - dreamy in-browser audio studio */
 @layer base {
   /* Tailwind v4's preflight no longer sets `cursor: pointer` on native buttons,
      so hoverable controls read as non-interactive. Restore it for enabled
@@ -70,7 +70,7 @@
     --aurora-pink: 244, 114, 182;
     --aurora-cyan: 56, 224, 232;
 
-    /* Audio-reactivity bus — published live by useAudioReactivity while a track
+    /* Audio-reactivity bus - published live by useAudioReactivity while a track
        plays, consumed by the scene + HUD panels to breathe with the music.
        Default 0 so everything is perfectly calm until sound arrives. */
     --audio-level: 0;
@@ -81,7 +81,7 @@
 
     /* ── shadcn semantic layer ──────────────────────────────────────────
        Full-color tokens derived from the Aurora triplets above. They use
-       var(--color-*) so they inherit the .dark overrides automatically —
+       var(--color-*) so they inherit the .dark overrides automatically -
        no need to redeclare them per mood. Names are kept distinct from the
        existing --color-* triplets so neither system clobbers the other. */
     --radius: 1rem;
@@ -148,7 +148,7 @@
 }
 
 @layer utilities {
-  /* iOS Glass Effect — the core floating surface */
+  /* iOS Glass Effect - the core floating surface */
   .glass {
     background: rgba(var(--color-surface), 0.82);
     backdrop-filter: saturate(180%) blur(20px);
@@ -167,7 +167,7 @@
       0 18px 50px -24px rgba(var(--color-ambient), 0.28);
   }
 
-  /* iOS Button Style — press scale + a soft, multi-property settle. The visible
+  /* iOS Button Style - press scale + a soft, multi-property settle. The visible
      lift now lives in each variant's shadow/fill (so transparent buttons react
      too); brightness is only a faint top-up on filled surfaces. */
   .ios-button {
@@ -192,9 +192,9 @@
   }
 
   /* Aurora signature surface (Export). The gradient sits on an oversized canvas
-     and pans gently on hover for a slow, dreamy shimmer — a one-shot transition,
+     and pans gently on hover for a slow, dreamy shimmer - a one-shot transition,
      not a loop, so it stays calm. Rebalanced violet↔cyan: violet owns the first
-     third, cyan the last third, and pink is only a thin transition peak — the
+     third, cyan the last third, and pink is only a thin transition peak - the
      surface reads holographic and cool, not candy-pink. */
   .btn-aurora {
     background-image: linear-gradient(
@@ -226,8 +226,8 @@
   /* Mood orb (play / pause). A glossy sphere coloured by the ACTIVE mood's
      accent so it belongs to the scene rather than wearing the fixed Aurora
      gradient. The body is lit at the crown (full accent) and eases to a deep
-     Dream-Indigo jewel base: that dark anchor is shared by every mood — light
-     palettes included — so the white glyph keeps AA contrast no matter how
+     Dream-Indigo jewel base: that dark anchor is shared by every mood - light
+     palettes included - so the white glyph keeps AA contrast no matter how
      bright the accent is. Vibrancy comes from the lit crown, the accent rim
      (inset shadow on the .play variant) and the --hud-glow halo, not from a
      bright flat fill. */
@@ -284,7 +284,7 @@
     }
   }
 
-  /* Audio-reactive halo on the play orb — the rhythmic HEART of the interface,
+  /* Audio-reactive halo on the play orb - the rhythmic HEART of the interface,
      so this is the one surface that punches with the kick: a glow that swells
      with bass weight and flashes on each onset. Separate layer from .play-pulse
      and the button's own shadow, so it augments rather than clobbers. */
@@ -304,7 +304,7 @@
   }
 
   /* Reverberation echoes behind the upload well. Concentric Aurora rings
-     breathe outward — the same reverb motif as the brand mark and play orb.
+     breathe outward - the same reverb motif as the brand mark and play orb.
      Static (faint, just present) under reduced motion. */
   .upload-echo {
     opacity: 0.5;
@@ -331,7 +331,7 @@
     }
   }
 
-  /* Range slider — Aurora-filled track, soft halo thumb.
+  /* Range slider - Aurora-filled track, soft halo thumb.
      Drive the fill with --range (0–100) inline. */
   .slider {
     -webkit-appearance: none;
@@ -463,7 +463,7 @@
       0 0 0 6px rgba(var(--color-accent), 0.4);
   }
 
-  /* Ambient drift behind the welcome stage — atmosphere, not chrome */
+  /* Ambient drift behind the welcome stage - atmosphere, not chrome */
   .aurora-stage::before {
     content: "";
     position: absolute;
@@ -536,7 +536,7 @@
     --scene-veil: 248, 250, 255;
   }
 
-  /* Dark palette — brighter cool hairline + a deep veil. */
+  /* Dark palette - brighter cool hairline + a deep veil. */
   [data-mood='dark'] {
     --hud-line: 150, 165, 210;
     --hud-glow: var(--color-ambient);
@@ -551,7 +551,7 @@
     --scene-veil: 8, 10, 24;
   }
 
-  /* Tidal — moonlit water. Cool teal/cyan, the reference immersive scene. */
+  /* Tidal - moonlit water. Cool teal/cyan, the reference immersive scene. */
   [data-mood='tidal'] {
     --color-background: 7, 13, 36;
     --color-surface: 16, 34, 58;
@@ -565,7 +565,7 @@
     --hud-glow: 56, 224, 232;
   }
 
-  /* Nocturne — deep starfield. Indigo/violet with cool starlight. */
+  /* Nocturne - deep starfield. Indigo/violet with cool starlight. */
   [data-mood='nocturne'] {
     --color-background: 6, 5, 18;
     --color-surface: 19, 17, 42;
@@ -579,7 +579,7 @@
     --hud-glow: 124, 92, 230;
   }
 
-  /* Aurora (Nebula Drift) — deep cosmic black with a saturated violet/magenta
+  /* Aurora (Nebula Drift) - deep cosmic black with a saturated violet/magenta
      focal light. Step 1 of the art-direction pass: drop the background to a
      near-black violet, resaturate the accent off the washed-out lilac, and kill
      the cyan ambient drift so a single light dominates (the waveform). Surface
@@ -602,7 +602,7 @@
     --hud-glow: 120, 100, 240;
   }
 
-  /* Horizon — dawn/dusk. The warm home: amber/coral over an indigo sky. */
+  /* Horizon - dawn/dusk. The warm home: amber/coral over an indigo sky. */
   [data-mood='horizon'] {
     --color-background: 26, 17, 52;
     --color-surface: 49, 29, 66;
@@ -627,7 +627,7 @@
        blurred backdrop: a near-clear surface tint that thins toward the bottom
        (the plate fades as it "emerges"), and a whisper of horizontal scanlines
        so the surface reads as a holographic readout caught in projected light.
-       The fill floor is deliberately low — the scene shows through — and
+       The fill floor is deliberately low - the scene shows through - and
        legibility leans on the strong blur + saturation, the edge-lit rim, and
        the high-contrast text, the way a real visor HUD does. */
     background:
@@ -662,7 +662,7 @@
      Content sits in normal flow above the plate, never clipped.
 
      The holographic plate itself (translucent gradient, luminous hairline, inner
-     glow) is painted at every width — it's what keeps the rails feeling like HUD
+     glow) is painted at every width - it's what keeps the rails feeling like HUD
      chrome rather than a flat boxy strip. Only the *curve* (the plate's outward
      overhang + elliptical corner radii + optical recentring) is reserved for `sm+`:
      a fisheye arc needs real width, and on a narrow phone it collapses into a
@@ -711,7 +711,7 @@
      scene's GPU-bound layers are the costly ones there, so we shed them: drop
      every backdrop-filter blur (the single heaviest CPU cost), hide the animated
      particle/meteor fields, and freeze the haze. The photo, haze tint, veil and
-     UI all stay — the cockpit just runs lean instead of stuttering. The hint
+     UI all stay - the cockpit just runs lean instead of stuttering. The hint
      nudges the user to re-enable acceleration to get the full scene back. */
   .gpu-software .glass,
   .gpu-software .hud-rail,
@@ -751,7 +751,7 @@
     animation: none !important;
   }
 
-  /* The fisheye curve + its optical recentring — desktop only (see note above). */
+  /* The fisheye curve + its optical recentring - desktop only (see note above). */
   @media (min-width: 640px) {
     .immersive .hud-rail::after {
       height: calc(100% + var(--hud-curve));
@@ -813,7 +813,7 @@
     );
   }
 
-  /* POV lens vignette + faint CRT scanlines — the retrofuturist HUD framing. */
+  /* POV lens vignette + faint CRT scanlines - the retrofuturist HUD framing. */
   .hud-vignette {
     inset: 0;
     background: radial-gradient(130% 120% at 50% 44%, transparent 50%, rgba(3, 5, 14, 0.68) 100%);
@@ -831,9 +831,9 @@
   }
 
   /* ── Audio breath ───────────────────────────────────────────────────────
-     Environmental light that swells with the track. Two soft glows — a warm
+     Environmental light that swells with the track. Two soft glows - a warm
      accent rising from below (bloom follows loudness) and a cool wash from the
-     top (kick flash) — composited with `screen` so they only ever lighten the
+     top (kick flash) - composited with `screen` so they only ever lighten the
      scene. Sits in the backdrop layer (z-index -1 via `.scene`), so it brightens
      the world *behind* the glass panels rather than tinting over text. The short
      transition keeps fast onsets snappy while smoothing the per-frame steps. */
@@ -874,7 +874,7 @@
   .scene-particles {
     inset: 0;
     opacity: calc(0.08 + var(--audio-treble) * 0.7);
-    /* Foreground parallax — the nearest plane, so it travels the most with the
+    /* Foreground parallax - the nearest plane, so it travels the most with the
        pointer and reads as depth in front of the photo/haze. */
     transform: translate3d(calc(var(--px, 0) * -52px), calc(var(--py, 0) * -42px), 0);
     transition: opacity 110ms linear, transform 260ms ease-out;
@@ -908,7 +908,7 @@
 
   @media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (pointer: fine) {
     /* Two independent animations per layer: a slow positional drift (transform)
-       and a faster twinkle (opacity) at a different rate — they animate different
+       and a faster twinkle (opacity) at a different rate - they animate different
        properties so they compose cleanly. The mismatched periods make the field
        shimmer unevenly, like real stars catching the light. */
     .scene-particles::before {
@@ -941,11 +941,11 @@
   }
 
   /* ── Shooting stars ──────────────────────────────────────────────────────
-     Occasional meteors that streak across the deep field — the cosmic answer to
+     Occasional meteors that streak across the deep field - the cosmic answer to
      Wallpaper-Engine's rain/snow particles. Each is a tapered light streak that
      slides along its own axis (rotate + translateX in the local frame), bright
      head leading. The streak only occupies the first slice of each cycle, then the
-     meteor stays invisible — with mismatched durations + delays per meteor they
+     meteor stays invisible - with mismatched durations + delays per meteor they
      read as rare and random, never a synchronised volley. Photo scenes only,
      behind the legibility veil; motion gated to desktop + no-reduce. */
   .scene-meteors {
@@ -968,7 +968,7 @@
       rgba(255, 255, 255, 0.75) 92%,
       #ffffff 100%
     );
-    /* drop-shadow (not box-shadow) so the glow follows the streak's alpha — a
+    /* drop-shadow (not box-shadow) so the glow follows the streak's alpha - a
        tapered comet halo, not a hard capsule outline. The compositing flash this
        used to cause behind the glass panels is fixed at the scene level via
        `isolation: isolate` on `.scene` (the backdrop then samples one flat layer). */
@@ -997,7 +997,7 @@
       width: 240px;
       animation: meteor-shoot 19s linear 12s infinite;
     }
-    /* 4th left in the markup but kept dormant — three feels rarer/calmer. */
+    /* 4th left in the markup but kept dormant - three feels rarer/calmer. */
     .meteor:nth-child(4) {
       display: none;
     }
@@ -1104,7 +1104,7 @@
     height: 100%;
   }
 
-  /* ── Scene: Nocturne (starfield) — V2 baseline ──────────────────────────── */
+  /* ── Scene: Nocturne (starfield) - V2 baseline ──────────────────────────── */
   .scene-nocturne {
     background: radial-gradient(120% 100% at 70% 16%, #2a1b5e 0%, #130c30 46%, #060414 100%);
   }
@@ -1169,7 +1169,7 @@
 
   /* Full-bleed photo base. `transform` carries ONLY the pointer parallax (a deep,
      small shift) plus a slight overscan scale; the autonomous slow pan rides on
-     `background-position` so the two never fight. Kept clean and sharp — the bloom
+     `background-position` so the two never fight. Kept clean and sharp - the bloom
      is cut on photo scenes so nothing washes it out. */
   .scene-photo {
     inset: 0;
@@ -1206,7 +1206,7 @@
     to { background-position: 53% 47%; }
   }
 
-  /* Drifting colour haze — soft blurred blobs in the mood hues, blended to
+  /* Drifting colour haze - soft blurred blobs in the mood hues, blended to
      lighten (screen). Two depths: -a nearer-ish, -b nearest (bigger parallax).
      transform = parallax, background-position = autonomous drift. Kept low-opacity
      so it reads as atmosphere, never a wash over the photo. */
@@ -1222,7 +1222,7 @@
     will-change: transform, background-position, opacity;
   }
 
-  /* The colour atmosphere brightens with the music — localised blobs, not a
+  /* The colour atmosphere brightens with the music - localised blobs, not a
      full-screen veil, so it never washes the photo. Base low → calm at rest;
      deep parallax (-a near, -b nearest) for plane separation. */
   .scene-haze-a {
@@ -1305,7 +1305,7 @@
     background: radial-gradient(50% 44% at 58% 88%, rgba(var(--color-accent), 0.18), transparent 74%);
   }
 
-  /* ── Scene: Horizon (dawn/dusk) — V2 baseline ───────────────────────────── */
+  /* ── Scene: Horizon (dawn/dusk) - V2 baseline ───────────────────────────── */
   .scene-horizon {
     background: linear-gradient(180deg, #1a1140 0%, #432065 38%, #8a3a66 64%, #c75b7a 82%, #ffb487 100%);
   }
@@ -1344,7 +1344,7 @@
     background: radial-gradient(circle, rgba(176, 120, 220, 0.34), transparent 70%);
   }
 
-  /* ── Scene: Daybreak (the `light` mood) — bright airy sky ──────────────── */
+  /* ── Scene: Daybreak (the `light` mood) - bright airy sky ──────────────── */
   .scene-daybreak {
     background: linear-gradient(180deg, #bfe0ff 0%, #d6ecff 46%, #eaf3ff 72%, #fff6ef 100%);
   }
@@ -1391,7 +1391,7 @@
     opacity: 0.6;
   }
 
-  /* ── Scene: Dusk (the `dark` mood) — calm deep nightfall ───────────────── */
+  /* ── Scene: Dusk (the `dark` mood) - calm deep nightfall ───────────────── */
   .scene-dusk {
     background: radial-gradient(120% 100% at 50% 12%, #1a1638 0%, #0d0a24 52%, #07061a 100%);
   }
@@ -1431,7 +1431,7 @@
       radial-gradient(1px 1px at 90% 52%, rgba(214, 220, 255, 0.5), transparent);
   }
 
-  /* ── Scene motion — desktop only ("le paquet"); mobile + touch keep a still
+  /* ── Scene motion - desktop only ("le paquet"); mobile + touch keep a still
      frame to spare the battery, and reduced-motion always wins. The JS scenes
      gate on the same predicate (scenes/motion.ts). ─────────────────────────── */
   @media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (pointer: fine) {
@@ -1532,7 +1532,7 @@
 
 /* ════════════════════════════════════════════════════════════════════════
    HUD INSTRUMENT DETAILING (immersive moods)
-   Inspired by holographic cockpit/visor interfaces — Iron Man's lab, the
+   Inspired by holographic cockpit/visor interfaces - Iron Man's lab, the
    S.H.I.E.L.D. glass slabs, the curved gunship HUD: edge-lit translucent
    panels framed by thin corner brackets. Kept calm and cool in Reverie's
    palette, never the gritty red/neon of a game HUD.
@@ -1553,11 +1553,11 @@
     position: relative;
   }
 
-  /* Corner brackets — the holographic-instrument signature. A full 1px frame at
+  /* Corner brackets - the holographic-instrument signature. A full 1px frame at
      the panel's exact edge (24px = rounded-3xl) masked down to four 22px corner
      squares, so only crisp L-brackets that hug the rounding remain. Bright
      hairline + a soft --hud-glow bleed makes them read as projected light catching
-     the plate's corners, the way a Stark visor brackets every readout. Static —
+     the plate's corners, the way a Stark visor brackets every readout. Static -
      pure structure, no audio reactivity (that lives on the inner frame below). */
   .immersive .hud-frame::before {
     content: '';
@@ -1580,7 +1580,7 @@
     filter: drop-shadow(0 0 4px rgba(var(--hud-glow), 0.55));
   }
 
-  /* Inner hairline frame — a concentric second border that follows the panel's
+  /* Inner hairline frame - a concentric second border that follows the panel's
      rounding (was square corner brackets, which clashed with the rounded
      corners). Inset 9px inside the rounded-3xl (24px) corner → 15px inner
      radius keeps it parallel to the edge. Reads as a clean HUD slab frame. */
@@ -1590,7 +1590,7 @@
     inset: 9px;
     z-index: 1;
     pointer-events: none;
-    /* Panels breathe with the MIDRANGE (harmony/body), never the kick — the edge
+    /* Panels breathe with the MIDRANGE (harmony/body), never the kick - the edge
        firms with mids, the inner bloom swells with overall loudness. Keeps the
        UI calm and continuous while the orb carries the rhythm. Flat when idle. */
     border: 1px solid rgba(var(--hud-line), calc(0.13 + var(--audio-mid) * 0.22));
@@ -1608,7 +1608,7 @@
     }
   }
 
-  /* Waveform aura — the holographic stage's glow brightens with overall energy
+  /* Waveform aura - the holographic stage's glow brightens with overall energy
      and shimmers with treble (harmonics/air), per the vision's "waveform glow
      reacts to harmonics". Just opacity on the existing radial wash; calm at idle. */
   .immersive .wf-aura {
@@ -1623,7 +1623,7 @@
     }
   }
 
-  /* Panel positional drift removed — the side consoles must stay anchored.
+  /* Panel positional drift removed - the side consoles must stay anchored.
      They used to bob a few px vertically with the music (--audio-level); the
      section positions must not move, so the transform is gone. Audio reactivity
      now lives only in non-positional cues (glows, borders, breath). */
@@ -1656,7 +1656,7 @@
     }
   }
 
-  /* ── Corner readout — small uppercase instrument label in the hairline hue. */
+  /* ── Corner readout - small uppercase instrument label in the hairline hue. */
   .hud-readout {
     font-size: 9px;
     line-height: 1;
@@ -1667,7 +1667,7 @@
     opacity: 0.6;
   }
 
-  /* ── Graduated tick ruler — a thin instrument scale, faded at both ends. */
+  /* ── Graduated tick ruler - a thin instrument scale, faded at both ends. */
   .hud-ruler {
     height: 7px;
     opacity: 0.5;
@@ -1680,7 +1680,7 @@
     mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
   }
 
-  /* The ruler tape slowly scrolls in immersive mode — ambient telemetry that's
+  /* The ruler tape slowly scrolls in immersive mode - ambient telemetry that's
      always alive (one tick period = 9px, so the loop is seamless). Desktop +
      no-reduce only; the tape is dead-still otherwise. */
   @media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (pointer: fine) {
@@ -1753,42 +1753,66 @@
   /* ── Side-console 3D ────────────────────────────────────────────────────
      A real HUD puts the readable info on angled side consoles and keeps the
      centre flat to look through. The control rail (side) tilts in on its inner
-     edge; the waveform (centre) stays flat — the part you watch. The perspective
+     edge; the waveform (centre) stays flat - the part you watch. The perspective
      sits on a wrapper around ONLY the control rail, so it never becomes a
      backdrop-root for the waveform (which would flatten its glass blur).
      Two-column layout only (lg+); the stacked mobile layout stays flat. */
   @media (min-width: 1024px) {
+    /* Each side console is its OWN perspective root - never the grid, which would
+       become a backdrop-root and flatten the centre waveform's glass blur. A short
+       perspective gives the dramatic cockpit-visor rake the user asked for. */
     .hud-console {
-      perspective: 2000px;
+      perspective: 1500px;
     }
     /* Both side consoles hinge on their inner edge (the one facing the central
-       waveform) and swing their outer edge forward — a cockpit "V" wrapping
+       waveform) and swing their outer edge forward - a cockpit "V" wrapping
        toward the viewer, mirrored left/right. */
     .hud-console-left {
-      transform: rotateY(9deg);
+      transform: rotateY(18deg);
       transform-origin: right center;
     }
     .hud-console-right {
-      transform: rotateY(-9deg);
+      transform: rotateY(-18deg);
       transform-origin: left center;
+    }
+    /* Projected-pane fill for the raked consoles. backdrop-filter blur tends to
+       flatten under a 3D transform, so legibility here can't lean on it: lift the
+       surface fill (still translucent - the scene reads through) so text stays
+       crisp at the oblique angle, the way a real visor HUD pane is lit, not
+       frosted. Tilted consoles only; the flat centre keeps the see-through glass. */
+    .immersive .hud-console-left .glass,
+    .immersive .hud-console-right .glass {
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          rgba(var(--hud-line), 0.05) 0 1px,
+          transparent 1px 4px
+        ),
+        linear-gradient(
+          165deg,
+          rgba(var(--color-surface), 0.46) 0%,
+          rgba(var(--color-surface), 0.30) 45%,
+          rgba(var(--color-surface), 0.18) 100%
+        );
     }
   }
 }
+
 
 /* ── Mood dive transition ──────────────────────────────────────────────────
    Switching mood = plunging into a new environment. The cockpit glass stays put
    (the compositor); the world we're leaving scales up and dissolves as we break
    through it, while the new one rises out of a slight zoom and settles into focus
-   underneath — a centred luminous swell, in the new mood's own colour, cresting
+   underneath - a centred luminous swell, in the new mood's own colour, cresting
    over the cockpit at the threshold. Spectacular but composed: no lateral slide,
    no sci-fi chrome, one slow expo curve. Orchestrated by <MoodTransition>, which
    mounts the layers (and adds `.mood-warp` to <html>) only when motion is allowed
-   — under reduced motion / touch none of it runs and the body cross-fade stands in. */
+   - under reduced motion / touch none of it runs and the body cross-fade stands in. */
 @layer utilities {
   /* Outgoing world: a full-bleed copy of the backdrop we're leaving that scales
      up, blurs and dissolves as we break through it, revealing the new scene rising
      into focus underneath. On top of the live scene (later in the DOM, same z -1),
-     below the cockpit UI — the world dissolves, the cockpit you sit in stays put.
+     below the cockpit UI - the world dissolves, the cockpit you sit in stays put.
      Isolated so the panels' backdrop-filter samples one flat layer (no flash). */
   .warp-world {
     position: fixed;
@@ -1809,7 +1833,7 @@
     transform: none;
     animation: none;
     transition: none;
-    /* The outgoing copy is shown immediately (no decode gate — its bitmap is
+    /* The outgoing copy is shown immediately (no decode gate - its bitmap is
        already on screen), so it must opt out of `.scene-photo`'s hidden default. */
     opacity: 1;
   }
@@ -1839,17 +1863,17 @@
   }
 
   /* Incoming world rises into focus: the live scene-photo eases down from a slight
-     zoom and de-blurs while lifting from a dim start — the new atmosphere closing
+     zoom and de-blurs while lifting from a dim start - the new atmosphere closing
      in around you. Scoped to the scene's own photo (`.scene >`) so the outgoing
-     copy is untouched. No `forwards` — releases to the base transform (parallax +
+     copy is untouched. No `forwards` - releases to the base transform (parallax +
      audio breathe). */
   .mood-warp .scene > .scene-photo {
     /* Keep the slow background-position pan running ALONGSIDE the dive (it animates
-       background-position, the dive animates transform/filter/opacity — no conflict)
+       background-position, the dive animates transform/filter/opacity - no conflict)
        so it never stops and restarts. If the dive overrode the `animation` shorthand
        alone, removing `.mood-warp` would restart `scene-photo-pan` from its `from`
        keyframe (47% 52%), snapping background-position a couple of % off the static
-       base (50% 50%) — the few-pixel vertical recale at the end of the transition.
+       base (50% 50%) - the few-pixel vertical recale at the end of the transition.
        Listing it here keeps it in flight across the class toggle. `.mood-warp` only
        mounts on desktop + motion-allowed: the exact context where the pan runs. */
     animation:
@@ -1868,7 +1892,7 @@
       opacity: 1;
     }
     /* End EXACTLY on `.scene-photo`'s resting transform (same scale + parallax
-       expression), so when the animation releases there's zero delta — no late
+       expression), so when the animation releases there's zero delta - no late
        drift from the photo's 500ms transform transition snapping back to the live
        pointer-parallax offset. */
     100% {
@@ -1879,11 +1903,11 @@
     }
   }
 
-  /* The luminous swell — a centred radial bloom in the NEW mood's live colour
+  /* The luminous swell - a centred radial bloom in the NEW mood's live colour
      (white-hot core → accent → hud-glow halo), screen-blended so it only ever
      lightens. It crests over the whole cockpit at the threshold (masking the token
      swap) then clears, growing as it dissipates. Centred and symmetric: the
-     spectacle, kept classy — no rings, no streaks, no telemetry. */
+     spectacle, kept classy - no rings, no streaks, no telemetry. */
   .warp-bloom {
     position: fixed;
     inset: 0;
@@ -1920,7 +1944,7 @@
   /* The cockpit gives a single soft acknowledgement as the new environment lands:
      the panel hairlines firm and bloom once, the rails lift their glow. Briefly
      overrides the audio-reactive border/shadow, then releases back to it. One
-     smooth swell on the same expo curve as the dive — no flicker, no glitch. */
+     smooth swell on the same expo curve as the dive - no flicker, no glitch. */
   .mood-warp .immersive .hud-frame::after {
     animation: hud-warp-frame 940ms cubic-bezier(0.5, 0, 0.2, 1);
   }
@@ -1978,13 +2002,13 @@
 /* ── Mood palette cross-fade ─────────────────────────────────────────────────
    A mood swaps the whole palette at once: the --color-* / --hud-* tokens flip on
    <html> the instant `data-mood` changes. The scene dives and the bloom crests
-   to carry the backdrop, and the chrome hairlines bloom once (`hud-warp-*`) —
+   to carry the backdrop, and the chrome hairlines bloom once (`hud-warp-*`) -
    but the cockpit's own palette-driven colours (text, accent fills, borders,
    icons) would otherwise snap. While <html> carries `.mood-shifting` (added by
    MoodContext for the length of the switch) every element eases those colours,
    so the chrome recolours in step with the diving backdrop. This also covers the
    reduced-motion / touch path, where the dive is withheld and only the colours
-   change — a gentle cross-fade, not motion.
+   change - a gentle cross-fade, not motion.
 
    Unlayered on purpose, so it outranks the layered component styles without
    `!important`. Only the directly-interpolable colour properties are listed:
@@ -1998,4 +2022,60 @@
   transition-property: color, background-color, border-color, fill, stroke, outline-color;
   transition-duration: 600ms;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Marquee (overflow-only scrolling text) ────────────────────────────────
+   Single-line text that gently scrolls only when it would be clipped; short
+   text stays static. Seamless loop (two copies + a gap), constant px/s speed
+   set per-instance via animation-duration, soft edge fade while scrolling.
+   Driven by <MarqueeText>, which measures overflow and only mounts the moving
+   track when it is needed AND motion is allowed - so under prefers-reduced-
+   motion it renders a static ellipsis instead. */
+@layer utilities {
+  .marquee {
+    display: block;
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  /* Soft holographic edges only while the text is actually travelling. */
+  .marquee-fade {
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent 100%);
+  }
+
+  /* Off-layout copy used only to measure the text's intrinsic width. */
+  .marquee-measure {
+    position: absolute;
+    left: 0;
+    top: 0;
+    visibility: hidden;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  .marquee-track {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    width: max-content;
+    will-change: transform;
+    animation: marquee-scroll linear infinite;
+  }
+
+  /* Each copy carries the gap as trailing padding, so a -50% shift lands the
+     second copy exactly where the first began - a seamless loop. */
+  .marquee-item {
+    white-space: nowrap;
+    padding-right: 48px;
+  }
+
+  @keyframes marquee-scroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .marquee-track { animation: none; }
+  }
 }

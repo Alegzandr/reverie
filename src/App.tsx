@@ -14,6 +14,8 @@ import { DesktopOnlyGate } from './components/DesktopOnlyGate';
 import { useIsViewportTooNarrow } from './hooks/useViewportGate';
 import { WaveformTimeline } from './components/WaveformTimeline';
 import { MoodRail } from './components/MoodRail';
+import { MarqueeText } from './components/MarqueeText';
+import { MetaReadout } from './components/MetaReadout';
 import { Logo } from './components/Logo';
 import { Card } from './components/ui/card';
 import { Badge } from './components/ui/badge';
@@ -59,7 +61,7 @@ function App() {
   } = useAudioProcessor();
 
   // Listening EQ: a comfort setting kept in its own context (and localStorage).
-  // Push the gains to the playback graph whenever they change — ramped live while
+  // Push the gains to the playback graph whenever they change - ramped live while
   // playing, remembered for the next play otherwise. Never touches the export.
   const { gains: eqGains } = useEq();
   useEffect(() => {
@@ -228,6 +230,12 @@ function App() {
     () =>
       originalFile
         ? [
+            // Format (the extension) lives here as a readout, not in the scrolling
+            // title - the title carries the name alone.
+            (() => {
+              const ext = originalFile.name.match(/\.([^/.]+)$/)?.[1];
+              return ext ? { label: t('track.format'), value: ext.toUpperCase() } : null;
+            })(),
             { label: t('track.size'), value: `${(originalFile.size / 1024 / 1024).toFixed(1)} MB` },
             metadata?.bitrate ? { label: t('track.bitrate'), value: `${metadata.bitrate} kbps` } : null,
             metadata?.sampleRate ? { label: t('track.sampleRate'), value: `${(metadata.sampleRate / 1000).toFixed(1)} kHz` } : null,
@@ -357,43 +365,68 @@ function App() {
       <main className="flex-1 mx-auto w-full max-w-[1700px] px-6 sm:px-10 pt-6 sm:pt-8 pb-32 sm:pb-40 flex flex-col gap-8 sm:gap-10 lg:justify-center">
         {errorBanner}
 
-        {originalFile && (
-          <div className="space-y-4">
-            <h2 className="font-display text-2xl sm:text-3xl font-normal text-[rgb(var(--color-text))] truncate">
-              {originalFile.name}
-            </h2>
-            {metaItems.length > 0 && (
-              <dl className="flex flex-wrap gap-x-8 gap-y-3">
-                {metaItems.map((item) => (
-                  <div key={item.label}>
-                    <dt className="text-[11px] uppercase tracking-wide text-[rgb(var(--color-text-secondary))]">
-                      {item.label}
-                    </dt>
-                    <dd className="text-sm font-medium tabular-nums text-[rgb(var(--color-text))]">
-                      {item.value}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            )}
-          </div>
-        )}
-
-        {/* Cockpit: effects rail | waveform centrepiece | mood rail. */}
+        {/* Cockpit: raked FX console | flat waveform centrepiece | raked mood
+           console. Each side console is wrapped in its own .hud-console
+           perspective root and tilted toward the viewer (a visor "V"); the
+           centre stays flat - the part you look through, so its glass blur is
+           never flattened by a 3D ancestor. Desktop-only (the tilt lives in a
+           lg+ media query); stacked layouts render flat. */}
         <div className="grid gap-6 lg:gap-12 xl:gap-16 items-start lg:grid-cols-[minmax(320px,400px)_minmax(0,1fr)_minmax(280px,340px)]">
           {originalFile && (
-            <Card asChild className="hud-frame p-4 sm:p-5 audio-drift-a">
-              <aside>
-                <EffectControls
-                  onChange={handleEffectChange}
-                  disabled={state.isExporting}
-                  initialSettings={effectSettings}
-                />
-              </aside>
-            </Card>
+            <div className="hud-console">
+              <div className="hud-console-left">
+                <Card asChild className="hud-frame p-4 sm:p-5">
+                  <aside>
+                    <EffectControls
+                      onChange={handleEffectChange}
+                      disabled={state.isExporting}
+                      initialSettings={effectSettings}
+                    />
+                  </aside>
+                </Card>
+              </div>
+            </div>
           )}
 
-          <section className="min-w-0">
+          {/* Centre stack: the track-identity panel sits on its own HUD plate
+             directly above the waveform - the cockpit's central read-out column
+             (title + the format telemetry), then the timeline beneath it. Flat,
+             never raked: a tilt here would distort the title and the waveform. */}
+          <section className="min-w-0 flex flex-col gap-6">
+            {originalFile && (
+              <Card asChild className="hud-frame px-5 py-4 sm:px-6 sm:py-5">
+                <div className="flex flex-col gap-3.5">
+                  {/* Corner tab + title - the HUD "tab" anchors this plate to the
+                     same language as the EFFETS / MOOD panels. */}
+                  <div className="flex flex-col gap-1.5">
+                    <span className="hud-readout">{t('track.title')}</span>
+                    <h2 className="min-w-0">
+                      <MarqueeText
+                        text={originalFile.name.replace(/\.[^/.]+$/, '')}
+                        className="font-display text-2xl sm:text-3xl font-normal text-[rgb(var(--color-text))]"
+                      />
+                    </h2>
+                  </div>
+                  {metaItems.length > 0 && (
+                    <>
+                      <div className="hud-ruler" aria-hidden="true" />
+                      {/* Format telemetry spread edge-to-edge as equal readout
+                         columns, so the strip fills the plate's width instead of
+                         clustering left. */}
+                      <dl
+                        className="grid gap-x-6 gap-y-3"
+                        style={{ gridTemplateColumns: `repeat(${metaItems.length}, minmax(0, 1fr))` }}
+                      >
+                        {metaItems.map((item) => (
+                          <MetaReadout key={item.label} label={item.label} value={item.value} />
+                        ))}
+                      </dl>
+                    </>
+                  )}
+                </div>
+              </Card>
+            )}
+
             {stageBuffer && (
               <WaveformTimeline
                 buffer={stageBuffer}
@@ -406,7 +439,11 @@ function App() {
             )}
           </section>
 
-          <MoodRail />
+          <div className="hud-console">
+            <div className="hud-console-right">
+              <MoodRail />
+            </div>
+          </div>
         </div>
       </main>
 

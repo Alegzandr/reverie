@@ -3,7 +3,7 @@ import { MonitorSmartphone } from 'lucide-react';
 import { AmbientScene } from './AmbientScene';
 
 /**
- * Reverie is a wide cockpit — the effects rail, the holographic waveform and the
+ * Reverie is a wide cockpit - the effects rail, the holographic waveform and the
  * mood rail only line up on a real desktop canvas. Rather than ship a cramped
  * phone layout, narrow viewports get this branded "come back on a bigger screen"
  * stage. Deliberately no bypass: the experience is always the intended one.

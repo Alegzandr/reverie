@@ -8,8 +8,8 @@ type LogoProps = {
 
 /**
  * Reverie's mark, inlined so it can breathe with the active mood. The night sky,
- * moon and stars stay moonlit, but the rippled reflection — Reverie's signature
- * "music as moonglade" — and the accent stars take on the mood's accent, so the
+ * moon and stars stay moonlit, but the rippled reflection - Reverie's signature
+ * "music as moonglade" - and the accent stars take on the mood's accent, so the
  * brand quietly recolours itself the moment a mood is selected.
  *
  * IDs are namespaced per instance (useId) so multiple logos on one page don't
@@ -48,7 +48,7 @@ export function Logo({ className, label }: LogoProps) {
         {/* The aurora gradient is mood-bound: it drives the horizon and the
             rippled reflection, so the brand's "sound waves" wear the mood.
             NB: var() only resolves inside CSS, never in SVG presentation
-            attributes — so the mood colours are set via `style`, not stop-color. */}
+            attributes - so the mood colours are set via `style`, not stop-color. */}
         <linearGradient id={id('aurora')} x1="0" y1="0" x2="1" y2="0">
           <stop offset="0" style={{ stopColor: 'rgb(var(--color-accent-hover))' }} />
           <stop offset="0.5" style={{ stopColor: 'rgb(var(--color-accent))' }} />
@@ -78,7 +78,7 @@ export function Logo({ className, label }: LogoProps) {
         <path d="M46.5 82.5 Q48.5 81.8 50 82.5 T53.5 82.5" strokeWidth="1.8" opacity="0.24" />
       </g>
 
-      {/* a few stars in the night sky — two pick up the mood accent (via style,
+      {/* a few stars in the night sky - two pick up the mood accent (via style,
           since var() doesn't resolve in the `fill` presentation attribute) */}
       <circle cx="27" cy="25" r="1.5" fill="#CDEBFF" opacity="0.9" />
       <circle cx="73" cy="22" r="1.7" style={{ fill: 'rgb(var(--color-accent-hover))' }} opacity="0.85" />

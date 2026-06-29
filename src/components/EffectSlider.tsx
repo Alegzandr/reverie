@@ -22,7 +22,7 @@ interface EffectSliderProps {
  * current value (driven by the --range custom property), and the value is rendered
  * large so the result, not the mechanism, leads.
  *
- * Double-clicking the track restores the default value — a quick escape from a
+ * Double-clicking the track restores the default value - a quick escape from a
  * dialed-in setting without nudging the thumb back by hand.
  */
 export function EffectSlider({

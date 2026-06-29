@@ -62,7 +62,7 @@ export function TransportTimeline({
     if (!draggingRef.current) return;
     const r = ratioFromEvent(event.clientX);
     if (r === null) return;
-    // Visual only — the real seek (and graph rebuild) is deferred to drag-end.
+    // Visual only - the real seek (and graph rebuild) is deferred to drag-end.
     setDragRatio(r);
     dragRatioRef.current = r;
   };

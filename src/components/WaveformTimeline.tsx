@@ -122,7 +122,7 @@ export function WaveformTimeline({
     if (!draggingRef.current || !duration) return;
     const r = ratioFromEvent(event.clientX);
     if (r === null) return;
-    // Visual only — the real seek (and graph rebuild) is deferred to drag-end.
+    // Visual only - the real seek (and graph rebuild) is deferred to drag-end.
     setDragRatio(r);
     dragRatioRef.current = r;
   };
@@ -179,7 +179,7 @@ export function WaveformTimeline({
     return () => ro.disconnect();
   }, [measure, follow, stretch, bars.length]);
 
-  // Per-frame auto-follow: no layout reads here — follow() uses cached metrics.
+  // Per-frame auto-follow: no layout reads here - follow() uses cached metrics.
   useEffect(() => {
     ratioRef.current = ratio;
     follow();
@@ -216,7 +216,7 @@ export function WaveformTimeline({
       </div>
 
       {/* Scroll viewport: the ambient glow stays put while the waveform pans inside it.
-         A definite height is essential — the parent grid is items-start, so this card is
+         A definite height is essential - the parent grid is items-start, so this card is
          content-sized; without a concrete height here the inner h-full chain collapses. */}
       <div
         ref={viewportRef}
@@ -227,7 +227,7 @@ export function WaveformTimeline({
           aria-hidden="true"
         />
 
-        {/* Scrub surface — its width grows with the stretch factor, so it can overflow. */}
+        {/* Scrub surface - its width grows with the stretch factor, so it can overflow. */}
         <div
           ref={contentRef}
           data-testid="waveform-timeline"
