@@ -63,7 +63,7 @@ export function SettingsMenu({ trigger }: SettingsMenuProps = {}) {
         <Tooltip>
           <TooltipTrigger asChild>
             <DialogTrigger asChild>
-              <Button type="button" variant="outline" size="icon" aria-label={t('settings.open')} className="glass">
+              <Button type="button" variant="glass" size="icon" aria-label={t('settings.open')}>
                 <Settings className="w-5 h-5 text-[rgb(var(--color-text))]" aria-hidden="true" />
               </Button>
             </DialogTrigger>

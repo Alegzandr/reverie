@@ -33,6 +33,7 @@ const toOptions = (s: EffectSettings): AudioProcessingOptions => ({
   rotationSpeed: s.rotationSpeed,
   bassBoost: s.mode === 'bass-boost',
   bassBoostIntensity: s.bassBoostIntensity,
+  bassUnderwater: s.bassUnderwater,
 });
 
 function App() {

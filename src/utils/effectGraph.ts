@@ -1,4 +1,4 @@
-import { AUDIO_EFFECTS, AUDIO_SIGNAL } from '../constants';
+import { AUDIO_EFFECTS, AUDIO_SIGNAL, underwaterCutoffHz } from '../constants';
 import { createDecayingNoiseImpulse } from './impulse';
 import type { AudioProcessingOptions } from './audioProcessor';
 
@@ -11,7 +11,8 @@ import type { AudioProcessingOptions } from './audioProcessor';
  * are one-shot), then `applyEffectOptions` is called to set or ramp every parameter.
  *
  * Signal path:
- *   source -> highpass -> lowshelf -> peaking -> (dry + convolver/wet) -> mix
+ *   source -> highpass -> lowshelf -> peaking -> underwater lowpass
+ *          -> (dry + convolver/wet) -> mix
  *          -> eq[0..5] -> stereo panner -> out -> [caller's volume gain] -> destination
  * 8D motion: oscillator -> panDepth gain -> panner.pan
  * 8D bed:    mix -> eightDConvolver -> eightDBed -> out  (un-panned, constant)
@@ -26,6 +27,10 @@ export interface EffectChain {
   highpass: BiquadFilterNode;
   lowshelf: BiquadFilterNode;
   peak: BiquadFilterNode;
+  /** Underwater muffle lowpass (bass-boost mode) + its slow cutoff-wobble LFO. */
+  underwaterLowpass: BiquadFilterNode;
+  underwaterLfo: OscillatorNode;
+  underwaterDepth: GainNode;
   dryGain: GainNode;
   wetGain: GainNode;
   convolver: ConvolverNode;
@@ -87,6 +92,19 @@ export function createEffectChain(ctx: AudioContext): EffectChain {
   peak.frequency.value = AUDIO_EFFECTS.BASS_BOOST.PEAKING_FREQUENCY_HZ;
   peak.Q.value = 1;
 
+  // Underwater muffle: starts wide open (transparent) and its cutoff is ramped down
+  // live as the amount rises. The LFO adds a slow swell to the cutoff; its depth is 0
+  // until the effect is dialled in, so the filter is inaudible at rest.
+  const underwaterLowpass = ctx.createBiquadFilter();
+  underwaterLowpass.type = 'lowpass';
+  underwaterLowpass.frequency.value = AUDIO_EFFECTS.BASS_BOOST.UNDERWATER_CUTOFF_MAX_HZ;
+  underwaterLowpass.Q.value = 0.7;
+  const underwaterLfo = ctx.createOscillator();
+  underwaterLfo.type = 'sine';
+  underwaterLfo.frequency.value = AUDIO_EFFECTS.BASS_BOOST.UNDERWATER_LFO_FREQUENCY_HZ;
+  const underwaterDepth = ctx.createGain();
+  underwaterDepth.gain.value = 0;
+
   const dryGain = ctx.createGain();
   const wetGain = ctx.createGain();
   const convolver = ctx.createConvolver();
@@ -117,9 +135,13 @@ export function createEffectChain(ctx: AudioContext): EffectChain {
 
   highpass.connect(lowshelf);
   lowshelf.connect(peak);
-  peak.connect(dryGain);
-  peak.connect(convolver);
+  peak.connect(underwaterLowpass);
+  underwaterLowpass.connect(dryGain);
+  underwaterLowpass.connect(convolver);
   convolver.connect(wetGain);
+  underwaterLfo.connect(underwaterDepth);
+  underwaterDepth.connect(underwaterLowpass.frequency);
+  underwaterLfo.start();
   dryGain.connect(mix);
   wetGain.connect(mix);
   // mix -> eq[0] -> eq[1] -> ... -> eq[last] -> panner
@@ -140,7 +162,7 @@ export function createEffectChain(ctx: AudioContext): EffectChain {
   panDepth.connect(panner.pan);
   osc.start();
 
-  return { input: highpass, output: out, highpass, lowshelf, peak, dryGain, wetGain, convolver, mix, eq, panner, panDepth, osc, eightDConvolver, eightDBed, out };
+  return { input: highpass, output: out, highpass, lowshelf, peak, underwaterLowpass, underwaterLfo, underwaterDepth, dryGain, wetGain, convolver, mix, eq, panner, panDepth, osc, eightDConvolver, eightDBed, out };
 }
 
 function setParam(param: AudioParam, value: number, ctx: AudioContext, ramp: boolean) {
@@ -169,6 +191,13 @@ export function applyEffectOptions(
   const bass = options.bassBoost ? Math.max(0, Math.min(1, options.bassBoostIntensity ?? 0)) : 0;
   setParam(chain.lowshelf.gain, bass * 18, ctx, ramp);
   setParam(chain.peak.gain, -bass * 3, ctx, ramp);
+
+  // Underwater muffle: only active within bass-boost mode. Cutoff closes as the
+  // amount grows; the LFO depth scales with it, so both reach zero effect at 0.
+  const underwater = options.bassBoost ? Math.max(0, Math.min(1, options.bassUnderwater ?? 0)) : 0;
+  const cutoff = underwaterCutoffHz(underwater);
+  setParam(chain.underwaterLowpass.frequency, cutoff, ctx, ramp);
+  setParam(chain.underwaterDepth.gain, cutoff * AUDIO_EFFECTS.BASS_BOOST.UNDERWATER_LFO_DEPTH_RATIO * underwater, ctx, ramp);
 
   const eightD = !!options.audio8D;
   setParam(chain.panDepth.gain, eightD ? 1 : 0, ctx, ramp);
@@ -201,7 +230,12 @@ export function disconnectEffectChain(chain: EffectChain) {
   } catch {
     // already stopped
   }
-  for (const node of [chain.osc, chain.panDepth, chain.panner, ...chain.eq, chain.eightDConvolver, chain.eightDBed, chain.out, chain.mix, chain.wetGain, chain.dryGain, chain.convolver, chain.peak, chain.lowshelf, chain.highpass]) {
+  try {
+    chain.underwaterLfo.stop();
+  } catch {
+    // already stopped
+  }
+  for (const node of [chain.osc, chain.panDepth, chain.panner, ...chain.eq, chain.eightDConvolver, chain.eightDBed, chain.out, chain.mix, chain.wetGain, chain.dryGain, chain.convolver, chain.underwaterDepth, chain.underwaterLfo, chain.underwaterLowpass, chain.peak, chain.lowshelf, chain.highpass]) {
     try {
       node.disconnect();
     } catch {

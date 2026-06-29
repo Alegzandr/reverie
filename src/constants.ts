@@ -250,6 +250,15 @@ export const AUDIO_EFFECTS = {
     LOWSHELF_FREQUENCY_HZ: 100,
     HIGHPASS_FREQUENCY_HZ: 40,
     PEAKING_FREQUENCY_HZ: 300,
+    /**
+     * Underwater muffle: a lowpass whose cutoff sweeps from transparent down to a
+     * deep muffle as the amount grows, with a slow LFO wobble on the cutoff for the
+     * "submerged" feel. Amount 0 leaves the cutoff at MAX (effectively bypassed).
+     */
+    UNDERWATER_CUTOFF_MAX_HZ: 18000,
+    UNDERWATER_CUTOFF_MIN_HZ: 500,
+    UNDERWATER_LFO_FREQUENCY_HZ: 0.25, // ~4 s period - a gentle swell, not a tremolo
+    UNDERWATER_LFO_DEPTH_RATIO: 0.15, // wobble peaks at ±15% of the cutoff
   },
 
   /** Reverb settings */
@@ -297,6 +306,17 @@ export const AUDIO_EFFECTS = {
   },
 } as const;
 
+/**
+ * Underwater muffle cutoff (Hz) for a given amount (0..1). The sweep is exponential
+ * so the perceived "submerging" is even across the slider: 0 → transparent (MAX),
+ * 1 → deep muffle (MIN). Shared by the offline render and the live playback graph.
+ */
+export function underwaterCutoffHz(amount: number): number {
+  const a = Math.max(0, Math.min(1, amount));
+  const { UNDERWATER_CUTOFF_MAX_HZ: max, UNDERWATER_CUTOFF_MIN_HZ: min } = AUDIO_EFFECTS.BASS_BOOST;
+  return max * Math.pow(min / max, a);
+}
+
 // ============================================================================
 // UI EFFECT CONTROL DEFAULTS
 // ============================================================================
@@ -317,7 +337,7 @@ export const EFFECT_DEFAULTS = {
     SPEED_MAX: 0.9,
     SPEED_STEP: 0.05,
     REVERB_DEFAULT: 0.5,
-    REVERB_MIN: 0.1,
+    REVERB_MIN: 0.0,
     REVERB_MAX: 1.0,
     REVERB_STEP: 0.1,
   },
@@ -332,7 +352,9 @@ export const EFFECT_DEFAULTS = {
 
   /** Bass boost effect defaults */
   BASS_BOOST_UI: {
-    INTENSITY_DEFAULT: 0.5,
+    // Defaults into the "Normal" band so the label reads "Normal" from the first
+    // frame, with room to dial up (Strong) or down (Light).
+    INTENSITY_DEFAULT: 0.4,
     INTENSITY_MIN: 0.0,
     INTENSITY_MAX: 1.0,
     INTENSITY_STEP: 0.01,
@@ -340,6 +362,11 @@ export const EFFECT_DEFAULTS = {
     LIGHT_THRESHOLD: 0.33,
     /** Threshold for normal bass intensity */
     NORMAL_THRESHOLD: 0.67,
+    /** Underwater muffle amount (0 = off, surface; 1 = deeply submerged). */
+    UNDERWATER_DEFAULT: 0.0,
+    UNDERWATER_MIN: 0.0,
+    UNDERWATER_MAX: 1.0,
+    UNDERWATER_STEP: 0.01,
   },
 } as const;
 

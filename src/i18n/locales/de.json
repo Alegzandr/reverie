@@ -39,6 +39,9 @@
     "bassLight": "Leicht",
     "bassNormal": "Normal",
     "bassStrong": "Stark",
+    "underwater": "Unterwasser",
+    "underwaterSurface": "Oberfläche",
+    "underwaterDeep": "Tief",
     "apply": "Effekte anwenden",
     "processing": "Verarbeitung..."
   },
@@ -48,7 +51,9 @@
     "export": "Exportieren",
     "exporting": "Exportiere...",
     "repeat": "Wiederholen",
-    "volume": "Lautstärke"
+    "volume": "Lautstärke",
+    "mute": "Stummschalten",
+    "unmute": "Stummschaltung aufheben"
   },
   "track": {
     "title": "Track",

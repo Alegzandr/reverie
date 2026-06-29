@@ -119,6 +119,7 @@ describe('App', () => {
       rotationSpeed: 0.4,
       bassBoost: false,
       bassBoostIntensity: undefined,
+      bassUnderwater: undefined,
     });
 
     await userEvent.click(screen.getByLabelText('playback.play'));

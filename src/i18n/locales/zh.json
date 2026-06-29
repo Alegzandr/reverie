@@ -39,6 +39,9 @@
     "bassLight": "轻",
     "bassNormal": "正常",
     "bassStrong": "强",
+    "underwater": "水下",
+    "underwaterSurface": "水面",
+    "underwaterDeep": "深",
     "apply": "应用效果",
     "processing": "处理中..."
   },
@@ -48,7 +51,9 @@
     "export": "导出",
     "exporting": "导出中...",
     "repeat": "循环",
-    "volume": "音量"
+    "volume": "音量",
+    "mute": "静音",
+    "unmute": "取消静音"
   },
   "track": {
     "title": "曲目",

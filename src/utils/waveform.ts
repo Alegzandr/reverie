@@ -86,6 +86,7 @@ export function shapeEnvelope(bars: number[], options?: AudioProcessingOptions |
     rotationSpeed = 0,
     bassBoost = false,
     bassBoostIntensity = 0,
+    bassUnderwater = 0,
   } = options;
 
   let out = bars.slice();
@@ -94,6 +95,18 @@ export function shapeEnvelope(bars: number[], options?: AudioProcessingOptions |
   if (bassBoost && bassBoostIntensity > 0) {
     const gain = 1 + 0.8 * bassBoostIntensity;
     out = out.map((b) => Math.min(1, b * gain));
+  }
+
+  // Underwater muffle: a lowpass softens transients, so peaks round off and bleed
+  // into their neighbours - the bars blur toward a local average and lose a little top.
+  if (bassBoost && bassUnderwater > 0) {
+    const w = bassUnderwater;
+    const blurred = out.map((b, i) => {
+      const prev = out[i - 1] ?? b;
+      const next = out[i + 1] ?? b;
+      return b * (1 - 0.5 * w) + ((prev + next) / 2) * (0.5 * w);
+    });
+    out = blurred.map((b) => b * (1 - 0.15 * w));
   }
 
   // Reverb: each bar bleeds into the following ones (a decaying tail) and fills gaps.

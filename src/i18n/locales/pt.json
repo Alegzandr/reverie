@@ -39,6 +39,9 @@
     "bassLight": "Leve",
     "bassNormal": "Normal",
     "bassStrong": "Forte",
+    "underwater": "Debaixo d'água",
+    "underwaterSurface": "Superfície",
+    "underwaterDeep": "Profundo",
     "apply": "Aplicar efeitos",
     "processing": "Processando..."
   },
@@ -48,7 +51,9 @@
     "export": "Exportar",
     "exporting": "Exportando...",
     "repeat": "Repetir",
-    "volume": "Volume"
+    "volume": "Volume",
+    "mute": "Silenciar",
+    "unmute": "Ativar som"
   },
   "track": {
     "title": "Faixa",

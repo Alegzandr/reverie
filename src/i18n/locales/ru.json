@@ -39,6 +39,9 @@
     "bassLight": "Легкая",
     "bassNormal": "Нормальная",
     "bassStrong": "Сильная",
+    "underwater": "Под водой",
+    "underwaterSurface": "Поверхность",
+    "underwaterDeep": "Глубоко",
     "apply": "Применить эффекты",
     "processing": "Обработка..."
   },
@@ -48,7 +51,9 @@
     "export": "Экспорт",
     "exporting": "Экспорт...",
     "repeat": "Повтор",
-    "volume": "Громкость"
+    "volume": "Громкость",
+    "mute": "Выключить звук",
+    "unmute": "Включить звук"
   },
   "track": {
     "title": "Трек",

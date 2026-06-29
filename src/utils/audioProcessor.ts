@@ -1,4 +1,4 @@
-import { AUDIO_EFFECTS, AUDIO_SIGNAL } from '../constants';
+import { AUDIO_EFFECTS, AUDIO_SIGNAL, underwaterCutoffHz } from '../constants';
 import { createDecayingNoiseImpulse } from './impulse';
 
 // Offline impulse-response cache. The IRs are pure noise+decay buffers that only
@@ -16,6 +16,7 @@ export interface AudioProcessingOptions {
   rotationSpeed?: number; // Speed of 8D rotation (0.1 - 2.0)
   bassBoost?: boolean; // Bass boost effect
   bassBoostIntensity?: number; // Bass boost intensity (0.0 - 1.0)
+  bassUnderwater?: number; // Underwater muffle amount within bass boost (0.0 - 1.0)
 }
 
 /**
@@ -64,7 +65,7 @@ export class AudioProcessor {
 
     try {
 
-    const { speedMultiplier, reverbAmount, audio8D, rotationSpeed, bassBoost, bassBoostIntensity } = options;
+    const { speedMultiplier, reverbAmount, audio8D, rotationSpeed, bassBoost, bassBoostIntensity, bassUnderwater } = options;
 
     // Create offline context for processing
     const offlineContext = new OfflineAudioContext(
@@ -107,7 +108,7 @@ export class AudioProcessor {
 
     // Apply bass boost if enabled
     if (bassBoost && bassBoostIntensity !== undefined) {
-      const bassBoostNode = this.createBassBoostEffect(offlineContext, bassBoostIntensity);
+      const bassBoostNode = this.createBassBoostEffect(offlineContext, bassBoostIntensity, bassUnderwater ?? 0);
       lastNode.connect(bassBoostNode.input);
       lastNode = bassBoostNode.output;
     }
@@ -188,10 +189,12 @@ export class AudioProcessor {
     return buffer;
   }
 
-  /** Bass boost: highpass (cut rumble) → lowshelf (boost) → peaking (de-mud), with makeup gain. */
+  /** Bass boost: highpass (cut rumble) → lowshelf (boost) → peaking (de-mud) →
+   *  optional underwater lowpass, with makeup gain. */
   private createBassBoostEffect(
     context: OfflineAudioContext,
-    intensity: number
+    intensity: number,
+    underwater: number
   ): { input: GainNode; output: GainNode } {
     const inputGain = context.createGain();
     const outputGain = context.createGain();
@@ -218,7 +221,31 @@ export class AudioProcessor {
     inputGain.connect(highpass);
     highpass.connect(lowshelf);
     lowshelf.connect(lowMidCut);
-    lowMidCut.connect(outputGain);
+
+    // Underwater muffle: a lowpass that closes as the amount grows, its cutoff
+    // wobbling on a slow LFO so the sound breathes like it's submerged. Only wired
+    // when the amount is non-zero, otherwise the chain stays exactly as before.
+    let tail: AudioNode = lowMidCut;
+    if (underwater > 0) {
+      const cutoff = underwaterCutoffHz(underwater);
+      const lowpass = context.createBiquadFilter();
+      lowpass.type = 'lowpass';
+      lowpass.frequency.value = cutoff;
+      lowpass.Q.value = 0.7;
+
+      const lfo = context.createOscillator();
+      lfo.type = 'sine';
+      lfo.frequency.value = AUDIO_EFFECTS.BASS_BOOST.UNDERWATER_LFO_FREQUENCY_HZ;
+      const lfoDepth = context.createGain();
+      lfoDepth.gain.value = cutoff * AUDIO_EFFECTS.BASS_BOOST.UNDERWATER_LFO_DEPTH_RATIO * underwater;
+      lfo.connect(lfoDepth);
+      lfoDepth.connect(lowpass.frequency);
+      lfo.start(0);
+
+      lowMidCut.connect(lowpass);
+      tail = lowpass;
+    }
+    tail.connect(outputGain);
 
     return { input: inputGain, output: outputGain };
   }

@@ -39,6 +39,9 @@
     "bassLight": "Ligero",
     "bassNormal": "Normal",
     "bassStrong": "Fuerte",
+    "underwater": "Bajo el agua",
+    "underwaterSurface": "Superficie",
+    "underwaterDeep": "Profundo",
     "apply": "Aplicar efectos",
     "processing": "Procesando..."
   },
@@ -48,7 +51,9 @@
     "export": "Exportar",
     "exporting": "Exportando...",
     "repeat": "Repetir",
-    "volume": "Volumen"
+    "volume": "Volumen",
+    "mute": "Silenciar",
+    "unmute": "Activar sonido"
   },
   "track": {
     "title": "Pista",

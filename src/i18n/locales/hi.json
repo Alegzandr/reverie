@@ -39,6 +39,9 @@
     "bassLight": "हल्का",
     "bassNormal": "सामान्य",
     "bassStrong": "मजबूत",
+    "underwater": "पानी के नीचे",
+    "underwaterSurface": "सतह",
+    "underwaterDeep": "गहरा",
     "apply": "प्रभाव लागू करें",
     "processing": "प्रोसेसिंग..."
   },
@@ -48,7 +51,9 @@
     "export": "निर्यात करें",
     "exporting": "निर्यात हो रहा है...",
     "repeat": "दोहराएँ",
-    "volume": "वॉल्यूम"
+    "volume": "वॉल्यूम",
+    "mute": "म्यूट करें",
+    "unmute": "अनम्यूट करें"
   },
   "track": {
     "title": "ट्रैक",

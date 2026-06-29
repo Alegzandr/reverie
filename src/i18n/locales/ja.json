@@ -39,6 +39,9 @@
     "bassLight": "軽い",
     "bassNormal": "通常",
     "bassStrong": "強い",
+    "underwater": "水中",
+    "underwaterSurface": "水面",
+    "underwaterDeep": "深い",
     "apply": "エフェクトを適用",
     "processing": "処理中..."
   },
@@ -48,7 +51,9 @@
     "export": "エクスポート",
     "exporting": "エクスポート中...",
     "repeat": "リピート",
-    "volume": "音量"
+    "volume": "音量",
+    "mute": "ミュート",
+    "unmute": "ミュート解除"
   },
   "track": {
     "title": "トラック",

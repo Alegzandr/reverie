@@ -24,6 +24,7 @@ export interface EffectSettings {
     reverbAmount: number;
     rotationSpeed?: number;
     bassBoostIntensity?: number;
+    bassUnderwater?: number;
     mode: EffectMode;
 }
 
@@ -78,6 +79,10 @@ export const EffectControls = memo(function EffectControls({ onChange, disabled,
         initialSettings?.bassBoostIntensity ??
             EFFECT_DEFAULTS.BASS_BOOST_UI.INTENSITY_DEFAULT
     );
+    const [bassUnderwater, setBassUnderwater] = useState<number>(
+        initialSettings?.bassUnderwater ??
+            EFFECT_DEFAULTS.BASS_BOOST_UI.UNDERWATER_DEFAULT
+    );
 
     useEffect(() => {
         if (mode === "none") {
@@ -104,6 +109,7 @@ export const EffectControls = memo(function EffectControls({ onChange, disabled,
                 speedMultiplier: 1,
                 reverbAmount: 0,
                 bassBoostIntensity,
+                bassUnderwater,
             });
         }
     }, [
@@ -113,6 +119,7 @@ export const EffectControls = memo(function EffectControls({ onChange, disabled,
         reverbAmount,
         rotationSpeed,
         bassBoostIntensity,
+        bassUnderwater,
         onChange,
     ]);
 
@@ -260,22 +267,40 @@ export const EffectControls = memo(function EffectControls({ onChange, disabled,
                             ]}
                         />
                     ) : (
-                        <EffectSlider
-                            id="bass-slider"
-                            label={t("effects.bassIntensity")}
-                            value={bassBoostIntensity}
-                            defaultValue={EFFECT_DEFAULTS.BASS_BOOST_UI.INTENSITY_DEFAULT}
-                            min={EFFECT_DEFAULTS.BASS_BOOST_UI.INTENSITY_MIN}
-                            max={EFFECT_DEFAULTS.BASS_BOOST_UI.INTENSITY_MAX}
-                            step={EFFECT_DEFAULTS.BASS_BOOST_UI.INTENSITY_STEP}
-                            disabled={disabled}
-                            onChange={setBassBoostIntensity}
-                            formatValue={() => bassIntensityLabel}
-                            markers={[
-                                t("effects.bassLight"),
-                                t("effects.bassStrong"),
-                            ]}
-                        />
+                        <div className="space-y-6">
+                            <EffectSlider
+                                id="bass-slider"
+                                label={t("effects.bassIntensity")}
+                                value={bassBoostIntensity}
+                                defaultValue={EFFECT_DEFAULTS.BASS_BOOST_UI.INTENSITY_DEFAULT}
+                                min={EFFECT_DEFAULTS.BASS_BOOST_UI.INTENSITY_MIN}
+                                max={EFFECT_DEFAULTS.BASS_BOOST_UI.INTENSITY_MAX}
+                                step={EFFECT_DEFAULTS.BASS_BOOST_UI.INTENSITY_STEP}
+                                disabled={disabled}
+                                onChange={setBassBoostIntensity}
+                                formatValue={() => bassIntensityLabel}
+                                markers={[
+                                    t("effects.bassLight"),
+                                    t("effects.bassStrong"),
+                                ]}
+                            />
+                            <EffectSlider
+                                id="underwater-slider"
+                                label={t("effects.underwater")}
+                                value={bassUnderwater}
+                                defaultValue={EFFECT_DEFAULTS.BASS_BOOST_UI.UNDERWATER_DEFAULT}
+                                min={EFFECT_DEFAULTS.BASS_BOOST_UI.UNDERWATER_MIN}
+                                max={EFFECT_DEFAULTS.BASS_BOOST_UI.UNDERWATER_MAX}
+                                step={EFFECT_DEFAULTS.BASS_BOOST_UI.UNDERWATER_STEP}
+                                disabled={disabled}
+                                onChange={setBassUnderwater}
+                                formatValue={formatPercentage}
+                                markers={[
+                                    t("effects.underwaterSurface"),
+                                    t("effects.underwaterDeep"),
+                                ]}
+                            />
+                        </div>
                     )}
                 </div>
             </div>

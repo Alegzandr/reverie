@@ -34,6 +34,19 @@ export function VolumeControl({ volume, onVolumeChange, disabled, className = ''
   const changeRef = useRef(onVolumeChange);
   const disabledRef = useRef(disabled);
 
+  // Remember the pre-mute level so clicking the icon can restore it on unmute.
+  const preMuteVolumeRef = useRef(volume || AUDIO_PROCESSING.DEFAULT_VOLUME);
+
+  const toggleMute = () => {
+    if (disabled) return;
+    if (volume === 0) {
+      onVolumeChange(preMuteVolumeRef.current || AUDIO_PROCESSING.DEFAULT_VOLUME);
+    } else {
+      preMuteVolumeRef.current = volume;
+      onVolumeChange(0);
+    }
+  };
+
   useEffect(() => {
     volumeRef.current = volume;
     changeRef.current = onVolumeChange;
@@ -57,7 +70,8 @@ export function VolumeControl({ volume, onVolumeChange, disabled, className = ''
     return () => el.removeEventListener('wheel', handleWheel);
   }, []);
 
-  const VolumeIcon = volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
+  const muted = volume === 0;
+  const VolumeIcon = muted ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
   const percent = Math.round(volume * 100);
 
   return (
@@ -66,7 +80,16 @@ export function VolumeControl({ volume, onVolumeChange, disabled, className = ''
       className={`flex items-center gap-2 px-2 py-2 rounded-full hover:bg-[rgba(var(--color-border),0.3)] transition-colors ${className}`}
       title={`${t('playback.volume')}: ${percent}%`}
     >
-      <VolumeIcon className="w-4 h-4 text-[rgb(var(--color-text-secondary))] shrink-0" aria-hidden="true" />
+      <button
+        type="button"
+        onClick={toggleMute}
+        disabled={disabled}
+        aria-label={muted ? t('playback.unmute') : t('playback.mute')}
+        title={muted ? t('playback.unmute') : t('playback.mute')}
+        className="shrink-0 flex items-center justify-center rounded-full text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text))] transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+      >
+        <VolumeIcon className="w-4 h-4" aria-hidden="true" />
+      </button>
       <Slider
         min={0}
         max={1}

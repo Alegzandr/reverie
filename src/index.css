@@ -492,7 +492,9 @@
     }
   }
 
-  /* Custom scrollbar */
+  /* Custom scrollbar - overlay style that fades in only while scrolling
+     (or hovering the scrollable area) and fades back out when idle, so it
+     never sits there breaking the immersion. */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -503,16 +505,40 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(var(--color-border), 0.8);
+    background: rgba(var(--color-border), 0);
     border-radius: 4px;
+    transition: background 0.3s ease;
   }
 
-  .dark ::-webkit-scrollbar-thumb {
-    background: rgba(var(--color-border), 0.9);
+  /* Reveal the thumb only while actively scrolling; otherwise invisible.
+     Just a translucent fill (no outline) so the mood scene shows through it and
+     a tall thumb on a short page never draws a hard bordered rectangle on the
+     right edge. */
+  .is-scrolling ::-webkit-scrollbar-thumb {
+    background: rgba(var(--color-border), 0.35);
+  }
+
+  .dark.is-scrolling ::-webkit-scrollbar-thumb {
+    background: rgba(var(--color-border), 0.4);
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(var(--color-text-secondary), 0.6);
+    background: rgba(var(--color-text-secondary), 0.5);
+  }
+
+  /* Firefox only: it has no ::-webkit-scrollbar, so style via scrollbar-color.
+     Scoped behind @supports so Chromium/Edge keep using the webkit rules above
+     (setting scrollbar-color there would disable them and re-show the native
+     scrollbar). Thin overlay, thumb tinted only while scrolling. */
+  @supports not selector(::-webkit-scrollbar) {
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: transparent transparent;
+    }
+
+    .is-scrolling * {
+      scrollbar-color: rgba(var(--color-border), 0.4) transparent;
+    }
   }
 }
 
@@ -700,8 +726,12 @@
     border-bottom: 1px solid rgba(var(--hud-line), 0.5);
   }
 
+  /* Sits flush with the rail's bottom (not -1px): the bottom rail is the last
+     element at the page's bottom edge, so a 1px overhang here is enough to make
+     the document taller than the viewport and pin a permanent scrollbar even
+     when everything fits. The bulge/seam is covered by the upward curve above. */
   .immersive .hud-rail-bottom::after {
-    bottom: -1px;
+    bottom: 0;
     border-top: 1px solid rgba(var(--hud-line), 0.5);
   }
 
@@ -784,6 +814,10 @@
   .scene {
     position: fixed;
     inset: 0;
+    /* 100vw includes the scrollbar gutter (unlike right:0, which stops at the
+       content edge), so the mood scene paints behind the scrollbar instead of
+       leaving the bare body background showing as a coloured band. */
+    width: 100vw;
     z-index: -1;
     overflow: hidden;
     pointer-events: none;

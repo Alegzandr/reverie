@@ -39,6 +39,9 @@
     "bassLight": "약하게",
     "bassNormal": "보통",
     "bassStrong": "강하게",
+    "underwater": "수중",
+    "underwaterSurface": "수면",
+    "underwaterDeep": "깊게",
     "apply": "효과 적용",
     "processing": "처리 중..."
   },
@@ -48,7 +51,9 @@
     "export": "내보내기",
     "exporting": "내보내는 중...",
     "repeat": "반복",
-    "volume": "볼륨"
+    "volume": "볼륨",
+    "mute": "음소거",
+    "unmute": "음소거 해제"
   },
   "track": {
     "title": "트랙",

@@ -16,6 +16,24 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 import { TooltipProvider } from './components/ui/tooltip'
 import { PerformanceHint } from './components/PerformanceHint'
 
+// Overlay scrollbar: reveal the thumb only while the user is actively
+// scrolling, then fade it back out after a short idle. Capture phase so it
+// also catches nested scroll containers (timeline, menus). The matching CSS
+// keys off `.is-scrolling` on <html>.
+{
+  const root = document.documentElement
+  let idleTimer: number | undefined
+  window.addEventListener(
+    'scroll',
+    () => {
+      root.classList.add('is-scrolling')
+      window.clearTimeout(idleTimer)
+      idleTimer = window.setTimeout(() => root.classList.remove('is-scrolling'), 800)
+    },
+    { capture: true, passive: true },
+  )
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>

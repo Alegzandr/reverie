@@ -39,6 +39,9 @@
     "bassLight": "Léger",
     "bassNormal": "Normal",
     "bassStrong": "Fort",
+    "underwater": "Sous l'eau",
+    "underwaterSurface": "Surface",
+    "underwaterDeep": "Profond",
     "apply": "Appliquer les effets",
     "processing": "Traitement en cours..."
   },
@@ -48,7 +51,9 @@
     "export": "Exporter",
     "exporting": "Exportation...",
     "repeat": "Répéter",
-    "volume": "Volume"
+    "volume": "Volume",
+    "mute": "Couper le son",
+    "unmute": "Rétablir le son"
   },
   "track": {
     "title": "Piste",
