@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Upload, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,28 +14,45 @@ interface FileUploaderProps {
 export function FileUploader({ onFileSelect, isLoading, hasFile }: FileUploaderProps) {
   const { t } = useTranslation();
   const [isDragging, setIsDragging] = useState(false);
-  // Opening the native file picker forces the browser out of fullscreen. We
-  // capture the state right before the dialog opens, then restore it from the
-  // `change` handler (which still counts as a user gesture, so requestFullscreen
-  // is allowed). Cancelling the picker fires no `change`, so we leave it be.
+  // Opening the native file picker forces the browser out of fullscreen. On
+  // selection the `change` handler restores it directly. But cancelling the
+  // picker fires no event, and re-entering fullscreen requires a transient user
+  // activation the browser won't grant from a focus/timer. So we arm the restore
+  // on the user's next gesture (pointerdown/keydown) — the next moment a valid
+  // activation exists — which covers both the cancel and the selection paths.
   const wasFullscreenRef = useRef(false);
-
-  const handleInputClick = useCallback(() => {
-    wasFullscreenRef.current =
-      typeof document !== 'undefined' && Boolean(document.fullscreenElement);
-  }, []);
+  const disarmRef = useRef<(() => void) | null>(null);
 
   const restoreFullscreen = useCallback(() => {
+    disarmRef.current?.();
+    disarmRef.current = null;
+    if (!wasFullscreenRef.current) return;
+    wasFullscreenRef.current = false;
     if (
-      wasFullscreenRef.current &&
       typeof document !== 'undefined' &&
       !document.fullscreenElement &&
       document.documentElement.requestFullscreen
     ) {
       void document.documentElement.requestFullscreen().catch(() => {});
     }
-    wasFullscreenRef.current = false;
   }, []);
+
+  const handleInputClick = useCallback(() => {
+    wasFullscreenRef.current =
+      typeof document !== 'undefined' && Boolean(document.fullscreenElement);
+    if (!wasFullscreenRef.current) return;
+    // Runs on `click`, after the opening pointerdown/keydown have already fired,
+    // so the next gesture we hear is the one that closes (or follows) the dialog.
+    const onGesture = () => restoreFullscreen();
+    window.addEventListener('pointerdown', onGesture, { once: true });
+    window.addEventListener('keydown', onGesture, { once: true });
+    disarmRef.current = () => {
+      window.removeEventListener('pointerdown', onGesture);
+      window.removeEventListener('keydown', onGesture);
+    };
+  }, [restoreFullscreen]);
+
+  useEffect(() => () => disarmRef.current?.(), []);
 
   const handleDrop = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
