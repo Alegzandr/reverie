@@ -10,6 +10,7 @@ import {
   type EffectChain,
 } from '../utils/effectGraph';
 import { EQ_FLAT_GAINS } from '../contexts/eqPresets';
+import { getBufferLoudness, type LoudnessProfile } from '../utils/audioLoudness';
 
 export interface PlaybackState {
   isPlaying: boolean;
@@ -54,7 +55,10 @@ export function useAudioPlayback({
       const parsed = stored ? parseFloat(stored) : NaN;
       return Number.isFinite(parsed) ? parsed : AUDIO_PROCESSING.DEFAULT_VOLUME;
     })(),
-    repeat: false,
+    repeat: (() => {
+      if (typeof localStorage === 'undefined') return false;
+      return localStorage.getItem(AUDIO_PROCESSING.REPEAT_STORAGE_KEY) === 'true';
+    })(),
     error: null,
   });
 
@@ -73,7 +77,10 @@ export function useAudioPlayback({
   // above, so the EQ shapes playback only and never reaches the offline renderer.
   const eqGainsRef = useRef<number[]>(EQ_FLAT_GAINS);
   const rateRef = useRef<number>(1);
-  const repeatRef = useRef<boolean>(false);
+  const repeatRef = useRef<boolean>(
+    typeof localStorage !== 'undefined' &&
+      localStorage.getItem(AUDIO_PROCESSING.REPEAT_STORAGE_KEY) === 'true',
+  );
   // Latest playAudio, captured for the onended loop restart without making the
   // callback depend on itself.
   const playAudioRef = useRef<((buffer?: AudioBuffer, startTime?: number) => void) | null>(null);
@@ -294,6 +301,9 @@ export function useAudioPlayback({
     setState((prev) => {
       const next = !prev.repeat;
       repeatRef.current = next;
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(AUDIO_PROCESSING.REPEAT_STORAGE_KEY, next.toString());
+      }
       return { ...prev, repeat: next };
     });
   }, []);
@@ -400,6 +410,15 @@ export function useAudioPlayback({
   // Live analyser node for visualisations; null while stopped.
   const getAnalyser = useCallback(() => analyserRef.current, []);
 
+  // The active track's loudness profile (peak + gated integrated RMS), or null when
+  // nothing is attached. Lets reactive visuals calibrate their intensity to each
+  // song's loudness and headroom instead of fixed constants. Measured once per
+  // buffer and cached.
+  const getLoudness = useCallback((): LoudnessProfile | null => {
+    const buffer = activeBufferRef.current;
+    return buffer ? getBufferLoudness(buffer) : null;
+  }, []);
+
   return {
     state,
     playAudio,
@@ -412,5 +431,6 @@ export function useAudioPlayback({
     attachBuffer,
     resetPlayback,
     getAnalyser,
+    getLoudness,
   };
 }

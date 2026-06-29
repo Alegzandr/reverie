@@ -214,6 +214,20 @@ describe('useAudioPlayback', () => {
     expect(result.current.state.isPlaying).toBe(true);
   });
 
+  it('persists the repeat preference and restores it on a fresh mount', () => {
+    const { result, unmount } = renderPlayback();
+
+    act(() => {
+      result.current.toggleRepeat();
+    });
+    expect(localStorage.getItem(AUDIO_PROCESSING.REPEAT_STORAGE_KEY)).toBe('true');
+
+    unmount();
+
+    const { result: restored } = renderPlayback();
+    expect(restored.current.state.repeat).toBe(true);
+  });
+
   it('stops at the end when repeat is off', () => {
     const { result } = renderPlayback();
 

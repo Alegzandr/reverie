@@ -86,7 +86,9 @@
   },
   "accessibility": {
     "themeToggle": "Toggle dark mode",
-    "resetApp": "Reset application"
+    "resetApp": "Reset application",
+    "enterFullscreen": "Enter fullscreen",
+    "exitFullscreen": "Exit fullscreen"
   },
   "waveform": {
     "title": "Waveform Timeline",
@@ -95,7 +97,8 @@
     "idle": "Ready",
     "scrub": "Scrub timeline",
     "raw": "Raw",
-    "fx": "FX"
+    "fx": "FX",
+    "toggleRemaining": "Toggle remaining time"
   },
   "language": {
     "open": "Open language modal",

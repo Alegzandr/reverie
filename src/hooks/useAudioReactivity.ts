@@ -1,8 +1,17 @@
 import { useEffect, useRef } from 'react';
+import { AUDIO_REACTIVITY } from '../constants';
+import type { LoudnessProfile } from '../utils/audioLoudness';
 
 interface UseAudioReactivityOptions {
   /** Returns the live playback analyser, or null while stopped. */
   getAnalyser: () => AnalyserNode | null;
+  /**
+   * Returns the active track's loudness profile (peak + gated RMS), or null while
+   * stopped. The engine calibrates intensity to it so quiet/dynamic and hot/
+   * compressed masters drive comparable visuals. Optional - omitted (or returning
+   * null) keeps the legacy fixed scaling.
+   */
+  getLoudness?: () => LoudnessProfile | null;
   isPlaying: boolean;
   /** Element to receive the CSS variables. Defaults to the document root. */
   target?: HTMLElement | null;
@@ -26,7 +35,7 @@ interface UseAudioReactivityOptions {
  * every value back to rest when playback stops so nothing ever snaps. The
  * smoothed state lives in a ref so easing stays continuous across play/pause.
  */
-export function useAudioReactivity({ getAnalyser, isPlaying, target }: UseAudioReactivityOptions) {
+export function useAudioReactivity({ getAnalyser, getLoudness, isPlaying, target }: UseAudioReactivityOptions) {
   // Smoothed, published energies - kept in a ref so a play/pause toggle eases
   // from the current value instead of jumping back to zero on effect re-run.
   const energy = useRef({ level: 0, bass: 0, mid: 0, treble: 0, pulse: 0, bassBaseline: 0 });
@@ -96,6 +105,25 @@ export function useAudioReactivity({ getAnalyser, isPlaying, target }: UseAudioR
         analyser.getByteFrequencyData(freq);
         analyser.getByteTimeDomainData(time);
 
+        // Calibrate to the track's loudness so quiet/dynamic and hot/compressed
+        // masters read evenly: aim the gated integrated RMS at TARGET_RMS (lifting
+        // quiet tracks, pulling loud ones back, clamped to [MIN_GAIN, MAX_GAIN]),
+        // then cap the result by available headroom (1 / peak) so a track that's
+        // quiet on average but spikes loud isn't boosted until its transients slam.
+        // norm = 1 when no loudness source is wired, preserving the fixed scaling.
+        const loud = typeof getLoudness === 'function' ? getLoudness() : null;
+        let norm = 1;
+        if (loud) {
+          const loudnessGain = Math.min(
+            AUDIO_REACTIVITY.MAX_GAIN,
+            Math.max(
+              AUDIO_REACTIVITY.MIN_GAIN,
+              AUDIO_REACTIVITY.TARGET_RMS / Math.max(loud.rms, AUDIO_REACTIVITY.RMS_FLOOR),
+            ),
+          );
+          norm = Math.min(loudnessGain, 1 / Math.max(loud.peak, AUDIO_REACTIVITY.PEAK_FLOOR));
+        }
+
         // Loudness - RMS of the time-domain signal (128 = silence midpoint).
         let sumSq = 0;
         for (let i = 0; i < time.length; i++) {
@@ -103,7 +131,7 @@ export function useAudioReactivity({ getAnalyser, isPlaying, target }: UseAudioR
           sumSq += v * v;
         }
         // RMS rarely exceeds ~0.45 on real music; lift it into a usable 0..1.
-        const targetLevel = Math.min(1, Math.sqrt(sumSq / time.length) * 2.2);
+        const targetLevel = Math.min(1, Math.sqrt(sumSq / time.length) * 2.2 * norm);
 
         // Three distinct bands so different surfaces can react to different parts
         // of the music (not everything strobing on the kick): bass = low ~12%,
@@ -111,18 +139,18 @@ export function useAudioReactivity({ getAnalyser, isPlaying, target }: UseAudioR
         const bassEnd = Math.max(1, Math.floor(bins * 0.12));
         let bSum = 0;
         for (let i = 0; i < bassEnd; i++) bSum += freq[i];
-        const targetBass = bSum / bassEnd / 255;
+        const targetBass = Math.min(1, (bSum / bassEnd / 255) * norm);
 
         const midStart = bassEnd;
         const midEnd = Math.max(midStart + 1, Math.floor(bins * 0.55));
         let mSum = 0;
         for (let i = midStart; i < midEnd; i++) mSum += freq[i];
-        const targetMid = mSum / (midEnd - midStart) / 255;
+        const targetMid = Math.min(1, (mSum / (midEnd - midStart) / 255) * norm);
 
         const trebleStart = Math.floor(bins * 0.6);
         let tSum = 0;
         for (let i = trebleStart; i < bins; i++) tSum += freq[i];
-        const targetTreble = tSum / (bins - trebleStart) / 255;
+        const targetTreble = Math.min(1, (tSum / (bins - trebleStart) / 255) * norm);
 
         // Fast attack, slower release - reads musical, not jittery.
         e.level += (targetLevel - e.level) * (targetLevel > e.level ? 0.5 : 0.12);
@@ -159,5 +187,5 @@ export function useAudioReactivity({ getAnalyser, isPlaying, target }: UseAudioR
 
     raf = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(raf);
-  }, [getAnalyser, isPlaying, target]);
+  }, [getAnalyser, getLoudness, isPlaying, target]);
 }

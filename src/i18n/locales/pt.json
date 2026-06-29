@@ -86,7 +86,9 @@
   },
   "accessibility": {
     "themeToggle": "Alternar modo escuro",
-    "resetApp": "Redefinir aplicação"
+    "resetApp": "Redefinir aplicação",
+    "enterFullscreen": "Tela cheia",
+    "exitFullscreen": "Sair da tela cheia"
   },
   "waveform": {
     "title": "Linha do tempo da forma de onda",
@@ -95,7 +97,8 @@
     "idle": "Pronto",
     "scrub": "Mover na linha do tempo",
     "raw": "Bruto",
-    "fx": "FX"
+    "fx": "FX",
+    "toggleRemaining": "Mostrar o tempo restante"
   },
   "language": {
     "open": "Abrir seletor de idioma",

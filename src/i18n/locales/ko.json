@@ -86,7 +86,9 @@
   },
   "accessibility": {
     "themeToggle": "다크 모드 전환",
-    "resetApp": "앱 초기화"
+    "resetApp": "앱 초기화",
+    "enterFullscreen": "전체 화면",
+    "exitFullscreen": "전체 화면 종료"
   },
   "waveform": {
     "title": "파형 타임라인",
@@ -95,7 +97,8 @@
     "idle": "준비 완료",
     "scrub": "타임라인 스크럽",
     "raw": "원본",
-    "fx": "효과"
+    "fx": "효과",
+    "toggleRemaining": "남은 시간 표시"
   },
   "language": {
     "open": "언어 선택 열기",

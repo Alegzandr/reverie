@@ -23,6 +23,9 @@ export function TransportTimeline({
   className = '',
 }: TransportTimelineProps) {
   const { t } = useTranslation();
+  // Click the trailing clock to flip between total duration and time remaining.
+  // Independent from the panel's own toggle.
+  const [showRemaining, setShowRemaining] = useState(false);
   const trackRef = useRef<HTMLDivElement | null>(null);
   const draggingRef = useRef(false);
   // Defer the seek (and its audio-graph rebuild) to drag-end; the fill/thumb track
@@ -125,9 +128,15 @@ export function TransportTimeline({
         />
       </div>
 
-      <span className="text-xs font-medium tabular-nums text-[rgb(var(--color-text-secondary))] w-10 shrink-0">
-        {formatClock(duration)}
-      </span>
+      <button
+        type="button"
+        onClick={() => setShowRemaining((v) => !v)}
+        className="text-xs font-medium tabular-nums text-[rgb(var(--color-text-secondary))] w-12 text-left shrink-0 transition-colors hover:text-[rgb(var(--color-text))] focus-visible:text-[rgb(var(--color-text))] cursor-pointer"
+        aria-label={t('waveform.toggleRemaining')}
+        aria-pressed={showRemaining}
+      >
+        {showRemaining ? `-${formatClock(duration - currentTime)}` : formatClock(duration)}
+      </button>
     </div>
   );
 }

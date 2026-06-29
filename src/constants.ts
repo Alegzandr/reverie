@@ -14,6 +14,9 @@ export const AUDIO_PROCESSING = {
   /** Storage key for persisting volume preference */
   VOLUME_STORAGE_KEY: 'reverie:volume',
 
+  /** Storage key for persisting repeat preference */
+  REPEAT_STORAGE_KEY: 'reverie:repeat',
+
   /** Progress update interval in milliseconds */
   PROGRESS_UPDATE_INTERVAL_MS: 100,
 
@@ -22,6 +25,33 @@ export const AUDIO_PROCESSING = {
 
   /** Delay after buffer ends before stopping MediaRecorder (ms) */
   MEDIA_RECORDER_STOP_DELAY_MS: 100,
+} as const;
+
+// ============================================================================
+// REACTIVE VISUALS
+// ============================================================================
+
+export const AUDIO_REACTIVITY = {
+  /**
+   * Reactive-visual intensity is calibrated per track so quiet/dynamic and hot/
+   * compressed masters drive comparable visuals. The primary reference is the
+   * track's gated integrated loudness (RMS): the gain aims it at TARGET_RMS, lifting
+   * quiet tracks and pulling loud ones back. TARGET_RMS ~ a typical pop master, so
+   * ordinary tracks land near gain 1 (unchanged from the original fixed scaling).
+   */
+  TARGET_RMS: 0.12,
+  /** Floor on a track's measured RMS so a near-silent track can't explode the gain. */
+  RMS_FLOOR: 0.03,
+  /** Bounds on the loudness gain: pull hot masters down, lift quiet ones, but never
+   *  past these limits. */
+  MIN_GAIN: 0.5,
+  MAX_GAIN: 4,
+  /**
+   * Peak headroom floor (~ -12 dBFS). The loudness gain is additionally capped at
+   * 1 / peak so a track that's quiet on average but has loud transients doesn't get
+   * boosted until those transients slam - preserving the "max dB" headroom guard.
+   */
+  PEAK_FLOOR: 0.25,
 } as const;
 
 // ============================================================================
@@ -315,6 +345,36 @@ export function underwaterCutoffHz(amount: number): number {
   const a = Math.max(0, Math.min(1, amount));
   const { UNDERWATER_CUTOFF_MAX_HZ: max, UNDERWATER_CUTOFF_MIN_HZ: min } = AUDIO_EFFECTS.BASS_BOOST;
   return max * Math.pow(min / max, a);
+}
+
+/**
+ * Reverb makeup gain for a given amount (0..1). The wet/dry crossfade
+ * (`dry = 1 - 0.5·amount`) pulls the direct signal down up to -6 dB while the
+ * decorrelated wet tail only partly fills it back in, so the mix gets quieter as
+ * reverb rises. Because dry and wet are decorrelated their powers add, giving an
+ * exact compensation: out / sqrt((1-0.5a)² + k·a²), where k ≈ 0.0525 is the
+ * measured power the normalized convolver returns relative to the input. Derived
+ * by measuring integrated loudness (BS.1770); residual is within ±0.08 dB and the
+ * value is content-independent. Restoring loudness adds no clipping since reverb
+ * lowers the crest factor. Shared by the offline render and the live graph.
+ */
+export function reverbMakeupGain(amount: number): number {
+  const a = Math.max(0, Math.min(1, amount));
+  return 1 / Math.sqrt((1 - 0.5 * a) ** 2 + 0.0525 * a * a);
+}
+
+/**
+ * Bass-boost output trim for a given intensity (0..1). The +18 dB low shelf adds
+ * level and eats headroom, so the output is scaled back as the boost grows. The
+ * loudness gain accelerates (a shelf is dB-linear in intensity), so the trim is
+ * quadratic rather than linear. The 0.4 coefficient is a content-centered
+ * compromise measured across a bass-heavy track and pink noise (BS.1770): it keeps
+ * neutral material within ±1 dB and caps a worst-case full boost at ~+1.6 dB
+ * instead of the +3.5 dB the previous linear 1-0.25·i left. Shared by both engines.
+ */
+export function bassBoostTrimGain(intensity: number): number {
+  const i = Math.max(0, Math.min(1, intensity));
+  return 1 - 0.4 * i * i;
 }
 
 // ============================================================================

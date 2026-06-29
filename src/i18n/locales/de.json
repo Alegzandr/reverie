@@ -86,7 +86,9 @@
   },
   "accessibility": {
     "themeToggle": "Dunkelmodus umschalten",
-    "resetApp": "Anwendung zurücksetzen"
+    "resetApp": "Anwendung zurücksetzen",
+    "enterFullscreen": "Vollbild",
+    "exitFullscreen": "Vollbild beenden"
   },
   "waveform": {
     "title": "Wellenform-Zeitleiste",
@@ -95,7 +97,8 @@
     "idle": "Bereit",
     "scrub": "Zeitleiste anpassen",
     "raw": "Roh",
-    "fx": "FX"
+    "fx": "FX",
+    "toggleRemaining": "Verbleibende Zeit anzeigen"
   },
   "language": {
     "open": "Sprachauswahl öffnen",

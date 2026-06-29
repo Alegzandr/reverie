@@ -123,8 +123,20 @@
     --color-ambient: 56, 189, 248;
   }
 
+  /* The document itself never scrolls: <html>/<body>/#root are pinned to the
+     viewport and an inner container (App's shell) owns the scroll. That keeps the
+     root scrollbar from carving a gutter that clips the fixed mood scene's right
+     edge and exposes a bare strip of the body background. The shell's scrollbar is
+     thin with a transparent track, so it floats over the scene filling behind it. */
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
   body {
-    @apply m-0 min-h-screen;
+    @apply m-0;
+    overflow: hidden;
     background: radial-gradient(120% 120% at 20% 20%, rgba(var(--color-ambient), 0.12), transparent 40%),
       radial-gradient(140% 140% at 80% 10%, rgba(var(--color-accent), 0.08), transparent 46%),
       rgb(var(--color-background));
@@ -814,9 +826,10 @@
   .scene {
     position: fixed;
     inset: 0;
-    /* 100vw includes the scrollbar gutter (unlike right:0, which stops at the
-       content edge), so the mood scene paints behind the scrollbar instead of
-       leaving the bare body background showing as a coloured band. */
+    /* The scroll lives on App's inner shell, not the document, so the viewport has
+       no root scrollbar to clip this fixed layer. 100vw spans the full viewport
+       width, letting the scene paint behind the shell's floating scrollbar so no
+       bare body-background strip ever shows. */
     width: 100vw;
     z-index: -1;
     overflow: hidden;

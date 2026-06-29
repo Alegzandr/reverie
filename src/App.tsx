@@ -8,6 +8,7 @@ import type { EffectSettings } from './components/EffectControls';
 import { PlaybackControls } from './components/PlaybackControls';
 import { ProgressBar } from './components/ProgressBar';
 import { SettingsMenu } from './components/SettingsMenu';
+import { FullscreenButton } from './components/FullscreenButton';
 import { AmbientScene } from './components/AmbientScene';
 import { MoodTransition } from './components/MoodTransition';
 import { DesktopOnlyGate } from './components/DesktopOnlyGate';
@@ -59,6 +60,7 @@ function App() {
     toggleRepeat,
     reset,
     getAnalyser,
+    getLoudness,
   } = useAudioProcessor();
 
   // Listening EQ: a comfort setting kept in its own context (and localStorage).
@@ -75,7 +77,7 @@ function App() {
 
   // The signature: the whole interface breathes with the music. Publishes live
   // audio-energy CSS vars that the scene and panels consume.
-  useAudioReactivity({ getAnalyser, isPlaying: state.isPlaying });
+  useAudioReactivity({ getAnalyser, getLoudness, isPlaying: state.isPlaying });
 
   useEffect(() => {
     document.title = t('meta.title');
@@ -260,7 +262,7 @@ function App() {
   // ---------------------------------------------------------------- Welcome
   if (!hasSession) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div className="h-[100dvh] overflow-y-auto overflow-x-hidden flex flex-col">
         <AmbientScene />
         <MoodTransition />
         <div className="flex items-center justify-end gap-2 px-4 sm:px-6 py-4">
@@ -327,13 +329,13 @@ function App() {
 
   // -------------------------------------------------------------- Workspace
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="h-[100dvh] overflow-y-auto overflow-x-hidden flex flex-col">
       <AmbientScene />
       <MoodTransition />
       <FileDropOverlay onFileSelect={handleFileSelect} disabled={state.isExporting} />
       <header className="hud-rail hud-rail-top sticky top-0 z-40 bg-[rgba(var(--color-surface),0.78)] backdrop-blur-xl border-b border-[rgba(var(--color-border),0.5)]">
         <div className="hud-bow">
-        <div className="hud-bow-inner mx-auto w-full max-w-[1700px] px-6 sm:px-10 h-16 flex items-center justify-between gap-4">
+        <div className="hud-bow-inner mx-auto w-full max-w-[1880px] px-6 sm:px-10 h-16 flex items-center justify-between gap-4">
           <Tooltip>
             <TooltipTrigger asChild>
               <button
@@ -356,6 +358,7 @@ function App() {
               isLoading={state.isLoading}
               hasFile
             />
+            <FullscreenButton />
             <SettingsMenu />
           </div>
         </div>
@@ -363,7 +366,7 @@ function App() {
       </header>
 
       {/* Biased upward (bottom padding > top) so content sits in the upper-middle. */}
-      <main className="flex-1 mx-auto w-full max-w-[1700px] px-6 sm:px-10 pt-6 sm:pt-8 pb-32 sm:pb-40 flex flex-col gap-8 sm:gap-10 lg:justify-center">
+      <main className="flex-1 mx-auto w-full max-w-[1880px] px-6 sm:px-10 pt-6 sm:pt-8 pb-32 sm:pb-40 flex flex-col gap-8 sm:gap-10 lg:justify-center">
         {errorBanner}
 
         {/* Cockpit: raked FX console | flat waveform centrepiece | raked mood
@@ -372,7 +375,7 @@ function App() {
            centre stays flat - the part you look through, so its glass blur is
            never flattened by a 3D ancestor. Desktop-only (the tilt lives in a
            lg+ media query); stacked layouts render flat. */}
-        <div className="grid gap-6 lg:gap-12 xl:gap-16 items-start lg:grid-cols-[minmax(320px,400px)_minmax(0,1fr)_minmax(280px,340px)]">
+        <div className="grid gap-6 lg:gap-16 xl:gap-24 2xl:gap-32 items-start lg:grid-cols-[minmax(320px,400px)_minmax(0,1fr)_minmax(280px,340px)]">
           {originalFile && (
             <div className="hud-console">
               <div className="hud-console-left">
@@ -451,7 +454,7 @@ function App() {
       {(processedBuffer || originalFile) && (
         <div className="hud-rail hud-rail-bottom sticky bottom-0 z-30 bg-[rgba(var(--color-surface),0.85)] backdrop-blur-xl border-t border-[rgba(var(--color-border),0.5)] shadow-[0_-14px_40px_-28px_rgba(var(--color-accent),0.5)]">
           <div className="hud-bow">
-          <div className="hud-bow-inner mx-auto w-full max-w-[1700px] px-6 sm:px-10 py-3">
+          <div className="hud-bow-inner mx-auto w-full max-w-[1880px] px-6 sm:px-10 py-3">
             <PlaybackControls
               isPlaying={state.isPlaying}
               onPlay={handlePlay}

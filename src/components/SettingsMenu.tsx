@@ -72,7 +72,13 @@ export function SettingsMenu({ trigger }: SettingsMenuProps = {}) {
         </Tooltip>
       )}
 
-      <DialogContent closeLabel={t('settings.close')}>
+      <DialogContent
+        closeLabel={t('settings.close')}
+        // Closing the dialog returns focus to the gear trigger, which is also a
+        // TooltipTrigger - that focus would pop its tooltip open. Suppress the
+        // auto-focus restore so the tooltip stays closed after exiting settings.
+        onCloseAutoFocus={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>{t('settings.title')}</DialogTitle>
           <DialogDescription>{t('settings.subtitle')}</DialogDescription>

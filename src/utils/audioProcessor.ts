@@ -1,4 +1,4 @@
-import { AUDIO_EFFECTS, AUDIO_SIGNAL, underwaterCutoffHz } from '../constants';
+import { AUDIO_EFFECTS, AUDIO_SIGNAL, underwaterCutoffHz, reverbMakeupGain, bassBoostTrimGain } from '../constants';
 import { createDecayingNoiseImpulse } from './impulse';
 
 // Offline impulse-response cache. The IRs are pure noise+decay buffers that only
@@ -92,8 +92,11 @@ export class AudioProcessor {
       const dry = offlineContext.createGain();
       const wet = offlineContext.createGain();
 
-      dry.gain.value = 1 - (reverbAmount * 0.5);
-      wet.gain.value = reverbAmount * 0.5;
+      // Makeup gain restores the loudness the dry/wet crossfade removes (see
+      // reverbMakeupGain); without it the mix drops up to ~5 dB at full reverb.
+      const makeup = reverbMakeupGain(reverbAmount);
+      dry.gain.value = (1 - reverbAmount * 0.5) * makeup;
+      wet.gain.value = reverbAmount * 0.5 * makeup;
 
       source.connect(dry);
       source.connect(convolver);
@@ -215,8 +218,10 @@ export class AudioProcessor {
     lowMidCut.Q.value = 1.0;
     lowMidCut.gain.value = Math.min(0, -intensity * 3);
 
-    // Trim output as the boost grows so the extra low end keeps headroom.
-    outputGain.gain.value = 1.0 - intensity * 0.25;
+    // Trim output as the boost grows so the extra low end keeps headroom. The trim
+    // is quadratic (the shelf's loudness gain accelerates with intensity); see
+    // bassBoostTrimGain for how the 0.4 coefficient was measured.
+    outputGain.gain.value = bassBoostTrimGain(intensity);
 
     inputGain.connect(highpass);
     highpass.connect(lowshelf);

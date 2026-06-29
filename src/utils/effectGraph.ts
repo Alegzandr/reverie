@@ -1,4 +1,4 @@
-import { AUDIO_EFFECTS, AUDIO_SIGNAL, underwaterCutoffHz } from '../constants';
+import { AUDIO_EFFECTS, AUDIO_SIGNAL, underwaterCutoffHz, reverbMakeupGain, bassBoostTrimGain } from '../constants';
 import { createDecayingNoiseImpulse } from './impulse';
 import type { AudioProcessingOptions } from './audioProcessor';
 
@@ -185,10 +185,16 @@ export function applyEffectOptions(
   ramp: boolean,
 ) {
   const reverb = Math.max(0, Math.min(1, options.reverbAmount || 0));
-  setParam(chain.dryGain.gain, 1 - reverb * 0.5, ctx, ramp);
-  setParam(chain.wetGain.gain, reverb * 0.5, ctx, ramp);
-
   const bass = options.bassBoost ? Math.max(0, Math.min(1, options.bassBoostIntensity ?? 0)) : 0;
+  // Reverb makeup restores the loudness lost to the dry/wet crossfade; the bass
+  // trim claws back the headroom the low shelf adds. Both fold into the dry/wet
+  // gains (the bass filters sit before the split, so scaling dry and wet equally
+  // is the same as trimming the bass-stage output) - this keeps live playback at
+  // the same loudness as the offline export, which applies the identical factors.
+  const levelTrim = reverbMakeupGain(reverb) * bassBoostTrimGain(bass);
+  setParam(chain.dryGain.gain, (1 - reverb * 0.5) * levelTrim, ctx, ramp);
+  setParam(chain.wetGain.gain, reverb * 0.5 * levelTrim, ctx, ramp);
+
   setParam(chain.lowshelf.gain, bass * 18, ctx, ramp);
   setParam(chain.peak.gain, -bass * 3, ctx, ramp);
 

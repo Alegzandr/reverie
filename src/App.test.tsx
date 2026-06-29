@@ -37,6 +37,7 @@ const mockApi = {
   toggleRepeat: vi.fn(),
   reset: vi.fn(),
   getAnalyser: () => null,
+  getLoudness: () => null,
 };
 
 const mockSetMood = vi.fn();

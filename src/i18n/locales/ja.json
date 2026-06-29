@@ -86,7 +86,9 @@
   },
   "accessibility": {
     "themeToggle": "ダークモード切り替え",
-    "resetApp": "アプリをリセット"
+    "resetApp": "アプリをリセット",
+    "enterFullscreen": "全画面表示",
+    "exitFullscreen": "全画面を終了"
   },
   "waveform": {
     "title": "波形タイムライン",
@@ -95,7 +97,8 @@
     "idle": "準備完了",
     "scrub": "タイムラインをスクラブ",
     "raw": "元の音源",
-    "fx": "エフェクト"
+    "fx": "エフェクト",
+    "toggleRemaining": "残り時間を表示"
   },
   "language": {
     "open": "言語選択を開く",

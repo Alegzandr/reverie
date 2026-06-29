@@ -86,7 +86,9 @@
   },
   "accessibility": {
     "themeToggle": "切换深色模式",
-    "resetApp": "重置应用程序"
+    "resetApp": "重置应用程序",
+    "enterFullscreen": "进入全屏",
+    "exitFullscreen": "退出全屏"
   },
   "waveform": {
     "title": "波形时间轴",
@@ -95,7 +97,8 @@
     "idle": "就绪",
     "scrub": "浏览时间轴",
     "raw": "原始",
-    "fx": "效果"
+    "fx": "效果",
+    "toggleRemaining": "显示剩余时间"
   },
   "language": {
     "open": "打开语言选择器",

@@ -32,6 +32,9 @@ export function WaveformTimeline({
   options,
 }: WaveformTimelineProps) {
   const { t } = useTranslation();
+  // Click the trailing clock to flip between total duration and time remaining.
+  // Panel and footer keep their own toggle, so each can be set independently.
+  const [showRemaining, setShowRemaining] = useState(false);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const draggingRef = useRef(false);
@@ -209,7 +212,20 @@ export function WaveformTimeline({
           </span>
           <p className="text-sm font-semibold tabular-nums text-[rgb(var(--color-text))]" aria-live="polite">
             {formatClock(currentTime)}
-            <span className="text-[rgb(var(--color-text-secondary))] font-normal"> / {formatClock(duration)}</span>
+            <span className="text-[rgb(var(--color-text-secondary))] font-normal">
+              {' / '}
+              <button
+                type="button"
+                onClick={() => setShowRemaining((v) => !v)}
+                className="font-normal tabular-nums transition-colors hover:text-[rgb(var(--color-text))] focus-visible:text-[rgb(var(--color-text))] cursor-pointer"
+                aria-label={t('waveform.toggleRemaining')}
+                aria-pressed={showRemaining}
+              >
+                {showRemaining
+                  ? `-${formatClock(duration - currentTime)}`
+                  : formatClock(duration)}
+              </button>
+            </span>
           </p>
         </div>
         <div className="hud-ruler" aria-hidden="true" />

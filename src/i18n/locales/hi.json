@@ -86,7 +86,9 @@
   },
   "accessibility": {
     "themeToggle": "डार्क मोड टॉगल करें",
-    "resetApp": "ऐप रीसेट करें"
+    "resetApp": "ऐप रीसेट करें",
+    "enterFullscreen": "पूर्ण स्क्रीन",
+    "exitFullscreen": "पूर्ण स्क्रीन से बाहर निकलें"
   },
   "waveform": {
     "title": "वेवफॉर्म टाइमलाइन",
@@ -95,7 +97,8 @@
     "idle": "तैयार",
     "scrub": "टाइमलाइन स्क्रब करें",
     "raw": "मूल",
-    "fx": "प्रभाव"
+    "fx": "प्रभाव",
+    "toggleRemaining": "शेष समय दिखाएं"
   },
   "language": {
     "open": "भाषा चयनकर्ता खोलें",

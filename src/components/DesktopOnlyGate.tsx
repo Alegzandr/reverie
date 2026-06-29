@@ -12,7 +12,7 @@ export function DesktopOnlyGate() {
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="h-[100dvh] overflow-y-auto overflow-x-hidden flex flex-col">
       <AmbientScene />
       <main className="flex-1 flex items-center justify-center px-6 py-16">
         <div className="aurora-stage relative w-full max-w-md flex flex-col items-center text-center">
