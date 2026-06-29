@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Upload, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,28 @@ interface FileUploaderProps {
 export function FileUploader({ onFileSelect, isLoading, hasFile }: FileUploaderProps) {
   const { t } = useTranslation();
   const [isDragging, setIsDragging] = useState(false);
+  // Opening the native file picker forces the browser out of fullscreen. We
+  // capture the state right before the dialog opens, then restore it from the
+  // `change` handler (which still counts as a user gesture, so requestFullscreen
+  // is allowed). Cancelling the picker fires no `change`, so we leave it be.
+  const wasFullscreenRef = useRef(false);
+
+  const handleInputClick = useCallback(() => {
+    wasFullscreenRef.current =
+      typeof document !== 'undefined' && Boolean(document.fullscreenElement);
+  }, []);
+
+  const restoreFullscreen = useCallback(() => {
+    if (
+      wasFullscreenRef.current &&
+      typeof document !== 'undefined' &&
+      !document.fullscreenElement &&
+      document.documentElement.requestFullscreen
+    ) {
+      void document.documentElement.requestFullscreen().catch(() => {});
+    }
+    wasFullscreenRef.current = false;
+  }, []);
 
   const handleDrop = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
@@ -32,11 +54,12 @@ export function FileUploader({ onFileSelect, isLoading, hasFile }: FileUploaderP
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) {
+        restoreFullscreen();
         onFileSelect(file);
         e.target.value = '';
       }
     },
-    [onFileSelect]
+    [onFileSelect, restoreFullscreen]
   );
 
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
@@ -53,6 +76,7 @@ export function FileUploader({ onFileSelect, isLoading, hasFile }: FileUploaderP
     <input
       type="file"
       accept="audio/*"
+      onClick={handleInputClick}
       onChange={handleFileInput}
       className="hidden"
       id="file-input"
