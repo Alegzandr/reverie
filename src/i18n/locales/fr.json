@@ -60,10 +60,10 @@
     "format": "Format",
     "name": "Nom",
     "size": "Taille",
-    "bitrate": "Débit binaire",
-    "sampleRate": "Fréq. échantillon",
+    "bitrate": "Débit",
+    "sampleRate": "Échantillonnage",
     "channels": "Canaux",
-    "bitDepth": "Profondeur de Bits",
+    "bitDepth": "Résolution",
     "mono": "Mono",
     "stereo": "Stéréo"
   },

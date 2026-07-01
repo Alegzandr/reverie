@@ -70,6 +70,12 @@
     --aurora-pink: 244, 114, 182;
     --aurora-cyan: 56, 224, 232;
 
+    /* Waveform hot core - the luminous spine running through the played bars
+       and the playhead. On dark moods it reads as near-white light; on the
+       light workspace white-on-white would vanish, so the core is a deep
+       saturated ink instead (same hue family as the light accent-text). */
+    --wf-core: 190, 36, 88;
+
     /* Audio-reactivity bus - published live by useAudioReactivity while a track
        plays, consumed by the scene + HUD panels to breathe with the music.
        Default 0 so everything is perfectly calm until sound arrives. */
@@ -121,6 +127,8 @@
        just tracks the accent (late-bound: each [data-mood] sets its own accent). */
     --color-accent-text: var(--color-accent);
     --color-ambient: 56, 189, 248;
+    /* On dark glass the waveform's hot core is near-white light. */
+    --wf-core: 255, 252, 255;
   }
 
   /* The document itself never scrolls: <html>/<body>/#root are pinned to the
@@ -475,33 +483,23 @@
       0 0 0 6px rgba(var(--color-accent), 0.4);
   }
 
-  /* Ambient drift behind the welcome stage - atmosphere, not chrome */
+  /* Legibility ground behind the welcome stage. The photo scenes carry their own
+     atmosphere; what the floating text needs is anchoring - a soft radial pool of
+     the mood's veil colour (deep on dark moods, bright on daybreak) that grounds
+     the wordmark, tagline and chips over even the brightest patch of sky. Static
+     on purpose: a drifting scrim would wobble the legibility it exists to provide. */
   .aurora-stage::before {
     content: "";
     position: absolute;
-    inset: -20%;
+    inset: -14% -22%;
     z-index: -1;
-    background:
-      radial-gradient(40% 38% at 22% 30%, rgba(var(--aurora-violet), 0.20), transparent 70%),
-      radial-gradient(36% 34% at 78% 24%, rgba(var(--aurora-pink), 0.16), transparent 70%),
-      radial-gradient(42% 40% at 60% 82%, rgba(var(--aurora-cyan), 0.14), transparent 72%);
-    filter: blur(18px);
+    background: radial-gradient(
+      58% 60% at 50% 48%,
+      rgba(var(--scene-veil), 0.52),
+      rgba(var(--scene-veil), 0.32) 58%,
+      transparent 80%
+    );
     pointer-events: none;
-  }
-
-  @media (prefers-reduced-motion: no-preference) {
-    .aurora-stage::before {
-      animation: aurora-drift 22s ease-in-out infinite alternate;
-    }
-  }
-
-  @keyframes aurora-drift {
-    from {
-      transform: translate3d(-2%, -1%, 0) scale(1);
-    }
-    to {
-      transform: translate3d(2%, 2%, 0) scale(1.08);
-    }
   }
 
   /* Custom scrollbar - overlay style that fades in only while scrolling

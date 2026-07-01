@@ -135,19 +135,27 @@ export function FileUploader({ onFileSelect, isLoading, hasFile }: FileUploaderP
       aria-label={t('upload.title')}
     >
       {input}
+      {/* The first surface a visitor ever touches wears the same holographic
+         plate language as the cockpit panels (glass + hairline + lit corner
+         brackets via .hud-frame) - the HUD identity starts here, not after
+         upload. Drag feedback uses an outline + a tint overlay rather than
+         fighting the glass plate's own border/shadow recipe. */}
       <label
         htmlFor="file-input"
         className={`
-          group flex flex-col items-center justify-center text-center
-          rounded-[28px] px-8 py-14 sm:py-16
-          border-2 border-dashed transition-colors duration-200
-          bg-[radial-gradient(120%_120%_at_50%_0%,rgba(var(--color-surface),0.7),rgba(var(--color-surface),0.35))]
-          ${isDragging
-            ? 'border-[rgb(var(--color-accent))] bg-[rgba(var(--color-accent),0.06)]'
-            : 'border-[rgba(var(--color-border),0.8)] hover:border-[rgba(var(--color-accent),0.5)]'}
+          group relative flex flex-col items-center justify-center text-center
+          glass hud-frame rounded-3xl px-8 py-12 sm:py-14
+          transition-colors duration-200
+          ${isDragging ? '[outline:2px_solid_rgba(var(--color-accent),0.75)] [outline-offset:-2px]' : ''}
           ${isLoading ? 'opacity-50 cursor-not-allowed' : 'ios-button cursor-pointer'}
         `}
       >
+        {isDragging && (
+          <span
+            className="pointer-events-none absolute inset-0 rounded-3xl bg-[rgba(var(--color-accent),0.08)]"
+            aria-hidden="true"
+          />
+        )}
         <div className="relative mb-6 grid place-items-center" aria-hidden="true">
           {/* Reverberation echoes - the brand's reverb motif (the mark's echo
               arcs, the play orb's pulse), breathing softly behind the well. */}

@@ -275,7 +275,7 @@ function App() {
             <h1 className="font-display lowercase text-5xl sm:text-6xl font-light tracking-[0.04em] text-[rgb(var(--color-text))]">
               {t('app.title')}
             </h1>
-            <p className="font-display mt-4 text-lg sm:text-xl font-light text-balance text-[rgb(var(--color-text-secondary))] max-w-md">
+            <p className="font-display mt-4 text-lg sm:text-xl font-light text-balance text-[rgba(var(--color-text),0.88)] max-w-md">
               {t('app.subtitle')}
             </p>
 
@@ -305,7 +305,7 @@ function App() {
                 { icon: Volume2, label: t('effects.bassBoost') },
               ].map(({ icon: Icon, label }) => (
                 <li key={label}>
-                  <Badge variant="ghost" className="gap-2">
+                  <Badge variant="hud" className="gap-2">
                     <Icon className="w-4 h-4 text-[rgb(var(--color-accent-text))]" aria-hidden="true" />
                     {label}
                   </Badge>
@@ -313,15 +313,17 @@ function App() {
               ))}
             </ul>
 
-            <p className="mt-8 flex items-center gap-2 text-xs text-[rgb(var(--color-text-secondary))]">
-              <ShieldCheck className="w-4 h-4" aria-hidden="true" />
+            {/* The privacy promise is a design principle, not a footnote - the
+               accent-lit shield and near-full ink keep it legible over the scene. */}
+            <p className="mt-8 flex items-center gap-2 text-xs font-medium text-[rgba(var(--color-text),0.82)]">
+              <ShieldCheck className="w-4 h-4 text-[rgb(var(--color-accent-text))]" aria-hidden="true" />
               {t('features.private.desc')}
             </p>
           </div>
         </main>
 
         <footer className="pb-8 text-center">
-          <p className="text-xs text-[rgb(var(--color-text-secondary))]">{t('footer.built')}</p>
+          <p className="text-xs text-[rgba(var(--color-text),0.72)]">{t('footer.built')}</p>
         </footer>
       </div>
     );
@@ -414,13 +416,11 @@ function App() {
                   {metaItems.length > 0 && (
                     <>
                       <div className="hud-ruler" aria-hidden="true" />
-                      {/* Format telemetry spread edge-to-edge as equal readout
-                         columns, so the strip fills the plate's width instead of
-                         clustering left. */}
-                      <dl
-                        className="grid gap-x-6 gap-y-3"
-                        style={{ gridTemplateColumns: `repeat(${metaItems.length}, minmax(0, 1fr))` }}
-                      >
+                      {/* Format telemetry spread edge-to-edge, each readout sized
+                         to its own label (equal 1fr columns truncated the longer
+                         locales' labels mid-word). space-between keeps the strip
+                         filling the plate's width; wrap is the long-locale net. */}
+                      <dl className="flex flex-wrap items-start justify-between gap-x-8 gap-y-3">
                         {metaItems.map((item) => (
                           <MetaReadout key={item.label} label={item.label} value={item.value} />
                         ))}

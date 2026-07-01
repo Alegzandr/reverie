@@ -134,6 +134,16 @@ export const MoodRail = memo(function MoodRail() {
   const { t } = useTranslation();
   const { mood, setMood, recentMoods } = useMood();
 
+  // The featured chip already names the active mood; repeating it in the recents
+  // list right below would be pure redundancy. Recents = the moods you can go
+  // BACK to, so the active one is filtered out.
+  const returnableMoods = recentMoods
+    .filter((id) => id !== mood)
+    .map((id) => ({ id, label: t(`settings.mood.${MOODS[id].labelKey}`) }))
+    // Stable alphabetical order so switching moods doesn't reshuffle the
+    // rail under your finger - only membership changes, never position.
+    .sort((a, b) => a.label.localeCompare(b.label));
+
   return (
     <Card asChild className="hud-frame p-4 sm:p-5 audio-drift-b">
       <aside className="flex flex-col gap-5" aria-label={t('studio.moods')}>
@@ -142,57 +152,38 @@ export const MoodRail = memo(function MoodRail() {
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-2 min-h-7">
             <span className="hud-readout truncate">{t('studio.mood')}</span>
-            <span className="hud-readout shrink-0">FX</span>
           </div>
           <MoodGallery />
         </div>
 
-        {/* Recently used - quick one-tap return to the moods you've been cycling. */}
-        <div className="space-y-2">
-          <span className="hud-readout block">{t('studio.recentMoods')}</span>
-          <ul className="space-y-1.5">
-            {recentMoods
-              .map((id) => ({ id, label: t(`settings.mood.${MOODS[id].labelKey}`) }))
-              // Stable alphabetical order so switching moods doesn't reshuffle the
-              // rail under your finger - only membership changes, never position.
-              .sort((a, b) => a.label.localeCompare(b.label))
-              .map(({ id, label }) => {
-              const tdef = MOODS[id];
-              const Icon = tdef.icon;
-              const active = mood === id;
-              return (
-                <li key={id}>
-                  <button
-                    type="button"
-                    onClick={() => setMood(id)}
-                    aria-pressed={active}
-                    className={cn(
-                      'ios-button flex w-full items-center gap-3 rounded-xl border px-2.5 py-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-background))]',
-                      active
-                        ? 'border-[rgba(var(--color-accent),0.55)] bg-[rgba(var(--color-accent),0.12)]'
-                        : 'border-transparent hover:border-[rgba(var(--color-border),0.6)] hover:bg-[rgba(var(--color-surface),0.5)]'
-                    )}
-                  >
-                    <Swatch id={id} className="h-7 w-7 shrink-0" />
-                    <span
-                      className={cn(
-                        'min-w-0 flex-1 truncate text-sm font-medium',
-                        active ? 'text-[rgb(var(--color-accent-text))]' : 'text-[rgb(var(--color-text))]'
-                      )}
+        {/* Recently used - quick one-tap return to the moods you've been cycling.
+           Hidden until there is somewhere to return to. */}
+        {returnableMoods.length > 0 && (
+          <div className="space-y-2">
+            <span className="hud-readout block">{t('studio.recentMoods')}</span>
+            <ul className="space-y-1.5">
+              {returnableMoods.map(({ id, label }) => {
+                const tdef = MOODS[id];
+                const Icon = tdef.icon;
+                return (
+                  <li key={id}>
+                    <button
+                      type="button"
+                      onClick={() => setMood(id)}
+                      className="ios-button flex w-full items-center gap-3 rounded-xl border border-transparent px-2.5 py-2 text-left outline-none hover:border-[rgba(var(--color-border),0.6)] hover:bg-[rgba(var(--color-surface),0.5)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-background))]"
                     >
-                      {label}
-                    </span>
-                    {active ? (
-                      <Check className="h-4 w-4 shrink-0 text-[rgb(var(--color-accent-text))]" aria-hidden="true" />
-                    ) : (
+                      <Swatch id={id} className="h-7 w-7 shrink-0" />
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium text-[rgb(var(--color-text))]">
+                        {label}
+                      </span>
                       <Icon className="h-4 w-4 shrink-0 text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
-                    )}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
       </aside>
     </Card>
   );

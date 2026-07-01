@@ -7,11 +7,16 @@ import { formatClock } from '../utils/formatters';
 import type { AudioProcessingOptions } from '../utils/audioProcessor';
 
 // Bar gradients are CSS-var driven (constant across moods), so hoist them out of
-// the per-frame render path. Played bars read brighter than not-yet-played ones.
+// the per-frame render path. The bars are centred on the timeline's axis, so a
+// symmetric gradient puts a white-hot core on the shared centreline of every
+// bar - together they draw one continuous luminous spine through the waveform -
+// and feathers the tips so each column reads as projected light, not a plastic
+// pill. Played bars burn in the accent; unplayed ones wait in the cool hairline
+// hue, so progress reads as temperature, not just brightness. */
 const BAR_BG_PLAYED =
-  'linear-gradient(180deg, rgba(var(--color-accent),0.95), rgba(var(--color-accent),0.5))';
+  'linear-gradient(180deg, rgba(var(--color-accent),0.12) 0%, rgba(var(--color-accent),0.8) 32%, rgba(var(--wf-core),0.95) 50%, rgba(var(--color-accent),0.8) 68%, rgba(var(--color-accent),0.12) 100%)';
 const BAR_BG_UNPLAYED =
-  'linear-gradient(180deg, rgba(var(--color-accent),0.4), rgba(var(--color-accent),0.2))';
+  'linear-gradient(180deg, rgba(var(--hud-line),0.05) 0%, rgba(var(--hud-line),0.42) 50%, rgba(var(--hud-line),0.05) 100%)';
 const BAR_WRAPPER_STYLE = { minWidth: '2px', maxWidth: '8px' } as const;
 
 interface WaveformTimelineProps {
@@ -265,17 +270,37 @@ export function WaveformTimeline({
             if (e.key === 'ArrowLeft') onSeek(Math.max(0, currentTime - 5));
           }}
         >
+          {/* Instrument axis - the hairline the bars' luminous cores ride on.
+             Spans the (stretched) content so it scrolls with the clip. */}
+          <div
+            className="pointer-events-none absolute inset-x-0 top-1/2 z-0 h-px -translate-y-1/2 bg-[linear-gradient(90deg,transparent,rgba(var(--hud-line),0.3)_5%,rgba(var(--hud-line),0.3)_95%,transparent)]"
+            aria-hidden="true"
+          />
+
+          {/* Played-region wash - a soft accent light pooled along the axis,
+             brightest at the playhead and fading back toward the start. Width
+             tracks the playhead (same per-frame cost as the playhead's left). */}
+          <div
+            className="pointer-events-none absolute inset-y-3 left-0 z-0 bg-[linear-gradient(180deg,transparent_10%,rgba(var(--color-accent),0.16)_50%,transparent_90%)] [mask-image:linear-gradient(90deg,rgba(0,0,0,0.25),#000_86%)] [-webkit-mask-image:linear-gradient(90deg,rgba(0,0,0,0.25),#000_86%)]"
+            style={{ width: `${playhead}%` }}
+            aria-hidden="true"
+          />
+
           {/* Fill the viewport height so bars and playhead share the same extent.
              h-full on each column is essential: the bars size in % against it. */}
           <div className="relative z-10 w-full flex items-center gap-[3px] h-full py-4 px-1 pointer-events-none">
             {barEls}
           </div>
 
+          {/* Playhead - a light blade with a reading head where it crosses the
+             axis, so the current position reads as a point of light, not a rule. */}
           <div
-            className="absolute top-4 bottom-4 z-20 w-[2px] bg-[rgb(var(--color-accent))] rounded-full shadow-[0_0_0_8px_rgba(var(--color-accent),0.12)] pointer-events-none"
+            className="pointer-events-none absolute top-4 bottom-4 z-20 w-[2px] rounded-full bg-[linear-gradient(180deg,rgba(var(--color-accent),0.2),rgba(var(--wf-core),0.95)_30%,rgba(var(--wf-core),0.95)_70%,rgba(var(--color-accent),0.2))] shadow-[0_0_14px_1px_rgba(var(--color-accent),0.55)]"
             style={{ left: `${playhead}%` }}
             aria-hidden="true"
-          />
+          >
+            <span className="absolute left-1/2 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[rgb(var(--wf-core))] shadow-[0_0_12px_3px_rgba(var(--color-accent),0.75)]" />
+          </div>
         </div>
       </div>
 
