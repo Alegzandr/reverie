@@ -2,6 +2,7 @@ import { memo, useEffect, useReducer, useRef } from 'react';
 import { useMood } from '../contexts/MoodContext';
 import type { SceneId } from '../contexts/moods';
 import { animatedBackdropAllowed } from './scenes/motion';
+import { SceneAurora } from './scenes/SceneAurora';
 
 /**
  * Full-viewport ambient backdrop for the active mood: a cosmic photo base
@@ -159,6 +160,9 @@ export const AmbientScene = memo(function AmbientScene() {
       ) : (
         DAYBREAK_LAYERS
       )}
+      {/* Living aurora veils - the audio-reactive shader light over the photo.
+          Gates itself (reduced motion, touch, software GPU, no WebGL2). */}
+      {isPhoto && <SceneAurora />}
       {isPhoto && (
         <>
           <div className="scene-haze scene-haze-a" />

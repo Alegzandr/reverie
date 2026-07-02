@@ -16,6 +16,7 @@ import { useIsViewportTooNarrow } from './hooks/useViewportGate';
 import { WaveformTimeline } from './components/WaveformTimeline';
 import { MoodRail } from './components/MoodRail';
 import { MarqueeText } from './components/MarqueeText';
+import { OverlayScrollbar } from './components/OverlayScrollbar';
 import { MetaReadout } from './components/MetaReadout';
 import { Logo } from './components/Logo';
 import { Card } from './components/ui/card';
@@ -220,6 +221,31 @@ function App() {
   const hasSession = !!(originalFile || originalBuffer || processedBuffer);
   const stageBuffer = originalBuffer || processedBuffer;
 
+  // Cockpit power-on: entering a session boots the workspace once (rails slide
+  // in, consoles light up, hairlines trace - see `.cockpit-boot` in index.css).
+  // The class is toggled straight on the shell element (no state, no re-render)
+  // and never lands under prefers-reduced-motion; it is removed after the
+  // choreography so the resting cockpit carries no animation styles.
+  const shellRef = useRef<HTMLDivElement | null>(null);
+  const welcomeShellRef = useRef<HTMLDivElement | null>(null);
+  const hadSessionRef = useRef(false);
+  useEffect(() => {
+    const had = hadSessionRef.current;
+    hadSessionRef.current = hasSession;
+    if (had || !hasSession) return;
+    const reduceMotion =
+      typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) return;
+    const shell = shellRef.current;
+    if (!shell) return;
+    shell.classList.add('cockpit-boot');
+    const off = window.setTimeout(() => shell.classList.remove('cockpit-boot'), 1500);
+    return () => {
+      window.clearTimeout(off);
+      shell.classList.remove('cockpit-boot');
+    };
+  }, [hasSession]);
+
   const errorBanner = state.error ? (
     <div role="alert" className="rounded-2xl px-4 py-3 border border-[rgba(var(--color-accent),0.4)] bg-[rgba(var(--color-accent),0.1)]">
       <p className="text-sm font-medium text-[rgb(var(--color-text))]">{state.error}</p>
@@ -262,7 +288,8 @@ function App() {
   // ---------------------------------------------------------------- Welcome
   if (!hasSession) {
     return (
-      <div className="h-[100dvh] overflow-y-auto overflow-x-hidden flex flex-col">
+      <div ref={welcomeShellRef} className="overlay-scroll h-[100dvh] overflow-y-auto overflow-x-hidden flex flex-col">
+        <OverlayScrollbar target={welcomeShellRef} insetTop={24} insetBottom={24} />
         <AmbientScene />
         <MoodTransition />
         <div className="flex items-center justify-end gap-2 px-4 sm:px-6 py-4">
@@ -331,7 +358,8 @@ function App() {
 
   // -------------------------------------------------------------- Workspace
   return (
-    <div className="h-[100dvh] overflow-y-auto overflow-x-hidden flex flex-col">
+    <div ref={shellRef} className="overlay-scroll h-[100dvh] overflow-y-auto overflow-x-hidden flex flex-col">
+      <OverlayScrollbar target={shellRef} />
       <AmbientScene />
       <MoodTransition />
       <FileDropOverlay onFileSelect={handleFileSelect} disabled={state.isExporting} />
@@ -439,6 +467,7 @@ function App() {
                 isPlaying={state.isPlaying}
                 onSeek={handleSeek}
                 options={effectOptions}
+                getAnalyser={getAnalyser}
               />
             )}
           </section>

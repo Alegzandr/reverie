@@ -245,6 +245,12 @@ export const WAVEFORM = {
 
   /** Minimum bar height percentage */
   MIN_BAR_HEIGHT_PERCENT: 8,
+
+  /** Width (px) of the left/right edge zones that trigger auto-scroll while scrubbing an overflowing clip */
+  EDGE_SCROLL_ZONE_PX: 48,
+
+  /** Peak auto-scroll speed (px per frame) reached at the very edge of the viewport */
+  EDGE_SCROLL_MAX_SPEED: 16,
 } as const;
 
 // ============================================================================

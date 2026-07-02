@@ -502,6 +502,51 @@
     pointer-events: none;
   }
 
+  /* The shell scroll container hides its native scrollbar entirely - a styled
+     ::-webkit-scrollbar stays classic on Chromium/Windows and always reserves
+     its gutter, carving a bare strip down the right edge the moment content
+     overflows. <OverlayScrollbar> paints a floating thumb over it instead, so
+     the cockpit content keeps the full viewport width. */
+  .overlay-scroll {
+    scrollbar-width: none; /* Firefox */
+  }
+  .overlay-scroll::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+
+  /* The floating thumb itself (portaled to <body>). Fixed to the viewport,
+     revealed only while scrolling / hovering / dragging so it never breaks the
+     immersion; the mood scene shows through its translucent fill. */
+  .overlay-scroll-thumb {
+    position: fixed;
+    right: 3px;
+    width: 8px;
+    border-radius: 4px;
+    background: rgba(var(--color-border), 0.35);
+    opacity: 0;
+    pointer-events: auto;
+    cursor: grab;
+    touch-action: none;
+    z-index: 60;
+    transition: opacity 0.3s ease, background 0.3s ease;
+  }
+  .is-scrolling .overlay-scroll-thumb,
+  .overlay-scroll-thumb:hover,
+  .overlay-scroll-thumb.is-dragging {
+    opacity: 1;
+  }
+  .dark.is-scrolling .overlay-scroll-thumb,
+  .dark .overlay-scroll-thumb.is-dragging {
+    background: rgba(var(--color-border), 0.4);
+  }
+  .overlay-scroll-thumb:hover {
+    background: rgba(var(--color-text-secondary), 0.5);
+  }
+  .overlay-scroll-thumb.is-dragging {
+    cursor: grabbing;
+  }
+
   /* Custom scrollbar - overlay style that fades in only while scrolling
      (or hovering the scrollable area) and fades back out when idle, so it
      never sits there breaking the immersion. */
@@ -856,6 +901,17 @@
       rgba(var(--scene-veil), 0.12) 76%,
       rgba(var(--scene-veil), 0.42) 100%
     );
+  }
+
+  /* Living aurora veils - the WebGL2 shader layer (<SceneAurora/>): pure
+     additive light breathing with the music, rendered at reduced resolution
+     and stretched (the field is cloud-soft, upscaling is invisible). Sits over
+     the photo, under the legibility veil. Mounted only when motion is allowed
+     and the GPU is real; in every other world this class never appears. */
+  .scene-aurora-veil {
+    inset: 0;
+    width: 100%;
+    height: 100%;
   }
 
   /* POV lens vignette + faint CRT scanlines - the retrofuturist HUD framing. */
@@ -2039,6 +2095,86 @@
     .mood-warp .scene > .scene-photo,
     .mood-warp .immersive .hud-frame::after,
     .mood-warp .immersive .hud-rail::after {
+      animation: none;
+    }
+  }
+}
+
+/* ── Cockpit power-on ───────────────────────────────────────────────────────
+   Loading a track boots the cockpit: the rails slide into place, the side
+   consoles light up out of a blur, the centre plates focus in, the corner
+   brackets and hairlines trace themselves, and the telemetry readouts settle
+   one after another - one orchestrated second, once per session, while the
+   wave instrument prints itself behind its scanning beam (canvas-side).
+   `.cockpit-boot` is set by App only when a session starts AND motion is
+   allowed (never under prefers-reduced-motion) and removed when the sequence
+   ends. Every animation is a both-filled one-shot on transform/opacity/filter,
+   so nothing here can drift the resting layout. */
+@layer utilities {
+  .cockpit-boot .hud-rail-top {
+    animation: boot-rail-down 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .cockpit-boot .hud-rail-bottom {
+    animation: boot-rail-up 560ms cubic-bezier(0.22, 1, 0.36, 1) 80ms both;
+  }
+  /* The raked consoles carry a rotateY pose - animate opacity/filter only,
+     never transform, so the boot can't fight the visor geometry. */
+  .cockpit-boot .hud-console-left {
+    animation: boot-light 700ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+  }
+  .cockpit-boot .hud-console-right {
+    animation: boot-light 700ms cubic-bezier(0.22, 1, 0.36, 1) 180ms both;
+  }
+  /* Centre plates (track identity + wave instrument) - flat, so a whisper of
+     scale is safe here. */
+  .cockpit-boot section .hud-frame {
+    animation: boot-plate 680ms cubic-bezier(0.22, 1, 0.36, 1) 220ms both;
+  }
+  .cockpit-boot .hud-frame::before {
+    animation: boot-light 620ms cubic-bezier(0.22, 1, 0.36, 1) 260ms both;
+  }
+  .cockpit-boot .hud-frame::after {
+    animation: boot-hairline 900ms cubic-bezier(0.16, 1, 0.3, 1) 320ms both;
+  }
+  .cockpit-boot dl > * {
+    animation: boot-readout 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .cockpit-boot dl > *:nth-child(1) { animation-delay: 380ms; }
+  .cockpit-boot dl > *:nth-child(2) { animation-delay: 425ms; }
+  .cockpit-boot dl > *:nth-child(3) { animation-delay: 470ms; }
+  .cockpit-boot dl > *:nth-child(4) { animation-delay: 515ms; }
+  .cockpit-boot dl > *:nth-child(5) { animation-delay: 560ms; }
+  .cockpit-boot dl > *:nth-child(6) { animation-delay: 605ms; }
+
+  @keyframes boot-rail-down {
+    from { opacity: 0; transform: translateY(-12px); }
+  }
+  @keyframes boot-rail-up {
+    from { opacity: 0; transform: translateY(12px); }
+  }
+  @keyframes boot-light {
+    from { opacity: 0; filter: blur(10px); }
+  }
+  @keyframes boot-plate {
+    from { opacity: 0; transform: scale(0.984); filter: blur(7px); }
+  }
+  @keyframes boot-hairline {
+    from { opacity: 0; clip-path: inset(0 100% 0 0); }
+  }
+  @keyframes boot-readout {
+    from { opacity: 0; transform: translateY(5px); filter: blur(3px); }
+  }
+
+  /* App never sets the class under reduced motion; this is the safety net. */
+  @media (prefers-reduced-motion: reduce) {
+    .cockpit-boot .hud-rail-top,
+    .cockpit-boot .hud-rail-bottom,
+    .cockpit-boot .hud-console-left,
+    .cockpit-boot .hud-console-right,
+    .cockpit-boot section .hud-frame,
+    .cockpit-boot .hud-frame::before,
+    .cockpit-boot .hud-frame::after,
+    .cockpit-boot dl > * {
       animation: none;
     }
   }

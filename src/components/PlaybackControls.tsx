@@ -72,8 +72,10 @@ export function PlaybackControls({
         {/* Play / Pause - the Aurora orb inside a holographic instrument dial whose
             rings rotate while a track plays. A soft ring also pulses outward. */}
         <div className="relative shrink-0 sm:order-1">
+          {/* The dial also spins while exporting - the offline render is the one
+              moment the machine works without sound, so the instrument shows it. */}
           <HudDial
-            spinning={playEnabled && isPlaying}
+            spinning={(playEnabled && isPlaying) || !!isExporting}
             className="pointer-events-none absolute -inset-[11px] z-0"
           />
           {/* Audio-reactive halo - punches with the kick (bass + onset). Rendered
