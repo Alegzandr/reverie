@@ -26,6 +26,7 @@ import { usePlaylist } from './hooks/usePlaylist';
 import { usePlaylistPlayer } from './hooks/usePlaylistPlayer';
 import { useMediaSession } from './hooks/useMediaSession';
 import { useUiRest } from './hooks/useUiRest';
+import { useFullscreenAutoHide } from './hooks/useFullscreenAutoHide';
 import { useEq } from './contexts/EqContext';
 import { EFFECT_EXPORT_LABELS, EFFECT_DEFAULTS, AUDIO_PROCESSING } from './constants';
 import type { AudioProcessingOptions } from './utils/audioProcessor';
@@ -394,6 +395,10 @@ function App() {
       shell.classList.remove('cockpit-boot');
     };
   }, [hasSession]);
+
+  // Fullscreen is for listening: idle panels fade away and leave the scene alone.
+  // Gated on the workspace actually being mounted (the shell ref must be live).
+  useFullscreenAutoHide(shellRef, hasSession && !viewportTooNarrow && !player.booting);
 
   const errorBanner = state.error ? (
     <div role="alert" className="rounded-2xl border border-[rgba(var(--color-accent),0.4)] bg-[rgba(var(--color-accent),0.12)] px-4 py-3 backdrop-blur-md">
