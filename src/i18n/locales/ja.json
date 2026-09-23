@@ -16,12 +16,13 @@
   },
   "upload": {
     "title": "オーディオファイルをアップロード",
-    "dragDrop": "オーディオファイルをここにドラッグ＆ドロップ",
+    "dragDrop": "音楽をここにドロップ（ファイルでもフォルダでも）",
     "or": "または",
     "browse": "ファイルを参照",
     "formats": "MP3、WAV、FLAC、OGG、M4A、AAC、AIFF、WebM",
     "loading": "読み込み中...",
-    "dropToReplace": "ドロップしてトラックを差し替え"
+    "dropPlay": "今すぐ再生",
+    "dropQueue": "プレイリストに追加"
   },
   "effects": {
     "none": "オリジナル",
@@ -54,20 +55,20 @@
     "pause": "一時停止",
     "export": "エクスポート",
     "exporting": "エクスポート中...",
-    "repeat": "リピート",
     "volume": "音量",
     "mute": "ミュート",
-    "unmute": "ミュート解除"
+    "unmute": "ミュート解除",
+    "previous": "前へ",
+    "next": "次へ",
+    "shuffle": "シャッフル",
+    "repeatOff": "リピート：オフ",
+    "repeatAll": "プレイリストをリピート",
+    "repeatOne": "この曲をリピート"
   },
   "track": {
     "title": "トラック",
     "format": "形式",
     "name": "名前",
-    "size": "サイズ",
-    "bitrate": "ビットレート",
-    "sampleRate": "サンプルレート",
-    "channels": "チャンネル",
-    "bitDepth": "ビット深度",
     "mono": "モノラル",
     "stereo": "ステレオ"
   },
@@ -121,15 +122,15 @@
   "settings": {
     "open": "設定",
     "title": "設定",
-    "subtitle": "イコライザーと言語",
+    "subtitle": "シーン、イコライザー、言語",
     "moods": "ムード",
     "mood": {
-      "light": "ライト",
-      "dark": "Void Bloom",
-      "tidal": "Cosmic Wave",
-      "nocturne": "Midnight Pulse",
-      "aurora": "Nebula Drift",
-      "horizon": "Lunar Haze"
+      "light": "夜明け",
+      "dark": "オーロラ",
+      "tidal": "月の潮",
+      "nocturne": "特異点",
+      "aurora": "星雲の漂い",
+      "horizon": "こだまの谷"
     },
     "language": "言語",
     "equalizer": "イコライザー",
@@ -138,19 +139,44 @@
     "eqReset": "リセット",
     "eqBand": "{{freq}} バンド",
     "eqHint": "再生のみに適用され、エクスポートには影響しません。",
-    "close": "設定を閉じる"
+    "close": "設定を閉じる",
+    "scene": "シーン",
+    "livingWorld": "生きた世界",
+    "livingWorldHint": "シーンが音楽に合わせて動きます（オフでバッテリー節約）",
+    "restUi": "インターフェースを休ませる",
+    "restUiHint": "聴いている間はパネルが薄れ、動かすとすぐ戻ります"
   },
   "studio": {
     "effects": "エフェクト",
     "adjustments": "調整",
     "mood": "ムード",
     "moods": "ムード",
-    "recentMoods": "最近使用したもの",
-    "allMoods": "すべてのムード",
     "active": "オン",
     "inactive": "オフ",
-    "levels": "レベル",
-    "backdrop": "背景画像",
-    "backdropHint": "シーンの背後に写真を表示"
+    "levels": "レベル"
+  },
+  "playlist": {
+    "title": "プレイリスト",
+    "add": "音楽を追加",
+    "addFolder": "フォルダを追加",
+    "clear": "プレイリストを空にする",
+    "clearConfirm": "すべての曲を削除しますか？",
+    "clearYes": "空にする",
+    "cancel": "キャンセル",
+    "remove": "プレイリストから削除",
+    "filter": "曲を絞り込む",
+    "empty": "プレイリストは空です",
+    "emptyHint": "オーディオファイルやフォルダごとここにドロップ",
+    "stored": "この端末にのみ保存、アップロードはされません",
+    "storageFull": "一部の曲をこの端末に保存できませんでした（容量不足）",
+    "broken": "このファイルを読み込めません",
+    "noMatch": "一致する曲はありません",
+    "nowPlaying": "再生中",
+    "upNext": "次の曲",
+    "position": "{{index}} / {{total}}"
+  },
+  "welcome": {
+    "resume": "前回の続きから",
+    "resumeHint": "プレイリストの曲数：{{count}}"
   }
 }

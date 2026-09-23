@@ -8,9 +8,9 @@ vi.mock('react-i18next', () => ({
 }));
 
 describe('FileUploader', () => {
-  it('handles drag and drop with accepted file', () => {
-    const onFileSelect = vi.fn();
-    render(<FileUploader onFileSelect={onFileSelect} />);
+  it('handles drag and drop with accepted file', async () => {
+    const onFilesSelect = vi.fn();
+    render(<FileUploader onFilesSelect={onFilesSelect} />);
 
     const dropZone = screen.getByLabelText('upload.title');
     const file = new File(['audio'], 'song.mp3', { type: 'audio/mp3' });
@@ -21,12 +21,12 @@ describe('FileUploader', () => {
       },
     });
 
-    expect(onFileSelect).toHaveBeenCalledWith(file);
+    await vi.waitFor(() => expect(onFilesSelect).toHaveBeenCalledWith([file]));
   });
 
   it('ignores unsupported drag type and respects input change', async () => {
-    const onFileSelect = vi.fn();
-    const { rerender } = render(<FileUploader onFileSelect={onFileSelect} isLoading hasFile />);
+    const onFilesSelect = vi.fn();
+    const { rerender } = render(<FileUploader onFilesSelect={onFilesSelect} isLoading hasFile />);
 
     const dropZone = screen.getByLabelText('upload.title');
     const badFile = new File(['audio'], 'song.xyz', { type: 'application/octet-stream' });
@@ -37,22 +37,23 @@ describe('FileUploader', () => {
       },
     });
 
-    expect(onFileSelect).not.toHaveBeenCalled();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(onFilesSelect).not.toHaveBeenCalled();
 
     const input = screen.getByLabelText('upload.browse');
     expect(input).toBeDisabled();
 
-    rerender(<FileUploader onFileSelect={onFileSelect} hasFile />);
+    rerender(<FileUploader onFilesSelect={onFilesSelect} hasFile />);
 
     const goodFile = new File(['audio'], 'clip.wav', { type: 'audio/wav' });
     await userEvent.upload(screen.getByLabelText('upload.browse'), goodFile);
 
-    expect(onFileSelect).toHaveBeenCalledWith(goodFile);
+    expect(onFilesSelect).toHaveBeenCalledWith([goodFile]);
   });
 
   it('prevents default on drag over', () => {
-    const onFileSelect = vi.fn();
-    render(<FileUploader onFileSelect={onFileSelect} />);
+    const onFilesSelect = vi.fn();
+    render(<FileUploader onFilesSelect={onFilesSelect} />);
 
     const dropZone = screen.getByLabelText('upload.title');
     const event = new Event('dragover', { bubbles: true, cancelable: true });

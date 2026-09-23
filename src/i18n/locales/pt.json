@@ -16,12 +16,13 @@
   },
   "upload": {
     "title": "Carregar arquivo de áudio",
-    "dragDrop": "Arraste e solte um arquivo de áudio aqui",
+    "dragDrop": "Solte sua música aqui, arquivos ou pastas inteiras",
     "or": "ou",
     "browse": "Procurar arquivos",
     "formats": "MP3, WAV, FLAC, OGG, M4A, AAC, AIFF, WebM",
     "loading": "Carregando...",
-    "dropToReplace": "Solte para trocar a faixa"
+    "dropPlay": "Tocar agora",
+    "dropQueue": "Adicionar à playlist"
   },
   "effects": {
     "none": "Original",
@@ -54,20 +55,20 @@
     "pause": "Pausar",
     "export": "Exportar",
     "exporting": "Exportando...",
-    "repeat": "Repetir",
     "volume": "Volume",
     "mute": "Silenciar",
-    "unmute": "Ativar som"
+    "unmute": "Ativar som",
+    "previous": "Anterior",
+    "next": "Próxima",
+    "shuffle": "Aleatório",
+    "repeatOff": "Repetir: desligado",
+    "repeatAll": "Repetir a playlist",
+    "repeatOne": "Repetir esta faixa"
   },
   "track": {
     "title": "Faixa",
     "format": "Formato",
     "name": "Nome",
-    "size": "Tamanho",
-    "bitrate": "Taxa de bits",
-    "sampleRate": "Taxa amostragem",
-    "channels": "Canais",
-    "bitDepth": "Profundidade de bits",
     "mono": "Mono",
     "stereo": "Estéreo"
   },
@@ -121,15 +122,15 @@
   "settings": {
     "open": "Definições",
     "title": "Definições",
-    "subtitle": "Equalizador e idioma",
+    "subtitle": "Cena, equalizador e idioma",
     "moods": "Ambientes",
     "mood": {
-      "light": "Claro",
-      "dark": "Void Bloom",
-      "tidal": "Cosmic Wave",
-      "nocturne": "Midnight Pulse",
-      "aurora": "Nebula Drift",
-      "horizon": "Lunar Haze"
+      "light": "Alvorada",
+      "dark": "Aurora boreal",
+      "tidal": "Maré lunar",
+      "nocturne": "Singularidade",
+      "aurora": "Nebulosa",
+      "horizon": "Vale do eco"
     },
     "language": "Idioma",
     "equalizer": "Equalizador",
@@ -138,19 +139,44 @@
     "eqReset": "Repor",
     "eqBand": "Banda {{freq}}",
     "eqHint": "Afeta apenas a reprodução, não as exportações.",
-    "close": "Fechar definições"
+    "close": "Fechar definições",
+    "scene": "Cena",
+    "livingWorld": "Mundo vivo",
+    "livingWorldHint": "A cena se move com sua música (desligado economiza bateria)",
+    "restUi": "Deixar a interface descansar",
+    "restUiHint": "Os painéis se apagam enquanto você ouve e voltam assim que você se mexe"
   },
   "studio": {
     "effects": "Efeitos",
     "adjustments": "Ajustes",
     "mood": "Ambiente",
     "moods": "Ambientes",
-    "recentMoods": "Usados recentemente",
-    "allMoods": "Todos os ambientes",
     "active": "Ativo",
     "inactive": "Inativo",
-    "levels": "Níveis",
-    "backdrop": "Imagem de fundo",
-    "backdropHint": "Mostrar a foto atrás da cena"
+    "levels": "Níveis"
+  },
+  "playlist": {
+    "title": "Playlist",
+    "add": "Adicionar música",
+    "addFolder": "Adicionar uma pasta",
+    "clear": "Limpar a playlist",
+    "clearConfirm": "Remover todas as faixas?",
+    "clearYes": "Limpar",
+    "cancel": "Cancelar",
+    "remove": "Remover da playlist",
+    "filter": "Filtrar faixas",
+    "empty": "Sua playlist está vazia",
+    "emptyHint": "Solte aqui arquivos de áudio ou pastas inteiras",
+    "stored": "Guardada só neste dispositivo, nunca enviada",
+    "storageFull": "Algumas faixas não puderam ser guardadas neste dispositivo (armazenamento cheio)",
+    "broken": "Não foi possível ler este arquivo",
+    "noMatch": "Nenhuma faixa corresponde",
+    "nowPlaying": "Tocando agora",
+    "upNext": "A seguir",
+    "position": "{{index}} de {{total}}"
+  },
+  "welcome": {
+    "resume": "Continue de onde parou",
+    "resumeHint": "Faixas na sua playlist: {{count}}"
   }
 }

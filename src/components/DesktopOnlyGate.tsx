@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next';
 import { MonitorSmartphone } from 'lucide-react';
-import { AmbientScene } from './AmbientScene';
 import { AuroraOrb } from './AuroraOrb';
 
 /**
@@ -14,7 +13,6 @@ export function DesktopOnlyGate() {
 
   return (
     <div className="h-[100dvh] overflow-y-auto overflow-x-hidden flex flex-col">
-      <AmbientScene />
       <main className="flex-1 flex items-center justify-center px-6 py-16">
         <div className="aurora-stage relative w-full max-w-md flex flex-col items-center text-center">
           <div

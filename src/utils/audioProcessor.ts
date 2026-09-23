@@ -37,6 +37,7 @@ export class AudioProcessor {
   // warning about contexts created before a user gesture.
   private audioContext: AudioContext | null = null;
   private audioBuffer: AudioBuffer | null = null;
+  private loadSeq = 0;
 
   /**
    * Load an audio file and decode it into an AudioBuffer
@@ -46,10 +47,15 @@ export class AudioProcessor {
    * @throws Error if file cannot be decoded or is not a valid audio file
    */
   async loadAudioFile(file: File): Promise<AudioBuffer> {
+    // Playlist skips can overlap decodes; only the latest request may become the
+    // current buffer, or a slow older decode landing last would make exports
+    // render the wrong song.
+    const seq = ++this.loadSeq;
     try {
       const arrayBuffer = await file.arrayBuffer();
-      this.audioBuffer = await this.getAudioContext().decodeAudioData(arrayBuffer);
-      return this.audioBuffer;
+      const decoded = await this.getAudioContext().decodeAudioData(arrayBuffer);
+      if (seq === this.loadSeq) this.audioBuffer = decoded;
+      return decoded;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       throw new Error(`Failed to load audio file: ${message}`);

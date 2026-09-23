@@ -16,12 +16,13 @@
   },
   "upload": {
     "title": "Audiodatei hochladen",
-    "dragDrop": "Ziehen Sie eine Audiodatei hierher",
+    "dragDrop": "Zieh deine Musik hierher, Dateien oder ganze Ordner",
     "or": "oder",
     "browse": "Dateien durchsuchen",
     "formats": "MP3, WAV, FLAC, OGG, M4A, AAC, AIFF, WebM",
     "loading": "Lädt...",
-    "dropToReplace": "Ablegen, um den Titel zu wechseln"
+    "dropPlay": "Jetzt abspielen",
+    "dropQueue": "Zur Playlist hinzufügen"
   },
   "effects": {
     "none": "Original",
@@ -54,20 +55,20 @@
     "pause": "Pause",
     "export": "Exportieren",
     "exporting": "Exportiere...",
-    "repeat": "Wiederholen",
     "volume": "Lautstärke",
     "mute": "Stummschalten",
-    "unmute": "Stummschaltung aufheben"
+    "unmute": "Stummschaltung aufheben",
+    "previous": "Zurück",
+    "next": "Weiter",
+    "shuffle": "Zufallswiedergabe",
+    "repeatOff": "Wiederholen: aus",
+    "repeatAll": "Playlist wiederholen",
+    "repeatOne": "Diesen Titel wiederholen"
   },
   "track": {
     "title": "Track",
     "format": "Format",
     "name": "Name",
-    "size": "Größe",
-    "bitrate": "Bitrate",
-    "sampleRate": "Abtastrate",
-    "channels": "Kanäle",
-    "bitDepth": "Bittiefe",
     "mono": "Mono",
     "stereo": "Stereo"
   },
@@ -121,15 +122,15 @@
   "settings": {
     "open": "Einstellungen",
     "title": "Einstellungen",
-    "subtitle": "Equalizer und Sprache",
+    "subtitle": "Szene, Equalizer und Sprache",
     "moods": "Stimmungen",
     "mood": {
-      "light": "Hell",
-      "dark": "Void Bloom",
-      "tidal": "Cosmic Wave",
-      "nocturne": "Midnight Pulse",
-      "aurora": "Nebula Drift",
-      "horizon": "Lunar Haze"
+      "light": "Morgengrauen",
+      "dark": "Polarlicht",
+      "tidal": "Mondflut",
+      "nocturne": "Singularität",
+      "aurora": "Nebeldrift",
+      "horizon": "Echotal"
     },
     "language": "Sprache",
     "equalizer": "Equalizer",
@@ -138,19 +139,44 @@
     "eqReset": "Zurücksetzen",
     "eqBand": "Band {{freq}}",
     "eqHint": "Betrifft nur die Wiedergabe, nicht deine Exporte.",
-    "close": "Einstellungen schließen"
+    "close": "Einstellungen schließen",
+    "scene": "Szene",
+    "livingWorld": "Lebendige Welt",
+    "livingWorldHint": "Die Szene bewegt sich mit deiner Musik (aus spart Akku)",
+    "restUi": "Oberfläche ruhen lassen",
+    "restUiHint": "Die Panels blenden beim Zuhören aus und kehren zurück, sobald du dich bewegst"
   },
   "studio": {
     "effects": "Effekte",
     "adjustments": "Einstellungen",
     "mood": "Stimmung",
     "moods": "Stimmungen",
-    "recentMoods": "Zuletzt verwendet",
-    "allMoods": "Alle Stimmungen",
     "active": "Aktiv",
     "inactive": "Inaktiv",
-    "levels": "Pegel",
-    "backdrop": "Hintergrundbild",
-    "backdropHint": "Foto hinter der Szene anzeigen"
+    "levels": "Pegel"
+  },
+  "playlist": {
+    "title": "Playlist",
+    "add": "Musik hinzufügen",
+    "addFolder": "Ordner hinzufügen",
+    "clear": "Playlist leeren",
+    "clearConfirm": "Alle Titel entfernen?",
+    "clearYes": "Leeren",
+    "cancel": "Abbrechen",
+    "remove": "Aus der Playlist entfernen",
+    "filter": "Titel filtern",
+    "empty": "Deine Playlist ist leer",
+    "emptyHint": "Zieh Audiodateien oder ganze Ordner hierher",
+    "stored": "Nur auf diesem Gerät gespeichert, nie hochgeladen",
+    "storageFull": "Einige Titel konnten nicht auf diesem Gerät gespeichert werden (Speicher voll)",
+    "broken": "Diese Datei kann nicht gelesen werden",
+    "noMatch": "Kein Titel passt",
+    "nowPlaying": "Läuft gerade",
+    "upNext": "Als Nächstes",
+    "position": "{{index}} von {{total}}"
+  },
+  "welcome": {
+    "resume": "Weiterhören, wo du aufgehört hast",
+    "resumeHint": "Titel in deiner Playlist: {{count}}"
   }
 }

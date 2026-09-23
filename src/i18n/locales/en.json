@@ -16,12 +16,13 @@
   },
   "upload": {
     "title": "Upload Audio File",
-    "dragDrop": "Drag and drop an audio file here",
+    "dragDrop": "Drop your music here, files or whole folders",
     "or": "or",
     "browse": "Browse Files",
     "formats": "MP3, WAV, FLAC, OGG, M4A, AAC, AIFF, WebM",
     "loading": "Loading...",
-    "dropToReplace": "Drop to swap the track"
+    "dropPlay": "Play now",
+    "dropQueue": "Add to the playlist"
   },
   "effects": {
     "none": "Original",
@@ -54,20 +55,20 @@
     "pause": "Pause",
     "export": "Export",
     "exporting": "Exporting...",
-    "repeat": "Repeat",
     "volume": "Volume",
     "mute": "Mute",
-    "unmute": "Unmute"
+    "unmute": "Unmute",
+    "previous": "Previous",
+    "next": "Next",
+    "shuffle": "Shuffle",
+    "repeatOff": "Repeat: off",
+    "repeatAll": "Repeat the playlist",
+    "repeatOne": "Repeat this track"
   },
   "track": {
     "title": "Track",
     "format": "Format",
     "name": "Name",
-    "size": "Size",
-    "bitrate": "Bitrate",
-    "sampleRate": "Sample Rate",
-    "channels": "Channels",
-    "bitDepth": "Bit Depth",
     "mono": "Mono",
     "stereo": "Stereo"
   },
@@ -121,15 +122,15 @@
   "settings": {
     "open": "Settings",
     "title": "Settings",
-    "subtitle": "Equalizer and language",
+    "subtitle": "Scene, equalizer and language",
     "moods": "Moods",
     "mood": {
-      "light": "Light",
-      "dark": "Void Bloom",
-      "tidal": "Cosmic Wave",
-      "nocturne": "Midnight Pulse",
+      "light": "Daybreak",
+      "dark": "Borealis",
+      "tidal": "Moon Tide",
+      "nocturne": "Singularity",
       "aurora": "Nebula Drift",
-      "horizon": "Lunar Haze"
+      "horizon": "Echo Valley"
     },
     "language": "Language",
     "equalizer": "Equalizer",
@@ -138,19 +139,44 @@
     "eqReset": "Reset",
     "eqBand": "{{freq}} band",
     "eqHint": "Affects playback only, not your exports.",
-    "close": "Close settings"
+    "close": "Close settings",
+    "scene": "Scene",
+    "livingWorld": "Living world",
+    "livingWorldHint": "The scene moves with your music (off saves battery)",
+    "restUi": "Rest the interface",
+    "restUiHint": "Panels fade while you listen, back as soon as you move"
   },
   "studio": {
     "effects": "Effects",
     "adjustments": "Adjustments",
     "mood": "Mood",
     "moods": "Moods",
-    "recentMoods": "Recently used",
-    "allMoods": "All moods",
     "active": "Active",
     "inactive": "Inactive",
-    "levels": "Levels",
-    "backdrop": "Backdrop image",
-    "backdropHint": "Show the photo behind the scene"
+    "levels": "Levels"
+  },
+  "playlist": {
+    "title": "Playlist",
+    "add": "Add music",
+    "addFolder": "Add a folder",
+    "clear": "Clear the playlist",
+    "clearConfirm": "Remove every track?",
+    "clearYes": "Clear",
+    "cancel": "Cancel",
+    "remove": "Remove from the playlist",
+    "filter": "Filter tracks",
+    "empty": "Your playlist is empty",
+    "emptyHint": "Drop audio files or whole folders here",
+    "stored": "Kept on this device only, never uploaded",
+    "storageFull": "Some tracks couldn't be kept on this device (storage full)",
+    "broken": "Couldn't read this file",
+    "noMatch": "No track matches",
+    "nowPlaying": "Now playing",
+    "upNext": "Up next",
+    "position": "{{index}} of {{total}}"
+  },
+  "welcome": {
+    "resume": "Pick up where you left off",
+    "resumeHint": "Tracks in your playlist: {{count}}"
   }
 }

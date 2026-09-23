@@ -1,12 +1,10 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-// Reverie's two faces, both self-hosted (no third-party request):
-//  - Fraunces (soft cut): the oneiric display serif for the wordmark + headings.
-//  - Hanken Grotesk: the warm humanist sans that carries the whole UI/body.
-// Variable fonts, Latin subset only (~62KB + ~35KB), loaded on demand via
-// unicode-range, so non-Latin locales fetch nothing and fall back per-glyph.
-import '@fontsource-variable/fraunces/soft.css'
-import '@fontsource-variable/hanken-grotesk/index.css'
+// Reverie's one face, self-hosted (no third-party request): Geist Mono, the
+// visor-readout voice for every label, value and title. Variable weight axis;
+// each subset loads on demand via unicode-range, so a locale fetches only the
+// glyphs it draws and falls back per-glyph for scripts it doesn't cover.
+import '@fontsource-variable/geist-mono/wght.css'
 import './index.css'
 import './i18n/config'
 import App from './App.tsx'

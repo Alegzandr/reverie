@@ -20,9 +20,13 @@ Speed a song up, slow it down with reverb, spin it into immersive 8D, or boost t
 
 Everything is **live**: press play, move any control, and the sound changes instantly. There is no "Apply" or "Process" step, you just listen and tune until it feels right.
 
+### Listen to everything
+- **Playlists that remember**: drop files or whole folders; Reverie keeps them on your device (nothing is uploaded) and brings the list, the track and the position back next time. Clear it in one click.
+- **Made for long sessions**: next/previous, shuffle, repeat the playlist or one track, drag to reorder, filter long lists, keyboard and media keys.
+
 ### Make it yours
-- **🪐 Moods** — six atmospheres, each a color palette plus an animated background: two calm workspaces (Light, Dark) and four immersive scenes (Tidal, Nocturne, Aurora, Horizon). Switch in one tap; your choice is remembered.
-- **💓 Breathe with the music** — the whole interface reacts to what's playing: the background blooms, the frames pulse, and the play button glows on the beat.
+- **🪐 Moods** — six living worlds rendered in real time and listening to the music: Nebula Drift, Borealis, Moon Tide, Echo Valley, Singularity and Daybreak. Switch in one tap from the top bar; your choice is remembered.
+- **💓 Breathe with the music** — the world, the glass and the play button react to what's playing. When you stop touching anything, the interface fades away and leaves you with the world.
 - **📊 See your track** — a live waveform doubles as the seek bar and previews the effect you're applying, alongside a compact spectrum meter.
 - **🌍 Ten languages** — English, French, Spanish, German, Portuguese, Russian, Chinese, Japanese, Korean, Hindi.
 - **♿ Accessible** — full keyboard navigation, screen-reader support, and a calm static fallback if you prefer reduced motion.
@@ -34,17 +38,17 @@ Everything is **live**: press play, move any control, and the sound changes inst
 
 ## How to use it
 
-1. **Load a track** — drag and drop, or click to browse. Supports MP3, WAV, AIFF, FLAC, OGG/Opus, WebM, AAC/M4A, and more.
+1. **Load your music** — drag and drop files or folders, or click to browse. Supports MP3, WAV, AIFF, FLAC, OGG/Opus, WebM, AAC/M4A, and more.
 2. **Pick an effect** — Speed Up, Slow + Reverb, 8D Audio, or Bass Boost.
 3. **Press play and tune** — every slider reshapes the sound in real time.
-4. **Set a mood** (optional) — choose a background from the mood rail.
+4. **Set a mood** (optional) — pick a world from the switcher in the top bar.
 5. **Export** — download your remix, matched to the original format and quality.
 
 ---
 
 ## For developers
 
-Reverie is a 100% client-side app built with **React 19 + TypeScript + Vite 7 + Tailwind CSS v4**. All audio runs on the **Web Audio API**, with lazy-loaded encoders (lamejs for MP3, libFLAC WASM for FLAC, MediaRecorder for WebM/OGG/M4A).
+Reverie is a 100% client-side app built with **React 19 + TypeScript + Vite 8 + Tailwind CSS v4**. All audio runs on the **Web Audio API**, with lazy-loaded encoders (lamejs for MP3, libFLAC WASM for FLAC, MediaRecorder for WebM/OGG/M4A).
 
 ```bash
 npm install
@@ -63,7 +67,7 @@ Two audio engines that must stay sonically identical:
 - **`src/utils/effectGraph.ts`** — the persistent live Web Audio graph. Effect changes ramp nodes in real time (~40 ms), no bake step.
 - **`src/utils/audioProcessor.ts`** — the offline render (`OfflineAudioContext`) used only at export time.
 
-Exports are dispatched per source format via a Strategy pattern (`src/utils/exportStrategies.ts`), with fallbacks (FLAC→WAV, MediaRecorder→MP3). Moods live in `src/contexts/moods.ts`; every UI string goes through i18next across all 10 locales in `src/i18n/locales/`.
+Exports are dispatched per source format via a Strategy pattern (`src/utils/exportStrategies.ts`), with fallbacks (FLAC→WAV, MediaRecorder→MP3). Moods live in `src/contexts/moods.ts` and their WebGL2 worlds in `src/components/scenes/world/`; the playlist persists through IndexedDB (`src/utils/playlistStore.ts`); every UI string goes through i18next across all 10 locales in `src/i18n/locales/`.
 
 Deeper docs: [`CLAUDE.md`](CLAUDE.md) (architecture + rules), [`PRODUCT.md`](PRODUCT.md) (product vision), [`DESIGN.md`](DESIGN.md) (visual system).
 

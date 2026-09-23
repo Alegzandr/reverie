@@ -329,7 +329,7 @@ export const EffectControls = memo(function EffectControls({ onChange, disabled,
         <div className="flex flex-col gap-5">
             {/* Effects - exclusive modes listed as rows; the chosen one is Active. */}
             <div className="space-y-2.5">
-                <span className="hud-readout block">{t("studio.effects")}</span>
+                <h2 className="pane-title mb-1">{t("studio.effects")}</h2>
                 <div className="space-y-2">
                     {EFFECT_DEFS.map((fx) => (
                         <EffectRow
