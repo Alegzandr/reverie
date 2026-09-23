@@ -26,6 +26,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from './components/ui/tooltip
 import { useAudioProcessor } from './hooks/useAudioProcessor';
 import type { AudioMetadata } from './hooks/useAudioFile';
 import { useAudioReactivity } from './hooks/useAudioReactivity';
+import { useFullscreenAutoHide } from './hooks/useFullscreenAutoHide';
 import { useEq } from './contexts/EqContext';
 import { EFFECT_EXPORT_LABELS, EFFECT_DEFAULTS, AUDIO_PROCESSING, VIEWPORT } from './constants';
 import type { AudioProcessingOptions } from './utils/audioProcessor';
@@ -400,6 +401,10 @@ function App() {
       shell.classList.remove('cockpit-boot');
     };
   }, [hasSession]);
+
+  // Fullscreen is for listening: idle panels fade away and leave the scene alone.
+  // Gated on the workspace actually being mounted (the shell ref must be live).
+  useFullscreenAutoHide(shellRef, hasSession && !viewportTooNarrow);
 
   const errorBanner = state.error ? (
     <div role="alert" className="rounded-2xl px-4 py-3 border border-[rgba(var(--color-accent),0.4)] bg-[rgba(var(--color-accent),0.1)]">

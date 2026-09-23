@@ -2331,3 +2331,46 @@
     .marquee-track { animation: none; }
   }
 }
+
+/* ── Fullscreen auto-hide ────────────────────────────────────────────────────
+   In fullscreen, `useFullscreenAutoHide` puts `.chrome-autohide` on the shell and
+   adds `.chrome-idle` after a spell without input: the panels fade out slowly,
+   then snap back quickly on the next movement. Same glass rule as the boot
+   sequence: every fade sits on the glass element itself (the frames, the rail
+   in flat moods, the rail's ::after plate in immersive ones), never on a
+   wrapper, so the backdrop blur stays live through the whole fade. Opacity
+   only, so nothing moves; hidden panels drop pointer events so a click in the
+   dark only wakes the cockpit instead of hitting an invisible control. */
+@layer utilities {
+  .chrome-autohide .hud-frame,
+  .chrome-autohide .hud-rail > .hud-bow,
+  .chrome-autohide .hud-rail::after,
+  :root:not(.immersive) .chrome-autohide .hud-rail {
+    transition: opacity 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .chrome-idle {
+    cursor: none;
+  }
+  .chrome-idle .hud-frame,
+  .chrome-idle .hud-rail > .hud-bow,
+  .chrome-idle .hud-rail::after,
+  :root:not(.immersive) .chrome-idle .hud-rail {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 900ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .chrome-autohide .hud-frame,
+    .chrome-autohide .hud-rail > .hud-bow,
+    .chrome-autohide .hud-rail::after,
+    :root:not(.immersive) .chrome-autohide .hud-rail,
+    .chrome-idle .hud-frame,
+    .chrome-idle .hud-rail > .hud-bow,
+    .chrome-idle .hud-rail::after,
+    :root:not(.immersive) .chrome-idle .hud-rail {
+      transition: none;
+    }
+  }
+}

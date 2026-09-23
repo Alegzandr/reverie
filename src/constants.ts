@@ -158,6 +158,16 @@ export const VIEWPORT = {
     CENTER_SPLIT_MIN_WIDTH: 1280,
 } as const;
 
+/**
+ * Fullscreen auto-hide: after this long without pointer or keyboard activity the
+ * cockpit panels fade out so the ambient scene has the screen to itself; any
+ * movement brings them straight back. Fade durations live with the styles
+ * (`.chrome-autohide` in index.css).
+ */
+export const FULLSCREEN_CHROME = {
+    IDLE_HIDE_DELAY_MS: 3000,
+} as const;
+
 // ============================================================================
 // FILE FORMAT CONSTANTS
 // ============================================================================
