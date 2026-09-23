@@ -16,12 +16,13 @@
   },
   "upload": {
     "title": "上传音频文件",
-    "dragDrop": "将音频文件拖放到此处",
+    "dragDrop": "将音乐拖放到这里，文件或整个文件夹均可",
     "or": "或",
     "browse": "浏览文件",
     "formats": "MP3、WAV、FLAC、OGG、M4A、AAC、AIFF、WebM",
     "loading": "加载中...",
-    "dropToReplace": "放下以更换音轨"
+    "dropPlay": "立即播放",
+    "dropQueue": "添加到播放列表"
   },
   "effects": {
     "none": "原始",
@@ -54,20 +55,20 @@
     "pause": "暂停",
     "export": "导出",
     "exporting": "导出中...",
-    "repeat": "循环",
     "volume": "音量",
     "mute": "静音",
-    "unmute": "取消静音"
+    "unmute": "取消静音",
+    "previous": "上一首",
+    "next": "下一首",
+    "shuffle": "随机播放",
+    "repeatOff": "循环：关闭",
+    "repeatAll": "循环播放列表",
+    "repeatOne": "单曲循环"
   },
   "track": {
     "title": "曲目",
     "format": "格式",
     "name": "名称",
-    "size": "大小",
-    "bitrate": "比特率",
-    "sampleRate": "采样率",
-    "channels": "声道",
-    "bitDepth": "位深度",
     "mono": "单声道",
     "stereo": "立体声"
   },
@@ -121,15 +122,15 @@
   "settings": {
     "open": "设置",
     "title": "设置",
-    "subtitle": "均衡器和语言",
+    "subtitle": "场景、均衡器和语言",
     "moods": "氛围",
     "mood": {
-      "light": "浅色",
-      "dark": "Void Bloom",
-      "tidal": "Cosmic Wave",
-      "nocturne": "Midnight Pulse",
-      "aurora": "Nebula Drift",
-      "horizon": "Lunar Haze"
+      "light": "破晓",
+      "dark": "北极光",
+      "tidal": "月潮",
+      "nocturne": "奇点",
+      "aurora": "星云漂流",
+      "horizon": "回声谷"
     },
     "language": "语言",
     "equalizer": "均衡器",
@@ -138,19 +139,44 @@
     "eqReset": "重置",
     "eqBand": "{{freq}} 频段",
     "eqHint": "仅影响播放，不影响导出。",
-    "close": "关闭设置"
+    "close": "关闭设置",
+    "scene": "场景",
+    "livingWorld": "动态世界",
+    "livingWorldHint": "场景随音乐律动（关闭可省电）",
+    "restUi": "界面自动淡出",
+    "restUiHint": "聆听时面板渐隐，一动即现"
   },
   "studio": {
     "effects": "效果",
     "adjustments": "调节",
     "mood": "氛围",
     "moods": "氛围",
-    "recentMoods": "最近使用",
-    "allMoods": "所有氛围",
     "active": "启用",
     "inactive": "停用",
-    "levels": "电平",
-    "backdrop": "背景图片",
-    "backdropHint": "在场景后显示照片"
+    "levels": "电平"
+  },
+  "playlist": {
+    "title": "播放列表",
+    "add": "添加音乐",
+    "addFolder": "添加文件夹",
+    "clear": "清空播放列表",
+    "clearConfirm": "移除所有曲目？",
+    "clearYes": "清空",
+    "cancel": "取消",
+    "remove": "从播放列表移除",
+    "filter": "筛选曲目",
+    "empty": "播放列表为空",
+    "emptyHint": "将音频文件或整个文件夹拖放到这里",
+    "stored": "仅保存在此设备上，从不上传",
+    "storageFull": "部分曲目无法保存在此设备上（存储空间已满）",
+    "broken": "无法读取此文件",
+    "noMatch": "没有匹配的曲目",
+    "nowPlaying": "正在播放",
+    "upNext": "接下来",
+    "position": "第 {{index}} 首，共 {{total}} 首"
+  },
+  "welcome": {
+    "resume": "从上次离开的地方继续",
+    "resumeHint": "播放列表中的曲目：{{count}}"
   }
 }

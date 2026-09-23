@@ -14,6 +14,9 @@ import {
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Select } from '@/components/ui/select';
 import { useEq } from '../contexts/EqContext';
+import { useMood } from '../contexts/MoodContext';
+import { toggleUiRest, useUiRestPreference } from '../hooks/useUiRest';
+import { BeatToggle } from './BeatToggle';
 import { EQ_PRESETS, EQ_CUSTOM } from '../contexts/eqPresets';
 import { AUDIO_EFFECTS } from '../constants';
 import { cn } from '@/lib/utils';
@@ -45,6 +48,8 @@ interface SettingsMenuProps {
 export const SettingsMenu = memo(function SettingsMenu({ trigger }: SettingsMenuProps = {}) {
   const { i18n, t } = useTranslation();
   const { gains, presetName, setPreset, setBandGain, reset } = useEq();
+  const { livingWorld, toggleLivingWorld } = useMood();
+  const restUi = useUiRestPreference();
   const [open, setOpen] = useState(false);
 
   const isCustom = presetName === EQ_CUSTOM;
@@ -87,6 +92,25 @@ export const SettingsMenu = memo(function SettingsMenu({ trigger }: SettingsMenu
         </DialogHeader>
 
         <div className="max-h-[64vh] overflow-y-auto pr-1 -mr-1">
+          {/* Scene - the living world and the resting interface. */}
+          <section className="mb-5 space-y-2">
+            <h3 className="text-[11px] uppercase tracking-wide text-[rgb(var(--color-text-secondary))] mb-2">
+              {t('settings.scene')}
+            </h3>
+            <BeatToggle
+              label={t('settings.livingWorld')}
+              description={t('settings.livingWorldHint')}
+              pressed={livingWorld}
+              onToggle={toggleLivingWorld}
+            />
+            <BeatToggle
+              label={t('settings.restUi')}
+              description={t('settings.restUiHint')}
+              pressed={restUi}
+              onToggle={toggleUiRest}
+            />
+          </section>
+
           {/* Listening equalizer - shapes playback for comfort only; it is never
               baked into exports. A preset bank plus six hand-tunable bands. */}
           <section className="mb-5">

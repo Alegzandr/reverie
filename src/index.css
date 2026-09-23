@@ -729,1023 +729,811 @@
   }
 }
 
+/* ════════════════════════════════════════════════════════════════════════
+   THE WORLD, AND THE GLASS THAT FLOATS OVER IT
+   Behind everything, the mood's living world (a real-time WebGL scene, see
+   components/scenes/world) over a still poster of itself. Over it, the
+   interface: a few calm panes of frosted glass around an open centre stage
+   where the world shows through. Panes never move - reactivity and the
+   resting interface only ever touch opacity and glow.
+   ════════════════════════════════════════════════════════════════════════ */
 @layer utilities {
-  /* ── Holographic glass ──────────────────────────────────────────────────
-     In immersive moods the floating panels read as translucent HUD plates:
-     thinner fill, a luminous hairline in --hud-line, and an inner + outer
-     glow in --hud-glow. Follows `.dark .glass`, so it wins at equal weight. */
-  .immersive .glass {
-    /* Projected light field, not a frosted slab. Two layers paint over the
-       blurred backdrop: a near-clear surface tint that thins toward the bottom
-       (the plate fades as it "emerges"), and a whisper of horizontal scanlines
-       so the surface reads as a holographic readout caught in projected light.
-       The fill floor is deliberately low - the scene shows through - and
-       legibility leans on the strong blur + saturation, the edge-lit rim, and
-       the high-contrast text, the way a real visor HUD does. */
-    background:
-      repeating-linear-gradient(
-        to bottom,
-        rgba(var(--hud-line), 0.04) 0 1px,
-        transparent 1px 4px
-      ),
-      linear-gradient(
-        165deg,
-        rgba(var(--color-surface), 0.22) 0%,
-        rgba(var(--color-surface), 0.09) 40%,
-        rgba(var(--color-surface), 0.04) 100%
-      );
-    border: 1px solid rgba(var(--hud-line), 0.4);
-    box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.14),
-      inset 0 0 26px -14px rgba(var(--hud-glow), 0.6),
-      0 26px 64px -32px rgba(var(--hud-glow), 0.55);
-    /* More see-through to the scene; lean on a stronger blur + saturation so text
-       stays legible over even the brightest backdrops. */
-    -webkit-backdrop-filter: saturate(168%) blur(24px);
-    backdrop-filter: saturate(168%) blur(24px);
-  }
-
-  /* ── Curved chrome rails (fisheye visor) ────────────────────────────────
-     The top and bottom bars bow outward like a cockpit visor. The bar's own
-     utilities (bg/border/blur) are suppressed in immersive mode and replaced
-     by a taller pseudo-plate whose elliptical corner radii sum to 100% across
-     the width, producing one smooth convex arc. The plate overhangs the bar by
-     --hud-curve so the bulge floats over the scene; pointer-events stay off it.
-     Content sits in normal flow above the plate, never clipped.
-
-     The holographic plate itself (translucent gradient, luminous hairline, inner
-     glow) is painted at every width - it's what keeps the rails feeling like HUD
-     chrome rather than a flat boxy strip. Only the *curve* (the plate's outward
-     overhang + elliptical corner radii + optical recentring) is reserved for `sm+`:
-     a fisheye arc needs real width, and on a narrow phone it collapses into a
-     lopsided bulge. So phones get the same glass plate, just with straight edges. */
-  .immersive .hud-rail {
-    background: transparent;
-    border: 0;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-  }
-
-  .immersive .hud-rail::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    z-index: -1;
-    /* Flat by default (no overhang); the curve adds the --hud-curve bulge at sm+. */
-    height: 100%;
-    pointer-events: none;
-    background: linear-gradient(
-      to bottom,
-      rgba(var(--color-surface), 0.3),
-      rgba(var(--color-surface), 0.07)
-    );
-    box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.16),
-      inset 0 0 30px -16px rgba(var(--hud-glow), 0.7);
-    -webkit-backdrop-filter: saturate(168%) blur(22px);
-    backdrop-filter: saturate(168%) blur(22px);
-  }
-
-  .immersive .hud-rail-top::after {
-    top: -1px;
-    border-bottom: 1px solid rgba(var(--hud-line), 0.5);
-  }
-
-  /* Sits flush with the rail's bottom (not -1px): the bottom rail is the last
-     element at the page's bottom edge, so a 1px overhang here is enough to make
-     the document taller than the viewport and pin a permanent scrollbar even
-     when everything fits. The bulge/seam is covered by the upward curve above. */
-  .immersive .hud-rail-bottom::after {
-    bottom: 0;
-    border-top: 1px solid rgba(var(--hud-line), 0.5);
-  }
-
-  /* ── Software-rendering degrade ─────────────────────────────────────────────
-     When the browser composites on the CPU (hardware acceleration off / GPU
-     blocklisted), `<html>` gets `.gpu-software` (see PerformanceHint.tsx). The
-     scene's GPU-bound layers are the costly ones there, so we shed them: drop
-     every backdrop-filter blur (the single heaviest CPU cost), hide the animated
-     particle/meteor fields, and freeze the haze. The photo, haze tint, veil and
-     UI all stay - the cockpit just runs lean instead of stuttering. The hint
-     nudges the user to re-enable acceleration to get the full scene back. */
-  .gpu-software .glass,
-  .gpu-software .hud-rail,
-  .gpu-software .hud-rail::after,
-  .gpu-software [class*='backdrop-blur'] {
-    -webkit-backdrop-filter: none !important;
-    backdrop-filter: none !important;
-  }
-
-  /* Without the blur to wash the backdrop, the near-transparent holographic
-     fill would leave text floating over a sharp photo. Restore an opaque floor
-     on the panels and rail plates so legibility holds when running lean. The
-     `.immersive` qualifier (0,3,0) outweighs the later `.immersive .glass`
-     background rules (0,2,0) regardless of source order. */
-  .gpu-software.immersive .glass {
-    background: linear-gradient(
-      165deg,
-      rgba(var(--color-surface), 0.94),
-      rgba(var(--color-surface), 0.88)
-    );
-  }
-
-  .gpu-software.immersive .hud-rail::after {
-    background: linear-gradient(
-      to bottom,
-      rgba(var(--color-surface), 0.92),
-      rgba(var(--color-surface), 0.82)
-    );
-  }
-
-  .gpu-software .scene-particles,
-  .gpu-software .scene-meteors {
-    display: none !important;
-  }
-
-  .gpu-software .scene-haze {
-    animation: none !important;
-  }
-
-  /* The fisheye curve + its optical recentring - desktop only (see note above). */
-  @media (min-width: 640px) {
-    .immersive .hud-rail::after {
-      height: calc(100% + var(--hud-curve));
-    }
-
-    .immersive .hud-rail-top::after {
-      border-radius: 0 0 50% 50% / 0 0 calc(var(--hud-curve) + 10px) calc(var(--hud-curve) + 10px);
-    }
-
-    .immersive .hud-rail-bottom::after {
-      border-radius: 50% 50% 0 0 / calc(var(--hud-curve) + 10px) calc(var(--hud-curve) + 10px) 0 0;
-    }
-
-    /* Optical centring inside the bow: the glass plate bulges past the flat content
-       row by --hud-curve, so centring on the row alone leaves the text/buttons too
-       high (top rail) / too low (bottom rail). Nudge toward the plate's true centre. */
-    .immersive .hud-rail-top .hud-bow-inner {
-      transform: translateY(calc(var(--hud-curve) * 0.46));
-    }
-
-    .immersive .hud-rail-bottom .hud-bow-inner {
-      transform: translateY(calc(var(--hud-curve) * -0.46));
-    }
-  }
-
-  /* ── Ambient scene scaffold ─────────────────────────────────────────────
-     A fixed full-viewport layer painted behind the app content (negative
-     z-index sits above the body background but under the shell). Mounted only
-     for immersive moods by <AmbientScene>. */
+  /* ── Scene layers ──────────────────────────────────────────────────────── */
   .scene {
     position: fixed;
     inset: 0;
-    /* The scroll lives on App's inner shell, not the document, so the viewport has
-       no root scrollbar to clip this fixed layer. 100vw spans the full viewport
-       width, letting the scene paint behind the shell's floating scrollbar so no
-       bare body-background strip ever shows. */
     width: 100vw;
     z-index: -1;
     overflow: hidden;
     pointer-events: none;
-    /* Flatten the whole scene into one isolated compositing group. Without this,
-       the meteors' filtered (drop-shadow) layer composites separately, and a
-       filtered layer moving behind the panels' `backdrop-filter` makes Chromium
-       mis-sample the backdrop and flash the panel rectangle brighter. Isolating
-       the scene gives the backdrop one stable flat image to sample. */
+    background: rgb(var(--color-background));
+    /* One flat compositing group for the glass above to sample. */
     isolation: isolate;
   }
 
   .scene > * {
     position: absolute;
-  }
-
-  /* Legibility veil: darken the top + bottom bands where the chrome lives,
-     leave the middle (waveform glass) clear. Keeps text AA over any scene. */
-  .scene-veil {
     inset: 0;
-    background: linear-gradient(
-      180deg,
-      rgba(var(--scene-veil), 0.44) 0%,
-      rgba(var(--scene-veil), 0.07) 26%,
-      rgba(var(--scene-veil), 0) 52%,
-      rgba(var(--scene-veil), 0.12) 76%,
-      rgba(var(--scene-veil), 0.42) 100%
-    );
   }
 
-  /* Living aurora veils - the WebGL2 shader layer (<SceneAurora/>): pure
-     additive light breathing with the music, rendered at reduced resolution
-     and stretched (the field is cloud-soft, upscaling is invisible). Sits over
-     the photo, under the legibility veil. Mounted only when motion is allowed
-     and the GPU is real; in every other world this class never appears. */
-  .scene-aurora-veil {
+  .scene-posters {
+    transition: opacity 1.4s ease;
+  }
+
+  /* Every world's still, stacked; the active one fades in (mood switches
+     cross-fade wherever the live world isn't running). */
+  .scene-poster {
+    position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
-  }
-
-  /* POV lens vignette + faint CRT scanlines - the retrofuturist HUD framing. */
-  .hud-vignette {
-    inset: 0;
-    background: radial-gradient(130% 120% at 50% 44%, transparent 50%, rgba(3, 5, 14, 0.68) 100%);
-  }
-
-  .hud-scanlines {
-    inset: 0;
-    opacity: 0.5;
-    mix-blend-mode: overlay;
-    background: repeating-linear-gradient(
-      to bottom,
-      rgba(255, 255, 255, 0.03) 0 1px,
-      transparent 1px 3px
-    );
-  }
-
-  /* ── Audio breath ───────────────────────────────────────────────────────
-     Environmental light that swells with the track. Two soft glows - a warm
-     accent rising from below (bloom follows loudness) and a cool wash from the
-     top (kick flash) - composited with `screen` so they only ever lighten the
-     scene. Sits in the backdrop layer (z-index -1 via `.scene`), so it brightens
-     the world *behind* the glass panels rather than tinting over text. The short
-     transition keeps fast onsets snappy while smoothing the per-frame steps. */
-  .scene-breath {
-    inset: 0;
-    mix-blend-mode: screen;
-    /* Environment = overall dynamics, NOT the kick (the kick lives on the orb).
-       Bloom from below swells with loudness + mids; a cool wash from the top
-       brightens with treble air. */
-    opacity: calc(0.1 + var(--audio-level) * 0.5 + var(--audio-mid) * 0.18);
-    background:
-      radial-gradient(
-        120% 85% at 50% 102%,
-        rgba(var(--color-accent), calc(0.12 + var(--audio-level) * 0.26)),
-        transparent 62%
-      ),
-      radial-gradient(
-        110% 75% at 50% -4%,
-        rgba(var(--color-ambient), calc(0.06 + var(--audio-treble) * 0.24)),
-        transparent 58%
-      );
-    transition: opacity 90ms linear;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .scene-breath {
-      opacity: 0.1;
-      transition: none;
-    }
-  }
-
-  /* ── Audio dust ─────────────────────────────────────────────────────────
-     A sparse particle field in the backdrop layer. Overall opacity tracks
-     treble, so highs/air make the air "sparkle" and quiet passages go still.
-     Two depths (::before far/small/slow, ::after near/large/fast) give parallax.
-     Drift is gated to desktop + no-reduce (matches the scene-motion strategy);
-     the opacity reaction itself is cheap and always on. */
-  .scene-particles {
-    inset: 0;
-    opacity: calc(0.08 + var(--audio-treble) * 0.7);
-    /* Foreground parallax - the nearest plane, so it travels the most with the
-       pointer and reads as depth in front of the photo/haze. */
-    transform: translate3d(calc(var(--px, 0) * -52px), calc(var(--py, 0) * -42px), 0);
-    transition: opacity 110ms linear, transform 260ms ease-out;
-    will-change: opacity, transform;
-  }
-
-  .scene-particles::before,
-  .scene-particles::after {
-    content: '';
-    position: absolute;
-    inset: -25% 0;
-    background-repeat: repeat;
-  }
-
-  .scene-particles::before {
-    background-image:
-      radial-gradient(1px 1px at 12% 30%, rgba(var(--hud-line), 0.9), transparent),
-      radial-gradient(1px 1px at 47% 70%, rgba(var(--hud-line), 0.7), transparent),
-      radial-gradient(1px 1px at 78% 18%, rgba(var(--hud-line), 0.8), transparent),
-      radial-gradient(1px 1px at 64% 52%, rgba(var(--hud-line), 0.6), transparent);
-    background-size: 200px 200px;
-  }
-
-  .scene-particles::after {
-    background-image:
-      radial-gradient(2px 2px at 22% 60%, rgba(var(--color-ambient), 0.9), transparent),
-      radial-gradient(2px 2px at 82% 40%, rgba(var(--color-accent), 0.8), transparent),
-      radial-gradient(1.5px 1.5px at 55% 12%, rgba(var(--color-ambient), 0.8), transparent);
-    background-size: 340px 340px;
-  }
-
-  @media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (pointer: fine) {
-    /* Two independent animations per layer: a slow positional drift (transform)
-       and a faster twinkle (opacity) at a different rate - they animate different
-       properties so they compose cleanly. The mismatched periods make the field
-       shimmer unevenly, like real stars catching the light. */
-    .scene-particles::before {
-      animation: dust-drift-far 46s linear infinite, dust-twinkle-far 3.6s ease-in-out infinite;
-    }
-    .scene-particles::after {
-      animation: dust-drift-near 30s linear infinite, dust-twinkle-near 2.7s ease-in-out infinite;
-    }
-  }
-
-  @keyframes dust-drift-far {
-    from { transform: translate3d(0, 0, 0); }
-    to { transform: translate3d(2%, -25%, 0); }
-  }
-
-  @keyframes dust-drift-near {
-    from { transform: translate3d(0, 0, 0); }
-    to { transform: translate3d(-3%, -25%, 0); }
-  }
-
-  @keyframes dust-twinkle-far {
-    0%, 100% { opacity: 0.65; }
-    50% { opacity: 1; }
-  }
-
-  @keyframes dust-twinkle-near {
-    0%, 100% { opacity: 1; }
-    40% { opacity: 0.7; }
-    70% { opacity: 0.95; }
-  }
-
-  /* ── Shooting stars ──────────────────────────────────────────────────────
-     Occasional meteors that streak across the deep field - the cosmic answer to
-     Wallpaper-Engine's rain/snow particles. Each is a tapered light streak that
-     slides along its own axis (rotate + translateX in the local frame), bright
-     head leading. The streak only occupies the first slice of each cycle, then the
-     meteor stays invisible - with mismatched durations + delays per meteor they
-     read as rare and random, never a synchronised volley. Photo scenes only,
-     behind the legibility veil; motion gated to desktop + no-reduce. */
-  .scene-meteors {
-    inset: 0;
-    overflow: hidden;
-    pointer-events: none;
-  }
-
-  .meteor {
-    position: absolute;
-    width: 300px;
-    height: 2px;
-    border-radius: 9999px;
-    /* long faint tail → crisp white head at the leading (right) end */
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      rgba(var(--color-ambient), 0) 28%,
-      rgba(var(--color-ambient), 0.4) 72%,
-      rgba(255, 255, 255, 0.75) 92%,
-      #ffffff 100%
-    );
-    /* drop-shadow (not box-shadow) so the glow follows the streak's alpha - a
-       tapered comet halo, not a hard capsule outline. The compositing flash this
-       used to cause behind the glass panels is fixed at the scene level via
-       `isolation: isolate` on `.scene` (the backdrop then samples one flat layer). */
-    filter: drop-shadow(0 0 7px rgba(255, 255, 255, 0.85))
-      drop-shadow(0 0 16px rgba(var(--color-ambient), 0.7));
+    object-fit: cover;
     opacity: 0;
-    will-change: transform, opacity;
+    transition: opacity 1.2s ease;
   }
 
-  @media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (pointer: fine) {
-    .meteor:nth-child(1) {
-      top: 6%;
-      left: 8%;
-      width: 280px;
-      animation: meteor-shoot 11s linear infinite;
-    }
-    .meteor:nth-child(2) {
-      top: 2%;
-      left: 30%;
-      width: 340px;
-      animation: meteor-shoot 15s linear 6s infinite;
-    }
-    .meteor:nth-child(3) {
-      top: 15%;
-      left: 4%;
-      width: 240px;
-      animation: meteor-shoot 19s linear 12s infinite;
-    }
-    /* 4th left in the markup but kept dormant - three feels rarer/calmer. */
-    .meteor:nth-child(4) {
-      display: none;
-    }
-  }
-
-  /* Slides the streak along its own (rotated) axis: a shallow down-right descent
-     (head leads, tail trails). Visible only for the first ~16% of the cycle; the
-     long invisible tail of the cycle makes each pass feel rare. */
-  @keyframes meteor-shoot {
-    0% { transform: rotate(28deg) translateX(0); opacity: 0; }
-    3% { opacity: 1; }
-    13% { opacity: 1; }
-    16% { transform: rotate(28deg) translateX(940px); opacity: 0; }
-    100% { transform: rotate(28deg) translateX(940px); opacity: 0; }
-  }
-
-  /* ── Scene: Tidal (moonlit water) ───────────────────────────────────────
-     CSS paints the still parts: a night sky with a clear horizon glow band at
-     50%, stars, a soft moon, and drifting clouds. The water surface + the
-     moonglade (the moon's broken, shimmering reflection) are drawn on a light
-     canvas (<TidalScene>) because a believable reflection needs wobbling
-     horizontal segments, not a CSS bar. Reduced-motion freezes the canvas on a
-     still frame. */
-  .scene-tidal {
-    background: linear-gradient(
-      180deg,
-      #060b20 0%,
-      #0a1430 33%,
-      #133a5a 47%,
-      #0f2f4c 51%,
-      #0a2438 70%,
-      #06182a 100%
-    );
-  }
-
-  .tidal-stars {
-    inset: 0 0 52% 0;
-    background-repeat: no-repeat;
-    background-image:
-      radial-gradient(1.4px 1.4px at 14% 18%, rgba(255, 255, 255, 0.9), transparent),
-      radial-gradient(1px 1px at 26% 40%, rgba(214, 230, 255, 0.7), transparent),
-      radial-gradient(1.2px 1.2px at 38% 12%, rgba(255, 255, 255, 0.8), transparent),
-      radial-gradient(1px 1px at 52% 30%, rgba(220, 235, 255, 0.65), transparent),
-      radial-gradient(1.5px 1.5px at 70% 20%, rgba(255, 255, 255, 0.85), transparent),
-      radial-gradient(1px 1px at 84% 36%, rgba(214, 230, 255, 0.6), transparent),
-      radial-gradient(1.2px 1.2px at 90% 14%, rgba(255, 255, 255, 0.75), transparent),
-      radial-gradient(1px 1px at 46% 44%, rgba(255, 255, 255, 0.55), transparent);
-  }
-
-  .tidal-moon {
-    left: 62%;
-    top: 12%;
-    width: 92px;
-    height: 92px;
-    transform: translateX(-50%);
-    border-radius: 50%;
-    background: radial-gradient(
-      circle at 50% 45%,
-      rgba(236, 250, 255, 0.98),
-      rgba(196, 232, 255, 0.5) 40%,
-      rgba(150, 210, 245, 0.12) 62%,
-      transparent 72%
-    );
-    box-shadow: 0 0 64px 20px rgba(150, 220, 250, 0.26);
-  }
-
-  .tidal-horizon {
-    left: 0;
-    right: 0;
-    top: 50%;
-    height: 2px;
-    background: linear-gradient(to right, transparent, rgba(178, 242, 255, 0.85), transparent);
-    filter: blur(1px);
-    box-shadow: 0 0 44px 8px rgba(132, 226, 255, 0.42);
-  }
-
-  .tidal-cloud-a,
-  .tidal-cloud-b {
-    border-radius: 50%;
-    filter: blur(34px);
-    opacity: 0.4;
-  }
-
-  .tidal-cloud-a {
-    width: 42%;
-    height: 11%;
-    left: 4%;
-    top: 24%;
-    background: radial-gradient(circle, rgba(120, 180, 230, 0.45), transparent 70%);
-  }
-
-  .tidal-cloud-b {
-    width: 32%;
-    height: 9%;
-    right: 8%;
-    top: 33%;
-    background: radial-gradient(circle, rgba(150, 175, 225, 0.36), transparent 70%);
-  }
-
-  .tidal-canvas,
-  .scene-canvas {
-    inset: 0;
-    width: 100%;
-    height: 100%;
-  }
-
-  /* ── Scene: Nocturne (starfield) - V2 baseline ──────────────────────────── */
-  .scene-nocturne {
-    background: radial-gradient(120% 100% at 70% 16%, #2a1b5e 0%, #130c30 46%, #060414 100%);
-  }
-
-  .noct-stars,
-  .noct-stars-2 {
-    inset: 0;
-    background-repeat: no-repeat;
-    background-image:
-      radial-gradient(1.4px 1.4px at 12% 22%, rgba(255, 255, 255, 0.9), transparent),
-      radial-gradient(1.2px 1.2px at 28% 64%, rgba(220, 230, 255, 0.8), transparent),
-      radial-gradient(1.6px 1.6px at 44% 34%, rgba(255, 255, 255, 0.85), transparent),
-      radial-gradient(1px 1px at 58% 72%, rgba(210, 222, 255, 0.7), transparent),
-      radial-gradient(1.5px 1.5px at 70% 26%, rgba(255, 255, 255, 0.9), transparent),
-      radial-gradient(1.1px 1.1px at 82% 58%, rgba(225, 232, 255, 0.75), transparent),
-      radial-gradient(1.3px 1.3px at 90% 38%, rgba(255, 255, 255, 0.8), transparent),
-      radial-gradient(1px 1px at 36% 12%, rgba(255, 255, 255, 0.7), transparent);
-  }
-
-  .noct-stars-2 {
-    background-image:
-      radial-gradient(1px 1px at 18% 48%, rgba(255, 255, 255, 0.6), transparent),
-      radial-gradient(1.2px 1.2px at 50% 18%, rgba(200, 215, 255, 0.7), transparent),
-      radial-gradient(1px 1px at 64% 52%, rgba(255, 255, 255, 0.6), transparent),
-      radial-gradient(1.3px 1.3px at 76% 70%, rgba(220, 230, 255, 0.7), transparent),
-      radial-gradient(1px 1px at 88% 20%, rgba(255, 255, 255, 0.6), transparent);
-    opacity: 0.7;
-  }
-
-  .noct-glow-a,
-  .noct-glow-b {
-    border-radius: 50%;
-    filter: blur(46px);
-    mix-blend-mode: screen;
-  }
-
-  .noct-glow-a {
-    width: 50%;
-    height: 40%;
-    left: 8%;
-    top: 14%;
-    background: radial-gradient(circle, rgba(124, 92, 230, 0.4), transparent 70%);
-  }
-
-  .noct-glow-b {
-    width: 44%;
-    height: 36%;
-    right: 6%;
-    bottom: 8%;
-    background: radial-gradient(circle, rgba(56, 200, 232, 0.3), transparent 70%);
-  }
-
-  /* ── Scene: Nebula Drift (photo backdrop) ───────────────────────────────────
-     Wallpaper-Engine approach: a real cosmic image as the full-bleed base layer
-     (<div.scene-photo> in AmbientScene), with only a slow drift on top. The
-     procedural nebula shader is retired here (kept orphaned for the future
-     animated layer). The base colour shows only in the brief moment before the
-     image paints / behind its scaled edges. */
-  .scene-aurora {
-    background: #070411;
-  }
-
-  /* Full-bleed photo base. `transform` carries ONLY the pointer parallax (a deep,
-     small shift) plus a slight overscan scale; the autonomous slow pan rides on
-     `background-position` so the two never fight. Kept clean and sharp - the bloom
-     is cut on photo scenes so nothing washes it out. */
-  .scene-photo {
-    inset: 0;
-    background-position: 50% 50%;
-    background-size: cover;
-    background-repeat: no-repeat;
-    /* scale = overscan (1.08) + a gentle audio "breathe"; translate = pointer
-       parallax. Both live in one transform; the audio terms are 0 at rest, so the
-       image is dead-still then. (The real depth feel comes from the depth-map
-       parallax layer, not from cranking this.) */
-    transform: scale(calc(1.08 + var(--audio-level, 0) * 0.035 + var(--audio-bass, 0) * 0.02))
-      translate3d(calc(var(--px, 0) * -10px), calc(var(--py, 0) * -8px), 0);
-    /* Hidden until its bitmap has decoded, then faded up by AmbientScene toggling
-       `.is-ready`. Without this the near-black scene floor shows through for the
-       whole decode and reads as a black blink on load / mood switch. */
-    opacity: 0;
-    transition: transform 500ms ease-out, opacity 600ms ease-out;
-    /* background-position is deliberately NOT listed: it isn't compositable,
-       so hinting it only pins an extra full-screen layer for no benefit. */
-    will-change: transform, opacity;
-  }
-
-  /* Decoded and paint-ready: the world materialises. */
-  .scene-photo.is-ready {
+  .scene-poster.is-active {
     opacity: 1;
   }
 
-  @media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (pointer: fine) {
-    .scene-photo {
-      animation: scene-photo-pan 52s ease-in-out infinite alternate;
-    }
+  /* The live world fades in over its poster once its first frame is up; the
+     posters then step out of the way (no compositing cost under an opaque canvas). */
+  .scene-world {
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 1.4s ease;
   }
 
-  @keyframes scene-photo-pan {
-    from { background-position: 47% 52%; }
-    to { background-position: 53% 47%; }
+  .scene.is-live .scene-world {
+    opacity: 1;
   }
 
-  /* Drifting colour haze - soft blurred blobs in the mood hues, blended to
-     lighten (screen). Two depths: -a nearer-ish, -b nearest (bigger parallax).
-     transform = parallax, background-position = autonomous drift. Kept low-opacity
-     so it reads as atmosphere, never a wash over the photo. */
-  .scene-haze {
-    inset: -12%;
-    pointer-events: none;
-    background-repeat: no-repeat;
-    background-size: 150% 150%;
-    mix-blend-mode: screen;
-    filter: blur(44px);
-    /* transform = parallax (slow), opacity = audio swell (snappy). */
-    transition: transform 600ms ease-out, opacity 110ms linear;
-    /* background-position is not compositable - hinting it is a free layer tax. */
-    will-change: transform, opacity;
+  .scene.is-live .scene-posters {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 1.4s ease, visibility 0s linear 1.4s;
   }
 
-  /* The colour atmosphere brightens with the music - localised blobs, not a
-     full-screen veil, so it never washes the photo. Base low → calm at rest;
-     deep parallax (-a near, -b nearest) for plane separation. */
-  .scene-haze-a {
-    opacity: calc(0.16 + var(--audio-level, 0) * 0.24 + var(--audio-bass, 0) * 0.16);
-    background-image: radial-gradient(40% 48% at 50% 50%, rgba(var(--color-accent), 0.55), transparent 70%);
-    transform: translate3d(calc(var(--px, 0) * -40px), calc(var(--py, 0) * -32px), 0);
+  /* Legibility: the chrome bands (top bar, dock) get a soft wash of the veil
+     colour - deep on dark moods, bright on daybreak - the centre stays clear. */
+  .scene-veil {
+    background: linear-gradient(
+      180deg,
+      rgba(var(--scene-veil), 0.42) 0%,
+      rgba(var(--scene-veil), 0) 16%,
+      rgba(var(--scene-veil), 0) 58%,
+      rgba(var(--scene-veil), 0.46) 100%
+    );
   }
 
-  .scene-haze-b {
-    opacity: calc(0.12 + var(--audio-level, 0) * 0.18 + var(--audio-treble, 0) * 0.18);
-    background-image: radial-gradient(44% 42% at 50% 50%, rgba(var(--color-ambient), 0.5), transparent 72%);
-    transform: translate3d(calc(var(--px, 0) * -66px), calc(var(--py, 0) * -52px), 0);
+  .scene-vignette {
+    background: radial-gradient(140% 110% at 50% 42%, transparent 58%, rgba(var(--scene-veil), 0.5) 100%);
   }
 
-  @media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (pointer: fine) {
-    .scene-haze-a {
-      animation: haze-drift-a 38s ease-in-out infinite alternate;
-    }
-    .scene-haze-b {
-      animation: haze-drift-b 50s ease-in-out infinite alternate;
-    }
-  }
-
-  @keyframes haze-drift-a {
-    from { background-position: 22% 32%; }
-    to { background-position: 44% 56%; }
-  }
-
-  @keyframes haze-drift-b {
-    from { background-position: 70% 60%; }
-    to { background-position: 48% 38%; }
-  }
-
-  .scene-photo-nebula {
-    background-image: url('/backgrounds/nebula-drift.webp');
-  }
-
-  .scene-photo-tidal {
-    background-image: url('/backgrounds/cosmic-wave.webp');
-  }
-
-  .scene-photo-nocturne {
-    background-image: url('/backgrounds/midnight-pulse.webp');
-  }
-
-  .scene-photo-horizon {
-    background-image: url('/backgrounds/lunar-haze.webp');
-  }
-
-  .scene-photo-dusk {
-    background-image: url('/backgrounds/void-bloom.webp');
-  }
-
-  /* On any photo backdrop the music-reactive bloom is silenced: the image must
-     read clean and sharp, with no luminous band crossing it. Reactivity returns
-     later, finely tuned, when the audio pillar is reopened. Scoped via :has so
-     it applies to every scene that uses a photo, leaving the CSS scenes (light)
-     with their breath. */
-  .scene:has(.scene-photo) .scene-breath {
-    display: none;
-  }
-
-  .aurora-veil-a,
-  .aurora-veil-b,
-  .aurora-veil-c {
-    inset: -20%;
-    filter: blur(50px);
-    mix-blend-mode: screen;
-  }
-
-  .aurora-veil-a {
-    background: radial-gradient(46% 40% at 76% 24%, rgba(var(--color-accent), 0.42), transparent 70%);
-  }
-
-  .aurora-veil-b {
-    background: radial-gradient(44% 38% at 30% 58%, rgba(var(--color-ambient), 0.28), transparent 72%);
-  }
-
-  .aurora-veil-c {
-    background: radial-gradient(50% 44% at 58% 88%, rgba(var(--color-accent), 0.18), transparent 74%);
-  }
-
-  /* ── Scene: Horizon (dawn/dusk) - V2 baseline ───────────────────────────── */
-  .scene-horizon {
-    background: linear-gradient(180deg, #1a1140 0%, #432065 38%, #8a3a66 64%, #c75b7a 82%, #ffb487 100%);
-  }
-
-  .horizon-sun {
-    left: 50%;
-    bottom: 6%;
-    width: 200px;
-    height: 200px;
-    transform: translateX(-50%);
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 226, 180, 0.95), rgba(255, 170, 122, 0.4) 45%, transparent 70%);
-    filter: blur(6px);
-  }
-
-  .horizon-glow-a,
-  .horizon-glow-b {
-    border-radius: 50%;
-    filter: blur(48px);
-    mix-blend-mode: screen;
-  }
-
-  .horizon-glow-a {
-    width: 60%;
-    height: 30%;
-    left: 4%;
-    bottom: 16%;
-    background: radial-gradient(circle, rgba(255, 150, 120, 0.4), transparent 70%);
-  }
-
-  .horizon-glow-b {
-    width: 44%;
-    height: 26%;
-    right: 6%;
-    top: 22%;
-    background: radial-gradient(circle, rgba(176, 120, 220, 0.34), transparent 70%);
-  }
-
-  /* ── Scene: Daybreak (the `light` mood) - bright airy sky ──────────────── */
-  .scene-daybreak {
-    background: linear-gradient(180deg, #bfe0ff 0%, #d6ecff 46%, #eaf3ff 72%, #fff6ef 100%);
-  }
-
-  .day-sun {
-    right: 16%;
-    top: 12%;
-    width: 26%;
-    height: 26%;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 248, 232, 0.95), rgba(255, 226, 170, 0.4) 42%, transparent 70%);
-    filter: blur(6px);
-  }
-
-  .day-cloud-a,
-  .day-cloud-b,
-  .day-cloud-c {
-    border-radius: 50%;
-    filter: blur(36px);
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.9), transparent 70%);
-  }
-
-  .day-cloud-a {
-    width: 46%;
-    height: 16%;
-    left: 6%;
-    top: 30%;
-    opacity: 0.85;
-  }
-
-  .day-cloud-b {
-    width: 38%;
-    height: 13%;
-    right: 8%;
-    top: 52%;
-    opacity: 0.7;
-  }
-
-  .day-cloud-c {
-    width: 30%;
-    height: 11%;
-    left: 30%;
-    top: 68%;
-    opacity: 0.6;
-  }
-
-  /* ── Scene: Dusk (the `dark` mood) - calm deep nightfall ───────────────── */
-  .scene-dusk {
-    background: radial-gradient(120% 100% at 50% 12%, #1a1638 0%, #0d0a24 52%, #07061a 100%);
-  }
-
-  .dusk-glow-a,
-  .dusk-glow-b {
-    border-radius: 50%;
-    filter: blur(50px);
-    mix-blend-mode: screen;
-  }
-
-  .dusk-glow-a {
-    width: 54%;
-    height: 42%;
-    left: 6%;
-    top: 10%;
-    background: radial-gradient(circle, rgba(124, 92, 230, 0.32), transparent 70%);
-  }
-
-  .dusk-glow-b {
-    width: 46%;
-    height: 36%;
-    right: 4%;
-    bottom: 6%;
-    background: radial-gradient(circle, rgba(56, 189, 248, 0.24), transparent 70%);
-  }
-
-  .dusk-stars {
+  /* Booting (reading the stored playlist): the world alone, nothing to flash. */
+  .boot-veil {
+    position: fixed;
     inset: 0;
-    background-repeat: no-repeat;
-    background-image:
-      radial-gradient(1.3px 1.3px at 16% 24%, rgba(255, 255, 255, 0.8), transparent),
-      radial-gradient(1px 1px at 34% 56%, rgba(214, 220, 255, 0.6), transparent),
-      radial-gradient(1.4px 1.4px at 52% 20%, rgba(255, 255, 255, 0.75), transparent),
-      radial-gradient(1px 1px at 68% 64%, rgba(214, 220, 255, 0.55), transparent),
-      radial-gradient(1.3px 1.3px at 80% 30%, rgba(255, 255, 255, 0.7), transparent),
-      radial-gradient(1px 1px at 90% 52%, rgba(214, 220, 255, 0.5), transparent);
   }
 
-  /* ── Scene motion - desktop only ("le paquet"); mobile + touch keep a still
-     frame to spare the battery, and reduced-motion always wins. The JS scenes
-     gate on the same predicate (scenes/motion.ts). ─────────────────────────── */
-  @media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (pointer: fine) {
-    .day-cloud-a {
-      animation: tidal-cloud-a 80s ease-in-out infinite alternate;
-    }
-    .day-cloud-b {
-      animation: tidal-cloud-b 104s ease-in-out infinite alternate;
-    }
-    .day-cloud-c {
-      animation: tidal-cloud-a 132s ease-in-out infinite alternate;
-    }
-    .dusk-glow-a {
-      animation: noct-drift-a 46s ease-in-out infinite alternate;
-    }
-    .dusk-glow-b {
-      animation: noct-drift-b 58s ease-in-out infinite alternate;
-    }
-    .dusk-stars {
-      animation: noct-twinkle 7s ease-in-out infinite alternate;
-    }
-    .tidal-cloud-a {
-      animation: tidal-cloud-a 70s ease-in-out infinite alternate;
-    }
-    .tidal-cloud-b {
-      animation: tidal-cloud-b 92s ease-in-out infinite alternate;
-    }
-    .noct-stars {
-      animation: noct-twinkle 6s ease-in-out infinite alternate;
-    }
-    .noct-stars-2 {
-      animation: noct-twinkle 8s ease-in-out infinite alternate-reverse;
-    }
-    .noct-glow-a {
-      animation: noct-drift-a 40s ease-in-out infinite alternate;
-    }
-    .noct-glow-b {
-      animation: noct-drift-b 52s ease-in-out infinite alternate;
-    }
-    .aurora-veil-a {
-      animation: aurora-veil-a 30s ease-in-out infinite alternate;
-    }
-    .aurora-veil-b {
-      animation: aurora-veil-b 38s ease-in-out infinite alternate;
-    }
-    .aurora-veil-c {
-      animation: aurora-veil-c 46s ease-in-out infinite alternate;
-    }
-    .horizon-glow-a {
-      animation: horizon-drift-a 44s ease-in-out infinite alternate;
-    }
-    .horizon-glow-b {
-      animation: horizon-drift-b 56s ease-in-out infinite alternate;
-    }
-  }
-
-  @keyframes tidal-cloud-a {
-    from { transform: translateX(-8%); }
-    to { transform: translateX(10%); }
-  }
-  @keyframes tidal-cloud-b {
-    from { transform: translateX(6%); }
-    to { transform: translateX(-10%); }
-  }
-  @keyframes noct-twinkle {
-    from { opacity: 0.55; }
-    to { opacity: 1; }
-  }
-  @keyframes noct-drift-a {
-    from { transform: translate3d(-3%, 0, 0); }
-    to { transform: translate3d(5%, 3%, 0); }
-  }
-  @keyframes noct-drift-b {
-    from { transform: translate3d(3%, 0, 0); }
-    to { transform: translate3d(-4%, -3%, 0); }
-  }
-  @keyframes aurora-veil-a {
-    from { transform: translate3d(-3%, -2%, 0) scale(1); }
-    to { transform: translate3d(4%, 3%, 0) scale(1.12); }
-  }
-  @keyframes aurora-veil-b {
-    from { transform: translate3d(2%, 0, 0) scale(1.05); }
-    to { transform: translate3d(-4%, 2%, 0) scale(0.95); }
-  }
-  @keyframes aurora-veil-c {
-    from { transform: translate3d(0, 2%, 0) scale(1); }
-    to { transform: translate3d(3%, -3%, 0) scale(1.1); }
-  }
-  @keyframes horizon-drift-a {
-    from { transform: translate3d(-4%, 0, 0); }
-    to { transform: translate3d(5%, -2%, 0); }
-  }
-  @keyframes horizon-drift-b {
-    from { transform: translate3d(3%, 0, 0); }
-    to { transform: translate3d(-5%, 2%, 0); }
-  }
-}
-
-/* ════════════════════════════════════════════════════════════════════════
-   HUD INSTRUMENT DETAILING (immersive moods)
-   Inspired by holographic cockpit/visor interfaces - Iron Man's lab, the
-   S.H.I.E.L.D. glass slabs, the curved gunship HUD: edge-lit translucent
-   panels framed by thin corner brackets. Kept calm and cool in Reverie's
-   palette, never the gritty red/neon of a game HUD.
-   ════════════════════════════════════════════════════════════════════════ */
-@layer utilities {
-  /* Brighter, edge-lit rim on the floating panels (the S.H.I.E.L.D. glass look).
-     Overrides the earlier `.immersive .glass` shadow at equal weight. */
+  /* ── Glass ───────────────────────────────────────────────────────────── */
+  /* Dialogs and popovers: denser than the panes - they sit over everything. */
   .immersive .glass {
+    background: linear-gradient(180deg, rgba(var(--color-surface), 0.86), rgba(var(--color-surface), 0.76));
+    border: 1px solid rgba(255, 255, 255, 0.09);
     box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.22),
-      inset 0 0 0 1px rgba(var(--hud-line), 0.14),
-      inset 0 0 34px -14px rgba(var(--hud-glow), 0.85),
-      0 0 0 1px rgba(var(--hud-line), 0.06),
-      0 30px 70px -34px rgba(var(--hud-glow), 0.7);
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 40px 100px -40px rgba(0, 0, 0, 0.75);
+    -webkit-backdrop-filter: blur(30px) saturate(160%);
+    backdrop-filter: blur(30px) saturate(160%);
   }
 
-  .immersive .hud-frame {
+  :root:not(.dark) .glass {
+    border-color: rgba(var(--color-border), 0.7);
+    box-shadow: 0 30px 80px -40px rgba(40, 50, 90, 0.35);
+  }
+
+  /* The panes: frosted, light-edged, softly shadowed. */
+  .pane {
     position: relative;
+    border-radius: 26px;
+    background: linear-gradient(180deg, rgba(var(--color-surface), 0.5), rgba(var(--color-surface), 0.3));
+    -webkit-backdrop-filter: blur(28px) saturate(150%);
+    backdrop-filter: blur(28px) saturate(150%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.07),
+      0 30px 70px -42px rgba(0, 0, 0, 0.7);
   }
 
-  /* Corner brackets - the holographic-instrument signature. A full 1px frame at
-     the panel's exact edge (24px = rounded-3xl) masked down to four 22px corner
-     squares, so only crisp L-brackets that hug the rounding remain. Bright
-     hairline + a soft --hud-glow bleed makes them read as projected light catching
-     the plate's corners, the way a Stark visor brackets every readout. Static -
-     pure structure, no audio reactivity (that lives on the inner frame below). */
-  .immersive .hud-frame::before {
+  /* A hairline edge that catches light at the top and fades down the sides. */
+  .pane::before {
     content: '';
     position: absolute;
     inset: 0;
-    z-index: 1;
+    border-radius: inherit;
+    padding: 1px;
     pointer-events: none;
-    border: 1px solid rgba(var(--hud-line), 0.85);
-    border-radius: 24px;
-    -webkit-mask:
-      linear-gradient(#000, #000) top left / 22px 22px no-repeat,
-      linear-gradient(#000, #000) top right / 22px 22px no-repeat,
-      linear-gradient(#000, #000) bottom left / 22px 22px no-repeat,
-      linear-gradient(#000, #000) bottom right / 22px 22px no-repeat;
-    mask:
-      linear-gradient(#000, #000) top left / 22px 22px no-repeat,
-      linear-gradient(#000, #000) top right / 22px 22px no-repeat,
-      linear-gradient(#000, #000) bottom left / 22px 22px no-repeat,
-      linear-gradient(#000, #000) bottom right / 22px 22px no-repeat;
-    filter: drop-shadow(0 0 4px rgba(var(--hud-glow), 0.55));
+    background: linear-gradient(
+      165deg,
+      rgba(255, 255, 255, 0.24),
+      rgba(255, 255, 255, 0.05) 38%,
+      rgba(var(--hud-glow), 0.12) 100%
+    );
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
   }
 
-  /* Inner hairline frame - a concentric second border that follows the panel's
-     rounding (was square corner brackets, which clashed with the rounded
-     corners). Inset 9px inside the rounded-3xl (24px) corner → 15px inner
-     radius keeps it parallel to the edge. Reads as a clean HUD slab frame. */
-  .immersive .hud-frame::after {
+  /* Breathes with the music's body (mids), never the kick. Flat when idle. */
+  .pane::after {
     content: '';
     position: absolute;
-    inset: 9px;
-    z-index: 1;
+    inset: 0;
+    border-radius: inherit;
     pointer-events: none;
-    /* Panels breathe with the MIDRANGE (harmony/body), never the kick - the edge
-       firms with mids, the inner bloom swells with overall loudness. Keeps the
-       UI calm and continuous while the orb carries the rhythm. Flat when idle. */
-    border: 1px solid rgba(var(--hud-line), calc(0.13 + var(--audio-mid) * 0.22));
-    border-radius: 15px;
-    box-shadow: inset 0 0 calc(16px + var(--audio-level) * 30px) -12px
-      rgba(var(--hud-glow), calc(var(--audio-level) * 0.45 + var(--audio-mid) * 0.2));
-    transition: box-shadow 90ms linear, border-color 90ms linear;
+    box-shadow: inset 0 0 calc(20px + var(--audio-level) * 40px) -18px
+      rgba(var(--hud-glow), calc(var(--audio-mid) * 0.35 + var(--audio-level) * 0.2));
+    transition: box-shadow 90ms linear;
+  }
+
+  :root:not(.dark) .pane {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.44));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      0 26px 60px -38px rgba(40, 50, 90, 0.4);
+  }
+
+  :root:not(.dark) .pane::before {
+    background: linear-gradient(165deg, rgba(255, 255, 255, 0.95), rgba(var(--color-border), 0.5) 60%);
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .immersive .hud-frame::after {
+    .pane::after {
       box-shadow: none;
-      border-color: rgba(var(--hud-line), 0.13);
       transition: none;
     }
   }
 
-  /* Waveform aura - the holographic stage's glow brightens with overall energy
-     and shimmers with treble (harmonics/air), per the vision's "waveform glow
-     reacts to harmonics". Just opacity on the existing radial wash; calm at idle. */
+  .pane-title {
+    font-family: var(--font-display);
+    font-variation-settings: 'SOFT' 50;
+    font-size: 1.35rem;
+    line-height: 1.2;
+    font-weight: 400;
+    color: rgb(var(--color-text));
+  }
+
+  /* Software rendering: blur is the costliest thing a CPU compositor can do -
+     drop it, and give the glass an opaque floor so text still holds. */
+  .gpu-software .glass,
+  .gpu-software .pane,
+  .gpu-software .world-switcher,
+  .gpu-software .wave-ribbon,
+  .gpu-software [class*='backdrop-blur'] {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  .gpu-software .pane,
+  .gpu-software.immersive .glass {
+    background: rgba(var(--color-surface), 0.92);
+  }
+
+  /* ── Layout ──────────────────────────────────────────────────────────── */
+  .app-shell {
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .top-bar {
+    position: relative;
+    z-index: 40;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 16px;
+    height: 76px;
+    padding: 0 24px;
+    flex-shrink: 0;
+  }
+
+  .stage-grid {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    gap: 20px;
+    padding: 4px 24px 16px;
+    grid-template-columns: minmax(270px, 290px) minmax(0, 1fr) minmax(290px, 310px);
+  }
+
+  @media (min-width: 1280px) {
+    .stage-grid {
+      gap: 28px;
+      grid-template-columns: minmax(300px, 330px) minmax(0, 1fr) minmax(320px, 350px);
+    }
+  }
+
+  @media (min-width: 1600px) {
+    .top-bar {
+      padding: 0 32px;
+    }
+    .stage-grid {
+      gap: 40px;
+      padding: 4px 32px 20px;
+      grid-template-columns: minmax(330px, 360px) minmax(0, 1fr) minmax(350px, 390px);
+    }
+    .dock-wrap {
+      padding: 0 32px 22px;
+    }
+  }
+
+  /* The open centre: the world, with the track set over its lower part. */
+  .stage-center {
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 22px;
+  }
+
+  .stage-wave {
+    height: clamp(118px, 19vh, 190px);
+    flex-shrink: 0;
+  }
+
+  .dock-wrap {
+    position: relative;
+    z-index: 30;
+    flex-shrink: 0;
+    padding: 0 24px 20px;
+  }
+
+  .dock {
+    padding: 12px 18px;
+  }
+
+  /* ── The resting interface ───────────────────────────────────────────────
+     While music plays and nothing stirs, the panes fade back and the world
+     takes the screen; any movement brings them straight back. */
+  .recede,
+  .dock-wrap,
+  .stage-wave {
+    transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .is-resting {
+    cursor: none;
+  }
+
+  .is-resting .recede {
+    opacity: 0;
+    transition-duration: 1.6s;
+  }
+
+  .is-resting .dock-wrap,
+  .is-resting .stage-wave {
+    opacity: 0.35;
+    transition-duration: 1.6s;
+  }
+
+  /* ── World switcher ──────────────────────────────────────────────────── */
+  .world-switcher {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px;
+    border-radius: 9999px;
+    background: rgba(var(--color-surface), 0.34);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    backdrop-filter: blur(20px) saturate(150%);
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.09),
+      0 12px 30px -18px rgba(0, 0, 0, 0.6);
+  }
+
+  :root:not(.dark) .world-switcher {
+    background: rgba(255, 255, 255, 0.55);
+    box-shadow: inset 0 0 0 1px rgba(var(--color-border), 0.7), 0 12px 30px -20px rgba(40, 50, 90, 0.35);
+  }
+
+  .world-chip {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    border-radius: 9999px;
+    outline: none;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, padding 0.3s ease;
+  }
+
+  .world-chip:focus-visible {
+    box-shadow: 0 0 0 2px rgba(var(--color-accent), 0.9);
+  }
+
+  .world-chip-thumb {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    border-radius: 9999px;
+    background-size: cover;
+    background-position: center;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), filter 0.3s ease;
+    filter: saturate(0.8) brightness(0.85);
+  }
+
+  .world-chip:hover .world-chip-thumb {
+    transform: scale(1.1);
+    filter: none;
+  }
+
+  .world-chip.is-active {
+    padding-right: 14px;
+    background: rgba(var(--color-accent), 0.16);
+    box-shadow: inset 0 0 0 1px rgba(var(--color-accent), 0.45);
+  }
+
+  .world-chip.is-active .world-chip-thumb {
+    filter: none;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35), 0 0 16px -2px rgba(var(--color-accent), 0.6);
+  }
+
+  .world-chip-label {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    color: rgb(var(--color-text));
+  }
+
+  /* ── Now playing ─────────────────────────────────────────────────────── */
+  .now-playing {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    gap: 22px;
+  }
+
+  /* A soft pool of the veil colour behind the type - legibility over any sky. */
+  .now-playing::before {
+    content: '';
+    position: absolute;
+    inset: -60px -80px -40px -80px;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(60% 70% at 32% 72%, rgba(var(--scene-veil), 0.5), transparent 75%);
+  }
+
+  .now-playing-art {
+    width: 96px;
+    height: 96px;
+    flex-shrink: 0;
+    border-radius: 20px;
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+      0 24px 50px -22px rgba(0, 0, 0, 0.75);
+  }
+
+  .now-playing-kicker {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgb(var(--color-text-secondary));
+  }
+
+  .now-playing-title {
+    font-family: var(--font-display);
+    font-variation-settings: 'SOFT' 50;
+    font-size: clamp(2rem, 3.1vw, 3.6rem);
+    line-height: 1.12;
+    font-weight: 300;
+    letter-spacing: -0.005em;
+    color: rgb(var(--color-text));
+    text-shadow: 0 2px 30px rgba(var(--scene-veil), 0.55);
+  }
+
+  .now-playing-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 10px;
+    row-gap: 2px;
+    margin-top: 6px;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    color: rgb(var(--color-text-secondary));
+  }
+
+  .now-playing-meta > span + span::before {
+    content: '·';
+    margin-right: 10px;
+    opacity: 0.55;
+  }
+
+  .now-playing-next {
+    margin-top: 8px;
+    font-size: 12px;
+    color: rgb(var(--color-text-secondary));
+  }
+
+  /* ── Waveform ribbon ─────────────────────────────────────────────────── */
+  .wave-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgb(var(--color-text-secondary));
+    background: rgba(var(--color-surface), 0.42);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+
+  .wave-chip.is-live {
+    color: rgb(var(--color-accent-text));
+    background: rgba(var(--color-accent), 0.16);
+  }
+
+  .wave-chip-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: currentColor;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .wave-chip.is-live .wave-chip-dot {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+  }
+
+  .wave-ribbon {
+    background: linear-gradient(180deg, rgba(var(--color-surface), 0.2), rgba(var(--color-surface), 0.08));
+    -webkit-backdrop-filter: blur(10px) saturate(140%);
+    backdrop-filter: blur(10px) saturate(140%);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+  }
+
+  /* ── Playlist ────────────────────────────────────────────────────────── */
+  .track-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .track-row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    border-radius: 14px;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .track-row:hover {
+    background: rgba(var(--color-text), 0.06);
+  }
+
+  .track-row.is-active {
+    background: rgba(var(--color-accent), 0.13);
+    box-shadow: inset 0 0 0 1px rgba(var(--color-accent), 0.28);
+  }
+
+  .track-main {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    align-items: center;
+    gap: 12px;
+    padding: 7px 10px;
+    border-radius: 14px;
+    text-align: left;
+    outline: none;
+  }
+
+  .track-main:focus-visible {
+    box-shadow: inset 0 0 0 2px rgba(var(--color-accent), 0.85);
+  }
+
+  .track-index {
+    display: grid;
+    width: 20px;
+    flex-shrink: 0;
+    place-items: center;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    color: rgb(var(--color-text-secondary));
+  }
+
+  .track-play {
+    display: none;
+    width: 12px;
+    height: 12px;
+    color: rgb(var(--color-text));
+  }
+
+  .track-row:hover .track-number,
+  .track-main:focus-visible .track-number {
+    display: none;
+  }
+
+  .track-row:hover .track-play,
+  .track-main:focus-visible .track-play {
+    display: block;
+  }
+
+  .track-art {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+
+  .track-title {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 14px;
+    font-weight: 600;
+    color: rgb(var(--color-text));
+  }
+
+  .track-row.is-active .track-title {
+    color: rgb(var(--color-accent-text));
+  }
+
+  .track-row.is-broken .track-title {
+    opacity: 0.6;
+  }
+
+  .track-sub {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+    color: rgb(var(--color-text-secondary));
+  }
+
+  .track-duration {
+    flex-shrink: 0;
+    margin-left: 6px;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    color: rgb(var(--color-text-secondary));
+  }
+
+  /* The remove cross takes the duration's place on hover. */
+  .track-remove {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    display: grid;
+    width: 28px;
+    height: 28px;
+    place-items: center;
+    border-radius: 9999px;
+    transform: translateY(-50%);
+    opacity: 0;
+    color: rgb(var(--color-text-secondary));
+    background: rgba(var(--color-surface), 0.7);
+    transition: opacity 0.15s ease, color 0.15s ease;
+  }
+
+  .track-remove:hover {
+    color: rgb(var(--color-text));
+  }
+
+  .track-row:hover .track-remove {
+    opacity: 1;
+  }
+
+  .track-row:hover .track-duration {
+    visibility: hidden;
+  }
+
+  .track-row[draggable='true'] {
+    cursor: grab;
+  }
+
+  .track-progress {
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    bottom: 3px;
+    height: 2px;
+    border-radius: 2px;
+    background: rgb(var(--color-accent));
+    box-shadow: 0 0 8px rgba(var(--color-accent), 0.7);
+    transform: scaleX(0);
+    transform-origin: left;
+    pointer-events: none;
+  }
+
+  .track-row.drop-before::before,
+  .track-row.drop-after::after {
+    content: '';
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    height: 2px;
+    border-radius: 2px;
+    background: rgb(var(--color-accent));
+    box-shadow: 0 0 10px rgba(var(--color-accent), 0.8);
+    pointer-events: none;
+  }
+
+  .track-row.drop-before::before {
+    top: -2px;
+  }
+
+  .track-row.drop-after::after {
+    bottom: -2px;
+  }
+
+  .eq-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 12px;
+  }
+
+  .eq-bars span {
+    width: 3px;
+    height: 45%;
+    border-radius: 1px;
+    background: rgb(var(--color-accent));
+  }
+
+  .eq-bars span:nth-child(2) {
+    height: 80%;
+  }
+
+  .eq-bars span:nth-child(3) {
+    height: 60%;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .eq-bars.is-playing span {
+      animation: eq-bar 0.9s ease-in-out infinite alternate;
+    }
+    .eq-bars.is-playing span:nth-child(2) {
+      animation-duration: 0.7s;
+      animation-delay: -0.3s;
+    }
+    .eq-bars.is-playing span:nth-child(3) {
+      animation-duration: 1.1s;
+      animation-delay: -0.6s;
+    }
+  }
+
+  @keyframes eq-bar {
+    from { transform: scaleY(0.3); }
+    to { transform: scaleY(1); }
+  }
+
+  .eq-bars span {
+    transform-origin: bottom;
+  }
+
+  /* ── Drop overlay: play now | add to playlist ────────────────────────── */
+  .drop-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    padding: 32px;
+    pointer-events: none;
+    background: rgba(var(--scene-veil), 0.55);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    animation: enter 150ms ease-out;
+    --tw-enter-opacity: 0;
+  }
+
+  .drop-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    border-radius: 32px;
+    border: 2px dashed rgba(var(--color-border), 0.7);
+    background: rgba(var(--color-surface), 0.22);
+    text-align: center;
+    transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .drop-zone.is-target {
+    border-color: rgb(var(--color-accent));
+    background: rgba(var(--color-accent), 0.14);
+    box-shadow: 0 30px 80px -40px rgba(var(--color-accent), 0.8);
+  }
+
+  .drop-zone-icon {
+    display: grid;
+    width: 64px;
+    height: 64px;
+    place-items: center;
+    border-radius: 9999px;
+    color: rgb(var(--color-accent-text));
+    background: rgba(var(--color-accent), 0.16);
+  }
+
+  /* ── Welcome ─────────────────────────────────────────────────────────── */
+  .welcome-stage::before {
+    content: '';
+    position: absolute;
+    inset: -14% -22%;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(58% 60% at 50% 46%, rgba(var(--scene-veil), 0.5), rgba(var(--scene-veil), 0.28) 58%, transparent 80%);
+  }
+}
+
+/* ── Session power-on ────────────────────────────────────────────────────────
+   Loading a track brings the interface in once: bars slide into place, panes
+   fade up (self-opacity only - a fading ANCESTOR would switch their glass off
+   for the whole fade), the track card and ribbon focus in. One orchestrated
+   second, never under reduced motion; every animation is a both-filled one-shot
+   on transform/opacity, so the resting layout never drifts. */
+@layer utilities {
+  .cockpit-boot .top-bar {
+    animation: boot-rail-down 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .cockpit-boot .dock-wrap {
+    animation: boot-rail-up 560ms cubic-bezier(0.22, 1, 0.36, 1) 80ms both;
+  }
+  .cockpit-boot .stage-grid > .pane:first-child {
+    animation: boot-glass 700ms cubic-bezier(0.22, 1, 0.36, 1) 140ms both;
+  }
+  .cockpit-boot .stage-grid > .pane:last-child {
+    animation: boot-glass 700ms cubic-bezier(0.22, 1, 0.36, 1) 200ms both;
+  }
+  .cockpit-boot .now-playing {
+    animation: boot-readout 800ms cubic-bezier(0.22, 1, 0.36, 1) 260ms both;
+  }
+  .cockpit-boot .stage-wave {
+    animation: boot-plate 760ms cubic-bezier(0.22, 1, 0.36, 1) 340ms both;
+  }
+
+  @keyframes boot-rail-down {
+    from { transform: translateY(-14px); opacity: 0; }
+  }
+  @keyframes boot-rail-up {
+    from { transform: translateY(14px); opacity: 0; }
+  }
+  @keyframes boot-glass {
+    from { opacity: 0; }
+  }
+  @keyframes boot-plate {
+    from { opacity: 0; transform: scale(0.985); }
+  }
+  @keyframes boot-readout {
+    from { opacity: 0; transform: translateY(8px); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cockpit-boot .top-bar,
+    .cockpit-boot .dock-wrap,
+    .cockpit-boot .stage-grid > .pane,
+    .cockpit-boot .now-playing,
+    .cockpit-boot .stage-wave {
+      animation: none;
+    }
+  }
+}
+
+
+@layer utilities {
   .immersive .wf-aura {
     opacity: calc(0.7 + var(--audio-level) * 0.5 + var(--audio-treble) * 0.5);
     transition: opacity 90ms linear;
@@ -1762,34 +1550,6 @@
      They used to bob a few px vertically with the music (--audio-level); the
      section positions must not move, so the transform is gone. Audio reactivity
      now lives only in non-positional cues (glows, borders, breath). */
-
-  /* ── Instrument dial (HudDial) ──────────────────────────────────────────
-     Concentric rings + a graduated rim + an accent arc. The rings spin only
-     while active (`.is-spinning`), and never under reduced-motion. */
-  .hud-dial .hud-spin,
-  .hud-dial .hud-spin-rev {
-    transform-box: view-box;
-    transform-origin: 50% 50%;
-  }
-
-  .hud-dial.is-spinning .hud-spin {
-    animation: hud-spin 26s linear infinite;
-  }
-
-  .hud-dial.is-spinning .hud-spin-rev {
-    animation: hud-spin 18s linear infinite reverse;
-  }
-
-  @keyframes hud-spin {
-    to { transform: rotate(360deg); }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .hud-dial.is-spinning .hud-spin,
-    .hud-dial.is-spinning .hud-spin-rev {
-      animation: none;
-    }
-  }
 
   /* ── Corner readout - small uppercase instrument label in the hairline hue. */
   .hud-readout {
@@ -1901,362 +1661,13 @@
     }
   }
 
-  /* ── Side-console 3D ────────────────────────────────────────────────────
-     A real HUD puts the readable info on angled side consoles and keeps the
-     centre flat to look through. The control rail (side) tilts in on its inner
-     edge; the waveform (centre) stays flat - the part you watch. The perspective
-     sits on a wrapper around ONLY the control rail, so it never becomes a
-     backdrop-root for the waveform (which would flatten its glass blur).
-     Two-column layout only (lg+); the stacked mobile layout stays flat. */
-  @media (min-width: 1024px) {
-    /* Each side console is its OWN perspective root - never the grid, which would
-       become a backdrop-root and flatten the centre waveform's glass blur. A short
-       perspective gives the dramatic cockpit-visor rake the user asked for. */
-    .hud-console {
-      perspective: 1500px;
-    }
-    /* Both side consoles hinge on their inner edge (the one facing the central
-       waveform) and swing their outer edge forward - a cockpit "V" wrapping
-       toward the viewer, mirrored left/right. The pivot sits at the centre of that
-       inner edge so the corners project symmetrically up AND down. (This is safe
-       only because each console holds a constant height - EFFECTS reserves its
-       adjustments height - so the centre-pivot foreshortening is identical across
-       effects and never shifts the projected top edge.) */
-    .hud-console-left {
-      transform: rotateY(18deg);
-      transform-origin: right center;
-    }
-    .hud-console-right {
-      transform: rotateY(-18deg);
-      transform-origin: left center;
-    }
-    /* Projected-pane fill for the raked consoles. backdrop-filter blur tends to
-       flatten under a 3D transform, so legibility here can't lean on it: lift the
-       surface fill (still translucent - the scene reads through) so text stays
-       crisp at the oblique angle, the way a real visor HUD pane is lit, not
-       frosted. Tilted consoles only; the flat centre keeps the see-through glass. */
-    .immersive .hud-console-left .glass,
-    .immersive .hud-console-right .glass {
-      background:
-        repeating-linear-gradient(
-          to bottom,
-          rgba(var(--hud-line), 0.05) 0 1px,
-          transparent 1px 4px
-        ),
-        linear-gradient(
-          165deg,
-          rgba(var(--color-surface), 0.46) 0%,
-          rgba(var(--color-surface), 0.30) 45%,
-          rgba(var(--color-surface), 0.18) 100%
-        );
-    }
-  }
-}
-
-
-/* ── Mood dive transition ──────────────────────────────────────────────────
-   Switching mood = plunging into a new environment. The cockpit glass stays put
-   (the compositor); the world we're leaving scales up and dissolves as we break
-   through it, while the new one rises out of a slight zoom and settles into focus
-   underneath - a centred luminous swell, in the new mood's own colour, cresting
-   over the cockpit at the threshold. Spectacular but composed: no lateral slide,
-   no sci-fi chrome, one slow expo curve. Orchestrated by <MoodTransition>, which
-   mounts the layers (and adds `.mood-warp` to <html>) only when motion is allowed
-   - under reduced motion / touch none of it runs and the body cross-fade stands in. */
-@layer utilities {
-  /* Outgoing world: a full-bleed copy of the backdrop we're leaving that scales
-     up, blurs and dissolves as we break through it, revealing the new scene rising
-     into focus underneath. On top of the live scene (later in the DOM, same z -1),
-     below the cockpit UI - the world dissolves, the cockpit you sit in stays put.
-     Isolated so the panels' backdrop-filter samples one flat layer (no flash). */
-  .warp-world {
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    overflow: hidden;
-    isolation: isolate;
-    will-change: transform, opacity, filter;
-    animation: warp-world-out 940ms cubic-bezier(0.5, 0, 0.2, 1) forwards;
-  }
-
-  /* Strip the live scene-photo's parallax/pan/transition so only the wrapper
-     drives the dive (otherwise two transforms fight). */
-  .warp-world > .scene-photo {
-    position: absolute;
-    inset: 0;
-    transform: none;
-    animation: none;
-    transition: none;
-    /* The outgoing copy is shown immediately (no decode gate - its bitmap is
-       already on screen), so it must opt out of `.scene-photo`'s hidden default. */
-    opacity: 1;
-  }
-
-  /* Leaving the light mood (no photo): a soft daybreak wash to dissolve out. */
-  .warp-world-flat {
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(120% 100% at 50% 18%, #bfe0ff 0%, #dbeeff 52%, #eaf3ff 74%, #fff6ef 100%);
-  }
-
-  /* Break through it: a gentle scale-up + light blur as it fades, so it reads as
-     passing THROUGH the old world rather than a flat cross-fade. The blur is what
-     keeps the dissolving old photo from competing as a sharp image with the new one
-     rising underneath (without it the two backdrops blend messily). */
-  @keyframes warp-world-out {
-    0% {
-      transform: scale(1);
-      filter: blur(0);
-      opacity: 1;
-    }
-    100% {
-      transform: scale(1.12);
-      filter: blur(4px);
-      opacity: 0;
-    }
-  }
-
-  /* Incoming world rises into focus: the live scene-photo eases down from a slight
-     zoom and de-blurs while lifting from a dim start - the new atmosphere closing
-     in around you. Scoped to the scene's own photo (`.scene >`) so the outgoing
-     copy is untouched. No `forwards` - releases to the base transform (parallax +
-     audio breathe). */
-  .mood-warp .scene > .scene-photo {
-    /* Keep the slow background-position pan running ALONGSIDE the dive (it animates
-       background-position, the dive animates transform/filter/opacity - no conflict)
-       so it never stops and restarts. If the dive overrode the `animation` shorthand
-       alone, removing `.mood-warp` would restart `scene-photo-pan` from its `from`
-       keyframe (47% 52%), snapping background-position a couple of % off the static
-       base (50% 50%) - the few-pixel vertical recale at the end of the transition.
-       Listing it here keeps it in flight across the class toggle. `.mood-warp` only
-       mounts on desktop + motion-allowed: the exact context where the pan runs. */
-    animation:
-      scene-photo-pan 52s ease-in-out infinite alternate,
-      warp-scene-in 1000ms cubic-bezier(0.5, 0, 0.2, 1);
-  }
-
-  @keyframes warp-scene-in {
-    0% {
-      transform: scale(1.14) translate3d(0, 0, 0);
-      filter: blur(4px);
-      /* Opaque from the first frame: the new world is the SOLID base the outgoing
-         copy dissolves away to reveal, instead of a second semi-transparent photo
-         the old one muddily blends with. The reveal reads clean; the focus-pull
-         (scale + de-blur) still carries the "rise into being". */
-      opacity: 1;
-    }
-    /* End EXACTLY on `.scene-photo`'s resting transform (same scale + parallax
-       expression), so when the animation releases there's zero delta - no late
-       drift from the photo's 500ms transform transition snapping back to the live
-       pointer-parallax offset. */
-    100% {
-      transform: scale(calc(1.08 + var(--audio-level, 0) * 0.035 + var(--audio-bass, 0) * 0.02))
-        translate3d(calc(var(--px, 0) * -10px), calc(var(--py, 0) * -8px), 0);
-      filter: blur(0);
-      opacity: 1;
-    }
-  }
-
-  /* The luminous swell - a centred radial bloom in the NEW mood's live colour
-     (white-hot core → accent → hud-glow halo), screen-blended so it only ever
-     lightens. It crests over the whole cockpit at the threshold (masking the token
-     swap) then clears, growing as it dissipates. Centred and symmetric: the
-     spectacle, kept classy - no rings, no streaks, no telemetry. */
-  .warp-bloom {
-    position: fixed;
-    inset: 0;
-    z-index: 55;
-    pointer-events: none;
-    mix-blend-mode: screen;
-    background: radial-gradient(
-      58% 58% at 50% 50%,
-      rgba(255, 255, 255, 0.5) 0%,
-      rgba(var(--color-accent), 0.42) 26%,
-      rgba(var(--hud-glow), 0.28) 50%,
-      transparent 72%
-    );
-    opacity: 0;
-    transform: scale(0.78);
-    will-change: opacity, transform;
-    animation: warp-bloom-k 1020ms cubic-bezier(0.5, 0, 0.2, 1) forwards;
-  }
-
-  @keyframes warp-bloom-k {
-    0% {
-      opacity: 0;
-      transform: scale(0.82);
-    }
-    44% {
-      opacity: 0.54;
-    }
-    100% {
-      opacity: 0;
-      transform: scale(1.16);
-    }
-  }
-
-  /* The cockpit gives a single soft acknowledgement as the new environment lands:
-     the panel hairlines firm and bloom once, the rails lift their glow. Briefly
-     overrides the audio-reactive border/shadow, then releases back to it. One
-     smooth swell on the same expo curve as the dive - no flicker, no glitch. */
-  .mood-warp .immersive .hud-frame::after {
-    animation: hud-warp-frame 940ms cubic-bezier(0.5, 0, 0.2, 1);
-  }
-
-  @keyframes hud-warp-frame {
-    0% {
-      border-color: rgba(var(--hud-line), 0.13);
-      box-shadow: inset 0 0 16px -12px rgba(var(--hud-glow), 0);
-    }
-    32% {
-      border-color: rgba(var(--hud-line), 0.5);
-      box-shadow: inset 0 0 28px -10px rgba(var(--hud-glow), 0.5);
-    }
-    100% {
-      border-color: rgba(var(--hud-line), 0.13);
-      box-shadow: inset 0 0 16px -12px rgba(var(--hud-glow), 0);
-    }
-  }
-
-  .mood-warp .immersive .hud-rail::after {
-    animation: hud-warp-rail 940ms cubic-bezier(0.5, 0, 0.2, 1);
-  }
-
-  @keyframes hud-warp-rail {
-    0% {
-      box-shadow:
-        inset 0 1px 0 0 rgba(255, 255, 255, 0.16),
-        inset 0 0 30px -16px rgba(var(--hud-glow), 0.7);
-    }
-    32% {
-      box-shadow:
-        inset 0 1px 0 0 rgba(255, 255, 255, 0.24),
-        inset 0 0 38px -12px rgba(var(--hud-glow), 0.9);
-    }
-    100% {
-      box-shadow:
-        inset 0 1px 0 0 rgba(255, 255, 255, 0.16),
-        inset 0 0 30px -16px rgba(var(--hud-glow), 0.7);
-    }
-  }
-
-  /* Belt-and-suspenders: <MoodTransition> already withholds the dive under
-     reduced motion, but never let these animations run if the class slips on. */
-  @media (prefers-reduced-motion: reduce) {
-    .warp-world,
-    .warp-bloom,
-    .mood-warp .scene > .scene-photo,
-    .mood-warp .immersive .hud-frame::after,
-    .mood-warp .immersive .hud-rail::after {
-      animation: none;
-    }
-  }
-}
-
-/* ── Cockpit power-on ───────────────────────────────────────────────────────
-   Loading a track boots the cockpit: the rails slide into place, the side
-   consoles light up out of a blur, the centre plates focus in, the corner
-   brackets and hairlines trace themselves, and the telemetry readouts settle
-   one after another - one orchestrated second, once per session, while the
-   wave instrument prints itself behind its scanning beam (canvas-side).
-   `.cockpit-boot` is set by App only when a session starts AND motion is
-   allowed (never under prefers-reduced-motion) and removed when the sequence
-   ends. Every animation is a both-filled one-shot on transform/opacity/filter,
-   so nothing here can drift the resting layout. */
-@layer utilities {
-  /* Glass rule of the boot: backdrop-filter only samples the scene when no
-     ANCESTOR carries an animated opacity or filter (either makes the ancestor
-     the backdrop root, so the glass goes inert for the whole fade and pops on
-     at its last frame). Transform is safe, and an element's OWN opacity
-     attenuates its glass continuously. Hence: the rails slide in without
-     fading - their glass (the element's blur, or the ::after plate in
-     immersive) is live from frame 1 - and every fade below sits directly on
-     the glass element itself, never on a wrapper. */
-  .cockpit-boot .hud-rail-top {
-    animation: boot-rail-down 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-  .cockpit-boot .hud-rail-bottom {
-    animation: boot-rail-up 560ms cubic-bezier(0.22, 1, 0.36, 1) 80ms both;
-  }
-  /* The raked consoles carry a rotateY pose, so their fade lands on the glass
-     Cards (self-opacity), never on the .hud-console wrapper (backdrop root)
-     and never as a transform (it would fight the visor geometry). */
-  .cockpit-boot .hud-console-left .hud-frame {
-    animation: boot-glass 700ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
-  }
-  .cockpit-boot .hud-console-right .hud-frame {
-    animation: boot-glass 700ms cubic-bezier(0.22, 1, 0.36, 1) 180ms both;
-  }
-  /* Centre plates (track identity + wave instrument) - flat, so a whisper of
-     scale is safe here (but no filter: same backdrop-root trap as the
-     consoles - the frames are glass themselves). */
-  .cockpit-boot section .hud-frame {
-    animation: boot-plate 680ms cubic-bezier(0.22, 1, 0.36, 1) 220ms both;
-  }
-  .cockpit-boot .hud-frame::before {
-    animation: boot-light 620ms cubic-bezier(0.22, 1, 0.36, 1) 260ms both;
-  }
-  .cockpit-boot .hud-frame::after {
-    animation: boot-hairline 900ms cubic-bezier(0.16, 1, 0.3, 1) 320ms both;
-  }
-  .cockpit-boot dl > * {
-    animation: boot-readout 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-  .cockpit-boot dl > *:nth-child(1) { animation-delay: 380ms; }
-  .cockpit-boot dl > *:nth-child(2) { animation-delay: 425ms; }
-  .cockpit-boot dl > *:nth-child(3) { animation-delay: 470ms; }
-  .cockpit-boot dl > *:nth-child(4) { animation-delay: 515ms; }
-  .cockpit-boot dl > *:nth-child(5) { animation-delay: 560ms; }
-  .cockpit-boot dl > *:nth-child(6) { animation-delay: 605ms; }
-
-  /* No opacity here: the rails' glass must be live from the first frame (see
-     the backdrop-root note above), so they arrive by motion alone. */
-  @keyframes boot-rail-down {
-    from { transform: translateY(-14px); }
-  }
-  @keyframes boot-rail-up {
-    from { transform: translateY(14px); }
-  }
-  @keyframes boot-light {
-    from { opacity: 0; filter: blur(10px); }
-  }
-  /* Self-opacity fade for glass elements: their own opacity attenuates the
-     backdrop blur continuously (unlike a wrapper fade, which disables it). */
-  @keyframes boot-glass {
-    from { opacity: 0; }
-  }
-  @keyframes boot-plate {
-    from { opacity: 0; transform: scale(0.984); }
-  }
-  @keyframes boot-hairline {
-    from { opacity: 0; clip-path: inset(0 100% 0 0); }
-  }
-  @keyframes boot-readout {
-    from { opacity: 0; transform: translateY(5px); filter: blur(3px); }
-  }
-
-  /* App never sets the class under reduced motion; this is the safety net. */
-  @media (prefers-reduced-motion: reduce) {
-    .cockpit-boot .hud-rail-top,
-    .cockpit-boot .hud-rail-bottom,
-    .cockpit-boot .hud-console-left .hud-frame,
-    .cockpit-boot .hud-console-right .hud-frame,
-    .cockpit-boot section .hud-frame,
-    .cockpit-boot .hud-frame::before,
-    .cockpit-boot .hud-frame::after,
-    .cockpit-boot dl > * {
-      animation: none;
-    }
-  }
 }
 
 /* ── Mood palette cross-fade ─────────────────────────────────────────────────
    A mood swaps the whole palette at once: the --color-* / --hud-* tokens flip on
-   <html> the instant `data-mood` changes. The scene dives and the bloom crests
-   to carry the backdrop, and the chrome hairlines bloom once (`hud-warp-*`) -
-   but the cockpit's own palette-driven colours (text, accent fills, borders,
-   icons) would otherwise snap. While <html> carries `.mood-shifting` (added by
+   <html> the instant `data-mood` changes. The world cross-fades inside its
+   engine, but the interface's own palette-driven colours (text, accent fills,
+   borders, icons) would otherwise snap. While <html> carries `.mood-shifting` (added by
    MoodContext for the length of the switch) every element eases those colours,
    so the chrome recolours in step with the diving backdrop. This also covers the
    reduced-motion / touch path, where the dive is withheld and only the colours
@@ -2264,7 +1675,7 @@
 
    Unlayered on purpose, so it outranks the layered component styles without
    `!important`. Only the directly-interpolable colour properties are listed:
-   gradient fills (.glass / .hud-rail) and box-shadow glows can't tween and are
+   gradient fills (.glass / .pane) and box-shadow glows can't tween and are
    left to the bloom + hairline swell to mask. Audio-reactive glows opt out so
    their per-frame box-shadow keeps its own snappy easing rather than being
    slowed to the cross-fade duration. */

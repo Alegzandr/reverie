@@ -5,7 +5,7 @@
  * Extracted from useAudioProcessor for better separation of concerns.
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { audioProcessor } from '../utils/audioProcessor';
 import type { AudioProcessingOptions } from '../utils/audioProcessor';
 import { extractAudioMetadata } from '../utils/audioMetadataExtractor';
@@ -54,6 +54,9 @@ export function useAudioFile(): UseAudioFileReturn {
   const [originalBuffer, setOriginalBuffer] = useState<AudioBuffer | null>(null);
   const [processedBuffer, setProcessedBuffer] = useState<AudioBuffer | null>(null);
   const [metadata, setMetadata] = useState<AudioMetadata | null>(null);
+  // Bumped per load: a decode that finishes after a newer request started is
+  // stale (the listener already skipped past it) and must not commit its state.
+  const loadSeqRef = useRef(0);
 
   const getBufferDuration = useCallback((buffer: AudioBuffer | null) => {
     if (!buffer) return 0;
@@ -80,6 +83,7 @@ export function useAudioFile(): UseAudioFileReturn {
   }, []);
 
   const loadAudioFile = useCallback(async (file: File) => {
+    const seq = ++loadSeqRef.current;
     // Reject oversized files up front: decoding is in-memory, so a huge file can
     // OOM the tab. Guarded here (the single choke point for both the drag-drop
     // and browse paths) rather than per UI surface.
@@ -96,6 +100,7 @@ export function useAudioFile(): UseAudioFileReturn {
       const rawMetadata = await extractAudioMetadata(file);
 
       const buffer = await audioProcessor.loadAudioFile(file);
+      if (seq !== loadSeqRef.current) return undefined;
       const bufferDuration = getBufferDuration(buffer);
 
       const originalFormat = file.name.split('.').pop()?.toLowerCase() || '';
@@ -120,6 +125,7 @@ export function useAudioFile(): UseAudioFileReturn {
       setState((prev) => ({ ...prev, isLoading: false, progress: 100 }));
       return buffer;
     } catch (error) {
+      if (seq !== loadSeqRef.current) return undefined;
       const message = error instanceof Error
         ? `${ERROR_MESSAGES.LOAD_FAILED}: ${error.message}`
         : ERROR_MESSAGES.LOAD_FAILED;

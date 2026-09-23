@@ -24,8 +24,15 @@ export interface ProcessingState {
  * for the next play and for export. Export renders the current settings offline on
  * demand, so there is no separate "apply/bake" step in the UI.
  */
-export function useAudioProcessor() {
+interface UseAudioProcessorOptions {
+  /** A track played out to its natural end (repeat-one aside) - the playlist advances on it. */
+  onTrackEnd?: () => void;
+}
+
+export function useAudioProcessor({ onTrackEnd }: UseAudioProcessorOptions = {}) {
   const [error, setError] = useState<string | null>(null);
+  // Mirrors useAudioFile's own guard: a superseded load must not attach its buffer.
+  const loadSeqRef = useRef(0);
   const optionsRef = useRef<AudioProcessingOptions>(NEUTRAL_OPTIONS);
   const renderedRef = useRef<AudioBuffer | null>(null);
   // Detected tempo for the Nightcore beat grid. There is no BPM in the source files,
@@ -80,6 +87,7 @@ export function useAudioProcessor() {
     getBufferDuration,
     getFallbackBuffer: getPlaybackBuffer,
     onError: setError,
+    onTrackEnd,
   });
 
   const {
@@ -100,10 +108,12 @@ export function useAudioProcessor() {
   );
 
   const loadAudioFile = useCallback(async (file: File) => {
+    const seq = ++loadSeqRef.current;
     setError(null);
     stopAudio();
     renderedRef.current = null;
     const buffer = await loadFile(file);
+    if (seq !== loadSeqRef.current) return undefined;
     const nextBuffer = buffer || audioProcessor.getAudioBuffer();
     attachBuffer(nextBuffer, { resetPosition: true });
     // Warm the Nightcore sample cache now (fire-and-forget) so enabling the beats - or

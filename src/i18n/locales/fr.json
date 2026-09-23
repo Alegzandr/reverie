@@ -16,12 +16,13 @@
   },
   "upload": {
     "title": "Téléverser un fichier audio",
-    "dragDrop": "Glissez-déposez un fichier audio ici",
+    "dragDrop": "Déposez votre musique ici, fichiers ou dossiers entiers",
     "or": "ou",
     "browse": "Sélectionner un fichier",
     "formats": "MP3, WAV, FLAC, OGG, M4A, AAC, AIFF, WebM",
     "loading": "Chargement...",
-    "dropToReplace": "Déposez pour changer de piste"
+    "dropPlay": "Lire maintenant",
+    "dropQueue": "Ajouter à la playlist"
   },
   "effects": {
     "none": "Original",
@@ -54,20 +55,20 @@
     "pause": "Pause",
     "export": "Exporter",
     "exporting": "Exportation...",
-    "repeat": "Répéter",
     "volume": "Volume",
     "mute": "Couper le son",
-    "unmute": "Rétablir le son"
+    "unmute": "Rétablir le son",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "shuffle": "Lecture aléatoire",
+    "repeatOff": "Répétition : désactivée",
+    "repeatAll": "Répéter la playlist",
+    "repeatOne": "Répéter ce morceau"
   },
   "track": {
     "title": "Piste",
     "format": "Format",
     "name": "Nom",
-    "size": "Taille",
-    "bitrate": "Débit",
-    "sampleRate": "Échantillonnage",
-    "channels": "Canaux",
-    "bitDepth": "Résolution",
     "mono": "Mono",
     "stereo": "Stéréo"
   },
@@ -121,15 +122,15 @@
   "settings": {
     "open": "Réglages",
     "title": "Réglages",
-    "subtitle": "Égaliseur et langue",
+    "subtitle": "Scène, égaliseur et langue",
     "moods": "Moods",
     "mood": {
-      "light": "Clair",
-      "dark": "Void Bloom",
-      "tidal": "Cosmic Wave",
-      "nocturne": "Midnight Pulse",
-      "aurora": "Nebula Drift",
-      "horizon": "Lunar Haze"
+      "light": "Aube",
+      "dark": "Aurore boréale",
+      "tidal": "Marée lunaire",
+      "nocturne": "Singularité",
+      "aurora": "Nébuleuse",
+      "horizon": "Vallée de l'écho"
     },
     "language": "Langue",
     "equalizer": "Égaliseur",
@@ -138,19 +139,44 @@
     "eqReset": "Réinitialiser",
     "eqBand": "Bande {{freq}}",
     "eqHint": "S'applique uniquement à l'écoute, pas à vos exports.",
-    "close": "Fermer les réglages"
+    "close": "Fermer les réglages",
+    "scene": "Scène",
+    "livingWorld": "Monde vivant",
+    "livingWorldHint": "La scène bouge avec votre musique (désactivé, économise la batterie)",
+    "restUi": "Laisser l'interface s'effacer",
+    "restUiHint": "Les panneaux s’estompent pendant l’écoute et reviennent dès que vous bougez"
   },
   "studio": {
     "effects": "Effets",
     "adjustments": "Réglages",
     "mood": "Mood",
     "moods": "Moods",
-    "recentMoods": "Récemment utilisés",
-    "allMoods": "Tous les moods",
     "active": "Actif",
     "inactive": "Inactif",
-    "levels": "Niveaux",
-    "backdrop": "Image de fond",
-    "backdropHint": "Afficher la photo derrière la scène"
+    "levels": "Niveaux"
+  },
+  "playlist": {
+    "title": "Playlist",
+    "add": "Ajouter de la musique",
+    "addFolder": "Ajouter un dossier",
+    "clear": "Vider la playlist",
+    "clearConfirm": "Retirer tous les morceaux ?",
+    "clearYes": "Vider",
+    "cancel": "Annuler",
+    "remove": "Retirer de la playlist",
+    "filter": "Filtrer les morceaux",
+    "empty": "Votre playlist est vide",
+    "emptyHint": "Déposez ici des fichiers audio ou des dossiers entiers",
+    "stored": "Gardée sur cet appareil uniquement, jamais envoyée",
+    "storageFull": "Certains morceaux n'ont pas pu être gardés sur cet appareil (stockage plein)",
+    "broken": "Impossible de lire ce fichier",
+    "noMatch": "Aucun morceau ne correspond",
+    "nowPlaying": "En lecture",
+    "upNext": "Ensuite",
+    "position": "{{index}} sur {{total}}"
+  },
+  "welcome": {
+    "resume": "Reprendre là où vous en étiez",
+    "resumeHint": "Morceaux dans votre playlist : {{count}}"
   }
 }

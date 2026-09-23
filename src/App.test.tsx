@@ -51,9 +51,10 @@ vi.mock('./hooks/useAudioProcessor', () => ({
 vi.mock('./contexts/MoodContext', () => ({
   useMood: () => ({
     mood: 'light',
-    def: { kind: 'workspace', scene: 'daybreak' },
+    def: { id: 'light', base: 'light', world: 'daybreak' },
     setMood: mockSetMood,
-    recentMoods: ['light', 'dark'],
+    livingWorld: false,
+    toggleLivingWorld: vi.fn(),
   }),
 }));
 
@@ -133,41 +134,42 @@ describe('App', () => {
     expect(mockApi.reset).toHaveBeenCalled();
   });
 
-  it('loads a replacement file from the workspace', async () => {
-    const file = new File(['abc'], 'upload.mp3', { type: 'audio/mp3' });
-    mockApi.originalFile = file;
-
-    renderWithRouter(<App />);
-
-    await userEvent.upload(screen.getByLabelText('upload.browse'), file);
-    expect(mockApi.loadAudioFile).toHaveBeenCalledWith(file);
-  });
-
-  it('resumes playback on the new track when swapping files mid-play', async () => {
-    const oldFile = new File(['old'], 'old.mp3', { type: 'audio/mp3' });
-    const newFile = new File(['new'], 'new.mp3', { type: 'audio/mp3' });
-    const newBuffer = new AudioBuffer({ length: 1, numberOfChannels: 1, sampleRate: 44100 });
-    mockApi.originalFile = oldFile;
-    mockState.isPlaying = true;
-    mockApi.loadAudioFile.mockResolvedValueOnce(newBuffer);
-
-    renderWithRouter(<App />);
-
-    await userEvent.upload(screen.getByLabelText('upload.browse'), newFile);
-    expect(mockApi.loadAudioFile).toHaveBeenCalledWith(newFile);
-    expect(mockApi.playAudio).toHaveBeenCalledWith(newBuffer, 0);
-  });
-
-  it('keeps the new track paused when swapping files while stopped', async () => {
-    const newFile = new File(['new'], 'new.mp3', { type: 'audio/mp3' });
+  it('adds files from the workspace to the playlist without interrupting the track', async () => {
     mockApi.originalFile = new File(['old'], 'old.mp3', { type: 'audio/mp3' });
+    renderWithRouter(<App />);
+
+    const file = new File(['abc'], 'Night Drive.mp3', { type: 'audio/mp3' });
+    await userEvent.upload(screen.getByLabelText('upload.browse'), file);
+
+    expect(await screen.findByRole('button', { name: 'Night Drive' })).toBeInTheDocument();
+    expect(mockApi.loadAudioFile).not.toHaveBeenCalled();
+  });
+
+  it('plays a playlist track when its row is clicked', async () => {
+    const newBuffer = new AudioBuffer({ length: 1, numberOfChannels: 1, sampleRate: 44100 });
+    mockApi.originalFile = new File(['old'], 'old.mp3', { type: 'audio/mp3' });
+    mockApi.loadAudioFile.mockResolvedValueOnce(newBuffer);
+    renderWithRouter(<App />);
+
+    const file = new File(['new'], 'Afterglow.mp3', { type: 'audio/mp3' });
+    await userEvent.upload(screen.getByLabelText('upload.browse'), file);
+    await userEvent.click(await screen.findByRole('button', { name: 'Afterglow' }));
+
+    expect(mockApi.loadAudioFile).toHaveBeenCalledWith(file);
+    await vi.waitFor(() => expect(mockApi.playAudio).toHaveBeenCalledWith(newBuffer, 0));
+  });
+
+  it('loads the first dropped file paused on the welcome stage', async () => {
     mockApi.loadAudioFile.mockResolvedValueOnce(
       new AudioBuffer({ length: 1, numberOfChannels: 1, sampleRate: 44100 })
     );
-
     renderWithRouter(<App />);
 
-    await userEvent.upload(screen.getByLabelText('upload.browse'), newFile);
+    const first = new File(['a'], 'a.mp3', { type: 'audio/mp3' });
+    const second = new File(['b'], 'b.mp3', { type: 'audio/mp3' });
+    await userEvent.upload(screen.getByLabelText('upload.browse'), [first, second]);
+
+    await vi.waitFor(() => expect(mockApi.loadAudioFile).toHaveBeenCalledWith(first));
     expect(mockApi.playAudio).not.toHaveBeenCalled();
   });
 
@@ -232,7 +234,7 @@ describe('App', () => {
 
   it('applies an equalizer preset from the settings menu', async () => {
     renderWithRouter(<App />);
-    // The settings menu now hosts the listening EQ + language (moods moved to the rail).
+    // The settings menu hosts the scene toggles, the listening EQ and the language.
     await userEvent.click(screen.getByLabelText('settings.open'));
     await userEvent.click(screen.getByRole('combobox', { name: 'settings.eqPreset' }));
     await userEvent.click(screen.getByRole('option', { name: 'Rock' }));

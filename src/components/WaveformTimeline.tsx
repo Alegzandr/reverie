@@ -378,64 +378,47 @@ export const WaveformTimeline = memo(function WaveformTimeline({
   }, [reduceMotion, drawNow, bars, dragRatio, isPlaying, fx, mood, resizeTick]);
 
   return (
-    <div className="relative glass hud-frame rounded-3xl p-5 sm:p-6 flex flex-col gap-5 h-full">
-      {/* Slim header (now-playing status + clock) with the HUD scale tucked
-          right under it, on a shared header height so it lines up with the
-          control rail's header across the grid. */}
-      <div className="space-y-2 shrink-0">
-        <div className="flex items-center justify-between gap-3 min-h-7">
-          <div className="flex items-center gap-2 min-w-0">
-            <span
-              className={`inline-flex items-center gap-2 text-xs font-medium px-2.5 py-1 rounded-full ${
-                isPlaying
-                  ? 'text-[rgb(var(--color-accent-text))] bg-[rgba(var(--color-accent),0.12)]'
-                  : 'text-[rgb(var(--color-text-secondary))] bg-[rgba(var(--color-border),0.35)]'
-              }`}
-            >
-              <span
-                className={`w-1.5 h-1.5 rounded-full ${
-                  isPlaying ? 'bg-[rgb(var(--color-accent))] animate-pulse' : 'bg-[rgb(var(--color-text-secondary))]'
-                }`}
-                aria-hidden="true"
-              />
-              {isPlaying ? t('waveform.playing') : t('waveform.idle')}
+    <div className="wave-stage relative flex h-full flex-col gap-2.5">
+      {/* Status, tempo and clock, set lightly over the world - the ribbon below
+          is the instrument, this is just its caption. */}
+      <div className="flex items-center justify-between gap-3 shrink-0 px-1">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className={`wave-chip ${isPlaying ? 'is-live' : ''}`}>
+            <span className="wave-chip-dot" aria-hidden="true" />
+            {isPlaying ? t('waveform.playing') : t('waveform.idle')}
+          </span>
+          {/* Track tempo, detected once on load (see detectTempo). Reflects the
+              tempo actually heard: the base BPM scaled by the playback rate, with
+              the original in parentheses when the speed shifts it. */}
+          {tempoLabel != null && (
+            <span className="wave-chip tabular-nums">
+              <Music className="w-3 h-3 shrink-0" aria-hidden="true" />
+              {tempoLabel}
             </span>
-            {/* Track tempo, detected once on load (see detectTempo). Reflects the
-                tempo actually heard: the base BPM scaled by the playback rate, with
-                the original in parentheses when the speed shifts it. */}
-            {tempoLabel != null && (
-              <span className="inline-flex items-center gap-1.5 text-xs font-medium tabular-nums px-2.5 py-1 rounded-full text-[rgb(var(--color-text-secondary))] bg-[rgba(var(--color-border),0.35)]">
-                <Music className="w-3 h-3 shrink-0" aria-hidden="true" />
-                {tempoLabel}
-              </span>
-            )}
-          </div>
-          <p className="text-sm font-semibold tabular-nums text-[rgb(var(--color-text))]" aria-live="polite">
-            {formatClock(second)}
-            <span className="text-[rgb(var(--color-text-secondary))] font-normal">
-              {' / '}
-              <DurationToggle
-                duration={duration}
-                current={second}
-                storageKey={AUDIO_PROCESSING.DURATION_DISPLAY_STORAGE_KEY_WAVEFORM}
-                className="font-normal tabular-nums transition-colors hover:text-[rgb(var(--color-text))] focus-visible:text-[rgb(var(--color-text))] cursor-pointer"
-              />
-            </span>
-          </p>
+          )}
         </div>
-        <div className="hud-ruler" aria-hidden="true" />
+        <p className="text-sm font-semibold tabular-nums text-[rgb(var(--color-text))] [text-shadow:0_1px_12px_rgba(0,0,0,0.35)]" aria-live="polite">
+          {formatClock(second)}
+          <span className="text-[rgb(var(--color-text-secondary))] font-normal">
+            {' / '}
+            <DurationToggle
+              duration={duration}
+              current={second}
+              storageKey={AUDIO_PROCESSING.DURATION_DISPLAY_STORAGE_KEY_WAVEFORM}
+              className="font-normal tabular-nums transition-colors hover:text-[rgb(var(--color-text))] focus-visible:text-[rgb(var(--color-text))] cursor-pointer"
+            />
+          </span>
+        </p>
       </div>
 
       {/* The instrument stage. The canvas is viewport-sized and stays put; the
          transparent scroll layer above it carries the stretched clip (and all
          pointer interaction), and the paint translates by its scrollLeft.
-         Height: a preferred 15rem (flex-basis) that the stage shrinks FROM when the
-         centre column is capped on a short viewport, down to a usable floor - so the
-         waveform gives up height gracefully instead of forcing the column to overflow.
-         The basis is what keeps the h-full chain from collapsing on a content-sized
-         card (the header/footer are shrink-0, so only the stage flexes). The canvas
-         re-reads its own clientHeight each paint, so the ribbon reflows to any size. */}
-      <div className="relative grow shrink basis-60 min-h-32 rounded-2xl overflow-hidden">
+         Height: it fills the slot the stage gives it (the caption above is
+         shrink-0), from a 6rem basis down to a usable floor, so a short viewport
+         thins the ribbon instead of pushing the layout. The canvas re-reads its own
+         clientHeight each paint, so the ribbon reflows to any size. */}
+      <div className="wave-ribbon relative grow shrink basis-24 min-h-20 rounded-2xl overflow-hidden">
         <div
           className="wf-aura pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_30%_20%,rgba(var(--color-ambient),0.10),transparent_50%),radial-gradient(circle_at_80%_0%,rgba(var(--color-accent),0.08),transparent_45%)]"
           aria-hidden="true"
@@ -469,13 +452,6 @@ export const WaveformTimeline = memo(function WaveformTimeline({
         </div>
       </div>
 
-      {/* HUD corner readouts: live status + the active speed / reverb values */}
-      <div className="flex items-center justify-between shrink-0">
-        <span className="hud-readout">{isPlaying ? '● Live' : '○ Standby'}</span>
-        <span className="hud-readout tabular-nums">
-          {rate.toFixed(2)}× · {Math.round((options?.reverbAmount ?? 0) * 100)}% RV
-        </span>
-      </div>
     </div>
   );
 });

@@ -189,13 +189,24 @@ describe('useAudioPlayback', () => {
     expect(result.current.playbackClock.get()).toBeCloseTo(0.5);
   });
 
-  it('loops from the top when repeat is armed and the track ends', () => {
+  it('cycles repeat off → all → one → off', () => {
     const { result } = renderPlayback();
+    expect(result.current.state.repeat).toBe('off');
+    act(() => result.current.toggleRepeat());
+    expect(result.current.state.repeat).toBe('all');
+    act(() => result.current.toggleRepeat());
+    expect(result.current.state.repeat).toBe('one');
+    act(() => result.current.toggleRepeat());
+    expect(result.current.state.repeat).toBe('off');
+  });
 
-    act(() => {
-      result.current.toggleRepeat();
-    });
-    expect(result.current.state.repeat).toBe(true);
+  it('loops from the top on repeat-one and does not report a track end', () => {
+    const onTrackEnd = vi.fn();
+    const { result } = renderPlayback({ onTrackEnd });
+
+    act(() => result.current.toggleRepeat());
+    act(() => result.current.toggleRepeat());
+    expect(result.current.state.repeat).toBe('one');
 
     act(() => {
       result.current.playAudio(mockBuffer);
@@ -212,24 +223,31 @@ describe('useAudioPlayback', () => {
     const secondSource = mockAudioContext.createBufferSource.mock.results[1].value;
     expect(secondSource.start).toHaveBeenCalledWith(0, 0);
     expect(result.current.state.isPlaying).toBe(true);
+    expect(onTrackEnd).not.toHaveBeenCalled();
   });
 
-  it('persists the repeat preference and restores it on a fresh mount', () => {
+  it('persists the repeat mode, and reads the legacy boolean as repeat-one', () => {
     const { result, unmount } = renderPlayback();
 
     act(() => {
       result.current.toggleRepeat();
     });
-    expect(localStorage.getItem(AUDIO_PROCESSING.REPEAT_STORAGE_KEY)).toBe('true');
+    expect(localStorage.getItem(AUDIO_PROCESSING.REPEAT_STORAGE_KEY)).toBe('all');
 
     unmount();
 
-    const { result: restored } = renderPlayback();
-    expect(restored.current.state.repeat).toBe(true);
+    const { result: restored, unmount: unmount2 } = renderPlayback();
+    expect(restored.current.state.repeat).toBe('all');
+    unmount2();
+
+    localStorage.setItem(AUDIO_PROCESSING.REPEAT_STORAGE_KEY, 'true');
+    const { result: legacy } = renderPlayback();
+    expect(legacy.current.state.repeat).toBe('one');
   });
 
-  it('stops at the end when repeat is off', () => {
-    const { result } = renderPlayback();
+  it('stops at the end and hands over to the playlist when not repeating one', () => {
+    const onTrackEnd = vi.fn();
+    const { result } = renderPlayback({ onTrackEnd });
 
     act(() => {
       result.current.playAudio(mockBuffer);
@@ -243,6 +261,7 @@ describe('useAudioPlayback', () => {
 
     expect(result.current.state.isPlaying).toBe(false);
     expect(mockAudioContext.createBufferSource).toHaveBeenCalledTimes(1);
+    expect(onTrackEnd).toHaveBeenCalledTimes(1);
   });
 
   it('sets error when attempting to play without a buffer', () => {

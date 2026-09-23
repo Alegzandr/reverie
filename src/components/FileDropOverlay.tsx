@@ -1,33 +1,36 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Upload } from 'lucide-react';
-import { AuroraOrb } from './AuroraOrb';
-import { FILE_FORMATS } from '../constants';
+import { ListPlus, Play } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { collectDroppedAudio } from '../utils/fileCollect';
+
+export type DropIntent = 'play' | 'queue';
 
 interface FileDropOverlayProps {
-  onFileSelect: (file: File) => void;
-  /** When true, drops are ignored (e.g. while a track is decoding/exporting). */
+  /** Accepted audio from the drop (folders expanded), and what the listener chose to do with it. */
+  onFilesDrop: (files: File[], intent: DropIntent) => void;
+  /** When true, drops are ignored (e.g. while exporting). */
   disabled?: boolean;
 }
 
 /**
- * Window-wide drop target for swapping the current track. Unlike the compact
- * FileUploader (a single button), this lets the user drop an audio file
- * anywhere over the workspace. It listens on `window` and only reveals its
- * overlay when files are actually being dragged in - so it never gets in the
- * way of ordinary pointer use.
+ * Window-wide drop target over the workspace. Dragging files (or whole folders)
+ * anywhere reveals two halves: drop on the left to play them now, on the right
+ * to add them quietly to the playlist - the one choice that matters, made by
+ * where you let go. It listens on `window` and only shows while files are
+ * actually being dragged, so it never gets in the way of ordinary pointer use
+ * (the playlist's own row drags carry no files and pass straight through).
  */
-export const FileDropOverlay = memo(function FileDropOverlay({ onFileSelect, disabled }: FileDropOverlayProps) {
+export const FileDropOverlay = memo(function FileDropOverlay({ onFilesDrop, disabled }: FileDropOverlayProps) {
   const { t } = useTranslation();
   const [isDragging, setIsDragging] = useState(false);
+  const [intent, setIntent] = useState<DropIntent>('play');
   // dragenter/dragleave fire for every nested element the cursor crosses, so a
   // single boolean flickers. Counting enters minus leaves tracks the window as
   // one region and only drops to zero when the drag truly leaves the page.
   const dragDepth = useRef(0);
 
-  // Whether a drag carries files (vs. selected text, a link, etc.).
-  const hasFiles = (e: DragEvent) =>
-    Array.from(e.dataTransfer?.types ?? []).includes('Files');
+  const hasFiles = (e: DragEvent) => Array.from(e.dataTransfer?.types ?? []).includes('Files');
 
   const reset = useCallback(() => {
     dragDepth.current = 0;
@@ -35,16 +38,16 @@ export const FileDropOverlay = memo(function FileDropOverlay({ onFileSelect, dis
   }, []);
 
   useEffect(() => {
-    // While disabled (e.g. exporting) we skip attaching listeners; the overlay
-    // is also hidden by the render guard below, so an in-flight drag can't
-    // reveal it. A drag can't realistically begin during an export anyway.
     if (disabled) return;
+
+    const sideOf = (e: DragEvent): DropIntent => (e.clientX < window.innerWidth / 2 ? 'play' : 'queue');
 
     const onDragEnter = (e: DragEvent) => {
       if (!hasFiles(e)) return;
       e.preventDefault();
       dragDepth.current += 1;
       setIsDragging(true);
+      setIntent(sideOf(e));
     };
 
     const onDragOver = (e: DragEvent) => {
@@ -52,6 +55,8 @@ export const FileDropOverlay = memo(function FileDropOverlay({ onFileSelect, dis
       // Required for the drop event to fire at all.
       e.preventDefault();
       if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+      const side = sideOf(e);
+      setIntent((prev) => (prev === side ? prev : side));
     };
 
     const onDragLeave = (e: DragEvent) => {
@@ -64,12 +69,11 @@ export const FileDropOverlay = memo(function FileDropOverlay({ onFileSelect, dis
     const onDrop = (e: DragEvent) => {
       if (!hasFiles(e)) return;
       e.preventDefault();
+      const chosen = sideOf(e);
       reset();
-      const file = e.dataTransfer?.files[0];
-      const mime = file?.type as (typeof FILE_FORMATS.ACCEPTED_MIME_TYPES)[number];
-      if (file && FILE_FORMATS.ACCEPTED_MIME_TYPES.includes(mime)) {
-        onFileSelect(file);
-      }
+      void collectDroppedAudio(e.dataTransfer).then((files) => {
+        if (files.length) onFilesDrop(files, chosen);
+      });
     };
 
     window.addEventListener('dragenter', onDragEnter);
@@ -83,28 +87,26 @@ export const FileDropOverlay = memo(function FileDropOverlay({ onFileSelect, dis
       window.removeEventListener('dragleave', onDragLeave);
       window.removeEventListener('drop', onDrop);
     };
-  }, [disabled, onFileSelect, reset]);
+  }, [disabled, onFilesDrop, reset]);
 
   if (!isDragging || disabled) return null;
 
+  const zones: { id: DropIntent; icon: typeof Play; label: string }[] = [
+    { id: 'play', icon: Play, label: t('upload.dropPlay') },
+    { id: 'queue', icon: ListPlus, label: t('upload.dropQueue') },
+  ];
+
   return (
-    <div
-      className="fixed inset-0 z-50 grid place-items-center p-6 pointer-events-none animate-in fade-in duration-150"
-      role="presentation"
-    >
-      <div className="absolute inset-0 bg-[rgba(var(--color-background),0.72)] backdrop-blur-md" />
-      <div className="relative flex flex-col items-center gap-5 rounded-[28px] border-2 border-dashed border-[rgb(var(--color-accent))] bg-[rgba(var(--color-surface),0.6)] px-12 py-14 text-center shadow-[0_30px_80px_-30px_rgba(var(--aurora-pink),0.7)]">
-        <AuroraOrb
-          className="grid place-items-center shadow-[0_0_0_4px_rgba(var(--aurora-pink),0.18)]"
-          icon={<Upload className="h-6 w-6 text-[rgb(var(--aurora-violet))]" aria-hidden="true" />}
-        />
-        <p className="text-xl font-semibold text-[rgb(var(--color-text))]">
-          {t('upload.dropToReplace')}
-        </p>
-        <p className="text-xs uppercase tracking-wide text-[rgb(var(--color-text-secondary))]">
-          {t('upload.formats')}
-        </p>
-      </div>
+    <div className="drop-overlay" role="presentation">
+      {zones.map(({ id, icon: Icon, label }) => (
+        <div key={id} className={cn('drop-zone', intent === id && 'is-target')}>
+          <span className="drop-zone-icon">
+            <Icon className="h-7 w-7" aria-hidden="true" />
+          </span>
+          <p className="text-xl font-semibold text-[rgb(var(--color-text))]">{label}</p>
+          <p className="text-xs uppercase tracking-wide text-[rgb(var(--color-text-secondary))]">{t('upload.formats')}</p>
+        </div>
+      ))}
     </div>
   );
 });

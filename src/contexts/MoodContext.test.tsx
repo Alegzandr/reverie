@@ -40,24 +40,32 @@ describe('MoodContext', () => {
     act(() => result.current.setMood('tidal'));
 
     expect(result.current.mood).toBe('tidal');
-    expect(result.current.def.scene).toBe('tidal');
+    expect(result.current.def.world).toBe('tide');
     expect(document.documentElement.getAttribute('data-mood')).toBe('tidal');
     expect(document.documentElement.classList.contains('dark')).toBe(true);
     expect(document.documentElement.classList.contains('immersive')).toBe(true);
   });
 
-  it('keeps the HUD (.immersive) on for every mood, swapping only base + scene', () => {
+  it('keeps the glass chrome (.immersive) on for every mood, swapping only base + world', () => {
     const { result } = renderMoodHook();
 
     // The HUD is the one interface - on even for the calm light palette.
     act(() => result.current.setMood('light'));
     expect(document.documentElement.classList.contains('immersive')).toBe(true);
     expect(document.documentElement.classList.contains('dark')).toBe(false);
-    expect(result.current.def.scene).toBe('daybreak');
+    expect(result.current.def.world).toBe('daybreak');
 
     act(() => result.current.setMood('tidal'));
     expect(document.documentElement.classList.contains('immersive')).toBe(true);
     expect(document.documentElement.classList.contains('dark')).toBe(true);
+  });
+
+  it('toggles and remembers the living world', () => {
+    const { result } = renderMoodHook();
+    expect(result.current.livingWorld).toBe(true);
+    act(() => result.current.toggleLivingWorld());
+    expect(result.current.livingWorld).toBe(false);
+    expect(localStorage.getItem('reverie:living-world')).toBe('false');
   });
 
   it('throws when used outside of provider', () => {

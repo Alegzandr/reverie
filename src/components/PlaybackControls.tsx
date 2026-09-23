@@ -1,21 +1,29 @@
 import { memo } from 'react';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Play, Pause, Download, Repeat } from 'lucide-react';
+import { Play, Pause, Download, Repeat, Repeat1, Shuffle, SkipBack, SkipForward } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 import { TransportTimeline } from './TransportTimeline';
 import { VolumeControl } from './VolumeControl';
 import { SpectrumMeter } from './SpectrumMeter';
-import { HudDial } from './hud/HudDial';
 import type { PlaybackClock } from '../utils/playbackClock';
+import type { RepeatMode } from '../utils/playlistModel';
 
 interface PlaybackControlsProps {
   isPlaying: boolean;
   onPlay: () => void;
   onStop: () => void;
   onExport: () => void;
-  repeat: boolean;
+  repeat: RepeatMode;
   onToggleRepeat: () => void;
+  shuffle?: boolean;
+  onToggleShuffle?: () => void;
+  onPrevious?: () => void;
+  onNext?: () => void;
+  hasPrevious?: boolean;
+  hasNext?: boolean;
   volume: number;
   onVolumeChange: (volume: number) => void;
   /** Playhead position source (effective time) - read by the timeline outside React. */
@@ -29,11 +37,53 @@ interface PlaybackControlsProps {
   getAnalyser: () => AnalyserNode | null;
 }
 
+const REPEAT_LABEL: Record<RepeatMode, string> = {
+  off: 'playback.repeatOff',
+  all: 'playback.repeatAll',
+  one: 'playback.repeatOne',
+};
+
+/** A quiet round transport button with its tooltip. */
+function TransportButton({
+  label,
+  onClick,
+  disabled,
+  pressed,
+  children,
+  className,
+}: {
+  label: string;
+  onClick?: () => void;
+  disabled?: boolean;
+  pressed?: boolean;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant={pressed ? 'accent' : 'ghost'}
+          size="icon"
+          onClick={onClick}
+          disabled={disabled}
+          aria-label={label}
+          aria-pressed={pressed}
+          className={cn('shrink-0 disabled:opacity-40', className)}
+        >
+          {children}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 /**
- * Transport bar: play/pause leads on the left, the classic timeline fills the centre,
- * and volume + export sit compactly on the right. Memoised - the playhead ticks
- * live in the clock store, so this bar only re-renders on real state changes
- * (play/pause, volume, export).
+ * The transport dock: previous · play · next lead on the left, the seek bar
+ * fills the centre, then shuffle and the three-state repeat (off → playlist →
+ * this track), a small live spectrum, the volume, and Export. Memoised - the
+ * playhead lives in the clock store, so this only re-renders on real changes.
  */
 export const PlaybackControls = memo(function PlaybackControls({
   isPlaying,
@@ -42,6 +92,12 @@ export const PlaybackControls = memo(function PlaybackControls({
   onExport,
   repeat,
   onToggleRepeat,
+  shuffle = false,
+  onToggleShuffle,
+  onPrevious,
+  onNext,
+  hasPrevious = false,
+  hasNext = false,
   volume,
   onVolumeChange,
   clock,
@@ -57,38 +113,19 @@ export const PlaybackControls = memo(function PlaybackControls({
 
   const playEnabled = hasAudio && !disabled;
   const exportEnabled = canExport && !disabled && !isExporting;
+  const RepeatIcon = repeat === 'one' ? Repeat1 : Repeat;
 
   return (
-    // On phones the bar splits into two rows: the timeline takes the full width on
-    // top, and the controls (play · volume · export) sit beneath it - otherwise
-    // everything is crushed onto one line and the clock collides with the volume.
-    // On `sm+` the controls wrapper dissolves (`sm:contents`) and every element
-    // rejoins a single flex row, ordered play → timeline → spectrum → volume → export.
-    <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-4">
-      {/* Classic timeline - full-width first row on mobile, centre flex on desktop. */}
-      <TransportTimeline
-        className="order-1 w-full sm:order-2 sm:flex-1"
-        clock={clock}
-        duration={duration}
-        onSeek={onSeek}
-        disabled={disabled || !hasAudio}
-      />
-
-      <div className="order-2 flex items-center gap-3 sm:order-none sm:contents">
-        {/* Play / Pause - the Aurora orb inside a holographic instrument dial whose
-            rings rotate while a track plays. A soft ring also pulses outward. */}
-        <div className="relative shrink-0 sm:order-1">
-          {/* The dial also spins while exporting - the offline render is the one
-              moment the machine works without sound, so the instrument shows it. */}
-          <HudDial
-            spinning={(playEnabled && isPlaying) || !!isExporting}
-            className="pointer-events-none absolute -inset-[11px] z-0"
-          />
-          {/* Audio-reactive halo - punches with the kick (bass + onset). Rendered
-              whenever the orb is live so the glow eases back down on pause. */}
-          {playEnabled && (
-            <span className="audio-orb-glow pointer-events-none absolute inset-0 z-0" aria-hidden="true" />
-          )}
+    <div className="flex items-center gap-4">
+      <div className="flex shrink-0 items-center gap-1.5">
+        {onPrevious && (
+          <TransportButton label={t('playback.previous')} onClick={onPrevious} disabled={disabled || !hasAudio || !hasPrevious}>
+            <SkipBack className="h-[18px] w-[18px]" fill="currentColor" aria-hidden="true" />
+          </TransportButton>
+        )}
+        <div className="relative shrink-0">
+          {/* Audio-reactive halo - punches with the kick (bass + onset). */}
+          {playEnabled && <span className="audio-orb-glow pointer-events-none absolute inset-0 z-0" aria-hidden="true" />}
           {playEnabled && isPlaying && (
             <span className="play-pulse pointer-events-none absolute inset-0 rounded-full" aria-hidden="true" />
           )}
@@ -101,76 +138,57 @@ export const PlaybackControls = memo(function PlaybackControls({
             className="relative h-12 w-12"
           >
             {isPlaying ? (
-              <Pause className="w-[18px] h-[18px]" fill="currentColor" strokeWidth={0} aria-hidden="true" />
+              <Pause className="h-[18px] w-[18px]" fill="currentColor" strokeWidth={0} aria-hidden="true" />
             ) : (
-              <Play className="w-[18px] h-[18px] translate-x-[1px]" fill="currentColor" strokeWidth={0} aria-hidden="true" />
+              <Play className="h-[18px] w-[18px] translate-x-[1px]" fill="currentColor" strokeWidth={0} aria-hidden="true" />
             )}
           </Button>
         </div>
+        {onNext && (
+          <TransportButton label={t('playback.next')} onClick={onNext} disabled={disabled || !hasAudio || !hasNext}>
+            <SkipForward className="h-[18px] w-[18px]" fill="currentColor" aria-hidden="true" />
+          </TransportButton>
+        )}
+      </div>
 
-        {/* Repeat - loops the track from the top when it ends. A quiet toggle next to
-            the orb: ghost when off, accent-tinted with a live glyph when armed. */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant={repeat ? 'accent' : 'ghost'}
-              size="icon"
-              onClick={onToggleRepeat}
-              disabled={disabled || !hasAudio}
-              aria-pressed={repeat}
-              aria-label={t('playback.repeat')}
-              className="shrink-0 sm:order-1"
-            >
-              <Repeat
-                className={`w-[18px] h-[18px] ${repeat ? 'text-[rgb(var(--color-accent))]' : ''}`}
-                aria-hidden="true"
-              />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>{t('playback.repeat')}</TooltipContent>
-        </Tooltip>
+      <TransportTimeline className="min-w-0 flex-1" clock={clock} duration={duration} onSeek={onSeek} disabled={disabled || !hasAudio} />
 
-        {/* Live spectrum - a small instrument that makes the bar feel alive.
-            Hidden on narrow screens where space is tight. */}
+      <div className="flex shrink-0 items-center gap-1.5">
+        {onToggleShuffle && (
+          <TransportButton label={t('playback.shuffle')} onClick={onToggleShuffle} disabled={disabled} pressed={shuffle}>
+            <Shuffle className={cn('h-[18px] w-[18px]', shuffle && 'text-[rgb(var(--color-accent))]')} aria-hidden="true" />
+          </TransportButton>
+        )}
+        <TransportButton
+          label={t(REPEAT_LABEL[repeat])}
+          onClick={onToggleRepeat}
+          disabled={disabled || !hasAudio}
+          pressed={repeat !== 'off'}
+        >
+          <RepeatIcon className={cn('h-[18px] w-[18px]', repeat !== 'off' && 'text-[rgb(var(--color-accent))]')} aria-hidden="true" />
+        </TransportButton>
+
         {hasAudio && (
-          <SpectrumMeter
-            getAnalyser={getAnalyser}
-            isPlaying={isPlaying}
-            className="hidden lg:block h-8 w-24 shrink-0 sm:order-3"
-          />
+          <SpectrumMeter getAnalyser={getAnalyser} isPlaying={isPlaying} className="ml-1 hidden h-8 w-20 shrink-0 xl:block" />
         )}
 
-        {/* Volume - compact, scroll to adjust. Pushed to the right edge on the
-            mobile controls row; sits inline on desktop. */}
-        {hasAudio && (
-          <VolumeControl
-            volume={volume}
-            onVolumeChange={onVolumeChange}
-            disabled={disabled}
-            className="ml-auto sm:ml-0 sm:order-4"
-          />
-        )}
+        {hasAudio && <VolumeControl volume={volume} onVolumeChange={onVolumeChange} disabled={disabled} />}
 
-        {/* Export - the quiet committing action: a dark glass pill, identity carried
-            by the mood-tinted icon (it tracks the active mood's accent) rather than
-            a loud fill. */}
+        {/* Export - the quiet committing action: a glass pill with a mood-tinted icon. */}
         <Button
           variant={exportEnabled ? 'glass' : 'muted'}
           size="pill"
           onClick={onExport}
           disabled={disabled || !canExport || isExporting}
           aria-label={isExporting ? t('playback.exporting') : t('playback.export')}
-          className="ml-auto shrink-0 px-4 sm:order-5 sm:ml-0 sm:px-6"
+          className="ml-1 shrink-0 px-5"
         >
           {isExporting ? (
-            <div className="w-5 h-5 border-2 border-[rgb(var(--color-accent))] border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-[rgb(var(--color-accent))] border-t-transparent" aria-hidden="true" />
           ) : (
-            <Download
-              className={`w-5 h-5 ${exportEnabled ? 'text-[rgb(var(--color-accent))]' : ''}`}
-              aria-hidden="true"
-            />
+            <Download className={cn('h-5 w-5', exportEnabled && 'text-[rgb(var(--color-accent))]')} aria-hidden="true" />
           )}
-          <span className="hidden sm:inline">{isExporting ? t('playback.exporting') : t('playback.export')}</span>
+          <span className="hidden lg:inline">{isExporting ? t('playback.exporting') : t('playback.export')}</span>
         </Button>
       </div>
     </div>

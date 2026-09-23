@@ -14,7 +14,7 @@ export const AUDIO_PROCESSING = {
     /** Storage key for persisting volume preference */
     VOLUME_STORAGE_KEY: "reverie:volume",
 
-    /** Storage key for persisting repeat preference */
+    /** Storage key for persisting the repeat mode ('off' | 'all' | 'one'; legacy 'true' reads as 'one') */
     REPEAT_STORAGE_KEY: "reverie:repeat",
 
     /** Storage keys for the "show time remaining" clock preference, one per toggle so they stay independent */
@@ -35,6 +35,53 @@ export const AUDIO_PROCESSING = {
 
     /** Delay after buffer ends before stopping MediaRecorder (ms) */
     MEDIA_RECORDER_STOP_DELAY_MS: 100,
+} as const;
+
+// ============================================================================
+// PLAYLIST
+// ============================================================================
+
+export const PLAYLIST = {
+    /** IndexedDB database holding the listener's tracks (the files themselves, on-device only). */
+    DB_NAME: "reverie",
+    DB_VERSION: 1,
+    /** Object store of track records ({ id, blob, name, ... }), keyed by id. */
+    TRACKS_STORE: "tracks",
+    /** Small key/value store for the playlist order. */
+    META_STORE: "meta",
+    ORDER_KEY: "order",
+
+    /** localStorage keys for the lightweight session state (written often, read once at boot). */
+    SESSION_STORAGE_KEY: "reverie:playlist-session",
+    SHUFFLE_STORAGE_KEY: "reverie:shuffle",
+
+    /** Seconds into a track past which "previous" restarts it instead of stepping back. */
+    PREVIOUS_RESTART_THRESHOLD_SECONDS: 3,
+
+    /** How often (ms) the playhead is checkpointed while playing, so a reload resumes near where you left. */
+    POSITION_SAVE_INTERVAL_MS: 2000,
+    /** Never resume within this many seconds of the end: a finished track should start over, not replay its last breath. */
+    RESUME_TAIL_GUARD_SECONDS: 2,
+
+    /** Give up on the metadata-only duration probe after this long (ms); the decode fills it in later anyway. */
+    DURATION_PROBE_TIMEOUT_MS: 8000,
+
+    /** Show the filter field once the list is long enough to need searching. */
+    FILTER_MIN_TRACKS: 8,
+
+    /** Seconds before a track ends when the now-playing block starts announcing the next one. */
+    UP_NEXT_LEAD_SECONDS: 12,
+} as const;
+
+// ============================================================================
+// RESTING INTERFACE
+// ============================================================================
+
+export const UI_REST = {
+    /** Preference: let the panels fade back while you listen (default on). */
+    STORAGE_KEY: "reverie:rest-ui",
+    /** Stillness (ms) before the interface recedes and leaves the world to itself. */
+    IDLE_MS: 9000,
 } as const;
 
 // ============================================================================
@@ -70,6 +117,59 @@ export const AUDIO_REACTIVITY = {
      * guard - values still saturate at 1, so it stays tasteful, never blown out.
      */
     INTENSITY: 1.25,
+} as const;
+
+// ============================================================================
+// LIVING WORLDS (WebGL2 scene engine)
+// ============================================================================
+
+export const SCENE_WORLD = {
+    /** Log-spaced spectrum bands published to the shaders (texture width). */
+    BANDS: 64,
+    /** Spectrum history depth in rows (texture height) - the worlds' memory of the music (~8.5 s). */
+    HISTORY_ROWS: 512,
+    /** History rows written per second; shaders convert "seconds ago" through it. */
+    HISTORY_RATE: 60,
+    /** Band edges (Hz): kick fundamentals up to the top of the "air". */
+    MIN_FREQUENCY_HZ: 32,
+    MAX_FREQUENCY_HZ: 16000,
+    /** The worlds' own analyser, teed off the playback one for finer low-end resolution. */
+    FFT_SIZE: 2048,
+    ANALYSER_SMOOTHING: 0.55,
+    ANALYSER_MIN_DB: -90,
+    ANALYSER_MAX_DB: -20,
+    /** Byte floor (0-1) under which a band reads as silence - the analyser's noise bed. */
+    BAND_FLOOR: 0.22,
+    /** High bands carry less energy in real music; tilt them up so the whole ring breathes. */
+    BAND_TILT: 0.55,
+    /** Auto-gain: the running peak decays by this per frame, never below PEAK_FLOOR. */
+    PEAK_DECAY: 0.996,
+    PEAK_FLOOR: 0.3,
+    /** Kick detector: bass must beat its own slow baseline by this ratio + offset, no faster than MIN_GAP. */
+    KICK_RATIO: 1.28,
+    KICK_OFFSET: 0.07,
+    KICK_MIN_GAP_SECONDS: 0.2,
+    /** Render resolution as a fraction of CSS pixels; adapted live between MIN and MAX. */
+    RENDER_SCALE_START: 0.8,
+    RENDER_SCALE_MIN: 0.5,
+    RENDER_SCALE_MAX: 1,
+    /**
+     * Temporal accumulation: weight of the running history against each new
+     * jittered frame. High enough to resolve edges and march noise into smooth
+     * gradients; the neighbourhood clamp in the shader keeps motion ghost-free.
+     */
+    TAA_HISTORY_WEIGHT: 0.88,
+    /** Gentle unsharp amount on the final pass (the accumulation softens a touch). */
+    PRESENT_SHARPEN: 0.22,
+    /** Jittered frames a still (reduced-motion) world accumulates before it rests. */
+    STILL_FRAMES: 24,
+    /** Frame-time EMA thresholds (ms) for stepping the render scale down / up. */
+    SLOW_FRAME_MS: 22,
+    FAST_FRAME_MS: 17.5,
+    /** How often (ms) the render scale may change - long enough for the EMA to settle. */
+    SCALE_ADAPT_INTERVAL_MS: 1200,
+    /** Cross-fade (ms) from the old world's last frame into the new one on a mood switch. */
+    WORLD_FADE_IN_MS: 1400,
 } as const;
 
 // ============================================================================

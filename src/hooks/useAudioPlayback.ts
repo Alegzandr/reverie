@@ -3,7 +3,8 @@ import { AUDIO_PROCESSING, EFFECT_DEFAULTS, ERROR_MESSAGES } from '../constants'
 import type { AudioProcessingOptions } from '../utils/audioProcessor';
 import { applyEffectOptions, applyEqGains, NEUTRAL_OPTIONS } from '../utils/effectGraph';
 import { buildPlaybackGraph, teardownPlaybackGraph, type PlaybackGraph } from '../utils/playbackGraph';
-import { readStoredBool, readStoredNumber, writeStored } from '../utils/storage';
+import { readStoredNumber, writeStored } from '../utils/storage';
+import { isRepeatMode, nextRepeatMode, type RepeatMode } from '../utils/playlistModel';
 import { EQ_FLAT_GAINS } from '../contexts/eqPresets';
 import { getBufferLoudness, type LoudnessProfile } from '../utils/audioLoudness';
 import { createPlaybackClock, type MutablePlaybackClock } from '../utils/playbackClock';
@@ -12,7 +13,7 @@ export interface PlaybackState {
   isPlaying: boolean;
   duration: number;
   volume: number;
-  repeat: boolean;
+  repeat: RepeatMode;
   error: string | null;
 }
 
@@ -21,6 +22,19 @@ interface UseAudioPlaybackParams {
   getBufferDuration: (buffer: AudioBuffer | null) => number;
   getFallbackBuffer: () => AudioBuffer | null;
   onError?: (message: string | null) => void;
+  /**
+   * Fires when a track plays out to its natural end (never on a manual stop or
+   * seek) and repeat-one didn't loop it - the playlist's cue to advance.
+   */
+  onTrackEnd?: () => void;
+}
+
+/** Stored repeat preference; the pre-playlist boolean ('true') meant "loop this track". */
+function readStoredRepeat(): RepeatMode {
+  if (typeof localStorage === 'undefined') return 'off';
+  const raw = localStorage.getItem(AUDIO_PROCESSING.REPEAT_STORAGE_KEY);
+  if (raw === 'true') return 'one';
+  return isRepeatMode(raw) ? raw : 'off';
 }
 
 interface AttachOptions {
@@ -44,12 +58,13 @@ export function useAudioPlayback({
   getBufferDuration,
   getFallbackBuffer,
   onError,
+  onTrackEnd,
 }: UseAudioPlaybackParams) {
   const [state, setState] = useState<PlaybackState>(() => ({
     isPlaying: false,
     duration: 0,
     volume: readStoredNumber(AUDIO_PROCESSING.VOLUME_STORAGE_KEY, AUDIO_PROCESSING.DEFAULT_VOLUME),
-    repeat: readStoredBool(AUDIO_PROCESSING.REPEAT_STORAGE_KEY),
+    repeat: readStoredRepeat(),
     error: null,
   }));
 
@@ -74,7 +89,13 @@ export function useAudioPlayback({
   // above, so the EQ shapes playback only and never reaches the offline renderer.
   const eqGainsRef = useRef<number[]>(EQ_FLAT_GAINS);
   const rateRef = useRef<number>(1);
-  const repeatRef = useRef<boolean>(state.repeat);
+  const repeatRef = useRef<RepeatMode>(state.repeat);
+  // Latest end-of-track listener, read at end time so the source's onended never
+  // captures a stale playlist.
+  const onTrackEndRef = useRef(onTrackEnd);
+  useEffect(() => {
+    onTrackEndRef.current = onTrackEnd;
+  }, [onTrackEnd]);
   // Latest playAudio, captured for the onended loop restart without making the
   // callback depend on itself.
   const playAudioRef = useRef<((buffer?: AudioBuffer, startTime?: number) => void) | null>(null);
@@ -181,10 +202,10 @@ export function useAudioPlayback({
 
     graph.source.onended = () => {
       if (playbackSessionRef.current !== sessionId) return;
-      // Repeat: when the track reaches its end, restart from the top with the same
-      // buffer and live effects instead of stopping. Manual stops/seeks null this
-      // handler before the source ends, so the loop only fires on a natural finish.
-      if (repeatRef.current && activeBufferRef.current) {
+      // Repeat one: when the track reaches its end, restart from the top with the
+      // same buffer and live effects instead of stopping. Manual stops/seeks null
+      // this handler before the source ends, so the loop only fires on a natural finish.
+      if (repeatRef.current === 'one' && activeBufferRef.current) {
         startOffsetRef.current = 0;
         playAudioRef.current?.(activeBufferRef.current, 0);
         return;
@@ -194,6 +215,7 @@ export function useAudioPlayback({
       setState((prev) => ({ ...prev, isPlaying: false }));
       teardownGraph();
       cancelProgressTick();
+      onTrackEndRef.current?.();
     };
 
     playStartTimeRef.current = audioContext.currentTime;
@@ -227,13 +249,12 @@ export function useAudioPlayback({
     stopPlayback();
   }, [stopPlayback]);
 
+  /** Cycles off → all → one. "All" is the playlist's business (it wraps at the end). */
   const toggleRepeat = useCallback(() => {
-    setState((prev) => {
-      const next = !prev.repeat;
-      repeatRef.current = next;
-      writeStored(AUDIO_PROCESSING.REPEAT_STORAGE_KEY, next);
-      return { ...prev, repeat: next };
-    });
+    const next = nextRepeatMode(repeatRef.current);
+    repeatRef.current = next;
+    writeStored(AUDIO_PROCESSING.REPEAT_STORAGE_KEY, next);
+    setState((prev) => ({ ...prev, repeat: next }));
   }, []);
 
   const updateVolume = useCallback((newVolume: number) => {
