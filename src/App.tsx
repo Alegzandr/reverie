@@ -430,7 +430,7 @@ function App() {
       <div ref={shellRef} className={`app-shell${resting ? ' is-resting' : ''}`}>
         <FileDropOverlay onFilesDrop={handleFilesDrop} disabled={state.isExporting} />
 
-        <header className="top-bar recede">
+        <header className="top-bar">
           <Tooltip>
             <TooltipTrigger asChild>
               <button
@@ -439,7 +439,7 @@ function App() {
                 className="ios-button flex min-w-0 items-center gap-3 rounded-full pr-2 outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <Logo className="h-9 w-9 shrink-0 rounded-[10px]" />
-                <span className="hidden font-display text-xl font-light lowercase tracking-[0.04em] text-[rgb(var(--color-text))] sm:inline">
+                <span className="wordmark hidden text-lg sm:inline">
                   {t('app.title')}
                 </span>
               </button>
@@ -457,11 +457,13 @@ function App() {
         </header>
 
         <main className="stage-grid">
-          <aside className="pane recede flex min-h-0 flex-col" aria-label={t('studio.effects')}>
-            <ScrollFade className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5">
-              <EffectControls onChange={handleEffectChange} disabled={state.isExporting} initialSettings={effectSettings} />
-            </ScrollFade>
-          </aside>
+          <div className="console console-left">
+            <aside className="pane recede flex min-h-0 flex-col" aria-label={t('studio.effects')}>
+              <ScrollFade className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5">
+                <EffectControls onChange={handleEffectChange} disabled={state.isExporting} initialSettings={effectSettings} />
+              </ScrollFade>
+            </aside>
+          </div>
 
           <section className="stage-center" aria-label={t('track.title')}>
             {errorBanner}
@@ -493,25 +495,27 @@ function App() {
             )}
           </section>
 
-          <aside className="pane recede flex min-h-0 flex-col" aria-label={t('playlist.title')}>
-            <PlaylistPanel
-              tracks={playlist.tracks}
-              activeId={playlist.activeId}
-              isPlaying={state.isPlaying}
-              clock={effectiveClock}
-              duration={effectiveDuration}
-              storageError={playlist.storageError}
-              onPlay={handlePlayTrack}
-              onRemove={playlist.removeTrack}
-              onMove={playlist.moveTrack}
-              onClear={playlist.clear}
-              onAddFiles={handleFilesSelect}
-            />
-          </aside>
+          <div className="console console-right">
+            <aside className="pane recede flex min-h-0 flex-col" aria-label={t('playlist.title')}>
+              <PlaylistPanel
+                tracks={playlist.tracks}
+                activeId={playlist.activeId}
+                isPlaying={state.isPlaying}
+                clock={effectiveClock}
+                duration={effectiveDuration}
+                storageError={playlist.storageError}
+                onPlay={handlePlayTrack}
+                onRemove={playlist.removeTrack}
+                onMove={playlist.moveTrack}
+                onClear={playlist.clear}
+                onAddFiles={handleFilesSelect}
+              />
+            </aside>
+          </div>
         </main>
 
         <footer className="dock-wrap">
-          <div className="pane dock">
+          <div className="dock">
             <PlaybackControls
               isPlaying={state.isPlaying}
               onPlay={handlePlay}

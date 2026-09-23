@@ -494,9 +494,9 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
     if (now - lastAdapt < SCENE_WORLD.SCALE_ADAPT_INTERVAL_MS) return;
     lastAdapt = now;
     if (frameEma > SCENE_WORLD.SLOW_FRAME_MS && scale > SCENE_WORLD.RENDER_SCALE_MIN) {
-      scale = Math.max(SCENE_WORLD.RENDER_SCALE_MIN, scale * 0.88);
+      scale = Math.max(SCENE_WORLD.RENDER_SCALE_MIN, scale * SCENE_WORLD.SCALE_STEP_DOWN);
     } else if (frameEma < SCENE_WORLD.FAST_FRAME_MS && scale < SCENE_WORLD.RENDER_SCALE_MAX) {
-      scale = Math.min(SCENE_WORLD.RENDER_SCALE_MAX, scale * 1.04);
+      scale = Math.min(SCENE_WORLD.RENDER_SCALE_MAX, scale * SCENE_WORLD.SCALE_STEP_UP);
     }
   };
 

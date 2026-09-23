@@ -26,12 +26,11 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
 
-  /* Two real faces, no system UI font. Hanken Grotesk (humanist sans) carries
-     every label, control, and value; Fraunces (soft serif) is the dreamy
-     counterpoint for the wordmark + headings only. Trailing system entries are
-     a swap/non-Latin net, never the design intent. */
-  --font-sans: 'Hanken Grotesk Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-display: 'Fraunces Variable', Georgia, 'Times New Roman', serif;
+  /* One face: Geist Mono, the instrument voice of a visor readout. Display
+     sizes lean on its light weights, labels on its caps. Trailing entries are a
+     swap/non-Latin net (CJK, Devanagari), never the design intent. */
+  --font-sans: 'Geist Mono Variable', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --font-display: 'Geist Mono Variable', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -106,11 +105,9 @@
     --destructive: rgb(239, 68, 68);
     --destructive-foreground: #ffffff;
 
-    /* Hanken Grotesk carries the whole UI. The trailing system entries are a
-       last-resort net only: they catch the brief swap window and non-Latin
-       scripts (CJK/Cyrillic) that a Latin web font can't render. For every
-       Latin locale the UI is 100% Hanken, never a system face. */
-    font-family: 'Hanken Grotesk Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    /* Geist Mono carries the whole UI (Latin + Cyrillic subsets); the system
+       entries only catch the swap window and scripts it doesn't cover. */
+    font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -150,14 +147,6 @@
       rgb(var(--color-background));
     color: rgb(var(--color-text));
     transition: background-color 0.3s ease, color 0.3s ease;
-  }
-
-  /* Fraunces' SOFT axis rounds the terminals just enough to read oneiric
-     rather than editorial-cold (the `soft` cut pins optical size to display).
-     Tracking is left to each call site: airy on the wordmark, neutral on
-     titles. */
-  .font-display {
-    font-variation-settings: 'SOFT' 50;
   }
 
   /* Visible focus for every interactive control (WCAG 2.1 AA) */
@@ -515,14 +504,6 @@
     height: 0;
   }
 
-  /* Short-height mode: when the between-rails band drops below CONSOLE_SHORT_HEIGHT
-     (App.tsx flags <main> with `.consoles-short`), consoles shed their supporting
-     hint lines so controls stay compact and legible instead of being clipped under
-     the scroll fade. Same threshold that reflows the centre - both switch together. */
-  .consoles-short .console-hint {
-    display: none;
-  }
-
   /* Scroll cue: dissolve the content at whichever edge still hides more, so an
      overflowing panel reads as scrollable even after the overlay scrollbar has
      faded. <ScrollFade> ramps --fade-t/--fade-b from the live scroll position;
@@ -643,6 +624,14 @@
      it lifts the bright daybreak scene, dark on every dark mood. */
   :root {
     --hud-curve: 26px;
+    /* Console rake: how far the side consoles swing toward the viewer. */
+    --hud-rake: 16deg;
+    --hud-rake-depth: 1400px;
+    --hud-bracket: 18px;
+    /* The helmet's visor opening: corner radius and the rim colour beyond it. */
+    --visor-radius: 44px;
+    --visor-rim: 3, 4, 10;
+    --visor-rim-alpha: 1;
     --hud-line: 150, 170, 205;
     --hud-glow: var(--color-ambient);
     --scene-veil: 248, 250, 255;
@@ -811,6 +800,81 @@
     background: radial-gradient(140% 110% at 50% 42%, transparent 58%, rgba(var(--scene-veil), 0.5) 100%);
   }
 
+  /* ── The helmet ──────────────────────────────────────────────────────────
+     The glass you look out through. Its rim rounds the edges of the view off
+     like a visor opening, a breath of glare catches the top-left, and two
+     graduated rulers mark the horizon on the side edges. It sits over the
+     interface (the HUD is projected on this glass) below every popover, and
+     never takes a pointer. */
+  .helmet {
+    position: fixed;
+    inset: 0;
+    z-index: 45;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .helmet::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--visor-radius);
+    border: 1px solid rgba(var(--hud-line), calc(0.1 + var(--audio-level) * 0.12));
+    box-shadow:
+      0 0 0 60px rgba(var(--visor-rim), var(--visor-rim-alpha)),
+      inset 0 0 90px -30px rgba(var(--visor-rim), 0.9);
+    transition: border-color 90ms linear;
+  }
+
+  .helmet::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--visor-radius);
+    background:
+      radial-gradient(70% 55% at 12% -8%, rgba(255, 255, 255, 0.07), transparent 70%),
+      linear-gradient(118deg, transparent 30%, rgba(255, 255, 255, 0.022) 36%, transparent 43%);
+  }
+
+  .helmet-ticks {
+    position: absolute;
+    top: 50%;
+    width: 12px;
+    height: 132px;
+    transform: translateY(-50%);
+    background:
+      linear-gradient(rgba(var(--hud-line), 0.55), rgba(var(--hud-line), 0.55)) center / 100% 1px no-repeat,
+      repeating-linear-gradient(to bottom, rgba(var(--hud-line), 0.32) 0 1px, transparent 1px 22px);
+    background-repeat: no-repeat;
+    -webkit-mask: linear-gradient(to bottom, transparent, #000 30%, #000 70%, transparent);
+    mask: linear-gradient(to bottom, transparent, #000 30%, #000 70%, transparent);
+  }
+
+  .helmet-ticks.is-left {
+    left: 8px;
+    background-size: 100% 1px, 55% 100%;
+    background-position: center, left top;
+  }
+
+  .helmet-ticks.is-right {
+    right: 8px;
+    background-size: 100% 1px, 55% 100%;
+    background-position: center, right top;
+  }
+
+  /* Daylight through the visor: the rim reads as tinted shade, not a bezel. */
+  :root:not(.dark) .helmet {
+    --visor-rim: 96, 104, 140;
+    --visor-rim-alpha: 0.4;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .helmet::before {
+      border-color: rgba(var(--hud-line), 0.1);
+      transition: none;
+    }
+  }
+
   /* Booting (reading the stored playlist): the world alone, nothing to flash. */
   .boot-veil {
     position: fixed;
@@ -834,35 +898,53 @@
     box-shadow: 0 30px 80px -40px rgba(40, 50, 90, 0.35);
   }
 
-  /* The panes: frosted, light-edged, softly shadowed. */
+  /* The panes: holographic plates projected on the visor, not frosted slabs.
+     A near-clear tint that thins toward the bottom, a whisper of scanlines, a
+     luminous hairline and an inner bloom in the mood's glow. The world reads
+     through; legibility leans on the blur + saturation and high-contrast type,
+     the way a real visor readout does. */
   .pane {
     position: relative;
-    border-radius: 26px;
-    background: linear-gradient(180deg, rgba(var(--color-surface), 0.5), rgba(var(--color-surface), 0.3));
-    -webkit-backdrop-filter: blur(28px) saturate(150%);
-    backdrop-filter: blur(28px) saturate(150%);
+    border-radius: 22px;
+    background:
+      repeating-linear-gradient(to bottom, rgba(var(--hud-line), 0.045) 0 1px, transparent 1px 4px),
+      linear-gradient(
+        165deg,
+        rgba(var(--color-surface), 0.36) 0%,
+        rgba(var(--color-surface), 0.16) 45%,
+        rgba(var(--color-surface), 0.08) 100%
+      );
+    -webkit-backdrop-filter: blur(22px) saturate(170%);
+    backdrop-filter: blur(22px) saturate(170%);
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.07),
-      0 30px 70px -42px rgba(0, 0, 0, 0.7);
+      inset 0 1px 0 rgba(255, 255, 255, 0.14),
+      inset 0 0 0 1px rgba(var(--hud-line), 0.22),
+      inset 0 0 36px -16px rgba(var(--hud-glow), 0.65),
+      0 30px 70px -38px rgba(var(--hud-glow), 0.45);
   }
 
-  /* A hairline edge that catches light at the top and fades down the sides. */
+  /* Corner brackets - the instrument signature. A full hairline frame masked
+     down to four corner squares, so only crisp L-brackets hugging the rounding
+     remain, lit like projected light catching the plate. Static structure. */
   .pane::before {
     content: '';
     position: absolute;
     inset: 0;
+    z-index: 1;
     border-radius: inherit;
-    padding: 1px;
     pointer-events: none;
-    background: linear-gradient(
-      165deg,
-      rgba(255, 255, 255, 0.24),
-      rgba(255, 255, 255, 0.05) 38%,
-      rgba(var(--hud-glow), 0.12) 100%
-    );
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+    border: 1px solid rgba(var(--hud-line), 0.8);
+    -webkit-mask:
+      linear-gradient(#000, #000) top left / var(--hud-bracket) var(--hud-bracket) no-repeat,
+      linear-gradient(#000, #000) top right / var(--hud-bracket) var(--hud-bracket) no-repeat,
+      linear-gradient(#000, #000) bottom left / var(--hud-bracket) var(--hud-bracket) no-repeat,
+      linear-gradient(#000, #000) bottom right / var(--hud-bracket) var(--hud-bracket) no-repeat;
+    mask:
+      linear-gradient(#000, #000) top left / var(--hud-bracket) var(--hud-bracket) no-repeat,
+      linear-gradient(#000, #000) top right / var(--hud-bracket) var(--hud-bracket) no-repeat,
+      linear-gradient(#000, #000) bottom left / var(--hud-bracket) var(--hud-bracket) no-repeat,
+      linear-gradient(#000, #000) bottom right / var(--hud-bracket) var(--hud-bracket) no-repeat;
+    filter: drop-shadow(0 0 4px rgba(var(--hud-glow), 0.6));
   }
 
   /* Breathes with the music's body (mids), never the kick. Flat when idle. */
@@ -878,14 +960,18 @@
   }
 
   :root:not(.dark) .pane {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.44));
+    background:
+      repeating-linear-gradient(to bottom, rgba(var(--hud-line), 0.07) 0 1px, transparent 1px 4px),
+      linear-gradient(165deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0.34) 50%, rgba(255, 255, 255, 0.24));
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      inset 0 0 0 1px rgba(var(--color-border), 0.55),
       0 26px 60px -38px rgba(40, 50, 90, 0.4);
   }
 
   :root:not(.dark) .pane::before {
-    background: linear-gradient(165deg, rgba(255, 255, 255, 0.95), rgba(var(--color-border), 0.5) 60%);
+    border-color: rgba(var(--color-accent), 0.7);
+    filter: none;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -895,19 +981,35 @@
     }
   }
 
+  /* Section heads read as instrument labels: small caps with a lit tick. */
   .pane-title {
-    font-family: var(--font-display);
-    font-variation-settings: 'SOFT' 50;
-    font-size: 1.35rem;
-    line-height: 1.2;
-    font-weight: 400;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    line-height: 1.4;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
     color: rgb(var(--color-text));
+  }
+
+  .pane-title::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    flex-shrink: 0;
+    background: rgb(var(--color-accent));
+    box-shadow: 0 0 10px rgba(var(--color-accent), 0.9);
+    transform: rotate(45deg);
   }
 
   /* Software rendering: blur is the costliest thing a CPU compositor can do -
      drop it, and give the glass an opaque floor so text still holds. */
   .gpu-software .glass,
   .gpu-software .pane,
+  .gpu-software .top-bar::before,
+  .gpu-software .dock-wrap::before,
   .gpu-software .world-switcher,
   .gpu-software .wave-ribbon,
   .gpu-software [class*='backdrop-blur'] {
@@ -916,7 +1018,9 @@
   }
 
   .gpu-software .pane,
-  .gpu-software.immersive .glass {
+  .gpu-software.immersive .glass,
+  .gpu-software .top-bar::before,
+  .gpu-software .dock-wrap::before {
     background: rgba(var(--color-surface), 0.92);
   }
 
@@ -928,6 +1032,12 @@
     overflow: hidden;
   }
 
+  /* ── Visor rails ─────────────────────────────────────────────────────────
+     The top and bottom bars bow toward the centre like the rim of a helmet
+     visor: each paints a full-width holographic plate whose elliptical corner
+     radii sum to the whole width, one smooth convex arc. The plate overhangs
+     its bar by --hud-curve at the middle only, into the open centre where the
+     world shows; content sits in normal flow above it, never clipped. */
   .top-bar {
     position: relative;
     z-index: 40;
@@ -935,9 +1045,107 @@
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
     gap: 16px;
-    height: 76px;
-    padding: 0 24px;
+    height: 72px;
+    padding: 0 28px;
     flex-shrink: 0;
+  }
+
+  .top-bar::before,
+  .dock-wrap::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    z-index: -1;
+    height: calc(100% + var(--hud-curve));
+    pointer-events: none;
+    -webkit-backdrop-filter: blur(22px) saturate(170%);
+    backdrop-filter: blur(22px) saturate(170%);
+  }
+
+  .top-bar::before {
+    top: 0;
+    border-bottom: 1px solid rgba(var(--hud-line), 0.5);
+    border-radius: 0 0 50% 50% / 0 0 var(--hud-curve) var(--hud-curve);
+    background:
+      repeating-linear-gradient(to bottom, rgba(var(--hud-line), 0.04) 0 1px, transparent 1px 4px),
+      linear-gradient(to bottom, rgba(var(--color-surface), 0.34), rgba(var(--color-surface), 0.08));
+    box-shadow:
+      inset 0 -1px 0 rgba(255, 255, 255, 0.06),
+      inset 0 -26px 30px -30px rgba(var(--hud-glow), 0.8),
+      0 14px 40px -20px rgba(var(--hud-glow), 0.45);
+  }
+
+  .dock-wrap::before {
+    bottom: 0;
+    border-top: 1px solid rgba(var(--hud-line), 0.5);
+    border-radius: 50% 50% 0 0 / var(--hud-curve) var(--hud-curve) 0 0;
+    background:
+      repeating-linear-gradient(to bottom, rgba(var(--hud-line), 0.04) 0 1px, transparent 1px 4px),
+      linear-gradient(to top, rgba(var(--color-surface), 0.4), rgba(var(--color-surface), 0.1));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      inset 0 26px 30px -30px rgba(var(--hud-glow), 0.8),
+      0 -14px 40px -20px rgba(var(--hud-glow), 0.45);
+  }
+
+  :root:not(.dark) .top-bar::before,
+  :root:not(.dark) .dock-wrap::before {
+    border-color: rgba(var(--color-accent), 0.55);
+    box-shadow: 0 14px 40px -24px rgba(40, 50, 90, 0.3);
+  }
+
+  :root:not(.dark) .top-bar::before {
+    background:
+      repeating-linear-gradient(to bottom, rgba(var(--hud-line), 0.06) 0 1px, transparent 1px 4px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.22));
+  }
+
+  :root:not(.dark) .dock-wrap::before {
+    background:
+      repeating-linear-gradient(to bottom, rgba(var(--hud-line), 0.06) 0 1px, transparent 1px 4px),
+      linear-gradient(to top, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.26));
+  }
+
+  /* ── The consoles ────────────────────────────────────────────────────────
+     A visor HUD puts what you read on angled side consoles and keeps the centre
+     flat to look through: both consoles hinge on their inner edge and swing the
+     outer one toward you, a "V" wrapping round the view. Each console is its
+     own perspective root - never the grid, which would become a backdrop root
+     and flatten the centre's glass. Each holds a constant height, so the
+     centre-pivot foreshortening never shifts an edge. */
+  .console {
+    display: flex;
+    min-height: 0;
+    perspective: var(--hud-rake-depth);
+  }
+
+  .console > .pane {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .console-left > .pane {
+    transform: rotateY(var(--hud-rake));
+    transform-origin: right center;
+  }
+
+  .console-right > .pane {
+    transform: rotateY(calc(var(--hud-rake) * -1));
+    transform-origin: left center;
+  }
+
+  /* Blur flattens under a 3D pose, so the raked plates can't lean on it:
+     lift the fill (still translucent) so type stays crisp at the angle. */
+  .dark .console > .pane {
+    background:
+      repeating-linear-gradient(to bottom, rgba(var(--hud-line), 0.05) 0 1px, transparent 1px 4px),
+      linear-gradient(
+        165deg,
+        rgba(var(--color-surface), 0.52) 0%,
+        rgba(var(--color-surface), 0.34) 45%,
+        rgba(var(--color-surface), 0.22) 100%
+      );
   }
 
   .stage-grid {
@@ -945,28 +1153,29 @@
     min-height: 0;
     display: grid;
     gap: 20px;
-    padding: 4px 24px 16px;
+    /* Clear of both visor bows, and of the consoles' raked outer edges. */
+    padding: 30px 28px calc(var(--hud-curve) + 18px);
     grid-template-columns: minmax(270px, 290px) minmax(0, 1fr) minmax(290px, 310px);
   }
 
   @media (min-width: 1280px) {
     .stage-grid {
-      gap: 28px;
+      gap: 32px;
       grid-template-columns: minmax(300px, 330px) minmax(0, 1fr) minmax(320px, 350px);
     }
   }
 
   @media (min-width: 1600px) {
     .top-bar {
-      padding: 0 32px;
+      padding: 0 36px;
     }
     .stage-grid {
-      gap: 40px;
-      padding: 4px 32px 20px;
+      gap: 48px;
+      padding: 34px 40px calc(var(--hud-curve) + 22px);
       grid-template-columns: minmax(330px, 360px) minmax(0, 1fr) minmax(350px, 390px);
     }
     .dock-wrap {
-      padding: 0 32px 22px;
+      padding: 12px 36px 18px;
     }
   }
 
@@ -989,18 +1198,23 @@
     position: relative;
     z-index: 30;
     flex-shrink: 0;
-    padding: 0 24px 20px;
+    padding: 10px 28px 16px;
   }
 
   .dock {
-    padding: 12px 18px;
+    position: relative;
   }
 
   /* ── The resting interface ───────────────────────────────────────────────
      While music plays and nothing stirs, the panes fade back and the world
-     takes the screen; any movement brings them straight back. */
+     takes the screen; any movement brings them straight back. Every fade is
+     on the glass itself or on its content, never on a glass's ancestor (that
+     would switch its blur off for the whole fade). */
   .recede,
-  .dock-wrap,
+  .top-bar > *,
+  .top-bar::before,
+  .dock-wrap > *,
+  .dock-wrap::before,
   .stage-wave {
     transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   }
@@ -1009,12 +1223,15 @@
     cursor: none;
   }
 
-  .is-resting .recede {
+  .is-resting .recede,
+  .is-resting .top-bar > *,
+  .is-resting .top-bar::before {
     opacity: 0;
     transition-duration: 1.6s;
   }
 
-  .is-resting .dock-wrap,
+  .is-resting .dock-wrap > *,
+  .is-resting .dock-wrap::before,
   .is-resting .stage-wave {
     opacity: 0.35;
     transition-duration: 1.6s;
@@ -1125,14 +1342,20 @@
   }
 
   .now-playing-title {
-    font-family: var(--font-display);
-    font-variation-settings: 'SOFT' 50;
-    font-size: clamp(2rem, 3.1vw, 3.6rem);
-    line-height: 1.12;
+    font-size: clamp(1.75rem, 2.5vw, 3rem);
+    line-height: 1.15;
     font-weight: 300;
-    letter-spacing: -0.005em;
+    letter-spacing: -0.03em;
     color: rgb(var(--color-text));
     text-shadow: 0 2px 30px rgba(var(--scene-veil), 0.55);
+  }
+
+  /* The brand in the visor voice: light, airy, lowercase. */
+  .wordmark {
+    font-weight: 300;
+    letter-spacing: 0.14em;
+    text-transform: lowercase;
+    color: rgb(var(--color-text));
   }
 
   .now-playing-meta {
@@ -1486,16 +1709,26 @@
    second, never under reduced motion; every animation is a both-filled one-shot
    on transform/opacity, so the resting layout never drifts. */
 @layer utilities {
+  /* The rails slide on the bar, fade on the plate and content - so the
+     visor glass keeps its blur through the whole entrance. */
   .cockpit-boot .top-bar {
     animation: boot-rail-down 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
   }
   .cockpit-boot .dock-wrap {
     animation: boot-rail-up 560ms cubic-bezier(0.22, 1, 0.36, 1) 80ms both;
   }
-  .cockpit-boot .stage-grid > .pane:first-child {
+  .cockpit-boot .top-bar > *,
+  .cockpit-boot .top-bar::before {
+    animation: boot-glass 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .cockpit-boot .dock-wrap > *,
+  .cockpit-boot .dock-wrap::before {
+    animation: boot-glass 560ms cubic-bezier(0.22, 1, 0.36, 1) 80ms both;
+  }
+  .cockpit-boot .console-left > .pane {
     animation: boot-glass 700ms cubic-bezier(0.22, 1, 0.36, 1) 140ms both;
   }
-  .cockpit-boot .stage-grid > .pane:last-child {
+  .cockpit-boot .console-right > .pane {
     animation: boot-glass 700ms cubic-bezier(0.22, 1, 0.36, 1) 200ms both;
   }
   .cockpit-boot .now-playing {
@@ -1506,10 +1739,10 @@
   }
 
   @keyframes boot-rail-down {
-    from { transform: translateY(-14px); opacity: 0; }
+    from { transform: translateY(-14px); }
   }
   @keyframes boot-rail-up {
-    from { transform: translateY(14px); opacity: 0; }
+    from { transform: translateY(14px); }
   }
   @keyframes boot-glass {
     from { opacity: 0; }
@@ -1524,7 +1757,11 @@
   @media (prefers-reduced-motion: reduce) {
     .cockpit-boot .top-bar,
     .cockpit-boot .dock-wrap,
-    .cockpit-boot .stage-grid > .pane,
+    .cockpit-boot .top-bar > *,
+    .cockpit-boot .top-bar::before,
+    .cockpit-boot .dock-wrap > *,
+    .cockpit-boot .dock-wrap::before,
+    .cockpit-boot .console > .pane,
     .cockpit-boot .now-playing,
     .cockpit-boot .stage-wave {
       animation: none;
@@ -1553,13 +1790,18 @@
 
   /* ── Corner readout - small uppercase instrument label in the hairline hue. */
   .hud-readout {
-    font-size: 9px;
+    font-size: 10px;
     line-height: 1;
     letter-spacing: 0.16em;
     text-transform: uppercase;
     font-weight: 600;
     color: rgb(var(--hud-line));
     opacity: 0.6;
+  }
+
+  :root:not(.dark) .hud-readout {
+    color: rgb(var(--color-text-secondary));
+    opacity: 0.85;
   }
 
   /* ── Graduated tick ruler - a thin instrument scale, faded at both ends.

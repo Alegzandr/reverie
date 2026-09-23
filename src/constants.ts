@@ -168,6 +168,9 @@ export const SCENE_WORLD = {
     FAST_FRAME_MS: 17.5,
     /** How often (ms) the render scale may change - long enough for the EMA to settle. */
     SCALE_ADAPT_INTERVAL_MS: 1200,
+    /** Multiplicative render-scale steps: drop fast on a slow frame, climb back gently. */
+    SCALE_STEP_DOWN: 0.88,
+    SCALE_STEP_UP: 1.04,
     /** Cross-fade (ms) from the old world's last frame into the new one on a mood switch. */
     WORLD_FADE_IN_MS: 1400,
 } as const;
@@ -231,31 +234,13 @@ export const BIT_DEPTH = {
 
 export const VIEWPORT = {
     /**
-     * Minimum viewport width (px) Reverie is offered at. The cockpit - effects
-     * rail, holographic waveform and mood rail - only lines up on a real desktop
-     * canvas (the 3-column grid activates at Tailwind's `lg`, 1024px). Below this
+     * Minimum viewport width (px) Reverie is offered at. The cockpit - raked
+     * effects and playlist consoles around the open centre - only lines up on a
+     * real desktop canvas (Tailwind's `lg`, 1024px). Below this
      * we gate to a branded "come back on a bigger screen" stage instead of
      * shipping a cramped mobile layout. Width-based and matched to `lg`.
      */
     MIN_DESKTOP_WIDTH: 1024,
-    /**
-     * Below this between-rails height (px, matching --col-max-h), the cockpit
-     * enters its short-height mode: the centre's two stacked plates (track identity
-     * + waveform) reflow SIDE BY SIDE (when wide enough - see CENTER_SPLIT_MIN_WIDTH)
-     * instead of running the stack into the transport rail, and the consoles drop
-     * their supporting hint lines (`.console-hint`) so every panel stays compact and
-     * legible. One threshold drives both, so nothing switches out of step and no
-     * panel is left half-clipped in an in-between band. avail = viewport - the top
-     * and bottom rails - main's padding, so this sits ~232px below the window height.
-     */
-    CONSOLE_SHORT_HEIGHT: 552,
-    /**
-     * Minimum viewport width (px) for that short-height side-by-side centre reflow.
-     * Splitting the centre column spends its width on two tracks; below this there
-     * isn't enough to leave the waveform a usable width, so the centre stays stacked
-     * (and leans on the shrink + clip fallback) even when it's short.
-     */
-    CENTER_SPLIT_MIN_WIDTH: 1280,
 } as const;
 
 // ============================================================================

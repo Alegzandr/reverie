@@ -17,6 +17,9 @@ import { SceneWorld } from './scenes/SceneWorld';
  *    switches itself (an in-engine cross-fade). Under reduced motion it still
  *    runs, but paints one calm frame per change and never moves.
  *
+ * Over everything sits the helmet: the visor's rounded rim, a breath of glare
+ * and two edge rulers - the glass the whole interface is projected on.
+ *
  * Mounted once at the app root, above the welcome/workspace split, so starting
  * a session never recompiles or blinks the world.
  */
@@ -58,24 +61,32 @@ export const AmbientScene = memo(function AmbientScene() {
   }, []);
 
   return (
-    <div className={`scene${live && runWorld ? ' is-live' : ''}`} aria-hidden="true">
-      <div className="scene-posters">
-        {MOOD_ORDER.map((id) => {
-          const world = MOODS[id].world;
-          return (
-            <img
-              key={id}
-              src={worldPoster(world)}
-              alt=""
-              decoding="async"
-              className={`scene-poster${world === def.world ? ' is-active' : ''}`}
-            />
-          );
-        })}
+    <>
+      <div className={`scene${live && runWorld ? ' is-live' : ''}`} aria-hidden="true">
+        <div className="scene-posters">
+          {MOOD_ORDER.map((id) => {
+            const world = MOODS[id].world;
+            return (
+              <img
+                key={id}
+                src={worldPoster(world)}
+                alt=""
+                decoding="async"
+                className={`scene-poster${world === def.world ? ' is-active' : ''}`}
+              />
+            );
+          })}
+        </div>
+        {runWorld && <SceneWorld world={def.world} still={still} onReady={onReady} onFail={onFail} />}
+        <div className="scene-veil" />
+        <div className="scene-vignette" />
       </div>
-      {runWorld && <SceneWorld world={def.world} still={still} onReady={onReady} onFail={onFail} />}
-      <div className="scene-veil" />
-      <div className="scene-vignette" />
-    </div>
+      {/* The visor glass you look through: over the interface too (the HUD is
+          projected on it), never catching a pointer. */}
+      <div className="helmet" aria-hidden="true">
+        <span className="helmet-ticks is-left" />
+        <span className="helmet-ticks is-right" />
+      </div>
+    </>
   );
 });

@@ -8,8 +8,8 @@
  * analytic and edge-filtered, so it stays crisp at any resolution.
  */
 export const TIDE = /* glsl */ `
-const float HORIZON = 0.44;
-const vec2 MOON_POS = vec2(0.0, 0.73);
+const float HORIZON = 0.46;
+const vec2 MOON_POS = vec2(0.0, 0.76);
 const float MOON_R = 0.055;
 const float RING_SPEED = 5.0;
 

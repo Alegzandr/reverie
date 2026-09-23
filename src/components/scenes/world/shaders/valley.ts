@@ -8,7 +8,7 @@
  * crisp at full resolution and costs next to nothing.
  */
 export const VALLEY = /* glsl */ `
-const float LAKE = 0.34;
+const float LAKE = 0.47;
 const int RANGES = 5;
 
 float valleyProfile(float x, float seed) {

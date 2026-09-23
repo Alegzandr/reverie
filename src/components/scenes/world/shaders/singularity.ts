@@ -55,7 +55,7 @@ vec3 world(vec2 fragCoord) {
   float elev = 0.13 + uPointer.y * -0.05 + sin(uTime * 0.05) * 0.02;
   float dist = 23.0;
   vec3 ro = vec3(sin(a) * cos(elev), sin(elev), cos(a) * cos(elev)) * dist;
-  vec3 fw = normalize(-ro + vec3(0.0, -0.4, 0.0));
+  vec3 fw = normalize(-ro + vec3(0.0, -2.4, 0.0));
   vec3 rt = normalize(cross(vec3(0.0, 1.0, 0.0), fw));
   vec3 up = cross(fw, rt);
   float roll = 0.12;

@@ -9,7 +9,7 @@
  * left, air to the right), and a kick sends a soft surge along the arcs.
  */
 export const BOREALIS = /* glsl */ `
-const float SHORE = 0.42;
+const float SHORE = 0.5;
 
 /* Aurora green, pulled a little toward the mood's ambient so each palette
    still owns its sky. */

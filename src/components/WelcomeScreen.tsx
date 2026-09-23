@@ -58,10 +58,10 @@ export function WelcomeScreen({
       <main className="flex flex-1 items-center justify-center px-6 pb-16">
         <div className="welcome-stage relative flex w-full max-w-2xl flex-col items-center text-center">
           <Logo className="mb-7 h-16 w-16 rounded-[18px] shadow-[0_18px_50px_-24px_rgba(var(--color-accent),0.7)]" />
-          <h1 className="font-display text-6xl font-light lowercase tracking-[0.04em] text-[rgb(var(--color-text))] sm:text-7xl">
+          <h1 className="wordmark text-6xl sm:text-7xl">
             {t('app.title')}
           </h1>
-          <p className="mt-4 max-w-md font-display text-lg font-light text-balance text-[rgba(var(--color-text),0.9)] sm:text-xl">
+          <p className="mt-5 max-w-lg text-base font-light text-balance text-[rgba(var(--color-text),0.9)] sm:text-lg">
             {t('app.subtitle')}
           </p>
 

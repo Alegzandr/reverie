@@ -20,11 +20,17 @@ Two audio engines that must stay sonically identical:
 - `src/utils/audioProcessor.ts` - offline render (`OfflineAudioContext`) used only at export time.
 - Shared between them: `src/utils/dsp.ts` (gain/cutoff curves with measured coefficients - don't retune casually) and `src/utils/impulse.ts` (cached noise-decay impulse responses).
 
-Hook composition (`src/hooks/`): `useAudioProcessor` orchestrates `useAudioFile` (load + header metadata) + `useAudioPlayback` (live graph, position clock, volume/repeat persistence) + `useAudioExport` (filenames, strategy dispatch). App.tsx consumes only `useAudioProcessor`.
+Hook composition (`src/hooks/`): `useAudioProcessor` orchestrates `useAudioFile` (load + header metadata) + `useAudioPlayback` (live graph, position clock, volume/repeat persistence, `onTrackEnd`) + `useAudioExport` (filenames, strategy dispatch). App.tsx wires it to the playlist through a stable trampoline.
+
+Playlist: `usePlaylist` (reducer + IndexedDB persistence via `src/utils/playlistStore.ts`, background tag/duration scan) and `usePlaylistPlayer` (seq-guarded loads, auto-advance, repeat off/all/one, shuffle laps, broken-file skipping, session restore). Pure helpers in `src/utils/playlistModel.ts`.
 
 Export (`src/utils/exportStrategies.ts`): strategy per source format, matched output (MP3→MP3, FLAC→FLAC via libFLAC WASM, WebM/OGG/M4A via MediaRecorder), with fallbacks (FLAC→WAV, MediaRecorder→MP3). Encoders are `import()`ed on demand - keep them off the initial bundle.
 
-Moods (`src/contexts/moods.ts` + `MoodContext.tsx`): 6 moods (light, dark, tidal, nocturne, aurora, horizon) = palette + ambient scene. Applied as `data-mood` + `.dark`/`.immersive` on `<html>`; tokens live in `src/index.css` (OKLCH). "Mood" is the product term - never reintroduce "theme".
+Moods (`src/contexts/moods.ts` + `MoodContext.tsx`): 6 moods (light, dark, tidal, nocturne, aurora, horizon) = palette + living world. Applied as `data-mood` + `.dark`/`.immersive` on `<html>`; tokens live in `src/index.css` (OKLCH). "Mood" is the product term - never reintroduce "theme".
+
+Living worlds (`src/components/scenes/world/`): a WebGL2 engine (TAA, adaptive render scale, in-engine cross-fade, still mode for reduced motion) running one fragment shader per world, fed by its own tee analyser (`analyserSource.ts`, `audioFeed.ts`). `AmbientScene` layers it over still posters (`public/worlds/`, regenerate them when a world changes) and adds the `.helmet` visor overlay. Never `loseContext` in a React cleanup.
+
+Chrome: the visor HUD (DESIGN.md). Side panes sit in `.console-left/-right` perspective wrappers (rake on the pane, never the grid); fade glass itself or its content, never a glass's ancestor (kills its blur). One font: Geist Mono.
 
 Audio reactivity (`src/hooks/useAudioReactivity.ts`): a live analyser publishes `--audio-level/-bass/-mid/-treble/-pulse` CSS vars; scenes/HUD read them (canvas code reads them per frame). Intensity is calibrated per track via `src/utils/audioLoudness.ts`.
 

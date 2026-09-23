@@ -64,7 +64,7 @@ vec3 world(vec2 fragCoord) {
   float elev = 0.18 + sin(uTravel * 0.02) * 0.12 - uPointer.y * 0.06;
   float dist = 15.5 - uBass * 0.4;
   vec3 ro = vec3(sin(a) * cos(elev), sin(elev), cos(a) * cos(elev)) * dist;
-  vec3 fw = normalize(-ro + vec3(0.0, 0.6, 0.0));
+  vec3 fw = normalize(-ro + vec3(0.0, -1.6, 0.0));
   vec3 rt = normalize(cross(vec3(0.0, 1.0, 0.0), fw));
   vec3 up = cross(fw, rt);
   vec3 rd = normalize(uv.x * rt + uv.y * up + 1.55 * fw);

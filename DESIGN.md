@@ -8,42 +8,38 @@ Source of truth for implemented tokens: `src/index.css` (CSS custom properties).
 
 Dark-first, with a clean light mode - but theming has grown past a binary toggle into a **mood system** (see "Moods" below).
 
-Scene that forces the choice: a music fan at night, headphones on, lights dimmed, losing themselves in a slowed + reverb edit. That is the home of the brand, so the identity surfaces (icon, OG card, ambient backdrop) live in deep indigo. The in-app workspace still offers a polished light mode for daytime and bright rooms. The interface is always the immersive HUD; a mood only swaps the palette and the animated background.
+Scene that forces the choice: a music fan at night, headphones on, lights dimmed, losing themselves in a slowed + reverb edit. That is the home of the brand, so the identity surfaces (icon, OG card, the default world) live in deep indigo. Daybreak keeps a polished light mood for daytime and bright rooms. The metaphor holding it together: **you are looking out through a spacesuit visor**. The interface is a holographic HUD projected on that glass; a mood swaps its palette and the living world beyond it.
 
 ## Moods
 
-The mood system is a first-class, always-visible control, not a buried setting. The registry lives in `src/contexts/moods.ts`; `MoodContext` writes three things to `<html>` per active mood: `data-mood="<id>"` (selects the colour-token block in `index.css`), `.dark` (kept on every dark-based mood so existing `dark:` utilities and `.dark` rules keep working), and `.immersive` (always on - gates the holographic chrome and mounts the ambient scene). The choice persists to `localStorage` under `mood`; default is **Aurora**.
+The mood system is a first-class, always-visible control, not a buried setting. The registry lives in `src/contexts/moods.ts`; `MoodContext` writes three things to `<html>` per active mood: `data-mood="<id>"` (selects the colour-token block in `index.css`), `.dark` (on every mood but `light`, so `dark:` utilities and `.dark` rules keep working), and `.immersive` (always on). The choice persists to `localStorage` under `mood`; default is **aurora**. ("Mood" is the product term; never "theme".)
 
-A mood = **palette + animated ambient scene**, over the one shared HUD. Six moods in two families:
+A mood = **palette + living world**, under the one shared visor HUD:
 
-| Mood | Family (`kind`) | Base | Scene |
+| Mood id | Label (EN) | World | Base |
 | --- | --- | --- | --- |
-| Light | workspace (calm) | light | daybreak (CSS sun + clouds) |
-| Dark | workspace (calm) | dark | dusk |
-| Tidal | immersive (vibey) | dark | tidal |
-| Nocturne | immersive (vibey) | dark | nocturne |
-| Aurora *(default)* | immersive (vibey) | dark | aurora/nebula |
-| Horizon | immersive (vibey) | dark | horizon |
+| `aurora` *(default)* | Nebula Drift | `nebula` - a slow orbit round a stellar nursery | dark |
+| `dark` | Borealis | `borealis` - green aurora arcs over snowy crests and a mirror lake | dark |
+| `tidal` | Moon Tide | `tide` - a stylised mirror sea under the moon | dark |
+| `horizon` | Echo Valley | `valley` - layered mountains round a still lake at dusk | dark |
+| `nocturne` | Singularity | `singularity` - a black hole bending its own spectrum disk | dark |
+| `light` | Daybreak | `daybreak` - a sunlit sea of clouds | light |
 
-Each `MoodDef` carries an `id`, an i18n `labelKey`, a Lucide `icon`, its `kind`, `base`, `scene`, and a `preview` CSS gradient (the gallery thumbnail / live swatch). Two surfaces let users switch it:
+Each `MoodDef` carries an `id`, an i18n `labelKey`, a Lucide `icon`, its `base` and its `world`; `worldPoster()` / `worldThumb()` resolve the stills in `public/worlds/`. One surface switches it: the **world switcher** (`WorldSwitcher`), centred in the top bar and on the welcome stage - a radiogroup of round world thumbnails where the active one opens out to show its name. Arrow keys walk it like any radiogroup.
 
-- **Mood rail (`MoodRail`)** - inline in the workspace cockpit (right column). A featured **Mood** chip reads out the active atmosphere and opens the full gallery (`MOOD_ORDER`); a **Recently used** list keeps the moods you've been cycling one tap away (the active mood is filtered out - the chip already names it - and the list hides until there is somewhere to return to). The fastest way to re-skin the whole atmosphere mid-listen.
-- **Settings gallery (`SettingsMenu`)** - a 2-column gallery of all six moods (`MOOD_ORDER`) plus the ten-locale language grid.
+## HUD language (the visor)
 
-## HUD language
+Everything in the chrome reads as light projected on a helmet visor: see-through plates, lit hairlines, instrument labels, a gentle rake toward the eye. It is driven by per-mood colour tokens (`--hud-line` hairline, `--hud-glow` bloom, `--scene-veil` legibility wash, all set in each `[data-mood]` block) and a few geometry tokens on `:root`: `--hud-curve` (visor bow depth), `--hud-rake` / `--hud-rake-depth` (console angle and perspective), `--hud-bracket` (corner bracket size), `--visor-radius` / `--visor-rim` / `--visor-rim-alpha` (the helmet opening).
 
-The immersive chrome borrows a holographic heads-up-display register (curved rails, instrument dials, scanlines). It is driven by per-mood tokens and a set of `hud-*` classes in `index.css`:
-
-- **`--hud-line`** (RGB hairline) and **`--hud-glow`** are set in each `[data-mood]` block, so the chrome recolours with the mood.
-- **`.hud-rail` / `.hud-rail-top` / `.hud-rail-bottom`** - the sticky header and transport, skinned as curved HUD bars; **`.hud-bow` / `.hud-bow-inner`** give them the bowed edge.
-- **`.hud-frame`** - the panel framing for the control rail and mood rail; its `::after` glow and border breathe with the audio (see below).
-- **`.hud-readout`** - small monospaced telemetry labels (e.g. "Mood", "FX").
-- **`.hud-scanlines` / `.hud-vignette`** - full-viewport overlays that sit over the ambient scene.
-- **`HudDial`** (`components/hud/HudDial.tsx`) - a memoised SVG instrument dial (concentric rings, graduated tick rim, accent arc) wrapping the transport play orb; its rings rotate while a track plays. Pure decoration, coloured by `--hud-line` / `--color-accent`.
+- **`.pane`** - the holographic plate: a near-clear surface tint that thins toward the bottom, 4px scanlines in `--hud-line`, a luminous hairline, an inner bloom in `--hud-glow`, over `blur(22px) saturate(170%)`. `::before` masks a hairline frame down to four lit **corner brackets**; `::after` is the inner glow that breathes with the music's mids.
+- **Visor rails** - `.top-bar::before` and `.dock-wrap::before` paint full-width plates whose elliptical corner radii sum to the whole width, so the top bar and the dock bow toward the centre like the rim of a visor, each with a lit hairline edge. The bow overhangs only the open centre.
+- **Consoles** - `.console-left` / `.console-right` are perspective wrappers around the side panes, which swing their outer edge toward the viewer (`rotateY(±var(--hud-rake))`, hinged on the inner edge): a cockpit "V" around the view. Each console is its own perspective root (never the grid, which would flatten the centre's glass), and the raked plates carry a raised fill because backdrop blur flattens under a 3D pose.
+- **`.helmet`** - a fixed overlay above the interface (below every popover, never taking a pointer): the visor's rounded rim, a breath of glare at the top-left, and two graduated horizon rulers on the side edges. Its hairline brightens faintly with `--audio-level`.
+- **`.pane-title`** - section heads as instrument labels: small caps, 0.2em tracking, a lit diamond tick. **`.hud-readout`** - tiny telemetry labels.
 
 ## Audio reactivity (breathe with the music)
 
-The signature: the interface swells and pulses with the playing track - subconscious emotional feedback, not a gamer RGB visualiser. `useAudioReactivity` (`src/hooks`) reads the live playback analyser each frame and publishes normalised energies as CSS custom properties on `<html>`:
+The signature: the world and the interface swell with the playing track - subconscious emotional feedback, not a gamer RGB visualiser. `useAudioReactivity` (`src/hooks`) reads the live playback analyser each frame and publishes normalised energies as CSS custom properties on `<html>`:
 
 | Variable | Meaning |
 | --- | --- |
@@ -53,11 +49,16 @@ The signature: the interface swells and pulses with the playing track - subconsc
 | `--audio-treble` | high-band energy (air/transients) |
 | `--audio-pulse` | onset flash - spikes on a kick, decays fast |
 
-Stylesheets consume them so different surfaces react to different parts of the music: `.scene-breath` bloom swells with level/mid, `.scene-particles` brighten with treble, `.hud-frame` borders/glow pulse with mid/level, the play orb halo (`.audio-orb-glow`) and `play-pulse` punch on bass + onset, and the waveform aura (`.wf-aura`) lifts. Panel *positions* never move: reactivity stays on non-positional cues (glow, borders, backdrop scale), so the layout never drifts. The hook only runs while a track plays, eases everything back to rest on stop, and **clears to flat under `prefers-reduced-motion`** - the values default to `0`, so the whole effect is simply absent in the reduced-motion / idle state. The `SpectrumMeter` (`components/SpectrumMeter.tsx`) is the one explicit instrument: a compact Canvas-2D live spectrum in the transport that settles to a calm baseline when idle or reduced-motion.
+Stylesheets consume them so different surfaces react to different parts of the music: pane glows (`.pane::after`) breathe with mid/level, the helmet hairline with the level, the play orb halo (`.audio-orb-glow`) and `play-pulse` punch on bass + onset, and the waveform aura (`.wf-aura`) lifts. The living world listens on its own, richer feed (see below). Panel *positions* never move: reactivity stays on non-positional cues (glow, borders, light), so the layout never drifts. The hook only runs while a track plays, eases everything back to rest on stop, and **clears to flat under `prefers-reduced-motion`**. The `SpectrumMeter` is the one explicit instrument: a compact Canvas-2D live spectrum in the dock that settles to a calm baseline when idle or under reduced motion.
 
-## Ambient scene
+## Living worlds
 
-`AmbientScene` mounts the active mood's `scene` full-viewport behind the glass. The "wallpaper-engine" approach paints a real cosmic image as the full-bleed base (`.scene-photo`, from `public/backgrounds/*.jpg`) with pointer parallax, slow drift and colour haze; `light`/daybreak keeps CSS sun + cloud layers instead. Over every photo scene floats the **living aurora layer** (`scenes/SceneAurora`): a WebGL2 fragment shader painting domain-warped fbm veils as pure additive light, tinted between the mood's ambient and accent tokens, and fed by the calibrated `--audio-*` variables - bass inflates the field, mids quicken its drift, treble sprinkles a fine shimmer, level lifts the veil's luminance; idle, it settles to a barely-there breath (a living wallpaper, never a visualiser). It renders at ~40% resolution, throttles to 30fps when no music plays, pauses when the tab hides, and self-gates: under reduced motion / touch (`animatedBackdropAllowed`), on the software GPU tier, or without WebGL2 it never mounts, and the scene keeps the CSS haze exactly as before (never call `loseContext` in a React cleanup - a dead context composites as a white sheet under StrictMode's effect replay; the canvas stays hidden until an init succeeds). Over the base sit `.scene-veil`, `.scene-breath`, `.scene-particles`, and the HUD overlays - all silenced to a still frame under `prefers-reduced-motion`. The cockpit's translucent panels - and the raked side consoles that angle the view toward the centre - let this scene breathe through the interface.
+`AmbientScene` is mounted once at the app root (above the welcome/workspace split, so starting a session never recompiles or blinks the world). Bottom to top: the **posters** (a 1920x1080 still of every world in `public/worlds/`, stacked, the active one faded in), the **living world** (`SceneWorld`), `.scene-veil` (a wash of `--scene-veil` behind the top bar and dock), `.scene-vignette`, and - above the interface - the `.helmet`.
+
+- **Engine** (`scenes/world/engine.ts`): WebGL2, one fragment shader per world (`scenes/world/shaders/`), over a shared prelude (tileable 3D/2D noise textures, starfield, ACES tonemap, palette uniforms linearised from the mood tokens). Quality comes from temporal anti-aliasing (Halton jitter into RGBA16F history, neighbourhood clamp) and a present pass with a light sharpen + dither, at an adaptive render scale (`SCENE_WORLD.RENDER_SCALE_*`). It idles at about 30fps without music, pauses when the tab hides, and a mood switch cross-fades in-engine from a snapshot of the outgoing world.
+- **Music** (`audioFeed.ts`): a tee analyser off the playback graph (`analyserSource.ts`) folds 64 log bands into a scrolling spectrum-history texture (60 rows/s), plus level/bass/mid/treble and kick detection. Each world spends it in its own way (ripples across the moon's glade, aurora curtains flaring, the accretion disk printing the spectrum) - contemplative, never a visualiser.
+- **Art direction**: stylised, not realistic (the sea is a simplified mirror, not a simulation); clean silhouettes, no noisy or smeared textures, one focal light per world. Regenerate the posters from the engine whenever a world changes.
+- **Gates**: live rendering needs a desktop fine pointer, a non-software GPU tier and WebGL2, and the *Living world* setting on; anywhere else the posters are the backdrop. Under reduced motion the world accumulates one calm frame per change and stops. Never call `loseContext` in a React cleanup (a dead context composites as a white sheet under StrictMode's effect replay).
 
 ## Color
 
@@ -127,31 +128,17 @@ The body backdrop layers two radial gradients (ambient at 20% 20%, accent at 80%
 
 ## Typography
 
-Two real web faces, no system UI font. A **humanist sans** carries the working UI (labels, controls, data, body); a **display serif** carries identity and headings, so the dreamy register the wordmark sets extends to every title instead of stopping at the logo. Both are self-hosted variable fonts (no third-party request), so the brand reads consistently on every platform rather than borrowing the OS face.
+One face: **Geist Mono**, the instrument voice of a visor readout, for every label, control, value and title. Self-hosted variable font (`@fontsource-variable/geist-mono/wght.css`, imported in `main.tsx`; no third-party request). Latin, Latin Extended and Cyrillic subsets load on demand through `unicode-range`; CJK and Devanagari fall back per-glyph to the system face. `--font-sans` and `--font-display` both resolve to it (with `ui-monospace` / `SF Mono` / `Menlo` / `Consolas` as the swap net), so the `font-display` utility still works but no longer switches face.
 
-**UI / body - Hanken Grotesk** (`--font-sans`):
+Hierarchy comes from weight, size and case, not a second family:
 
-```
-'Hanken Grotesk Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif
-```
-
-**Display - Fraunces** (`--font-display`, Tailwind `font-display` utility):
-
-```
-'Fraunces Variable', Georgia, 'Times New Roman', serif
-```
-
-Both imported in `main.tsx` via `@fontsource-variable/*`. Hanken Grotesk is a warm, soft-terminal humanist sans that echoes Fraunces' SOFT axis, sturdy enough for dense labels and tabular data. Fraunces is a soft optical serif; we self-host its variable `soft` cut, and `.font-display` pins `font-variation-settings: 'SOFT' 50` to round the terminals just enough to read oneiric rather than editorial-cold.
-
-Only the **Latin subsets** load (~35KB Hanken + ~62KB Fraunces), on demand through `unicode-range`, so non-Latin locales (ZH, JA, KO, HI, RU) download nothing and fall back per-glyph to their native system face. The trailing `system-ui` entries in `--font-sans` are a last-resort net for the brief `font-display: swap` window and those non-Latin scripts only; every Latin locale renders 100% Hanken, never a system sans.
-
-Reserve Fraunces for identity and headings only: the wordmark, the welcome tagline, and the track title. **Never** put it on labels, buttons, sliders, metadata, or any data/control text, those stay Hanken (display serif in UI chrome reads strange, even in a dreamy product).
+- **Wordmark** (`.wordmark`): lowercase `reverie`, weight 300, letter-spacing 0.14em. Never in the Aurora gradient.
+- **Display** (track title, welcome wordmark): light (300) with slightly negative tracking - mono is wide, so display sizes run a step smaller than a proportional face would.
+- **Instrument labels** (`.pane-title`, the now-playing kicker, `.hud-readout`): small caps with wide tracking (0.16 to 0.2em).
+- **Controls and data**: regular to semibold; numbers are naturally tabular.
+- Scale steps keep a ratio of at least 1.25. Secondary/technical text uses `--color-text-secondary`.
 
 Smoothing: `-webkit-font-smoothing: antialiased`, `-moz-osx-font-smoothing: grayscale`.
-
-- **Wordmark**: Fraunces, lowercase `reverie`, weight 300, letter-spacing ~0.04em, solid `#F5F3FF` on the Dream field. The serif, lightness, and spacing carry the dreamy register together; never set it in the Aurora gradient.
-- **Hierarchy**: scale steps keep a ratio of at least 1.25. Large display text is Fraunces at light/regular weight; labels and controls are Hanken at medium/semibold. The face change, not just size, separates display from UI. Avoid flat scales.
-- **Body**: cap measure at 65 to 75ch. Secondary/technical text (bitrate, sample rate) uses `--color-text-secondary`.
 
 ## Radius & Spacing
 
@@ -176,43 +163,46 @@ The tinted secondary shadow (accent in light, ambient in dark) is what makes sur
 ## Motion
 
 - **Easing**: button feedback uses `cubic-bezier(0.4, 0, 0.2, 1)` at ~200ms. For entrances and reveals prefer ease-out-expo/quint. No bounce, no elastic.
-- **Press**: `.ios-button:active` scales to `0.96`; hover lifts brightness (1.05 light, 1.15 dark).
-- **Mood switch**: the 600ms palette cross-fade (`.mood-shifting`), carried by the mood-dive spectacle (`<MoodTransition>`) when motion is allowed.
-- **Cockpit power-on (`.cockpit-boot`)**: loading a track boots the workspace once - rails slide into place, the raked consoles light up out of a blur (opacity/filter only, never transform: they carry the visor rotateY pose), the centre plates focus in, corner brackets and hairlines trace themselves (`clip-path` reveal), the telemetry readouts settle in a 45ms-stagger cascade, and the wave instrument prints itself behind a scanning beam (canvas-side sweep, delayed ~380ms so it plays on a legible plate). One orchestrated second, once per session; App toggles the class straight on the shell element and never sets it under reduced motion, with a CSS safety net on top. Every animation is a both-filled one-shot on transform/opacity/filter, so nothing can drift the resting layout.
-- **Never** animate layout properties (width, height, top, left). Animate transform and opacity.
-- **Reduced motion**: honor `prefers-reduced-motion`. The waveform and any ambient drift must fall back to a static state; the app stays fully usable without motion.
+- **Press**: `.ios-button:active` scales to `0.96`.
+- **Mood switch**: the palette cross-fades (`.mood-shifting`) while the living world cross-fades in-engine (the posters cross-fade wherever it isn't running).
+- **Cockpit power-on (`.cockpit-boot`)**: starting a session brings the interface in once - the visor rails slide into place (transform on the bar, fade on its plate and content, so the glass keeps its blur), the consoles fade up (opacity only: they carry the rake), the now-playing readout rises and the waveform focuses in. One orchestrated second; App toggles the class straight on the shell element and never under reduced motion.
+- **Resting interface** (`useUiRest`): while music plays and nothing stirs for `UI_REST.IDLE_MS`, the consoles and the top bar fade out, the dock and waveform dim, the cursor hides - the world takes the screen; any movement brings everything straight back. Fades land on each glass or its content, never on a glass's ancestor (that would switch its blur off). Opt-out in settings.
+- **Never** animate layout properties (width, height, top, left), and never move a section: animate transform and opacity on one-shot entrances only.
+- **Reduced motion**: honor `prefers-reduced-motion`. The world paints still frames, the waveform a static ribbon, audio reactivity clears to flat; the app stays fully usable without motion.
 
-## App shell (desktop gate + two states)
+## App shell (desktop gate + stages)
 
-Before either stage, a **desktop gate** guards the whole app. Reverie is desktop-only: the cockpit needs a wide canvas, so viewports under `VIEWPORT.MIN_DESKTOP_WIDTH` (1024px, matching Tailwind's `lg` where the three-column grid activates) render `DesktopOnlyGate` instead - a branded, AmbientScene-backed "open on a larger screen" stage (brand mark, a monitor glyph in the Aurora well, an invitation to switch to a computer). There is **no bypass**: we send phone visitors to a real screen rather than ship a cramped layout. The check (`useIsViewportTooNarrow`) tracks `matchMedia`, so the app reveals or hides itself live as the window is resized - no reload.
+Before anything, a **desktop gate** guards the whole app. Reverie is desktop-only: the cockpit needs a wide canvas, so viewports under `VIEWPORT.MIN_DESKTOP_WIDTH` (1024px) render `DesktopOnlyGate` instead - a branded "open on a larger screen" stage. There is **no bypass**. The check (`useIsViewportTooNarrow`) tracks `matchMedia`, so the app reveals or hides itself live as the window is resized.
 
-Once the viewport is wide enough, a single decision point, `hasSession` (true once any audio buffer or file exists), governs the layout:
+The world and the helmet are always there (`AmbientScene` at the root). Over them, one of three stages:
 
-Both stages mount the `AmbientScene` behind everything; the chrome (header + transport) is the HUD-skinned `.hud-rail`.
-
-- **Welcome stage** (no track): centered and atmospheric. Brand mark, lowercase wordmark, tagline, the hero dropzone, a row previewing the four effects, and the privacy promise on one line. The dropzone is a full holographic plate (`glass hud-frame`, with the lit corner brackets and hairline of the cockpit panels) - the HUD identity starts at first contact, not after upload; drag feedback is an accent outline + tint overlay. The effect chips are small glass pills (`Badge` variant `hud`). Behind the whole column sits a static legibility scrim (`.aurora-stage::before`): a radial pool of the mood's `--scene-veil` colour that grounds the floating text over even the brightest patch of the scene - deliberately not animated, so legibility never wobbles. This stage teaches the effects, so there is no separate marketing feature grid.
-- **Workspace** (track loaded): a sticky top HUD rail (brand, replace-track, settings; the brand mark doubles as start-over), then a **three-column cockpit** (`lg:grid-cols-[minmax(320px,400px)_minmax(0,1fr)_minmax(280px,340px)]`). The two side columns are **raked 3D consoles**: the effects control rail (left) and the **mood rail** (`MoodRail`, right) each sit in their own `.hud-console` perspective wrapper and tilt inward toward the viewer (a cockpit-visor "V" - `rotateY ±18°`, hinged on the inner edge, desktop-only and static, so it never drives positional drift). The **centre column stays flat** (a 3D ancestor would flatten its glass blur) and stacks two HUD plates: the **track-identity panel** (title + format telemetry) directly above the **waveform** (`WaveformTimeline`). A sticky HUD transport bar is pinned to the bottom.
+- **Boot veil** - while the stored playlist is read and the last track decoded: the world alone for that half-second, never a flash of the welcome stage.
+- **Welcome stage** (no session): the world switcher and settings on top; the brand mark, wordmark and tagline; the hero dropzone (files or whole folders); when a playlist is remembered on this device, a **resume** card straight back into it; the four effects as small pills; the privacy promise. A static radial pool of `--scene-veil` behind the column keeps the type legible over any sky.
+- **Workspace** (`.app-shell`, a session is loaded):
+  - **Top visor rail** (`.top-bar`): the brand mark (doubles as start-over), the world switcher centred, then Add music, fullscreen and settings.
+  - **Stage** (`.stage-grid`): the raked **effects console** (left), the open **centre** where the world shows through - the now-playing readout and the waveform set over its lower part - and the raked **playlist console** (right).
+  - **Bottom visor rail** (`.dock-wrap`): the transport.
+  - Dropping files anywhere opens `FileDropOverlay`: left half plays them now, right half queues them.
 
 ## Interaction model
 
-The product is a late-night listening experience, not an export funnel. Effects are **live**: there is no "apply/bake" step. Moving any control calls `setEffects`, which ramps a persistent Web Audio graph (`utils/effectGraph.ts`) on the playing source with a ~40 ms time constant, so the sound reshapes smoothly as you drift through settings, DAW-style. A speed change rebases the position clock so the playhead stays accurate. Export renders the current settings offline on demand, so download is a quiet secondary action, available whenever a track is loaded. Language and mood live behind a single settings menu in the chrome; language persists to `localStorage` (never the URL), so switching never reloads or loses the session.
+The product is a late-night listening experience, not an export funnel. Effects are **live**: there is no "apply/bake" step. Moving any control calls `setEffects`, which ramps a persistent Web Audio graph (`utils/effectGraph.ts`) on the playing source with a ~40 ms time constant. Export renders the current settings offline on demand, a quiet secondary action.
+
+Listening is playlist-first. Load one file or a whole folder and every track joins a **playlist remembered on this device** (IndexedDB, files included), with the active track and position restored on the next visit. Tracks advance on their own; repeat cycles off / playlist / this track; shuffle plays laps without repeats. Keyboard: space plays/pauses, left/right seek, up/down set the volume, Shift+left/right step through the playlist, media keys and the OS media controls (Media Session) work too. Language, EQ and scene preferences live behind one settings dialog and persist to `localStorage`.
 
 ## Components
 
-- **Glass surface (`.glass`)**: `rgba(surface, ~0.8)` with `backdrop-filter: saturate(180%) blur(20px)`, a 1px translucent border, and the elevation recipe above. This is the core affordance for panels that float over the ambient backdrop. Use it purposefully for genuine surfaces, not as decoration on every element, and never nest one glass panel inside another. In the workspace cockpit, two `.hud-frame` glass panels flank the centre as raked 3D consoles (see App shell) - the effects control rail (left) and the mood rail (right) - while the flat centre stacks the track-identity panel over the waveform. In the immersive moods the glass is reskinned to the HUD treatment (`.immersive .glass`): a thinner fill, a luminous `--hud-line` hairline, and inner + outer glow.
-- **iOS button (`.ios-button` + `buttonVariants`)**: press-scale (0.96) with the lift living in each variant's shadow/fill so transparent buttons react to hover too (not a brightness-only hover). Variants: `play` (the mood-accent orb, `.btn-orb`, recolours per mood over a deep Dream-Indigo base), `glass` (the quiet dark-glass export with an Aurora-tinted icon), `accent` (selected affordance, deepens on hover), `outline`/`secondary` (chrome, Aurora wash on hover), `inverse`, `ghost`, `muted`. The signature `.btn-aurora` gradient pans gently on hover (one-shot, calm); its shadow stacks a violet and a pink glow.
-- **Effect mode button (`EffectModeButton`)**: one button per effect (Speed Up, Slowed + Reverb, 8D, Bass Boost), in a 2x2 grid. Not a glass surface (it lives inside the glass rail): a bordered tile that, when selected, pairs an Aurora-tinted fill and border with a Lucide icon and label, so mode is never communicated by color alone.
-- **Effect slider (`EffectSlider`)**: a single clear control per effect (speed multiplier, reverb amount, rotation speed, bass intensity). Built on the `.slider` class, whose track fills with the Aurora accent up to the current value via the `--range` custom property, with a soft-halo white thumb. Value rendered large and tabular; formatted for humans (see `utils/formatters.ts`).
-- **Waveform (`WaveformTimeline` + `waveInstrument.ts`)**: the centre instrument - a `.hud-frame` glass plate whose envelope is painted by a Canvas-2D renderer (`createWaveInstrument`) as one continuous ribbon of light, mirrored around a shared instrument axis (a faint `--hud-line` hairline). The played region burns in the mood accent around a `--wf-core` hot core (near-white light on dark moods, a deep saturated ink on the light workspace) with a core filament lying on the axis; the unplayed tail is a ghost - a near-empty body under a fine luminous edge, so the scene breathes through it and progress reads as temperature AND substance. While playing, the instrument is alive: an accent wash pools inside the ribbon toward the playhead (reverb stretches it), a spectral flame licks along the spine with the track's real FFT, kick onsets fire pulses that travel back down the played region, treble lifts short-lived sparks, 8D braids two stereo strands (accent + ambient) around the spine, and bass boost deepens the core's pulse. The playhead is a scanning beam with a bloom that swells on the level and a round reading head on the axis. The drawn envelope chases the effect-shaped target, so dragging a slider morphs the instrument as liquid. On first data the instrument prints itself left-to-right behind a scanning beam (the power-on sweep). Rendering contract: the canvas is viewport-sized (the stretched clip pans over it via scrollLeft), rAF runs at the display's refresh rate with all physics integrated over the real frame delta, idle relaxes to ~30fps, additive light only over dark moods, the software-GPU tier drops every additive overlay, and reduced motion paints a static ribbon once per state change (no loop, no overlays, instant sweep). A header reads status + clock, a footer reads the live effect (`STANDBY` / `0.70× · 50% RV`). Click, drag, or arrow-key to seek (`role="slider"` on a transparent hit layer above the paint). Its aura (`.wf-aura`) lifts with level + treble.
-- **Track-identity panel**: a flat `.hud-frame` plate in the centre column, directly above the waveform. A `hud-readout` tab (the localized "Track"), the title, a `.hud-ruler` divider, then the format telemetry spread edge-to-edge with `space-between`, each readout sized to its own label (equal columns truncated the longer locales' labels mid-word) - Format, Size, Bitrate, Sample rate, Channels, Bit depth, labels in the `hud-readout` register, values tabular; both carry a `title` so a clipped readout reveals in full on hover. The title scrolls (`MarqueeText`) only when it would clip, at a calm constant px/s, and falls back to a static ellipsis under reduced motion; the file extension is lifted out of the title into the **Format** readout.
-- **Transport seekbar (`TransportTimeline`)**: the thin scrubbable track in the bottom transport - elapsed time, a draggable playhead in a tall transparent hit area, total duration.
-- **Transport bar (`PlaybackControls`)**: the sticky bottom HUD rail, laid out as a classic player: the play/pause orb leads on the left, the transport seekbar (`TransportTimeline`) fills the centre, then a compact live spectrum (`SpectrumMeter`, `lg`+ only), the volume, and the Export action on the right. The play/pause is the mood-accent orb (the hero of a listening session, recoloured per mood), wrapped in a holographic instrument dial (`HudDial`) whose rings spin while playing - and while exporting, so the offline render reads as the machine working; Export is the quiet dark-glass pill, available whenever a track is loaded. Start-over lives once, on the toolbar brand mark, not here.
-- **Mood rail (`MoodRail`)**: the right column of the cockpit - an always-visible mood picker (see "Moods"). A featured Mood chip reads out the active atmosphere and opens the full gallery (a centred modal - a translucent popover over the translucent rail turned illegible). Below it, "Recently used" lists the moods you can go *back* to - the active one is filtered out (the chip already names it), and the section hides entirely until there is somewhere to return to.
-- **HUD dial (`HudDial`)**: a memoised SVG instrument dial (concentric rings, graduated tick rim, accent arc) decorating the play orb; coloured by `--hud-line` / `--color-accent`, rings spin under `is-spinning` while playing, frozen under reduced-motion.
-- **Spectrum meter (`SpectrumMeter`)**: a small Canvas-2D live spectrum (28 bars, ambient→accent vertical gradient) in the transport. Draws real frequency data while playing; settles to a calm static baseline when idle or under reduced-motion (never fakes motion).
-- **Volume control (`VolumeControl`)**: a compact icon-plus-short-slider on the right of the transport. The icon reflects the level (mute/low/high). The whole control is a wheel target with a generous hit area, so scrolling over it nudges the volume (and prevents the page from scrolling). Persists to `localStorage` (`reverie:volume`).
-- **Settings menu (`SettingsMenu`)**: a single gear button in the chrome opens a dialog with the listening equalizer (six vertical `.eq-slider` faders + preset select; playback-only, never the export) and the ten-locale language grid. Moods are not in here - they live in the always-visible mood rail (see "Moods").
-- **Focus & scrollbar**: a global `:focus-visible` accent outline on every control; custom scrollbar 8px, transparent track, border-tinted thumb (dark/light aware).
+- **Pane (`.pane`)**: the holographic plate (see "HUD language"). Used for genuine surfaces only - the two consoles, the hero dropzone, the resume card - and never nested. Dialogs and popovers use the denser `.immersive .glass`.
+- **iOS button (`.ios-button` + `buttonVariants`)**: press-scale (0.96) with the lift living in each variant's shadow/fill. Variants: `play` (the mood-accent orb, `.btn-orb`, over a deep Dream-Indigo base so the glyph holds AA), `glass`, `accent`, `outline`/`secondary`, `inverse`, `ghost`, `muted`.
+- **World switcher (`WorldSwitcher`)**: see "Moods".
+- **Effects console (`EffectControls` + `EffectRow` + `EffectSlider`)**: the four effects as exclusive rows (icon, name, Active/Inactive, a power glyph), then the active effect's adjustments: a level meter, a tick ruler, and one or two sliders with large tabular values and human formatting (`utils/formatters.ts`).
+- **Now playing (`NowPlaying`)**: over the world, bottom-left of the centre - artwork (embedded cover or a hue tile from `TrackArt`), a kicker with the playlist position, the title (`MarqueeText` scrolls only when it would clip; static under reduced motion), artist and format telemetry, and an "Up next" line close to the end of the track.
+- **Waveform (`WaveformTimeline` + `waveInstrument.ts`)**: the centre instrument - a Canvas-2D ribbon of light mirrored round an instrument axis, the played region burning in the mood accent, the unplayed tail a ghost. While playing it is alive (accent wash toward the playhead, spectral flame along the spine, kick pulses, treble sparks, 8D strands); the drawn envelope chases the effect-shaped target, so dragging a slider morphs it as liquid. Chips above read status, tempo and meter, and the clock. Click, drag or arrow-key to seek (`role="slider"`). Reduced motion paints a static ribbon.
+- **Playlist console (`PlaylistPanel` + `TrackRow`)**: title with track count and total length; add files, add a folder, clear (with a confirm); a filter from `PLAYLIST.FILTER_MIN_TRACKS` tracks up; rows with index (EQ bars on the active one), artwork, title, artist or format, duration, a remove cross on hover, and a live progress hairline under the active row. Rows reorder by drag and drop or Alt+Up/Down, Delete removes one, and the list walks with arrow keys (`data-own-arrows`). The footer states the storage promise (or that storage is full).
+- **Transport (`PlaybackControls`)**: in the bottom visor rail - previous, the play orb, next; the seek bar (`TransportTimeline`); shuffle and the three-state repeat; a compact spectrum (`SpectrumMeter`, `xl`+); the volume (`VolumeControl`, wheel-adjustable, persisted); Export.
+- **Drop overlay (`FileDropOverlay`)**: window-wide while files are dragged - two halves, play now or add to the playlist, chosen by where you let go.
+- **Settings (`SettingsMenu`)**: one gear button opening a dialog - Scene (living world on/off, resting interface on/off), the listening equalizer (six faders + presets; playback only, never the export), and the ten-locale language grid.
+- **Focus & scrollbar**: a global `:focus-visible` accent outline on every control; overlay scrollbars that show only while scrolling; `ScrollFade` dissolves the edge that still hides content.
 
 ## Iconography & Brand Assets
 
