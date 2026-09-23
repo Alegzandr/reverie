@@ -13,10 +13,11 @@ const OPEN_OVERLAY_SELECTOR = '[role="dialog"], [role="menu"], [role="listbox"]'
 const ACTIVITY_EVENTS = ['pointermove', 'pointerdown', 'keydown', 'wheel', 'touchstart'] as const;
 
 /**
- * In browser fullscreen, fades the cockpit panels out after a spell of inactivity
- * and back in on the next movement. Toggles classes straight on the shell (no
- * state, no re-render); the fades themselves are pure CSS so reduced motion can
- * drop them. Opacity only, so nothing ever shifts position.
+ * In browser fullscreen, hides the cockpit after a spell of inactivity (panels
+ * fade, rails slide off the top and bottom edges) and brings it back on the next
+ * movement. Toggles classes straight on the shell (no state, no re-render); the
+ * motion itself is pure CSS so reduced motion can drop it, and it's transient:
+ * at rest every section is exactly where it was.
  */
 export function useFullscreenAutoHide(shellRef: RefObject<HTMLElement | null>, enabled: boolean) {
   useEffect(() => {

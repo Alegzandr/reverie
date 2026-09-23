@@ -160,8 +160,8 @@ export const VIEWPORT = {
 
 /**
  * Fullscreen auto-hide: after this long without pointer or keyboard activity the
- * cockpit panels fade out so the ambient scene has the screen to itself; any
- * movement brings them straight back. Fade durations live with the styles
+ * cockpit panels fade out and the rails slide off-screen so the ambient scene has
+ * the screen to itself; any movement brings them back. Motion timings live with the styles
  * (`.chrome-autohide` in index.css).
  */
 export const FULLSCREEN_CHROME = {

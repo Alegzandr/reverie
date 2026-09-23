@@ -2334,43 +2334,96 @@
 
 /* ── Fullscreen auto-hide ────────────────────────────────────────────────────
    In fullscreen, `useFullscreenAutoHide` puts `.chrome-autohide` on the shell and
-   adds `.chrome-idle` after a spell without input: the panels fade out slowly,
-   then snap back quickly on the next movement. Same glass rule as the boot
-   sequence: every fade sits on the glass element itself (the frames, the rail
-   in flat moods, the rail's ::after plate in immersive ones), never on a
-   wrapper, so the backdrop blur stays live through the whole fade. Opacity
-   only, so nothing moves; hidden panels drop pointer events so a click in the
-   dark only wakes the cockpit instead of hitting an invisible control. */
+   adds `.chrome-idle` after a spell without input. Choreography:
+   - Hiding is unhurried: the panels settle back (fade + a whisper of recoil)
+     first, then the rails glide out of frame, header up, footer down, on a
+     symmetric ease so they leave without a jolt.
+   - Revealing is quick to answer but lands softly: the rails lead on an
+     expo-out (most of the travel in the first frames, a long gentle settle),
+     the panels follow a beat later, their contents surfacing last.
+   Idle rules carry the hide timing, `.chrome-autohide` rules the reveal timing
+   (a transition runs with the rules of the state it goes TO).
+   Glass rule (see the boot sequence): opacity sits on the glass element itself
+   or on non-glass content, never on a wrapper of glass, and the rails travel by
+   `translate` alone, so every backdrop blur stays live through the motion. The
+   individual `translate`/`scale` properties compose with the transforms other
+   rules own (visor rake, optical recentring, boot keyframes) instead of
+   overriding them. The motion is transient: at rest nothing has moved. Hidden
+   chrome drops pointer events so a click in the dark only wakes the cockpit. */
 @layer utilities {
-  .chrome-autohide .hud-frame,
-  .chrome-autohide .hud-rail > .hud-bow,
-  .chrome-autohide .hud-rail::after,
-  :root:not(.immersive) .chrome-autohide .hud-rail {
-    transition: opacity 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  /* The footer's slide would otherwise extend the shell's scrollable overflow
+     and flash a scrollbar; the fullscreen cockpit never scrolls anyway. */
+  .overlay-scroll.chrome-autohide {
+    overflow-y: hidden;
+  }
+
+  .chrome-autohide .hud-rail {
+    transition: translate 560ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .chrome-autohide .hud-rail > .hud-bow {
+    transition: opacity 320ms cubic-bezier(0.22, 1, 0.36, 1) 90ms;
+  }
+  .chrome-autohide .hud-frame {
+    transition:
+      opacity 380ms cubic-bezier(0.22, 1, 0.36, 1) 70ms,
+      scale 620ms cubic-bezier(0.16, 1, 0.3, 1) 70ms;
+  }
+  .chrome-autohide .hud-frame > * {
+    transition: opacity 360ms cubic-bezier(0.22, 1, 0.36, 1) 140ms;
   }
 
   .chrome-idle {
     cursor: none;
   }
-  .chrome-idle .hud-frame,
-  .chrome-idle .hud-rail > .hud-bow,
-  .chrome-idle .hud-rail::after,
-  :root:not(.immersive) .chrome-idle .hud-rail {
-    opacity: 0;
+  /* The overshoot past 100% clears the immersive plate's bulge and the rail's
+     own accent shadow (which the immersive plate doesn't replace), so no halo
+     lingers at the screen edge. */
+  .chrome-idle .hud-rail {
     pointer-events: none;
-    transition: opacity 900ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition: translate 760ms cubic-bezier(0.65, 0, 0.35, 1) 140ms;
+  }
+  .chrome-idle .hud-rail-top {
+    translate: 0 calc(-100% - var(--hud-curve, 0px) - 32px);
+  }
+  .chrome-idle .hud-rail-bottom {
+    translate: 0 calc(100% + var(--hud-curve, 0px) + 32px);
+  }
+  .chrome-idle .hud-rail > .hud-bow {
+    opacity: 0;
+    transition: opacity 520ms cubic-bezier(0.4, 0, 0.2, 1) 220ms;
+  }
+  .chrome-idle .hud-frame {
+    opacity: 0;
+    scale: 0.975;
+    pointer-events: none;
+    transition:
+      opacity 720ms cubic-bezier(0.4, 0, 0.2, 1),
+      scale 820ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .chrome-idle .hud-frame > * {
+    opacity: 0;
+    transition: opacity 420ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
+  /* No travel, no recoil: the chrome simply appears and disappears. */
   @media (prefers-reduced-motion: reduce) {
-    .chrome-autohide .hud-frame,
+    .chrome-autohide .hud-rail,
     .chrome-autohide .hud-rail > .hud-bow,
-    .chrome-autohide .hud-rail::after,
-    :root:not(.immersive) .chrome-autohide .hud-rail,
-    .chrome-idle .hud-frame,
+    .chrome-autohide .hud-frame,
+    .chrome-autohide .hud-frame > *,
+    .chrome-idle .hud-rail,
     .chrome-idle .hud-rail > .hud-bow,
-    .chrome-idle .hud-rail::after,
-    :root:not(.immersive) .chrome-idle .hud-rail {
+    .chrome-idle .hud-frame,
+    .chrome-idle .hud-frame > * {
       transition: none;
+    }
+    .chrome-idle .hud-rail-top,
+    .chrome-idle .hud-rail-bottom {
+      translate: none;
+      visibility: hidden;
+    }
+    .chrome-idle .hud-frame {
+      scale: none;
     }
   }
 }
