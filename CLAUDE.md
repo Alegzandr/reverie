@@ -26,7 +26,7 @@ Playlist: `usePlaylist` (reducer + IndexedDB persistence via `src/utils/playlist
 
 Export (`src/utils/exportStrategies.ts`): strategy per source format, matched output (MP3→MP3, FLAC→FLAC via libFLAC WASM, WebM/OGG/M4A via MediaRecorder), with fallbacks (FLAC→WAV, MediaRecorder→MP3). Encoders are `import()`ed on demand - keep them off the initial bundle.
 
-Moods (`src/contexts/moods.ts` + `MoodContext.tsx`): 6 moods (light, dark, tidal, nocturne, aurora, horizon) = palette + living world. Applied as `data-mood` + `.dark`/`.immersive` on `<html>`; tokens live in `src/index.css` (OKLCH). "Mood" is the product term - never reintroduce "theme".
+Moods (`src/contexts/moods.ts` + `MoodContext.tsx`): 8 moods (light, dark, tidal, nocturne, aurora, horizon, sakura, citypop) = palette + living world. Applied as `data-mood` + `.dark`/`.immersive` on `<html>`; tokens live in `src/index.css` (OKLCH). "Mood" is the product term - never reintroduce "theme".
 
 Living worlds (`src/components/scenes/world/`): a WebGL2 engine (TAA, adaptive render scale, in-engine cross-fade, still mode for reduced motion) running one fragment shader per world, fed by its own tee analyser (`analyserSource.ts`, `audioFeed.ts`). `AmbientScene` layers it over still posters (`public/worlds/`, regenerate them when a world changes) and adds the `.helmet` visor overlay. Never `loseContext` in a React cleanup.
 

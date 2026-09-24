@@ -22,6 +22,8 @@ A mood = **palette + living world**, under the one shared visor HUD:
 | `dark` | Borealis | `borealis` - green aurora arcs over snowy crests and a mirror lake | dark |
 | `tidal` | Moon Tide | `tide` - a stylised mirror sea under the moon | dark |
 | `horizon` | Echo Valley | `valley` - a fjord at dusk: sheer cliffs wall behind wall in a mirror of water, a soft warm aurora above | dark |
+| `sakura` | Sakura Dusk | `blossom` - walking a cherry-tree lane at golden hour, painted like an animated film, the one world you move through: trunks forking into branches under an arch of airy blossom (loose bunches of flowers, sky and wood showing through), the low sun at the lane's end, petals flying past; the paper lanterns lining the path carry the spectrum, near ones now, far ones a moment ago | dark |
+| `citypop` | City Pop | `skyline` - a bay city at midnight, eighties album-sleeve style: towers whose windows climb with their band of the spectrum, a floodlit lattice tower, an expressway of streaming lights, neon signs flaring on the downbeat | dark |
 | `nocturne` | Singularity | `singularity` - a total eclipse face-on, photographic: steep K-corona, tapering helmet streamers, polar plumes, rose prominences, one diamond bead | dark |
 | `light` | Daybreak | `daybreak` - a sunlit sea of clouds | light |
 

@@ -776,7 +776,9 @@
   [data-mood='tidal'],
   [data-mood='nocturne'],
   [data-mood='aurora'],
-  [data-mood='horizon'] {
+  [data-mood='horizon'],
+  [data-mood='sakura'],
+  [data-mood='citypop'] {
     --scene-veil: 8, 10, 24;
   }
 
@@ -843,6 +845,35 @@
     --color-ambient: 255, 122, 150;
     --hud-line: 255, 202, 156;
     --hud-glow: 255, 150, 120;
+  }
+
+  /* Sakura - a cherry-tree lane at golden hour. Petal pink over a deep plum. */
+  [data-mood='sakura'] {
+    --color-background: 22, 12, 30;
+    --color-surface: 44, 26, 50;
+    --color-text: 252, 240, 246;
+    --color-text-secondary: 214, 186, 202;
+    --color-border: 118, 78, 108;
+    --color-accent: 255, 164, 196;
+    --color-accent-hover: 255, 190, 212;
+    --color-ambient: 255, 128, 150;
+    --hud-line: 255, 204, 220;
+    --hud-glow: 255, 138, 172;
+  }
+
+  /* City Pop - a bay city at midnight. Neon magenta and cyan over navy. */
+  [data-mood='citypop'] {
+    --color-background: 8, 6, 26;
+    --color-surface: 22, 16, 48;
+    --color-text: 240, 238, 255;
+    --color-text-secondary: 176, 170, 214;
+    --color-border: 84, 68, 132;
+    --color-accent: 255, 104, 180;
+    --color-accent-hover: 255, 140, 198;
+    --color-accent-text: 255, 142, 200;
+    --color-ambient: 64, 214, 255;
+    --hud-line: 140, 220, 255;
+    --hud-glow: 255, 84, 172;
   }
 }
 
@@ -1303,10 +1334,12 @@
       );
   }
 
-  /* Singularity's corona and Echo Valley's aurora run bright behind the
-     consoles and the now-playing type: a denser floor keeps them legible. */
+  /* Singularity's corona, Echo Valley's aurora and Sakura Dusk's blossom vault run
+     bright behind the consoles and the now-playing type: a denser floor keeps
+     them legible. */
   [data-mood='nocturne'] .console > .pane,
-  [data-mood='horizon'] .console > .pane {
+  [data-mood='horizon'] .console > .pane,
+  [data-mood='sakura'] .console > .pane {
     background:
       repeating-linear-gradient(to bottom, rgba(var(--hud-line), 0.05) 0 1px, transparent 1px 4px),
       linear-gradient(
@@ -1469,7 +1502,8 @@
   }
 
   [data-mood='horizon'] .now-playing::before,
-  [data-mood='nocturne'] .now-playing::before {
+  [data-mood='nocturne'] .now-playing::before,
+  [data-mood='sakura'] .now-playing::before {
     --now-playing-veil: 0.8;
   }
 

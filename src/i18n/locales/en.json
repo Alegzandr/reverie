@@ -129,7 +129,9 @@
       "tidal": "Moon Tide",
       "nocturne": "Singularity",
       "aurora": "Nebula Drift",
-      "horizon": "Echo Valley"
+      "horizon": "Echo Valley",
+      "sakura": "Sakura Dusk",
+      "citypop": "City Pop"
     },
     "language": "Language",
     "equalizer": "Equalizer",

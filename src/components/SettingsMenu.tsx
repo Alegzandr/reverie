@@ -118,7 +118,9 @@ export const SettingsMenu = memo(function SettingsMenu({ trigger }: SettingsMenu
           {/* Listening equalizer - shapes playback for comfort only; it is never
               baked into exports. A preset bank plus six hand-tunable bands. */}
           <section className="mb-5">
-            <div className="flex items-center justify-between gap-2 mb-2">
+            {/* Fixed to the reset button's height so it appearing/disappearing as
+                the preset leaves or returns to Flat never resizes the dialog. */}
+            <div className="flex h-7 items-center justify-between gap-2 mb-2">
               <h3 className="text-[11px] uppercase tracking-wide text-[rgb(var(--color-text-secondary))]">
                 {t('settings.equalizer')}
               </h3>

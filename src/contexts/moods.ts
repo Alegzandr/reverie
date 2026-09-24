@@ -1,5 +1,5 @@
 import type { WorldId } from '../components/scenes/world/worlds';
-import { SunIcon, MountainsIcon, MoonIcon, PlanetIcon, SparkleIcon, SunHorizonIcon } from '@phosphor-icons/react';
+import { SunIcon, MountainsIcon, MoonIcon, PlanetIcon, SparkleIcon, SunHorizonIcon, FlowerIcon, CityIcon } from '@phosphor-icons/react';
 import type { Icon } from '@phosphor-icons/react';
 
 /**
@@ -13,7 +13,7 @@ import type { Icon } from '@phosphor-icons/react';
  * `dark:` utility and `.dark` rule still applies), and `.immersive` (always on:
  * the glass chrome that floats over the world).
  */
-export type MoodId = 'light' | 'dark' | 'tidal' | 'nocturne' | 'aurora' | 'horizon';
+export type MoodId = 'light' | 'dark' | 'tidal' | 'nocturne' | 'aurora' | 'horizon' | 'sakura' | 'citypop';
 
 export interface MoodDef {
   id: MoodId;
@@ -32,11 +32,13 @@ export const MOODS: Record<MoodId, MoodDef> = {
   tidal: { id: 'tidal', labelKey: 'tidal', icon: MoonIcon, base: 'dark', world: 'tide' },
   horizon: { id: 'horizon', labelKey: 'horizon', icon: SunHorizonIcon, base: 'dark', world: 'valley' },
   nocturne: { id: 'nocturne', labelKey: 'nocturne', icon: PlanetIcon, base: 'dark', world: 'singularity' },
+  sakura: { id: 'sakura', labelKey: 'sakura', icon: FlowerIcon, base: 'dark', world: 'blossom' },
+  citypop: { id: 'citypop', labelKey: 'citypop', icon: CityIcon, base: 'dark', world: 'skyline' },
   light: { id: 'light', labelKey: 'light', icon: SunIcon, base: 'light', world: 'daybreak' },
 };
 
 /** Switcher order: the default first, then from the calmest night to daylight. */
-export const MOOD_ORDER: MoodId[] = ['aurora', 'dark', 'tidal', 'horizon', 'nocturne', 'light'];
+export const MOOD_ORDER: MoodId[] = ['aurora', 'dark', 'tidal', 'horizon', 'sakura', 'citypop', 'nocturne', 'light'];
 
 /**
  * A still of each world (rendered from the engine itself), shown while the live
