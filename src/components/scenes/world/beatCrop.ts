@@ -9,9 +9,9 @@ import type { NodTiming } from './gridFollower';
  * the trough instead of bouncing off them, and it never rests between beats -
  * a nod that snaps up and then waits reads as hopping. The settle is scaled by
  * the beat it leaves, the wind-up by the beat it goes to, so the sway grows in
- * with the drums and fades at a breakdown. The present pass turns it into
- * parallax (near things rise, the horizon holds), after the temporal
- * accumulation so nothing smears.
+ * with the drums and fades at a breakdown. The present pass turns it into a
+ * zoom from the frame centre (near things swell more than far ones), after
+ * the temporal accumulation so nothing smears.
  */
 
 export interface BeatCrop {

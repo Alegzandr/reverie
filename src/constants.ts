@@ -224,8 +224,10 @@ export const SCENE_WORLD = {
     },
     /** The head nod (beatCrop.ts), applied in the present pass after the temporal accumulation. */
     BEAT_CROP: {
-        /** How far the nearest things rise at a full nod (fraction of the frame height); the horizon holds. */
-        NOD_LIFT: 0.007,
+        /** Zoom of the nearest things at a full bump, pushed out from the frame centre. */
+        NOD_ZOOM: 0.012,
+        /** Share of that zoom the horizon and sky keep: the whole frame bumps, near things more. */
+        FAR_SHARE: 0.4,
         /**
          * Share of each beat spent settling after the hit; the rest winds back
          * into the next one. One continuous sway, no rest in between: a head

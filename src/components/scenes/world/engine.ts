@@ -232,7 +232,8 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
       seed: gl.getUniformLocation(presentProg, 'uSeed'),
       nod: gl.getUniformLocation(presentProg, 'uNod'),
     };
-    gl.uniform1f(gl.getUniformLocation(presentProg, 'uNodLift'), SCENE_WORLD.BEAT_CROP.NOD_LIFT);
+    gl.uniform1f(gl.getUniformLocation(presentProg, 'uNodZoom'), SCENE_WORLD.BEAT_CROP.NOD_ZOOM);
+    gl.uniform1f(gl.getUniformLocation(presentProg, 'uNodFar'), SCENE_WORLD.BEAT_CROP.FAR_SHARE);
     // The still (reduced-motion) world never nods; the live loop overwrites this each frame.
     gl.uniform1f(presentLoc.nod, 0);
     return true;

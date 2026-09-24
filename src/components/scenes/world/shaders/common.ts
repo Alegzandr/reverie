@@ -230,10 +230,11 @@ uniform sampler2D uSnapshot;
 uniform float uMix;
 uniform float uSharpen;
 uniform float uSeed;
-// The head nod: its envelope (0..1) and how far the nearest things rise at
-// its peak (fraction of the frame height).
+// The beat bump: its envelope (0..1), the zoom of the nearest things at its
+// peak, and the share of it the far ones keep.
 uniform float uNod;
-uniform float uNodLift;
+uniform float uNodZoom;
+uniform float uNodFar;
 out vec4 outColor;
 float hash(vec2 p) {
   vec3 p3 = fract(vec3(p.xyx) * 0.1031);
@@ -271,15 +272,17 @@ void main() {
   // At rest (uNod 0) this lands on texel centres: the taps read exactly what
   // texelFetch did, so the nod costs nothing when it's still.
   vec2 uv = gl_FragCoord.xy / size;
-  // Parallax: near things rise with the nod, the horizon holds. A backward
-  // warp: read from below by the nearness found there - the nearest within
-  // the lift, so a near edge rises over the far one instead of staying put
-  // while its inside slides. No zoom: a uniform magnification puts every
-  // pixel on a different sub-pixel phase and softens the frame on each beat.
-  float lift = uNod * uNodLift;
+  // A bump pushed out from the centre of the frame, with depth: the whole
+  // frame swells a touch and near things swell more, so the scenery opens up
+  // around the viewer instead of sliding one way. A backward warp: read
+  // towards the centre by the nearness found there - the nearest along the
+  // push, so a near edge grows over the far one instead of staying put while
+  // its inside slides. Catmull-Rom keeps the magnified frame sharp.
+  float zoom = uNod * uNodZoom;
+  vec2 toCentre = uv - 0.5;
   float near = max(texture(uImage, uv).a,
-    max(texture(uImage, uv - vec2(0.0, lift * 0.5)).a, texture(uImage, uv - vec2(0.0, lift)).a));
-  uv.y -= lift * near;
+    max(texture(uImage, uv - toCentre * zoom * 0.5).a, texture(uImage, uv - toCentre * zoom).a));
+  uv = 0.5 + toCentre / (1.0 + zoom * mix(uNodFar, 1.0, near));
   vec2 px = 1.0 / size;
   vec3 c = sharpSample(uImage, uv, size);
   vec3 n = texture(uImage, uv + vec2(0.0, px.y)).rgb
