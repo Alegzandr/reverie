@@ -20,12 +20,25 @@ function playing() {
 }
 
 describe('nodShape', () => {
-  it('peaks on the beat and falls off both ways, faster before than after', () => {
-    expect(nodShape(0, PERIOD)).toBe(1);
-    const before = nodShape(-0.05, PERIOD);
-    const after = nodShape(0.05, PERIOD);
-    expect(before).toBeLessThan(1);
-    expect(after).toBeGreaterThan(before);
+  it('peaks on the beat and settles longer than it winds up', () => {
+    expect(nodShape(at(0))).toBe(1);
+    const windUp = nodShape(at(PERIOD - 0.1));
+    const settle = nodShape(at(0.1));
+    expect(windUp).toBeLessThan(1);
+    expect(settle).toBeGreaterThan(windUp);
+  });
+
+  it('never rests between beats: it only touches 0 at the turn', () => {
+    const turn = PERIOD * SCENE_WORLD.BEAT_CROP.SETTLE_SHARE;
+    expect(nodShape(at(turn))).toBeCloseTo(0, 6);
+    expect(nodShape(at(turn - 0.05))).toBeGreaterThan(0);
+    expect(nodShape(at(turn + 0.05))).toBeGreaterThan(0);
+  });
+
+  it('only sways within a beat of the grid across a gap', () => {
+    const gap = { sincePrev: 2, untilNext: 3, prevStrength: 1, nextStrength: 1, period: PERIOD };
+    expect(nodShape(gap)).toBe(0);
+    expect(nodShape({ ...gap, sincePrev: Infinity, untilNext: 0.05 })).toBeGreaterThan(0.9);
   });
 });
 
@@ -33,13 +46,13 @@ describe('createBeatCrop', () => {
   it('peaks on each beat and rests between them', () => {
     const crop = playing();
     expect(crop.update(DT, at(PERIOD), 1)).toBeCloseTo(1, 1);
-    expect(crop.update(DT, at(PERIOD * 1.5), 1)).toBeLessThan(0.1);
+    const turn = PERIOD * SCENE_WORLD.BEAT_CROP.SETTLE_SHARE;
+    expect(crop.update(DT, at(PERIOD + turn), 1)).toBeLessThan(0.01);
   });
 
   it('starts moving before the beat - into the hit, not after it', () => {
     const crop = playing();
-    const lead = PERIOD * SCENE_WORLD.BEAT_CROP.RISE_PERIODS;
-    expect(crop.update(DT, at(PERIOD - lead), 1)).toBeGreaterThan(0.3);
+    expect(crop.update(DT, at(PERIOD - 0.05), 1)).toBeGreaterThan(0.8);
   });
 
   it('moves smoothly: no frame-to-frame jump anywhere in the beat', () => {
@@ -47,7 +60,7 @@ describe('createBeatCrop', () => {
     let prev = crop.update(DT, at(0), 1);
     for (let t = DT; t < PERIOD * 3; t += DT) {
       const v = crop.update(DT, at(t), 1);
-      expect(Math.abs(v - prev)).toBeLessThan(0.35);
+      expect(Math.abs(v - prev)).toBeLessThan(0.15);
       prev = v;
     }
   });

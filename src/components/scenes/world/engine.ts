@@ -5,7 +5,7 @@ import { createAudioFeed, type AudioFeed } from './audioFeed';
 import { currentWorldBeat } from './analyserSource';
 import { createBeatClock } from './beatClock';
 import { createBeatCrop } from './beatCrop';
-import { gridTiming, type NodTiming } from './gridFollower';
+import { createPlayhead, gridTiming, type NodTiming } from './gridFollower';
 import { buildNoise2D, buildNoise3D } from './noiseTextures';
 import { ACCUMULATE_SHADER, PRELUDE, PRESENT_SHADER, VERTEX_SHADER } from './shaders/common';
 import { WORLD_SHADERS, WORLD_SPEED, type WorldId } from './worlds';
@@ -120,6 +120,7 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
   const beat = createBeatClock();
   const nodTiming: NodTiming = { sincePrev: Infinity, untilNext: Infinity, prevStrength: 0, nextStrength: 0, period: 0 };
   const crop = createBeatCrop();
+  const playhead = createPlayhead();
 
   // ── GPU resources ──────────────────────────────────────────────────────────
   let vs: WebGLShader | null = null;
@@ -594,7 +595,10 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
       beat.update(dt, feed.bands, feed.frame.level);
       const source = currentWorldBeat();
       const grid = source?.getGrid();
-      const timing = source && grid?.times.length ? gridTiming(grid, source.getPosition() - outputLatency(), nodTiming) : beat.timing(nodTiming);
+      const timing =
+        source && grid?.times.length
+          ? gridTiming(grid, playhead.update(dt, source.getPosition()) - outputLatency(), nodTiming)
+          : beat.timing(nodTiming);
       crop.update(dt, timing, feed.frame.playing);
       pointer[0] += (pointerTarget[0] - pointer[0]) * Math.min(1, dt * 1.5);
       pointer[1] += (pointerTarget[1] - pointer[1]) * Math.min(1, dt * 1.5);

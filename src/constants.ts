@@ -226,9 +226,17 @@ export const SCENE_WORLD = {
     BEAT_CROP: {
         /** How far the nearest things rise at a full nod (fraction of the frame height); the horizon holds. */
         NOD_LIFT: 0.007,
-        /** Gaussian widths as fractions of the beat: the move into the beat, and the settle after it. */
-        RISE_PERIODS: 0.1,
-        SETTLE_PERIODS: 0.28,
+        /**
+         * Share of each beat spent settling after the hit; the rest winds back
+         * into the next one. One continuous sway, no rest in between: a head
+         * that stops dead between beats reads as hopping.
+         */
+        SETTLE_SHARE: 0.62,
+        /** Playhead smoothing (alpha-beta filter per frame): the audio clock ticks in coarse steps. */
+        PLAYHEAD_ALPHA: 0.08,
+        PLAYHEAD_BETA: 0.003,
+        /** A playhead error this large is a seek, not jitter (s): jump to it. */
+        PLAYHEAD_SNAP_SECONDS: 0.25,
         /** How long the head takes to come to rest when the music stops (s). */
         REST_SECONDS: 0.4,
     },

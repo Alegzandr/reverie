@@ -1,3 +1,4 @@
+import { SCENE_WORLD } from '../../../constants';
 import type { BeatGrid } from '../../../utils/beatGrid';
 
 /**
@@ -42,4 +43,35 @@ export function gridTiming(grid: BeatGrid, position: number, out: NodTiming): No
   out.nextStrength = next < grid.times.length ? grid.strength[next] : 0;
   out.period = grid.period;
   return out;
+}
+
+export interface Playhead {
+  /** Advance by dt seconds towards the reported position; returns the smoothed one. */
+  update(dt: number, reported: number): number;
+}
+
+/**
+ * The playhead as the nod reads it. The reported position moves in coarse,
+ * uneven steps (the audio clock ticks per hardware buffer, and the tick that
+ * publishes it runs on its own frame loop), which a sway at a fraction of a
+ * beat turns into visible stutter. An alpha-beta filter glides through them at
+ * the learnt playback speed; a jump far off that path is a seek, taken at once.
+ */
+export function createPlayhead(): Playhead {
+  const C = SCENE_WORLD.BEAT_CROP;
+  let position = NaN;
+  let speed = 1;
+  return {
+    update(dt, reported) {
+      const predicted = position + speed * dt;
+      const error = reported - predicted;
+      if (!(Math.abs(error) < C.PLAYHEAD_SNAP_SECONDS)) {
+        position = reported;
+        return position;
+      }
+      position = predicted + C.PLAYHEAD_ALPHA * error;
+      speed = Math.max(0, speed + (C.PLAYHEAD_BETA * error) / dt);
+      return position;
+    },
+  };
 }
