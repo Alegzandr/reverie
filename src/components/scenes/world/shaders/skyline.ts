@@ -1,17 +1,18 @@
 /**
- * City Pop (citypop mood): a bay city at midnight, the way the album sleeves
- * of the eighties drew it. Towers stand in three rows against a sky that
- * glows magenta where the city's light meets the haze, two searchlights sweep
- * the low cloud, a lattice tower burns orange among them, an elevated
- * expressway runs the waterfront with its streams of head- and tail-lights,
- * and the black water below mirrors it all, the swell pulling every light
- * into a long shivering column. The music lives in the windows: each tower
- * takes the band of the spectrum under it (bass on the left, air on the
- * right), its windows glowing up the floors as the band sounds - what plays
- * now on the lower floors, a moment ago higher up. Downbeats flare the neon
- * signs, the traffic flows faster with the track, the treble sets the tower
- * lights and the water's glints sparkling. Analytic and edge-filtered, crisp
- * at any size.
+ * City Pop (citypop mood): a bay city late at night, the way the album sleeves
+ * of the eighties drew it - few things, each one worth a look. Downtown
+ * gathers around a lattice tower burning orange, a smaller cluster rises under
+ * the moon, and between and beyond them the skyline thins to low blocks and
+ * open sky. Most of the city has gone home: lights come in runs (an office
+ * still going, a floor of flats), each room its own lamp, screen or blind. An
+ * elevated expressway runs the waterfront with a few cars on it, three neon
+ * signs and one billboard hang on the middle row, and the black water mirrors
+ * only what burns bright. The music lives in a handful of downtown towers:
+ * their windows climb with the band under them (bass on the left, air on the
+ * right) - what plays now on the lower floors, a moment ago higher up - while
+ * every other lit window only breathes with it. Downbeats lift the neon, the
+ * traffic flows faster with the track, the treble sparkles on the water.
+ * Analytic and edge-filtered, crisp at any size.
  */
 export const SKYLINE = /* glsl */ `
 const float SHORE = 0.27;
@@ -28,6 +29,15 @@ const float FLOOR_MEMORY = 9.0;
 /* How far a tower may rise past its roofline (crowns, masts, billboards):
    the pixel test must reach this high or they get clipped. */
 const float ROOF_REACH = 0.06;
+/* Where the city gathers: downtown around the lattice tower, a smaller
+   cluster across the bay under the moon. */
+const float DOWNTOWN_X = 0.1;
+const float UPTOWN_X = -0.62;
+/* The vertical signs on the middle row: x, drop below the roof, colour. */
+const vec3 NEON_SIGNS[3] = vec3[3](vec3(-0.21, 0.0, 0.9), vec3(0.02, 0.02, 0.5), vec3(0.46, 0.01, 0.1));
+const float SIGN_HALF = 0.028;
+const float BOARD_X = -0.13;
+const vec3 SIGN_BACK = vec3(0.012, 0.006, 0.02);
 
 /* Set while painting the bay: the reflection only needs each tower's glow,
    and the window grid, torn by the swell, would read as noise. */
@@ -41,10 +51,10 @@ const vec3 SKY_HAZE = vec3(0.42, 0.06, 0.26);
 const vec3 SKY_EMBER = vec3(0.9, 0.22, 0.16);
 const vec3 MOON_PALE = vec3(1.0, 0.9, 0.8);
 const vec3 MOONLIGHT = vec3(0.45, 0.55, 1.0);
-const vec3 SEARCHLIGHT = vec3(0.7, 0.6, 1.0);
 const vec3 WIN_WARM = vec3(1.0, 0.66, 0.3);
 const vec3 WIN_COOL = vec3(0.62, 0.86, 1.0);
 const vec3 WIN_OFFICE = vec3(0.85, 0.95, 1.0);
+const vec3 WIN_SCREEN = vec3(0.45, 0.5, 1.0);
 const vec3 GLASS_DARK = vec3(0.004, 0.012, 0.03);
 const vec3 NEON_PINK = vec3(1.0, 0.12, 0.5);
 const vec3 NEON_CYAN = vec3(0.1, 0.85, 1.0);
@@ -67,18 +77,6 @@ float coverage(float dist) {
 
 vec3 neonColor(float h) {
   return h > 0.66 ? NEON_PINK : (h > 0.33 ? NEON_CYAN : NEON_AMBER);
-}
-
-/* A searchlight from behind the towers, swinging slowly through the haze. */
-float searchlight(vec2 q, float x0, float seed) {
-  vec2 o = vec2(x0, SHORE + 0.08);
-  float a = sin(uTime * 0.05 + seed) * 0.42 + sin(uTime * 0.021 + seed * 2.7) * 0.12;
-  vec2 dir = vec2(sin(a), cos(a));
-  vec2 r = q - o;
-  float along = dot(r, dir);
-  float across = abs(r.x * dir.y - r.y * dir.x);
-  float width = 0.004 + along * 0.05;
-  return exp(-sq(across / width)) * smoothstep(0.0, 0.15, along) * exp(-along * 2.2) * step(0.0, along);
 }
 
 /* A drift of cloud: warped value noise stretched along the wind, thresholded
@@ -151,26 +149,33 @@ vec3 citySky(vec2 q) {
   vec3 scudCol = mix(SKY_VIOLET * 0.35, glowTint * 0.28 * (1.0 + downtown * 0.5), 0.35 + 0.65 * belly) + MOON_PALE * 0.08 * moonLight;
   c = mix(c, scudCol, scud * band * 0.75);
 
-  /* The searchlights catch in the haze and brighten where they cross cloud. */
-  float cloudCatch = max(scud * band, cirrus);
-  float beams = searchlight(q, -0.35, 0.0) + searchlight(q, 0.62, 2.1) * 0.8;
-  c += SEARCHLIGHT * beams * (0.04 + cloudCatch * 0.14) * (1.0 + kickFlash(2.0) * 0.3 * uPlaying);
   return c;
 }
 
-/* One row of towers. Two interleaved grids of different pitch make an uneven
-   skyline; the taller building at a pixel wins, and its facade is drawn. */
-vec3 towers(vec2 q, vec3 col, float row) {
-  float near = row / float(ROWS - 1);        /* 0 far .. 1 near */
-  float px = q.x + uPointer.x * 0.012 * (near + 0.3);
+/* How much city stands at x: downtown gathers around the lattice tower, a
+   smaller cluster rises across the bay, and between and beyond them the
+   skyline thins out to low blocks and open sky. */
+float skylineMass(float x) {
+  return exp(-sq((x - DOWNTOWN_X) / 0.4)) + 0.45 * exp(-sq((x - UPTOWN_X) / 0.2));
+}
+
+struct Tower {
+  float h;
+  float l;
+  float w;
+  float id;
+};
+
+/* The tower standing at px in a row. Two interleaved grids of different pitch
+   make an uneven skyline; the taller building wins, unless qy is already above
+   its roof reach - then a shorter one behind its crown may show. */
+Tower pickTower(float px, float row, float qy) {
+  float near = row / float(ROWS - 1);
   float base = SHORE + 0.004;
-  float bestH = 0.0;
-  float bestL = 0.0;
-  float bestW = 1.0;
-  float bestId = 0.0;
+  Tower best = Tower(0.0, 0.0, 1.0, 0.0);
   for (int g = 0; g < 2; g++) {
     float fg = float(g);
-    float pitch = mix(0.07, 0.11, near) * (1.0 + fg * 0.37);
+    float pitch = mix(0.05, 0.1, near) * (1.0 + fg * 0.37);
     float x = px / pitch + fg * 0.5 + row * 3.3;
     float cell = floor(x);
     float h1 = hash12(vec2(cell, row * 11.0 + fg * 5.0));
@@ -178,63 +183,148 @@ vec3 towers(vec2 q, vec3 col, float row) {
     float inset = 0.06 + 0.22 * h2;
     float u = fract(x);
     if (u < inset || u > 1.0 - inset * 0.5) continue;
-    /* Downtown: the far rows climb toward the middle of the bay. */
-    float downtown = exp(-sq(px / 0.55)) * (1.0 - near);
-    float h = mix(0.06, 0.2, near * 0.3 + 0.2) + h1 * mix(0.2, 0.12, near) + downtown * 0.16;
-    if (h > bestH && q.y < base + h + ROOF_REACH) {
-      bestH = h;
-      bestL = (cell + inset - fg * 0.5 - row * 3.3) * pitch;
-      bestW = (1.0 - inset * 1.5) * pitch;
-      bestId = cell * 13.0 + fg * 101.0 + row * 37.0;
+    float cx = (cell + 0.5 - fg * 0.5 - row * 3.3) * pitch;
+    float mass = skylineMass(cx);
+    /* Away from the clusters, lots stand empty and the sky shows through. */
+    if (hash12(vec2(cell, row * 5.0 + fg * 13.0 + 2.0)) > 0.3 + mass * 0.9) continue;
+    float h;
+    if (row < 0.5) h = 0.035 + mass * (0.13 + h1 * 0.24) + h1 * 0.03;
+    else if (row < 1.5) h = 0.03 + mass * (0.06 + h1 * 0.12) + h1 * 0.04;
+    else h = 0.02 + h1 * 0.035 + mass * 0.025;
+    /* The rows in front of the lattice tower stay low enough to show it. */
+    if (row > 0.5) h *= 1.0 - 0.6 * exp(-sq((cx - TOWER_BASE.x) / 0.06));
+    if (h > best.h && qy < base + h + ROOF_REACH) {
+      best.h = h;
+      best.l = (cell + inset - fg * 0.5 - row * 3.3) * pitch;
+      best.w = (1.0 - inset * 1.5) * pitch;
+      best.id = cell * 13.0 + fg * 101.0 + row * 37.0;
     }
   }
-  if (bestH <= 0.0) return col;
-  float top = base + bestH;
-  float lx = px - bestL;
-  float mid = lx - bestW * 0.5;
-  /* A setback crown on some towers, a mast on a few, a rooftop billboard on
-     some of the near ones. */
-  float hc = hash12(vec2(bestId, 3.0));
-  float hb = hash12(vec2(bestId, 21.0));
-  float crown = step(0.55, hc) * step(abs(mid), bestW * 0.28) * 0.025;
-  float mast = step(0.82, hc) * step(abs(mid), 0.0012) * 0.05;
-  float dist = q.y - (top + max(crown, mast));
-  float body = coverage(dist) * coverage(-lx) * coverage(lx - bestW);
-  bool hasBoard = near > 0.4 && hb < 0.3 && hc < 0.82;
-  vec2 bp = vec2(mid, q.y - top - crown - 0.017);
-  float boardHalf = bestW * 0.36;
-  float board = 0.0;
-  if (hasBoard) {
-    board = coverage(abs(bp.x) - boardHalf) * coverage(abs(bp.y) - 0.008);
-    float legs = coverage(abs(abs(bp.x) - boardHalf * 0.6) - 0.0008) * step(bp.y, 0.0);
-    body = max(body, max(board, legs * coverage(q.y - top - crown - 0.01)));
-  }
-  /* The billboard's light spills into the night around it. */
-  vec3 halo = vec3(0.0);
-  float flare = 1.0 + kickFlash(2.6) * 0.9 * uPlaying;
-  if (hasBoard) {
-    float bd = length(max(abs(bp) - vec2(boardHalf, 0.008), 0.0));
-    halo = neonColor(hb * 3.3) * exp(-bd * 220.0) * 0.12 * flare;
-  }
-  if (body <= 0.0) return col + halo;
+  return best;
+}
 
-  /* Aerial perspective: the far rows sink into the magenta haze. */
-  float hy = (q.y - base) / bestH;
-  vec3 wall = mix(SKY_HAZE * 0.16 + uBg * 0.3, vec3(0.006, 0.005, 0.016) + uBg * 0.1, near);
-  wall *= 0.8 + 0.4 * smoothstep(bestW * 0.2, bestW, lx) * (1.0 - near * 0.5);
+/* A made-up kana: a few strokes on a 3x3 lattice, picked per glyph, drawn as
+   neon tube. p is in glyph units (-0.5..0.5); returns the distance to the
+   nearest stroke. */
+float glyphDist(vec2 p, float seed) {
+  float d = 1e3;
+  for (int k = 0; k < 3; k++) {
+    float fk = float(k);
+    float at = (fk - 1.0) * 0.32;
+    if (hash12(vec2(seed, fk)) < 0.45) d = min(d, length(vec2(max(abs(p.x) - 0.3, 0.0), p.y - at)));
+    if (hash12(vec2(seed, fk + 7.0)) < 0.4) d = min(d, length(vec2(p.x - at, max(abs(p.y) - 0.3, 0.0))));
+  }
+  /* A glyph that drew nothing gets its middle bar. */
+  return d > 100.0 ? length(vec2(max(abs(p.x) - 0.3, 0.0), p.y)) : d;
+}
+
+/* A neon tube's brightness at distance d (screen units): the lit core and
+   the glow it lays on the glass around it. */
+float tube(float d, float core) {
+  return coverage(d - core) + exp(-d / (core * 3.0)) * 0.35;
+}
+
+/* An occasional stutter, the way an old transformer drops a sign for a beat. */
+float neonStutter(float seed) {
+  return 1.0 - 0.7 * step(0.985, hash12(vec2(floor(uTime * 9.0), seed)));
+}
+
+/* One row of towers. */
+vec3 towers(vec2 q, vec3 col, float row) {
+  float near = row / float(ROWS - 1);        /* 0 far .. 1 near */
+  float px = q.x + uPointer.x * 0.012 * (near + 0.3);
+  float base = SHORE + 0.004;
+  Tower t = pickTower(px, row, q.y);
+  float top = base + t.h;
+  float lx = px - t.l;
+  float mid = lx - t.w * 0.5;
+  float mass = skylineMass(t.l + t.w * 0.5);
+
+  /* The roofline: setback crowns on the tall, a second tier on the tallest,
+     plant rooms and water tanks on the rest, a mast here and there. */
+  float hc = hash12(vec2(t.id, 3.0));
+  float hr = hash12(vec2(t.id, 23.0));
+  bool tall = t.h > 0.15;
+  float crown = tall && hc > 0.45 ? step(abs(mid), t.w * 0.3) * 0.022 : 0.0;
+  float tier = tall && hc > 0.75 ? step(abs(mid), t.w * 0.14) * 0.016 : 0.0;
+  float plant = !tall && hr < 0.6 ? step(abs(mid - t.w * (hr - 0.3)), t.w * 0.18) * 0.007 : 0.0;
+  float tankX = mid + t.w * (0.3 - hr * 0.2);
+  float tank = !tall && hr > 0.35 ? step(abs(tankX), 0.0028) * (0.008 + 0.0022 * (1.0 - sq(tankX / 0.0028))) : 0.0;
+  float mast = (tall && hc > 0.88) || (!tall && hr > 0.92) ? step(abs(mid), 0.0012) * 0.045 : 0.0;
+  float roof = max(max(crown + tier, plant), max(tank, mast));
+  float dist = q.y - (top + roof);
+  float body = t.h > 0.0 ? coverage(dist) * coverage(-lx) * coverage(lx - t.w) : 0.0;
+
+  /* The signs: a few, placed by hand on the middle row, each hung on
+     whichever tower stands there - drawn from that tower's geometry, so a
+     neighbour on the other grid can't cut them. */
+  float flare = 1.0 + kickFlash(2.6) * 0.4 * uPlaying;
+  vec3 halo = vec3(0.0);
+  vec3 sign = vec3(0.0);
+  float signMask = 0.0;
+  if (row > 0.5 && row < 1.5) {
+    for (int i = 0; i < 3; i++) {
+      vec3 s = NEON_SIGNS[i];
+      Tower st = pickTower(s.x, row, 0.0);
+      if (st.h < 0.06) continue;
+      vec3 neon = neonColor(s.z);
+      vec2 sp = vec2(px - st.l - 0.009, q.y - (base + st.h - 0.035 - s.y));
+      float box = coverage(abs(sp.x) - 0.0042) * coverage(abs(sp.y) - SIGN_HALF);
+      float stutter = neonStutter(float(i));
+      float halfGlyph = SIGN_HALF - 0.002;
+      if (box > 0.0) {
+        vec2 gp = vec2(sp.x / 0.0066, fract((sp.y + SIGN_HALF) / 0.0112) - 0.5);
+        float seed = floor((sp.y + SIGN_HALF) / 0.0112) + float(i) * 17.0;
+        float g = tube(glyphDist(gp, seed) * 0.0066, 0.00045) * step(abs(sp.y), halfGlyph);
+        float rim = tube(abs(max(abs(sp.x) - 0.0042, abs(sp.y) - SIGN_HALF)), 0.0003);
+        sign = mix(sign, mix(SIGN_BACK, neon * (g * 0.9 + rim * 0.35) * stutter * flare, min(g + rim, 1.0)), box);
+        signMask = max(signMask, box);
+      }
+      float sd = length(vec2(sp.x, max(abs(sp.y) - SIGN_HALF, 0.0)));
+      halo += neon * (exp(-sd * 90.0) * 0.05 + exp(-sd * 22.0) * 0.02) * flare * stutter;
+    }
+    /* One billboard over the rooftops, its glyphs running across it. */
+    Tower bt = pickTower(BOARD_X, row, 0.0);
+    vec3 neon = neonColor(0.9);
+    float boardHalf = min(bt.w * 0.42, 0.032);
+    float boardTop = base + bt.h;
+    vec2 bp = vec2(px - bt.l - bt.w * 0.5, q.y - boardTop - 0.022);
+    float panel = coverage(abs(bp.x) - boardHalf) * coverage(abs(bp.y) - 0.0075);
+    float legs = coverage(abs(abs(bp.x) - boardHalf * 0.6) - 0.0007) * step(bp.y, 0.0) * step(boardTop - 0.001, q.y);
+    float stutter = neonStutter(5.0);
+    if (panel > 0.0) {
+      vec2 gp = vec2(fract((bp.x + boardHalf) / 0.0092) - 0.5, bp.y / 0.0092);
+      float seed = floor((bp.x + boardHalf) / 0.0092) + 61.0;
+      float g = tube(glyphDist(gp, seed) * 0.0092, 0.0005) * step(abs(bp.x), boardHalf - 0.003);
+      float rim = tube(abs(max(abs(bp.x) - boardHalf, abs(bp.y) - 0.0075)), 0.0003);
+      sign = mix(sign, mix(SIGN_BACK, neon * (g * 0.9 + rim * 0.4) * stutter * flare, min(g + rim, 1.0)), panel);
+    }
+    sign = mix(sign, vec3(0.006, 0.004, 0.012), legs * (1.0 - panel));
+    signMask = max(signMask, max(panel, legs));
+    float bd = length(max(abs(bp) - vec2(boardHalf, 0.0075), 0.0));
+    halo += neon * exp(-bd * 160.0) * 0.07 * flare * stutter;
+  }
+  if (t.h <= 0.0 || body <= 0.0) return mix(col + halo, sign, signMask);
+
+
+  /* Aerial perspective: the far rows sink into the magenta haze, the near
+     ones stand as silhouettes. */
+  float hy = (q.y - base) / t.h;
+  vec3 wall = mix(SKY_HAZE * 0.11 + uBg * 0.3, vec3(0.005, 0.004, 0.013) + uBg * 0.08, near);
+  wall *= 0.8 + 0.4 * smoothstep(t.w * 0.2, t.w, lx) * (1.0 - near * 0.5);
 
   /* Three kinds of facade: punched windows, ribbon glazing, and curtain-wall
      glass that mirrors the haze until a floor lights up behind it. */
-  float kind = hash12(vec2(bestId, 5.0));
-  bool ribbon = kind > 0.55 && kind < 0.8;
+  float kind = hash12(vec2(t.id, 5.0));
+  bool ribbon = kind > 0.6 && kind < 0.8;
   bool glass = kind >= 0.8;
   if (glass) wall = mix(wall, mix(SKY_HAZE * 0.1, GLASS_DARK, smoothstep(0.0, 1.0, hy)) * mix(1.6, 1.0, near), 0.7);
 
-  vec2 cellSize = vec2(mix(0.004, 0.009, near), mix(0.006, 0.012, near));
+  vec2 cellSize = vec2(mix(0.0036, 0.008, near), mix(0.0052, 0.0105, near));
   if (ribbon) cellSize.x *= 0.6;
   /* The grid centred between the tower's edges: no half window at a corner. */
-  float cols = max(floor(bestW / cellSize.x - 0.6), 1.0);
-  float margin = (bestW - cols * cellSize.x) * 0.5;
+  float cols = max(floor(t.w / cellSize.x - 0.6), 1.0);
+  float margin = (t.w - cols * cellSize.x) * 0.5;
   vec2 wv = vec2(lx - margin, q.y - base) / cellSize;
   vec2 wc = floor(wv);
   vec2 wf = fract(wv);
@@ -252,30 +342,50 @@ vec3 towers(vec2 q, vec3 col, float row) {
   }
   win *= step(0.0, wv.x) * step(wv.x, cols);
   /* Where a window is smaller than a couple of pixels, fade to its average. */
-  float settle = 1.0 - smoothstep(0.35, 0.8, max(fwidth(wv.x), fwidth(wv.y)));
-  win = mix(winAvg, win, settle * (1.0 - gBlurWindows));
+  float settle = (1.0 - smoothstep(0.35, 0.8, max(fwidth(wv.x), fwidth(wv.y)))) * (1.0 - gBlurWindows);
 
-  /* Who is still at work: whole floors go dark, offices light in runs, and
-     glass towers light a floor at a time. */
-  float floorOn = step(0.22, hash12(vec2(bestId, wc.y + 0.5)));
-  float hw;
-  if (glass) hw = hash12(vec2(bestId, wc.y)) * 0.8;
-  else if (ribbon) hw = hash12(vec2(floor(wc.x / 4.0), wc.y) + bestId);
-  else hw = hash12(wc + bestId);
-  float band = clamp((bestL + bestW * 0.5) / (0.89 * 2.0) + 0.5, 0.0, 1.0);
+  /* Who is still at work, late: most of the city has gone home. Lights come
+     in runs - an office still going, a floor of flats - with the odd lamp on
+     its own; downtown keeps more of them. */
+  float litShare = (row < 0.5 ? 0.3 : (row < 1.5 ? 0.26 : 0.12)) * (0.55 + 0.6 * min(mass, 1.0));
+  vec2 zoneSize = glass ? vec2(1e3, 1.0) : (ribbon ? vec2(6.0 + floor(hr * 6.0), 1.0) : vec2(2.0 + floor(hc * 4.0), 1.0 + floor(hr * 3.0)));
+  vec2 zone = floor(wc / zoneSize);
+  float zoneOn = step(hash12(zone * vec2(1.7, 3.1) + t.id * 0.37), litShare);
+  float lit = max(zoneOn * step(hash12(wc + t.id), 0.8), step(hash12(wc * 1.3 + t.id + 9.0), 0.025));
+
+  /* The music lives in a handful of downtown towers: their windows climb with
+     the band under them (bass on the left, air on the right) - what plays now
+     on the lower floors, a moment ago higher up. Every other lit window only
+     breathes with it. */
+  float band = clamp((t.l + t.w * 0.5) / (0.89 * 2.0) + 0.5, 0.0, 1.0);
   float s = spec(band, (q.y - base) * FLOOR_MEMORY);
-  float litBase = step(hw, 0.34) * floorOn;
-  float litMusic = smoothstep(hw, hw + 0.25, 0.1 + s * 0.9) * uPlaying;
-  float lit = max(litBase * mix(0.65, 0.5, uPlaying), litMusic);
-  lit = mix(lit, 0.55 + 0.6 * s * uPlaying, gBlurWindows);
-  vec3 tint = glass || ribbon ? WIN_OFFICE : mix(WIN_WARM, WIN_COOL, step(0.62, hash12(vec2(bestId, wc.y))));
-  if (ribbon) tint = mix(tint, WIN_WARM, 0.4) * 0.75;
+  float hero = step(hash12(vec2(t.id, 41.0)), 0.35) * step(0.13, t.h) * step(near, 0.6);
+  float hw = glass ? hash12(vec2(t.id, wc.y)) * 0.8 : hash12(wc + t.id + 3.0);
+  float litMusic = smoothstep(hw, hw + 0.25, 0.05 + s * 0.9) * uPlaying * hero;
+  lit = max(lit, litMusic);
+  /* Seen in the water, only each tower's overall glow matters. */
+  lit = mix(lit, litShare * 0.85 + hero * s * 0.45 * uPlaying, gBlurWindows);
+
+  /* Each lit room its own: warm lamps, office tubes, the blue of a screen, a
+     blind half drawn. */
+  float tt = hash12(wc + t.id + 5.0);
+  vec3 tint = tt < 0.5 ? WIN_WARM : (tt < 0.8 ? WIN_COOL : (tt < 0.94 ? WIN_OFFICE : WIN_SCREEN));
+  /* Office glazing reads white; down on the waterfront it would outshine downtown. */
+  if (glass || ribbon) tint = mix(WIN_OFFICE, WIN_WARM, step(0.7, tt) * 0.6) * mix(1.0, 0.65, near);
+  float roomLevel = 0.55 + 0.45 * hash12(wc + t.id + 11.0);
+  if (tt >= 0.94 && !glass && !ribbon) roomLevel *= 0.8 + 0.2 * noise2(vec2(uTime * 3.0, tt * 50.0));
+  float blind = step(hash12(wc + t.id + 13.0), 0.25) * step(0.55, wf.y) * 0.65;
+  float ceiling = mix(0.8, 1.15, smoothstep(0.2, 0.85, wf.y));
+  win = mix(winAvg, win * ceiling * (1.0 - blind), settle);
+
   float inTop = step(q.y, top - cellSize.y * 0.5);
-  float glow = mix(0.12, 0.5, near) * (0.7 + 0.6 * s * uPlaying) * inTop;
+  float glow = mix(0.13, 0.5, near) * roomLevel * (0.85 + 0.35 * s * uPlaying) * inTop;
   vec3 c = wall + tint * win * lit * glow;
   /* A lit window lights the wall around it a little, so the grid glows
      rather than sits as flat dots. */
-  c += tint * lit * glow * 0.06 * (1.0 - gBlurWindows);
+  c += tint * lit * glow * 0.06 * settle;
+  /* The floor slabs: a faint line of lighter concrete at each storey. */
+  if (!glass) c += wall * 0.5 * (1.0 - smoothstep(0.0, 0.1, wf.y)) * settle * inTop;
 
   /* Moonlight rims the left edge and the roofline of the near towers; the
      street's sodium light washes up their feet. */
@@ -284,38 +394,15 @@ vec3 towers(vec2 q, vec3 col, float row) {
   c += MOONLIGHT * rim * 0.05 * near;
   c += SODIUM * exp(-(q.y - base) * 45.0) * 0.05 * near;
   /* Floodlit crowns on the tallest. */
-  if (crown > 0.0 && bestH > 0.17) c += mix(WIN_OFFICE, SKY_HAZE, 0.6) * exp(-max(top + crown - q.y, 0.0) * 300.0) * step(q.y, top + crown) * 0.06;
-
-  /* Neon: a vertical sign down the flank of some near towers. */
-  float hn = hash12(vec2(bestId, 9.0));
-  if (near > 0.4 && hn > 0.5) {
-    vec3 neon = neonColor((hn - 0.5) * 2.0);
-    float sy = top - 0.03 - hn * 0.05;
-    vec2 sp = vec2(lx - 0.008, q.y - (sy - 0.035));
-    float sign = coverage(abs(sp.x) - 0.0035) * coverage(abs(sp.y) - 0.035);
-    /* Glyph blocks lit inside the sign, flickering on on a downbeat. */
-    float glyph = step(0.35, hash12(vec2(floor(sp.y / 0.007), bestId))) * step(abs(sp.x), 0.0022);
-    c = mix(c, neon * (0.12 + glyph * 0.8) * flare, sign);
-    float sd = length(vec2(sp.x, max(abs(sp.y) - 0.035, 0.0)));
-    c += neon * (exp(-sd * 90.0) * 0.08 + exp(-sd * 25.0) * 0.03) * flare;
-  }
-  /* The billboard: a dark panel, a lit border, a row of glyphs. */
-  if (hasBoard) {
-    vec3 neon = neonColor(hb * 3.3);
-    float edge = coverage(abs(bp.x) - boardHalf) * coverage(abs(bp.y) - 0.008) * (1.0 - coverage(abs(bp.x) - boardHalf + 0.0012) * coverage(abs(bp.y) - 0.0068));
-    float gx = floor(bp.x / 0.005);
-    float glyph = step(0.3, hash12(vec2(gx, bestId + floor(bp.y / 0.004)))) * coverage(abs(bp.y) - 0.0045) * coverage(abs(bp.x) - boardHalf + 0.003);
-    glyph *= step(0.15, fract(bp.x / 0.005)) * step(fract(bp.x / 0.005), 0.85);
-    vec3 panel = vec3(0.01, 0.006, 0.02) + neon * (edge * 0.7 + glyph * 0.9) * flare;
-    c = mix(c, panel, board);
-  }
+  if (crown > 0.0) c += mix(WIN_OFFICE, SKY_HAZE, 0.6) * exp(-max(top + crown + tier - q.y, 0.0) * 300.0) * step(q.y, top + crown + tier) * 0.06;
   /* Red aviation lights on the tallest roofs, slowly blinking. */
-  if (bestH > 0.2) {
+  if (t.h > 0.22) {
     float blink = step(0.5, fract(uTime * 0.5 + hc));
-    float rl = length(vec2(mid, q.y - top - max(crown, mast)));
+    float rl = length(vec2(mid, q.y - top - roof));
     c += TAILLIGHT * blink * (exp(-rl * 900.0) * 1.5 + exp(-rl * 200.0) * 0.06);
   }
-  return mix(col + halo, c, body);
+  c = mix(c, sign, signMask);
+  return mix(col + halo, c, max(body, signMask));
 }
 
 /* The lattice tower, floodlit orange: tapered legs, two decks, a mast. */
@@ -347,7 +434,7 @@ vec3 latticeTower(vec2 q, vec3 col) {
   float sparkle = 1.0 + uTreble * 0.5 * uPlaying * step(0.9, hash12(floor(vec2(t.x * 400.0, t.y * 300.0)) + floor(uTime * 8.0)));
   /* Lit from below: hotter at the foot, the white of the floodlights on
      the legs' inner faces. */
-  vec3 c = TOWER_ORANGE * (0.12 + 0.88 * lattice) * mix(1.0, 0.5, y) * sparkle;
+  vec3 c = TOWER_ORANGE * (0.1 + 0.72 * lattice) * mix(1.0, 0.5, y) * sparkle;
   c += vec3(1.0, 0.7, 0.4) * lattice * exp(-y * 6.0) * 0.25;
   /* The observation decks: windows all round, warm white. */
   float deckWin = step(0.3, fract(t.x * 260.0));
@@ -397,7 +484,7 @@ vec3 expressway(vec2 q, vec3 col) {
     float cell = floor(x);
     float hc = hash12(vec2(cell, float(lane) * 9.0));
     float u = fract(x);
-    float streak = smoothstep(0.0, 0.05, u) * (1.0 - smoothstep(0.1 + hc * 0.5, 0.2 + hc * 0.6, u)) * step(0.35, hc);
+    float streak = smoothstep(0.0, 0.03, u) * (1.0 - smoothstep(0.05 + hc * 0.1, 0.09 + hc * 0.14, u)) * step(0.62, hc);
     float dy = q.y - ly;
     float line = exp(-sq(dy / (0.0009 * soften))) / soften;
     float bloom = exp(-abs(dy) / 0.004) * 0.12;
@@ -450,7 +537,7 @@ vec3 world(vec2 fragCoord) {
   float phase = 0.9 / (below + 0.004) + uTime * 0.3;
   float settleLines = 1.0 - smoothstep(0.2, 0.6, fwidth(phase));
   float line = sin(phase * TAU + noise2(vec2(p.x * 4.0, floor(phase) * 0.7)) * 3.0);
-  float sliver = mix(1.0, 0.5 + 0.8 * smoothstep(-0.5, 0.9, line), settleLines);
+  float sliver = mix(1.0, 0.75 + 0.4 * smoothstep(-0.5, 0.9, line), settleLines);
   float tear = (noise2(vec2(floor(phase) * 3.1, p.x * 2.0)) - 0.5) * settleLines;
 
   float jit = rayJitter(fragCoord);
@@ -471,7 +558,7 @@ vec3 world(vec2 fragCoord) {
   refl *= 0.5 * WATER_TINT;
   /* Only the bright lights survive the trip across dark water: the dim glow
      of walls and haze drops away faster than the windows and neon. */
-  refl *= refl / (refl + 0.04) * 1.3;
+  refl *= refl / (refl + 0.1) * 1.6;
   /* Glints: the crests facing you catch the lights full on. */
   float crest = smoothstep(0.55, 0.85, h0) * settle;
   float glint = 1.0 + crest * (0.8 + uTreble * 1.2 * uPlaying);
