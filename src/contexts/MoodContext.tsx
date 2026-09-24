@@ -25,13 +25,31 @@ interface MoodContextType {
 
 const MoodContext = createContext<MoodContextType | undefined>(undefined);
 
+// Storage can be missing or throw (private mode, blocked site data): the mood is
+// a preference, so it falls back to the defaults and never takes the app down.
+function readStored(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeStored(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Unavailable - the choice holds for this session.
+  }
+}
+
 function readInitialMood(): MoodId {
-  const saved = localStorage.getItem(STORAGE_KEY);
+  const saved = readStored(STORAGE_KEY);
   return isMoodId(saved) ? saved : DEFAULT_MOOD;
 }
 
 function readInitialLivingWorld(): boolean {
-  return localStorage.getItem(LIVING_WORLD_KEY) !== 'false';
+  return readStored(LIVING_WORLD_KEY) !== 'false';
 }
 
 export function MoodProvider({ children }: { children: ReactNode }) {
@@ -44,7 +62,7 @@ export function MoodProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const def = MOODS[mood];
-    localStorage.setItem(STORAGE_KEY, def.id);
+    writeStored(STORAGE_KEY, def.id);
 
     const root = document.documentElement;
     // Ease every palette-driven colour across the swap (text, accent fills,
@@ -80,7 +98,7 @@ export function MoodProvider({ children }: { children: ReactNode }) {
   const toggleLivingWorld = useCallback(() => {
     setLivingWorld((prev) => {
       const next = !prev;
-      localStorage.setItem(LIVING_WORLD_KEY, String(next));
+      writeStored(LIVING_WORLD_KEY, String(next));
       return next;
     });
   }, []);

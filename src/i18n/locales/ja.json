@@ -26,7 +26,6 @@
   },
   "effects": {
     "none": "オリジナル",
-    "resetHint": "ダブルクリックでリセット",
     "originalHint": "オリジナルのトラックを再生中、エフェクトなし。",
     "speedUp": "スピードアップ",
     "slowReverb": "スロー + リバーブ",
@@ -45,7 +44,6 @@
     "underwaterDeep": "深い",
     "nightcoreBeats": "ナイトコア ビート",
     "betaBadge": "ベータ",
-    "nightcoreBeatsHint": "スピードアップに 4/4 のビートを重ねる",
     "beatVolume": "ビート音量",
     "apply": "エフェクトを適用",
     "processing": "処理中..."
@@ -63,7 +61,9 @@
     "shuffle": "シャッフル",
     "repeatOff": "リピート：オフ",
     "repeatAll": "プレイリストをリピート",
-    "repeatOne": "この曲をリピート"
+    "repeatOne": "この曲をリピート",
+    "saved": "保存しました",
+    "savedAs": "{{name}} として保存しました"
   },
   "track": {
     "title": "トラック",
@@ -97,7 +97,6 @@
   },
   "waveform": {
     "title": "波形タイムライン",
-    "caption": "元のオーディオとエフェクト適用後を切り替え",
     "playing": "再生中",
     "idle": "準備完了",
     "scrub": "タイムラインをスクラブ",
@@ -105,7 +104,8 @@
     "fx": "エフェクト",
     "toggleRemaining": "残り時間を表示",
     "tempo": "{{bpm}} BPM · {{meter}}",
-    "tempoScaled": "{{bpm}} ({{original}}) BPM · {{meter}}"
+    "tempoScaled": "{{bpm}} BPM · {{meter}}",
+    "position": "{{current}} / {{total}}"
   },
   "language": {
     "open": "言語選択を開く",
@@ -122,7 +122,6 @@
   "settings": {
     "open": "設定",
     "title": "設定",
-    "subtitle": "シーン、イコライザー、言語",
     "moods": "ムード",
     "mood": {
       "light": "夜明け",
@@ -142,17 +141,36 @@
     "close": "設定を閉じる",
     "scene": "シーン",
     "livingWorld": "生きた世界",
-    "livingWorldHint": "シーンが音楽に合わせて動きます（オフでバッテリー節約）",
-    "restUi": "インターフェースを休ませる",
-    "restUiHint": "聴いている間はパネルが薄れ、動かすとすぐ戻ります"
+    "restUi": "全画面表示でインターフェースを隠す",
+    "eqPresets": {
+      "flat": "フラット",
+      "acoustic": "アコースティック",
+      "bass_booster": "低音強め",
+      "bass_reducer": "低音控えめ",
+      "classical": "クラシック",
+      "dance": "ダンス",
+      "deep": "ディープ",
+      "electronic": "エレクトロニック",
+      "hiphop": "ヒップホップ",
+      "jazz": "ジャズ",
+      "latin": "ラテン",
+      "loudness": "ラウドネス",
+      "lounge": "ラウンジ",
+      "piano": "ピアノ",
+      "pop": "ポップ",
+      "rnb": "R&B",
+      "rock": "ロック",
+      "small_speakers": "小型スピーカー",
+      "spoken_word": "話し声",
+      "treble_booster": "高音強め",
+      "treble_reducer": "高音控えめ",
+      "vocal_booster": "ボーカル強調"
+    }
   },
   "studio": {
     "effects": "エフェクト",
-    "adjustments": "調整",
     "mood": "ムード",
     "moods": "ムード",
-    "active": "オン",
-    "inactive": "オフ",
     "levels": "レベル"
   },
   "playlist": {
@@ -160,7 +178,7 @@
     "add": "音楽を追加",
     "addFolder": "フォルダを追加",
     "clear": "プレイリストを空にする",
-    "clearConfirm": "すべての曲を削除しますか？",
+    "clearConfirm": "このデバイスから {{count}} 曲すべてを削除しますか？",
     "clearYes": "空にする",
     "cancel": "キャンセル",
     "remove": "プレイリストから削除",
@@ -178,5 +196,19 @@
   "welcome": {
     "resume": "前回の続きから",
     "resumeHint": "プレイリストの曲数：{{count}}"
+  },
+  "errors": {
+    "loadFailed": "このファイルを読み込めませんでした。別のコピーや別の形式でお試しください。",
+    "tooLarge": "ファイルが大きすぎるため開けません（最大 {{max}} MB）。",
+    "processFailed": "エフェクトを適用できませんでした。もう一度試すか、別のエフェクトを選んでください。",
+    "exportFailed": "書き出しに失敗しました。もう一度お試しください。繰り返し失敗する場合は、このブラウザーが形式に対応していない可能性があります。",
+    "noAudio": "先に曲を読み込んでください。",
+    "generic": "問題が発生しました。もう一度お試しください。"
+  },
+  "crash": {
+    "title": "問題が発生しました",
+    "body": "Reverie で予期しないエラーが発生しました。曲はこのデバイスに保存されたままです。",
+    "retry": "もう一度試す",
+    "reload": "再読み込み"
   }
 }

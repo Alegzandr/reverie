@@ -40,7 +40,7 @@ const DialogContent = React.forwardRef<
         'fixed left-1/2 top-1/2 z-[9999] w-full max-w-md -translate-x-1/2 -translate-y-1/2',
         'glass rounded-3xl p-6 sm:p-7 shadow-2xl border border-[rgba(var(--color-border),0.7)]',
         'max-h-[92vh] overflow-hidden focus:outline-none',
-        'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 duration-200',
+        'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 motion-safe:data-[state=closed]:zoom-out-95 motion-safe:data-[state=open]:zoom-in-95 duration-200',
         className
       )}
       {...props}

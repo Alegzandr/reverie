@@ -6,9 +6,9 @@
  * core on the centreline, feathered tips, the played region burning in the
  * mood accent while the unplayed tail waits in the cool hairline hue. While a
  * track plays the instrument is ALIVE: the ribbon glows toward the playhead, a
- * spectral flame licks along the spine with the track's real FFT, kick onsets
- * fire pulses that travel back down the played region, treble lifts sparks off
- * the spine, and each effect morphs the instrument (reverb stretches the
+ * spectral flame breathes along the spine with the track's real FFT, a clear
+ * downbeat sends a slow swell of light back down the played region, treble
+ * lets a few embers drift off the spine, and each effect morphs the instrument (reverb stretches the
  * afterglow, 8D weaves two stereo strands, bass boost deepens the core's
  * pulse).
  *
@@ -96,9 +96,22 @@ const BOOT_MS = 950;
 const BOOT_DELAY_MS = 380;
 const FLAME_BINS = 22;
 const FLAME_STRIP_W = 5;
-const PARTICLE_CAP = 90;
-const PULSE_SPEED = 380; // px/s back down the spine
-const PULSE_COOLDOWN_MS = 150;
+/** Flame bins rise and settle this slowly (1/s): a breath, not a flicker. */
+const FLAME_ATTACK = 5;
+const FLAME_RELEASE = 2.5;
+const PARTICLE_CAP = 24;
+/** Embers per second at full treble - a sparse drift, never a spray. */
+const SPARK_RATE = 40;
+const PULSE_SPEED = 160; // px/s back down the spine
+/** Only a clear downbeat rings the spine, and never more than about once a bar. */
+const PULSE_ONSET = 0.7;
+const PULSE_COOLDOWN_MS = 1400;
+/**
+ * The published energies follow the music frame by frame (the orb wants that);
+ * the instrument listens through a slower ear (seconds) so it swells with the
+ * phrase instead of shaking on every transient.
+ */
+const ENERGY_SETTLE_S = 0.9;
 
 const parseTriplet = (value: string, fallback: Rgb): Rgb => {
   const m = value.split(',').map((p) => parseFloat(p));
@@ -167,11 +180,12 @@ export function createWaveInstrument(
     // Log-ish spread over the musically useful low 70% (same mapping the
     // SpectrumMeter settled on) with a soft attack so the flame breathes.
     const usable = Math.floor(freq.length * 0.7);
-    const attack = 1 - Math.exp(-30 * dt);
+    const attack = 1 - Math.exp(-FLAME_ATTACK * dt);
+    const release = 1 - Math.exp(-FLAME_RELEASE * dt);
     for (let i = 0; i < FLAME_BINS; i++) {
       const idx = Math.floor(((i + 1) / FLAME_BINS) ** 1.6 * (usable - 1));
       const target = (freq[idx] ?? 0) / 255;
-      bins[i] += (target - bins[i]) * attack;
+      bins[i] += (target - bins[i]) * (target > bins[i] ? attack : release);
     }
   };
 
@@ -209,6 +223,7 @@ export function createWaveInstrument(
   const particles: Particle[] = [];
   const pulses: Pulse[] = [];
   let lastPulseAt = 0;
+  const calm = { level: 0, bass: 0, treble: 0 };
 
   // Gradient caches (rebuilt on palette or height change only).
   let playedGrad: CanvasGradient | null = null;
@@ -326,10 +341,12 @@ export function createWaveInstrument(
     // A live instrument only while actually animating: reduced motion keeps
     // the ribbons + playhead (state) and drops every decorative energy.
     const live = isPlaying && !reducedMotion;
-    const level = live ? readEnergyVar('--audio-level') : 0;
-    const bass = live ? readEnergyVar('--audio-bass') : 0;
-    const treble = live ? readEnergyVar('--audio-treble') : 0;
     const onset = live ? readEnergyVar('--audio-pulse') : 0;
+    const settle = 1 - Math.exp(-dt / ENERGY_SETTLE_S);
+    calm.level += ((live ? readEnergyVar('--audio-level') : 0) - calm.level) * settle;
+    calm.bass += ((live ? readEnergyVar('--audio-bass') : 0) - calm.bass) * settle;
+    calm.treble += ((live ? readEnergyVar('--audio-treble') : 0) - calm.treble) * settle;
+    const { level, bass, treble } = calm;
     readSpectrum(live, dt);
 
     const mid = cssH / 2;
@@ -417,7 +434,7 @@ export function createWaveInstrument(
         if (!lowPower) {
           const washL = Math.max(visL, 0);
           if (playX > washL + 1) {
-            const peak = glow(0.14 + 0.15 * fx.reverb + 0.08 * level) * (1 - 0.35 * fx.muffle);
+            const peak = glow(0.14 + 0.15 * fx.reverb + 0.05 * level) * (1 - 0.35 * fx.muffle);
             const wash = ctx.createLinearGradient(washL, 0, playX, 0);
             wash.addColorStop(0, rgba(accent, peak * 0.35));
             wash.addColorStop(0.55, rgba(accent, peak * 0.55));
@@ -434,10 +451,10 @@ export function createWaveInstrument(
       // 4 - core spine: a filament of light lying on the axis across the played
       // region; bass boost makes it pulse deeper.
       if (playX > visL) {
-        const coreW = 1.6 + bass * (1.6 + 2.2 * fx.bass);
+        const coreW = 1.6 + bass * (0.5 + 1.1 * fx.bass);
         const spine = ctx.createLinearGradient(visL, 0, playX, 0);
         spine.addColorStop(0, rgba(core, 0.06));
-        spine.addColorStop(1, rgba(core, glow(0.5 + 0.35 * level)));
+        spine.addColorStop(1, rgba(core, glow(0.5 + 0.15 * level)));
         if (additive) ctx.globalCompositeOperation = 'lighter';
         ctx.fillStyle = spine;
         ctx.fillRect(visL, mid - coreW / 2, Math.min(playX, visR) - visL, coreW);
@@ -454,9 +471,9 @@ export function createWaveInstrument(
         if (x < visL || x > visR) continue;
         // Capped just above the envelope so the flame licks the silhouette
         // without breaking out of it.
-        const h = Math.max(MIN_HALF_HEIGHT, envAt(x, contentWidth) * amp) * (0.25 + 0.8 * bins[i]);
+        const h = Math.max(MIN_HALF_HEIGHT, envAt(x, contentWidth) * amp) * (0.3 + 0.35 * bins[i]);
         const tint = mix(core, ambient, i / (FLAME_BINS - 1));
-        ctx.fillStyle = rgba(tint, glow((0.08 + 0.16 * bins[i]) * (1 - 0.5 * fx.muffle)));
+        ctx.fillStyle = rgba(tint, glow((0.05 + 0.07 * bins[i]) * (1 - 0.5 * fx.muffle)));
         ctx.fillRect(x, mid - h, FLAME_STRIP_W - 1, h * 2);
       }
       ctx.globalCompositeOperation = 'source-over';
@@ -487,12 +504,12 @@ export function createWaveInstrument(
       ctx.globalCompositeOperation = 'source-over';
     }
 
-    // 7 - onset pulses: a kick fires a band of light that travels back down the
-    // played region and dies out (reverb lets it ring longer).
+    // 7 - onset swells: a clear downbeat sends a soft band of light back down
+    // the played region (reverb lets it ring longer).
     if (live && !lowPower) {
-      if (onset > 0.45 && now - lastPulseAt > PULSE_COOLDOWN_MS) {
+      if (onset > PULSE_ONSET && now - lastPulseAt > PULSE_COOLDOWN_MS) {
         lastPulseAt = now;
-        pulses.push({ x0: playX, born: now, life: 1100 * (1 + 0.9 * fx.reverb) });
+        pulses.push({ x0: playX, born: now, life: 1800 * (1 + 0.9 * fx.reverb) });
       }
       if (additive) ctx.globalCompositeOperation = 'lighter';
       for (let i = pulses.length - 1; i >= 0; i--) {
@@ -504,24 +521,25 @@ export function createWaveInstrument(
         }
         const x = p.x0 - (now - p.born) * 0.001 * PULSE_SPEED;
         if (x < visL - 30 || x > visR + 30) continue;
-        const fade = (1 - age) ** 2;
-        const h = Math.max(MIN_HALF_HEIGHT, envAt(x, contentWidth) * amp) * (1.05 + 0.3 * fade);
-        const band = ctx.createLinearGradient(x - 14, 0, x + 14, 0);
+        // Swells in and out (sin envelope) instead of striking at full light.
+        const fade = Math.sin(Math.PI * age) * (1 - age);
+        const h = Math.max(MIN_HALF_HEIGHT, envAt(x, contentWidth) * amp);
+        const band = ctx.createLinearGradient(x - 28, 0, x + 28, 0);
         band.addColorStop(0, rgba(accent, 0));
-        band.addColorStop(0.5, rgba(mix(accent, core, 0.5), glow(0.4 * fade)));
+        band.addColorStop(0.5, rgba(mix(accent, core, 0.4), glow(0.16 * fade)));
         band.addColorStop(1, rgba(accent, 0));
         ctx.fillStyle = band;
-        ctx.fillRect(x - 14, mid - h, 28, h * 2);
+        ctx.fillRect(x - 28, mid - h, 56, h * 2);
       }
       ctx.globalCompositeOperation = 'source-over';
     } else {
       pulses.length = 0;
     }
 
-    // 8 - sparks: treble lifts short-lived embers off the spine near the
-    // playhead; reverb lets them linger.
+    // 8 - embers: treble lets a few drift off the spine near the playhead;
+    // reverb lets them linger.
     if (live && !lowPower) {
-      const rate = treble * treble * 300 * dt;
+      const rate = treble * treble * SPARK_RATE * dt;
       let want = Math.floor(rate);
       if (Math.random() < rate - want) want += 1;
       for (let s = 0; s < want && particles.length < PARTICLE_CAP; s++) {
@@ -531,8 +549,8 @@ export function createWaveInstrument(
         particles.push({
           x,
           y: mid + (Math.random() * 2 - 1) * a * 0.7,
-          vx: (Math.random() - 0.6) * 12,
-          vy: -(8 + Math.random() * 26),
+          vx: (Math.random() - 0.6) * 6,
+          vy: -(4 + Math.random() * 10),
           born: now,
           life: (700 + Math.random() * 800) * (1 + 0.6 * fx.reverb),
           size: 1 + Math.random() * 1.8,
@@ -551,7 +569,7 @@ export function createWaveInstrument(
         pt.y += pt.vy * dt;
         if (pt.x < visL || pt.x > visR) continue;
         const fade = (1 - age) ** 1.5;
-        ctx.fillStyle = rgba(mix(core, ambient, pt.hue * 0.7), glow(0.65 * fade));
+        ctx.fillStyle = rgba(mix(core, ambient, pt.hue * 0.7), glow(0.4 * fade));
         ctx.beginPath();
         ctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
         ctx.fill();
@@ -563,10 +581,10 @@ export function createWaveInstrument(
 
     // 9 - playhead: a scanning beam of light with a reading head on the axis.
     if (playX >= visL && playX <= visR) {
-      const bloomR = 26 + 44 * level + 16 * onset;
+      const bloomR = 30 + 14 * level;
       if (!lowPower) {
         const bloom = ctx.createRadialGradient(playX, mid, 0, playX, mid, bloomR);
-        bloom.addColorStop(0, rgba(accent, glow(0.30 * (0.45 + level))));
+        bloom.addColorStop(0, rgba(accent, glow(0.26 * (0.6 + 0.4 * level))));
         bloom.addColorStop(1, rgba(accent, 0));
         if (additive) ctx.globalCompositeOperation = 'lighter';
         ctx.fillStyle = bloom;
@@ -582,8 +600,7 @@ export function createWaveInstrument(
       ctx.fillStyle = blade;
       ctx.fillRect(playX - 1, VERTICAL_PAD, 2, cssH - VERTICAL_PAD * 2);
 
-      // Reading head - swells a touch on the kick.
-      const headR = 3.5 + 1.5 * onset;
+      const headR = 3.5;
       ctx.fillStyle = rgba(core, 0.98);
       ctx.beginPath();
       ctx.arc(playX, mid, headR, 0, Math.PI * 2);

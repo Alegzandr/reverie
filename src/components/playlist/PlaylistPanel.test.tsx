@@ -38,14 +38,14 @@ function renderPanel(overrides: Partial<Parameters<typeof PlaylistPanel>[0]> = {
 describe('PlaylistPanel', () => {
   it('lists the tracks, marks the playing one, and plays a clicked row', async () => {
     const props = renderPanel();
-    expect(screen.getByRole('button', { name: 'Beta' })).toHaveAttribute('aria-current', 'true');
-    await userEvent.click(screen.getByRole('button', { name: 'Gamma' }));
+    expect(screen.getByRole('button', { name: /^Beta/ })).toHaveAttribute('aria-current', 'true');
+    await userEvent.click(screen.getByRole('button', { name: /^Gamma/ }));
     expect(props.onPlay).toHaveBeenCalledWith(tracks[2].id);
   });
 
   it('removes a track with the Delete key and reorders with Alt+arrows', () => {
     const props = renderPanel();
-    const alpha = screen.getByRole('button', { name: 'Alpha' });
+    const alpha = screen.getByRole('button', { name: /^Alpha/ });
     fireEvent.keyDown(alpha, { key: 'ArrowDown', altKey: true });
     expect(props.onMove).toHaveBeenCalledWith(0, 1);
     fireEvent.keyDown(alpha, { key: 'Delete' });

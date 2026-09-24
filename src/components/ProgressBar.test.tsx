@@ -4,7 +4,7 @@ import { ProgressBar } from './ProgressBar';
 
 describe('ProgressBar', () => {
   it('returns null when idle', () => {
-    const { container } = render(<ProgressBar progress={0} isProcessing={false} />);
+    const { container } = render(<ProgressBar progress={0} isProcessing={false} message="Working" />);
     expect(container.firstChild).toBeNull();
   });
 
@@ -17,8 +17,9 @@ describe('ProgressBar', () => {
     expect(bar).toHaveStyle({ width: '42%' });
   });
 
-  it('falls back to default message', () => {
-    render(<ProgressBar progress={10} isProcessing />);
-    expect(screen.getByText('Processing...')).toBeInTheDocument();
+  it('names the progress bar after what is happening', () => {
+    render(<ProgressBar progress={10} isProcessing message="Loading" />);
+    expect(screen.getByRole('progressbar', { name: 'Loading' })).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Loading');
   });
 });

@@ -102,7 +102,9 @@ describe('App', () => {
     mockState.error = 'Oops';
     renderWithRouter(<App />);
 
-    expect(screen.getByText('Oops')).toBeInTheDocument();
+    // Raw engine text never reaches the listener: it's mapped to translated copy.
+    expect(screen.getByRole('alert')).toHaveTextContent('errors.generic');
+    expect(screen.queryByText('Oops')).not.toBeInTheDocument();
   });
 
   it('applies effects live, plays, and resets', async () => {
@@ -141,7 +143,7 @@ describe('App', () => {
     const file = new File(['abc'], 'Night Drive.mp3', { type: 'audio/mp3' });
     await userEvent.upload(screen.getByLabelText('upload.browse'), file);
 
-    expect(await screen.findByRole('button', { name: 'Night Drive' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /^Night Drive/ })).toBeInTheDocument();
     expect(mockApi.loadAudioFile).not.toHaveBeenCalled();
   });
 
@@ -153,10 +155,26 @@ describe('App', () => {
 
     const file = new File(['new'], 'Afterglow.mp3', { type: 'audio/mp3' });
     await userEvent.upload(screen.getByLabelText('upload.browse'), file);
-    await userEvent.click(await screen.findByRole('button', { name: 'Afterglow' }));
+    await userEvent.click(await screen.findByRole('button', { name: /^Afterglow/ }));
 
     expect(mockApi.loadAudioFile).toHaveBeenCalledWith(file);
     await vi.waitFor(() => expect(mockApi.playAudio).toHaveBeenCalledWith(newBuffer, 0));
+  });
+
+  it('never lets the previous track play or export under an unreadable one', async () => {
+    const oldBuffer = new AudioBuffer({ length: 1, numberOfChannels: 1, sampleRate: 44100 });
+    mockApi.originalFile = new File(['old'], 'old.mp3', { type: 'audio/mp3' });
+    mockApi.originalBuffer = oldBuffer;
+    mockApi.loadAudioFile.mockResolvedValueOnce(undefined);
+    renderWithRouter(<App />);
+
+    const broken = new File(['??'], 'Broken.mp3', { type: 'audio/mp3' });
+    await userEvent.upload(screen.getByLabelText('upload.browse'), broken);
+    await userEvent.click(await screen.findByRole('button', { name: /^Broken/ }));
+
+    await vi.waitFor(() => expect(screen.getByRole('button', { name: 'playback.export' })).toBeDisabled());
+    expect(screen.getByRole('button', { name: 'playback.play' })).toBeDisabled();
+    expect(screen.queryByTestId('waveform-timeline')).not.toBeInTheDocument();
   });
 
   it('loads the first dropped file paused on the welcome stage', async () => {
@@ -237,7 +255,7 @@ describe('App', () => {
     // The settings menu hosts the scene toggles, the listening EQ and the language.
     await userEvent.click(screen.getByLabelText('settings.open'));
     await userEvent.click(screen.getByRole('combobox', { name: 'settings.eqPreset' }));
-    await userEvent.click(screen.getByRole('option', { name: 'Rock' }));
+    await userEvent.click(screen.getByRole('option', { name: 'settings.eqPresets.rock' }));
     expect(mockSetPreset).toHaveBeenCalledWith('Rock');
   });
 

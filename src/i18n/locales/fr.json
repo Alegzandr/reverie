@@ -6,13 +6,13 @@
   },
   "gate": {
     "title": "Pensé pour le grand écran",
-    "description": "Le cockpit de Reverie (les effets, la forme d'onde vivante et l'ambiance) a besoin d'espace pour respirer. Ouvre-le sur un ordinateur pour en profiter pleinement.",
+    "description": "Le cockpit de Reverie (les effets, la forme d'onde vivante et l'ambiance) a besoin d'espace pour respirer. Ouvrez-le sur un ordinateur pour en profiter pleinement.",
     "hint": "On se retrouve sur PC"
   },
   "app": {
     "title": "Reverie",
     "subtitle": "Des remixes oniriques pour vos morceaux préférés",
-    "description": "Transformez votre musique avec des effets audio professionnels. Accélérez, ralentissez, ajoutez de la réverbération ou créez des versions audio 8D immersives de vos morceaux et exportez automatiquement dans le format et la qualité d'origine."
+    "description": "Transformez votre musique avec des effets audio. Accélérez, ralentissez, ajoutez de la réverbération ou créez des versions 8D immersives de vos morceaux, exportées dans le format et la qualité d'origine."
   },
   "upload": {
     "title": "Téléverser un fichier audio",
@@ -26,7 +26,6 @@
   },
   "effects": {
     "none": "Original",
-    "resetHint": "Double-cliquez pour réinitialiser",
     "originalHint": "Lecture de la piste originale, aucun effet appliqué.",
     "speedUp": "Accélérer",
     "slowReverb": "Ralenti + Reverb",
@@ -45,7 +44,6 @@
     "underwaterDeep": "Profond",
     "nightcoreBeats": "Percussions nightcore",
     "betaBadge": "Bêta",
-    "nightcoreBeatsHint": "Ajoute une rythmique 4/4 sur l'accéléré",
     "beatVolume": "Volume des percussions",
     "apply": "Appliquer les effets",
     "processing": "Traitement en cours..."
@@ -63,7 +61,9 @@
     "shuffle": "Lecture aléatoire",
     "repeatOff": "Répétition : désactivée",
     "repeatAll": "Répéter la playlist",
-    "repeatOne": "Répéter ce morceau"
+    "repeatOne": "Répéter ce morceau",
+    "saved": "Enregistré",
+    "savedAs": "Enregistré sous {{name}}"
   },
   "track": {
     "title": "Piste",
@@ -97,7 +97,6 @@
   },
   "waveform": {
     "title": "Chronologie de forme d'onde",
-    "caption": "Naviguez entre l'audio brut et traité",
     "playing": "En lecture",
     "idle": "Prêt",
     "scrub": "Parcourir la chronologie",
@@ -105,7 +104,8 @@
     "fx": "FX",
     "toggleRemaining": "Afficher le temps restant",
     "tempo": "{{bpm}} BPM · {{meter}}",
-    "tempoScaled": "{{bpm}} ({{original}}) BPM · {{meter}}"
+    "tempoScaled": "{{bpm}} BPM · {{meter}}",
+    "position": "{{current}} sur {{total}}"
   },
   "language": {
     "open": "Ouvrir le sélecteur de langue",
@@ -122,7 +122,6 @@
   "settings": {
     "open": "Réglages",
     "title": "Réglages",
-    "subtitle": "Scène, égaliseur et langue",
     "moods": "Moods",
     "mood": {
       "light": "Aube",
@@ -142,17 +141,36 @@
     "close": "Fermer les réglages",
     "scene": "Scène",
     "livingWorld": "Monde vivant",
-    "livingWorldHint": "La scène bouge avec votre musique (désactivé, économise la batterie)",
-    "restUi": "Laisser l'interface s'effacer",
-    "restUiHint": "Les panneaux s’estompent pendant l’écoute et reviennent dès que vous bougez"
+    "restUi": "Masquer l'interface en plein écran",
+    "eqPresets": {
+      "flat": "Neutre",
+      "acoustic": "Acoustique",
+      "bass_booster": "Plus de basses",
+      "bass_reducer": "Moins de basses",
+      "classical": "Classique",
+      "dance": "Dance",
+      "deep": "Profond",
+      "electronic": "Électronique",
+      "hiphop": "Hip-hop",
+      "jazz": "Jazz",
+      "latin": "Latino",
+      "loudness": "Loudness",
+      "lounge": "Lounge",
+      "piano": "Piano",
+      "pop": "Pop",
+      "rnb": "R&B",
+      "rock": "Rock",
+      "small_speakers": "Petites enceintes",
+      "spoken_word": "Voix parlée",
+      "treble_booster": "Plus d'aigus",
+      "treble_reducer": "Moins d'aigus",
+      "vocal_booster": "Voix en avant"
+    }
   },
   "studio": {
     "effects": "Effets",
-    "adjustments": "Réglages",
     "mood": "Mood",
     "moods": "Moods",
-    "active": "Actif",
-    "inactive": "Inactif",
     "levels": "Niveaux"
   },
   "playlist": {
@@ -160,7 +178,7 @@
     "add": "Ajouter de la musique",
     "addFolder": "Ajouter un dossier",
     "clear": "Vider la playlist",
-    "clearConfirm": "Retirer tous les morceaux ?",
+    "clearConfirm": "Retirer les {{count}} morceaux de cet appareil ?",
     "clearYes": "Vider",
     "cancel": "Annuler",
     "remove": "Retirer de la playlist",
@@ -178,5 +196,19 @@
   "welcome": {
     "resume": "Reprendre là où vous en étiez",
     "resumeHint": "Morceaux dans votre playlist : {{count}}"
+  },
+  "errors": {
+    "loadFailed": "Impossible de lire ce fichier. Essayez une autre copie du morceau, ou un autre format.",
+    "tooLarge": "Ce fichier est trop lourd pour être ouvert ici ({{max}} Mo maximum).",
+    "processFailed": "L'effet n'a pas pu être appliqué. Réessayez, ou choisissez un autre effet.",
+    "exportFailed": "L'export n'a pas abouti. Réessayez ; si l'échec se répète, ce navigateur ne gère peut-être pas ce format.",
+    "noAudio": "Chargez d'abord un morceau.",
+    "generic": "Un problème est survenu. Réessayez."
+  },
+  "crash": {
+    "title": "Un problème est survenu",
+    "body": "Reverie a rencontré une erreur inattendue. Vos morceaux sont toujours gardés sur cet appareil.",
+    "retry": "Réessayer",
+    "reload": "Recharger"
   }
 }

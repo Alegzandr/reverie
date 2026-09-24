@@ -16,6 +16,7 @@ import { Logo } from './components/Logo';
 import { WelcomeScreen } from './components/WelcomeScreen';
 import { WorldSwitcher } from './components/WorldSwitcher';
 import { NowPlaying } from './components/NowPlaying';
+import { IdleReadout } from './components/IdleReadout';
 import { PlaylistPanel } from './components/playlist/PlaylistPanel';
 import { Tooltip, TooltipTrigger, TooltipContent } from './components/ui/tooltip';
 import { provideWorldAnalyser } from './components/scenes/world/analyserSource';
@@ -25,10 +26,11 @@ import { useAudioReactivity } from './hooks/useAudioReactivity';
 import { usePlaylist } from './hooks/usePlaylist';
 import { usePlaylistPlayer } from './hooks/usePlaylistPlayer';
 import { useMediaSession } from './hooks/useMediaSession';
-import { useUiRest } from './hooks/useUiRest';
+import { useUiRestPreference } from './hooks/useUiRest';
 import { useFullscreenAutoHide } from './hooks/useFullscreenAutoHide';
 import { useEq } from './contexts/EqContext';
-import { EFFECT_EXPORT_LABELS, EFFECT_DEFAULTS, AUDIO_PROCESSING } from './constants';
+import { EFFECT_EXPORT_LABELS, EFFECT_DEFAULTS, AUDIO_PROCESSING, EXPORT_NOTICE } from './constants';
+import { describeError } from './utils/errorMessages';
 import type { AudioProcessingOptions } from './utils/audioProcessor';
 import { stripExtension } from './utils/playlistModel';
 import { prefersReducedMotion } from './components/scenes/motion';
@@ -214,16 +216,36 @@ function App() {
     [setEffects]
   );
 
+  // What's playing, as the playlist knows it (tags, artwork) - falling back to
+  // the loaded file for a track that was removed from the list mid-listen.
+  const activeTrack = playlist.activeIndex >= 0 ? playlist.tracks[playlist.activeIndex] : null;
+  // A track that couldn't be decoded is selected but not loaded: the engine
+  // still holds the previous one. Nothing of that previous track may leak into
+  // what's shown, played or exported under this one's name.
+  const activeBroken = !!activeTrack?.broken;
+  const title = activeTrack?.title ?? (originalFile ? stripExtension(originalFile.name) : '');
+  const artist = activeTrack?.artist ?? null;
+  const cover = activeTrack?.cover ?? null;
+  const loadedDetails = useTrackDetails(originalFile, metadata);
+  const details = activeBroken ? [t('playlist.broken')] : loadedDetails;
+
   const handlePlay = useCallback(() => {
+    if (activeBroken) return;
     // At the end of the track, play starts over. The position lives in the
     // playback clock (an external store), so reading it here costs nothing.
     const time = playbackClock.get();
     const startAt = duration > 0 && time >= duration ? 0 : time;
     if (originalBuffer) playAudio(originalBuffer, startAt);
     else if (processedBuffer) playAudio(processedBuffer, startAt);
-  }, [playAudio, playbackClock, originalBuffer, processedBuffer, duration]);
+  }, [activeBroken, playAudio, playbackClock, originalBuffer, processedBuffer, duration]);
 
-  const hasPlayableAudio = !!(originalBuffer || processedBuffer);
+  const hasLoadedAudio = !!(originalBuffer || processedBuffer);
+
+  // Landing on an unreadable file stops whatever was still sounding: the
+  // previous track must not play on under this one's name.
+  useEffect(() => {
+    if (activeBroken && state.isPlaying) stopAudio();
+  }, [activeBroken, state.isPlaying, stopAudio]);
 
   const handleTogglePlay = useCallback(() => {
     if (state.isPlaying) stopAudio();
@@ -239,7 +261,7 @@ function App() {
   // residual focus on the last button pressed, and letting it swallow space made
   // the key re-trigger that button instead of the transport.
   useEffect(() => {
-    if (!hasPlayableAudio || state.isExporting) return;
+    if (!hasLoadedAudio || state.isExporting) return;
 
     const isKeyboardFocused = (el: HTMLElement) => {
       try {
@@ -267,7 +289,7 @@ function App() {
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [hasPlayableAudio, state.isExporting, handleTogglePlay]);
+  }, [hasLoadedAudio, state.isExporting, handleTogglePlay]);
 
   // Speed changes the listening length (3:00 at 0.5x lasts 6:00): the transport
   // speaks in effective time, while the engine tracks source-buffer time. The
@@ -295,7 +317,7 @@ function App() {
   // Yields to fields, native sliders, menus, and lists that walk with arrows
   // themselves (the playlist marks itself data-own-arrows).
   useEffect(() => {
-    if (!hasPlayableAudio || state.isExporting) return;
+    if (!hasLoadedAudio || state.isExporting) return;
 
     const onKeyDown = (e: KeyboardEvent) => {
       const key = e.key;
@@ -315,7 +337,7 @@ function App() {
       const target = e.target as HTMLElement | null;
       if (
         target?.isContentEditable ||
-        target?.closest('input, textarea, select, [role="slider"], [role="listbox"], [role="menu"], [role="combobox"], [data-own-arrows]')
+        target?.closest('input, textarea, select, [role="slider"], [role="listbox"], [role="menu"], [role="combobox"], [role="radiogroup"], [data-own-arrows]')
       ) {
         return;
       }
@@ -335,15 +357,8 @@ function App() {
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [hasPlayableAudio, state.isExporting, effectiveClock, effectiveDuration, handleSeek, volume, updateVolume, next, previous, handleTogglePlay]);
+  }, [hasLoadedAudio, state.isExporting, effectiveClock, effectiveDuration, handleSeek, volume, updateVolume, next, previous, handleTogglePlay]);
 
-  // What's playing, as the playlist knows it (tags, artwork) - falling back to
-  // the loaded file for a track that was removed from the list mid-listen.
-  const activeTrack = playlist.activeIndex >= 0 ? playlist.tracks[playlist.activeIndex] : null;
-  const title = activeTrack?.title ?? (originalFile ? stripExtension(originalFile.name) : '');
-  const artist = activeTrack?.artist ?? null;
-  const cover = activeTrack?.cover ?? null;
-  const details = useTrackDetails(originalFile, metadata);
   const upNext = useMemo(() => {
     if (repeat === 'one') return null;
     const id = playlist.upcomingId ?? (repeat === 'all' && !playlist.shuffle ? playlist.tracks[0]?.id : null);
@@ -362,20 +377,29 @@ function App() {
     onPrevious: previous,
   });
 
+  const [savedAs, setSavedAs] = useState<string | null>(null);
+  useEffect(() => {
+    if (!savedAs) return;
+    const id = window.setTimeout(() => setSavedAs(null), EXPORT_NOTICE.VISIBLE_MS);
+    return () => window.clearTimeout(id);
+  }, [savedAs]);
+
   const handleExport = useCallback(async () => {
+    setSavedAs(null);
     try {
       // Pause first so the offline render isn't fighting the live graph.
       if (state.isPlaying) stopAudio();
       const baseName = originalFile ? originalFile.name.replace(/\.[^/.]+$/, '') : 'track';
       // English-only labels for filenames (not translated)
       const fxLabel = EFFECT_EXPORT_LABELS[effectSettings.mode];
-      await exportProcessedAudio({ filename: baseName, effectLabel: fxLabel });
+      setSavedAs(await exportProcessedAudio({ filename: baseName, effectLabel: fxLabel }));
     } catch (error) {
+      // The banner carries the listener-facing message; the detail stays here.
       console.error('Export error:', error);
     }
   }, [exportProcessedAudio, originalFile, effectSettings.mode, state.isPlaying, stopAudio]);
 
-  const resting = useUiRest(state.isPlaying && hasSession);
+  const restPreference = useUiRestPreference();
 
   // Session power-on: entering a session brings the interface in once (see
   // `.cockpit-boot` in index.css). Toggled straight on the shell element - no
@@ -396,13 +420,15 @@ function App() {
     };
   }, [hasSession]);
 
-  // Fullscreen is for listening: idle panels fade away and leave the scene alone.
-  // Gated on the workspace actually being mounted (the shell ref must be live).
-  useFullscreenAutoHide(shellRef, hasSession && !viewportTooNarrow && !player.booting);
+  // Fullscreen is for listening: idle panels step aside and leave the world (and
+  // a one-line readout) alone. Windowed, the interface never rests. Gated on the
+  // workspace actually being mounted (the shell ref must be live).
+  useFullscreenAutoHide(shellRef, restPreference && hasSession && !viewportTooNarrow && !player.booting);
 
-  const errorBanner = state.error ? (
-    <div role="alert" className="rounded-2xl border border-[rgba(var(--color-accent),0.4)] bg-[rgba(var(--color-accent),0.12)] px-4 py-3 backdrop-blur-md">
-      <p className="text-sm font-medium text-[rgb(var(--color-text))]">{state.error}</p>
+  const errorCopy = state.error ? describeError(state.error) : null;
+  const errorBanner = errorCopy ? (
+    <div role="alert" className="rounded-2xl border border-[rgba(var(--color-accent),0.45)] bg-[rgba(var(--color-surface),0.82)] px-4 py-3">
+      <p className="text-sm font-medium text-[rgb(var(--color-text))]">{t(errorCopy.key, errorCopy.params)}</p>
     </div>
   ) : null;
 
@@ -427,12 +453,13 @@ function App() {
         uploadRevision={uploadRevision}
         errorBanner={errorBanner}
         playlistCount={playlist.tracks.length}
+        resumeTitle={playlist.tracks.find((tr) => tr.id === resumeId)?.title ?? null}
         onResume={handleResume}
       />
     );
   } else {
     stage = (
-      <div ref={shellRef} className={`app-shell${resting ? ' is-resting' : ''}`}>
+      <div ref={shellRef} className="app-shell">
         <FileDropOverlay onFilesDrop={handleFilesDrop} disabled={state.isExporting} />
 
         <header className="top-bar">
@@ -463,7 +490,7 @@ function App() {
 
         <main className="stage-grid">
           <div className="console console-left">
-            <aside className="pane recede flex min-h-0 flex-col" aria-label={t('studio.effects')}>
+            <aside className="pane flex min-h-0 flex-col" aria-label={t('studio.effects')}>
               <ScrollFade className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5">
                 <EffectControls onChange={handleEffectChange} disabled={state.isExporting} initialSettings={effectSettings} />
               </ScrollFade>
@@ -483,7 +510,7 @@ function App() {
               clock={effectiveClock}
               duration={effectiveDuration}
             />
-            {(originalBuffer || processedBuffer) && (
+            {(originalBuffer || processedBuffer) && !activeBroken && (
               <div className="stage-wave">
                 <WaveformTimeline
                   buffer={originalBuffer || processedBuffer}
@@ -501,7 +528,7 @@ function App() {
           </section>
 
           <div className="console console-right">
-            <aside className="pane recede flex min-h-0 flex-col" aria-label={t('playlist.title')}>
+            <aside className="pane flex min-h-0 flex-col" aria-label={t('playlist.title')}>
               <PlaylistPanel
                 tracks={playlist.tracks}
                 activeId={playlist.activeId}
@@ -519,6 +546,8 @@ function App() {
           </div>
         </main>
 
+        <IdleReadout title={title} artist={artist} clock={effectiveClock} duration={effectiveDuration} />
+
         <footer className="dock-wrap">
           <div className="dock">
             <PlaybackControls
@@ -532,16 +561,18 @@ function App() {
               onToggleShuffle={playlist.toggleShuffle}
               onPrevious={previous}
               onNext={next}
-              hasPrevious={hasPlayableAudio}
+              hasPrevious={hasLoadedAudio}
               hasNext={hasNext}
               volume={volume}
               onVolumeChange={updateVolume}
               clock={effectiveClock}
               duration={effectiveDuration}
               onSeek={handleSeek}
-              hasAudio={hasPlayableAudio}
-              canExport={hasPlayableAudio}
+              hasAudio={hasLoadedAudio}
+              canPlay={!activeBroken}
+              canExport={hasLoadedAudio && !activeBroken}
               isExporting={state.isExporting}
+              savedAs={savedAs}
               disabled={state.isExporting}
               getAnalyser={getAnalyser}
             />

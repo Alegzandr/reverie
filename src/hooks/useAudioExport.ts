@@ -50,7 +50,8 @@ export function useAudioExport({
     }
   }, [onError]);
 
-  const exportProcessedAudio = useCallback(async (arg?: ExportArg) => {
+  /** Renders, encodes and downloads; resolves with the saved file's name. */
+  const exportProcessedAudio = useCallback(async (arg?: ExportArg): Promise<string> => {
     setError(null);
     const filename = typeof arg === 'string' ? arg : arg?.filename;
     const label = typeof arg === 'object' ? arg?.effectLabel : undefined;
@@ -87,9 +88,10 @@ export function useAudioExport({
           ? `${originalFile.name.replace(/\.[^/.]+$/, '')}_processed`
           : 'processed_audio';
 
-      const finalName = buildReverieName(baseName, label);
-      downloadBlob(blob, `${finalName}.${targetExtension}`);
+      const savedAs = `${buildReverieName(baseName, label)}.${targetExtension}`;
+      downloadBlob(blob, savedAs);
       setState((prev) => ({ ...prev, isExporting: false }));
+      return savedAs;
     } catch (error) {
       const message = error instanceof Error ? error.message : ERROR_MESSAGES.EXPORT_FAILED;
       setState((prev) => ({ ...prev, isExporting: false, error: message }));

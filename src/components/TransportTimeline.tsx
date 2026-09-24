@@ -40,10 +40,12 @@ export function TransportTimeline({
   // Whole seconds drive the clock texts + aria value - the only React re-render.
   const second = useSyncExternalStore(clock.subscribe, () => Math.floor(clock.get()));
 
+  // Composited only: the fill scales and the thumb's full-width rail slides, so
+  // a 60fps playhead never touches layout.
   const applyProgress = useCallback((ratio: number) => {
-    const pct = `${(Math.min(1, Math.max(0, ratio)) * 100).toFixed(3)}%`;
-    if (fillRef.current) fillRef.current.style.width = pct;
-    if (thumbRef.current) thumbRef.current.style.left = pct;
+    const r = Math.min(1, Math.max(0, ratio));
+    if (fillRef.current) fillRef.current.style.transform = `scaleX(${r.toFixed(5)})`;
+    if (thumbRef.current) thumbRef.current.style.transform = `translateX(${(r * 100).toFixed(3)}%)`;
   }, []);
 
   const syncToClock = useCallback(() => {
@@ -90,6 +92,7 @@ export function TransportTimeline({
         aria-valuemin={0}
         aria-valuemax={Math.round(duration) || 0}
         aria-valuenow={second}
+        aria-valuetext={t('waveform.position', { current: formatClock(second), total: formatClock(duration) })}
         aria-disabled={disabled || undefined}
         tabIndex={disabled ? -1 : 0}
         onPointerDown={handlePointerDown}
@@ -104,16 +107,15 @@ export function TransportTimeline({
         <div className="relative w-full h-1.5 rounded-full bg-[rgba(var(--color-border),0.55)] overflow-hidden">
           <div
             ref={fillRef}
-            className="absolute inset-y-0 left-0 rounded-full bg-[rgb(var(--color-accent))]"
+            className="absolute inset-0 origin-left rounded-full bg-[rgb(var(--color-accent))]"
+            style={{ transform: 'scaleX(0)' }}
             aria-hidden="true"
           />
         </div>
         {/* Playhead thumb: appears on hover/focus, always visible while scrubbing */}
-        <div
-          ref={thumbRef}
-          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-white shadow-[0_2px_6px_-1px_rgba(0,0,0,0.35),0_0_0_4px_rgba(var(--color-accent),0.25)] opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
-          aria-hidden="true"
-        />
+        <div ref={thumbRef} className="pointer-events-none absolute inset-x-0 top-1/2 h-0" aria-hidden="true">
+          <div className="absolute left-0 top-0 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-white shadow-[0_2px_6px_-1px_rgba(0,0,0,0.35),0_0_0_4px_rgba(var(--color-accent),0.25)] opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity" />
+        </div>
       </div>
 
       <DurationToggle

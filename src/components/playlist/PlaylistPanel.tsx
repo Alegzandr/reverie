@@ -231,10 +231,10 @@ export const PlaylistPanel = memo(function PlaylistPanel({
       {confirmClear && tracks.length > 0 && (
         <div
           role="alertdialog"
-          aria-label={t('playlist.clearConfirm')}
+          aria-label={t('playlist.clearConfirm', { count: tracks.length })}
           className="mx-4 mb-3 flex items-center justify-between gap-3 rounded-2xl border border-[rgba(var(--color-accent),0.4)] bg-[rgba(var(--color-accent),0.1)] px-3.5 py-2.5 motion-safe:animate-in motion-safe:fade-in-0"
         >
-          <span className="text-sm font-medium text-[rgb(var(--color-text))]">{t('playlist.clearConfirm')}</span>
+          <span className="text-sm font-medium text-[rgb(var(--color-text))]">{t('playlist.clearConfirm', { count: tracks.length })}</span>
           <span className="flex shrink-0 items-center gap-1.5">
             <button
               type="button"
@@ -246,7 +246,7 @@ export const PlaylistPanel = memo(function PlaylistPanel({
             </button>
             <button
               type="button"
-              className="rounded-full bg-[rgb(var(--color-accent))] px-3 py-1 text-xs font-semibold text-[rgb(13,9,31)]"
+              className="rounded-full bg-[rgb(var(--color-accent))] px-3 py-1 text-xs font-semibold text-[rgb(var(--dream-deep))]"
               onClick={() => {
                 onClear();
                 setConfirmClear(false);
@@ -321,12 +321,14 @@ export const PlaylistPanel = memo(function PlaylistPanel({
 
       <p
         className={cn(
-          'flex items-center gap-1.5 border-t border-[rgba(var(--color-border),0.35)] px-5 py-3 text-[11px]',
+          'flex items-start gap-1.5 border-t border-[rgba(var(--color-border),0.35)] px-5 py-3 text-[11px]',
           storageError ? 'text-[rgb(var(--color-accent-text))]' : 'text-[rgb(var(--color-text-secondary))]',
         )}
       >
         <HardDrive className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-        <span className="truncate">{storageError ? t('playlist.storageFull') : t('playlist.stored')}</span>
+        {/* Two lines rather than an ellipsis: the promise (or the storage
+            warning) is the whole point of this line - it must be readable. */}
+        <span className="line-clamp-2">{storageError ? t('playlist.storageFull') : t('playlist.stored')}</span>
       </p>
     </div>
   );

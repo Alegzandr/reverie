@@ -58,8 +58,12 @@ export function EqProvider({ children }: { children: ReactNode }) {
   const presetName = useMemo(() => presetNameForGains(gains), [gains]);
 
   useEffect(() => {
-    localStorage.setItem(GAINS_STORAGE_KEY, JSON.stringify(gains));
-    localStorage.setItem(PRESET_STORAGE_KEY, presetName);
+    try {
+      localStorage.setItem(GAINS_STORAGE_KEY, JSON.stringify(gains));
+      localStorage.setItem(PRESET_STORAGE_KEY, presetName);
+    } catch {
+      // Storage unavailable - the EQ holds for this session.
+    }
   }, [gains, presetName]);
 
   const setPreset = useCallback((name: string) => {

@@ -26,7 +26,6 @@
   },
   "effects": {
     "none": "原始",
-    "resetHint": "双击以重置",
     "originalHint": "正在播放原始音轨，未应用任何效果。",
     "speedUp": "加速",
     "slowReverb": "慢速 + 混响",
@@ -45,7 +44,6 @@
     "underwaterDeep": "深",
     "nightcoreBeats": "Nightcore 鼓点",
     "betaBadge": "测试版",
-    "nightcoreBeatsHint": "在加速上叠加 4/4 鼓点",
     "beatVolume": "鼓点音量",
     "apply": "应用效果",
     "processing": "处理中..."
@@ -63,7 +61,9 @@
     "shuffle": "随机播放",
     "repeatOff": "循环：关闭",
     "repeatAll": "循环播放列表",
-    "repeatOne": "单曲循环"
+    "repeatOne": "单曲循环",
+    "saved": "已保存",
+    "savedAs": "已保存为 {{name}}"
   },
   "track": {
     "title": "曲目",
@@ -97,7 +97,6 @@
   },
   "waveform": {
     "title": "波形时间轴",
-    "caption": "在原始音频和效果音频之间切换",
     "playing": "正在播放",
     "idle": "就绪",
     "scrub": "浏览时间轴",
@@ -105,7 +104,8 @@
     "fx": "效果",
     "toggleRemaining": "显示剩余时间",
     "tempo": "{{bpm}} BPM · {{meter}}",
-    "tempoScaled": "{{bpm}} ({{original}}) BPM · {{meter}}"
+    "tempoScaled": "{{bpm}} BPM · {{meter}}",
+    "position": "{{current}} / {{total}}"
   },
   "language": {
     "open": "打开语言选择器",
@@ -122,7 +122,6 @@
   "settings": {
     "open": "设置",
     "title": "设置",
-    "subtitle": "场景、均衡器和语言",
     "moods": "氛围",
     "mood": {
       "light": "破晓",
@@ -142,17 +141,36 @@
     "close": "关闭设置",
     "scene": "场景",
     "livingWorld": "动态世界",
-    "livingWorldHint": "场景随音乐律动（关闭可省电）",
-    "restUi": "界面自动淡出",
-    "restUiHint": "聆听时面板渐隐，一动即现"
+    "restUi": "全屏时隐藏界面",
+    "eqPresets": {
+      "flat": "平直",
+      "acoustic": "原声",
+      "bass_booster": "增强低音",
+      "bass_reducer": "减弱低音",
+      "classical": "古典",
+      "dance": "舞曲",
+      "deep": "深沉",
+      "electronic": "电子",
+      "hiphop": "嘻哈",
+      "jazz": "爵士",
+      "latin": "拉丁",
+      "loudness": "响度",
+      "lounge": "沙发音乐",
+      "piano": "钢琴",
+      "pop": "流行",
+      "rnb": "R&B",
+      "rock": "摇滚",
+      "small_speakers": "小音箱",
+      "spoken_word": "人声朗读",
+      "treble_booster": "增强高音",
+      "treble_reducer": "减弱高音",
+      "vocal_booster": "人声清晰"
+    }
   },
   "studio": {
     "effects": "效果",
-    "adjustments": "调节",
     "mood": "氛围",
     "moods": "氛围",
-    "active": "启用",
-    "inactive": "停用",
     "levels": "电平"
   },
   "playlist": {
@@ -160,7 +178,7 @@
     "add": "添加音乐",
     "addFolder": "添加文件夹",
     "clear": "清空播放列表",
-    "clearConfirm": "移除所有曲目？",
+    "clearConfirm": "要从此设备移除全部 {{count}} 首曲目吗？",
     "clearYes": "清空",
     "cancel": "取消",
     "remove": "从播放列表移除",
@@ -178,5 +196,19 @@
   "welcome": {
     "resume": "从上次离开的地方继续",
     "resumeHint": "播放列表中的曲目：{{count}}"
+  },
+  "errors": {
+    "loadFailed": "无法读取此文件。请换一个副本或换一种格式试试。",
+    "tooLarge": "文件太大，无法在此打开（最大 {{max}} MB）。",
+    "processFailed": "无法渲染该效果。请重试，或换一个效果。",
+    "exportFailed": "导出未完成。请重试；如果仍然失败，可能是此浏览器不支持该格式。",
+    "noAudio": "请先载入一首曲目。",
+    "generic": "出了点问题。请重试。"
+  },
+  "crash": {
+    "title": "出了点问题",
+    "body": "Reverie 遇到了意外错误。你的曲目仍保存在此设备上。",
+    "retry": "重试",
+    "reload": "重新加载"
   }
 }

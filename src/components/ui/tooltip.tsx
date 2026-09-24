@@ -34,7 +34,7 @@ const TooltipContent = React.forwardRef<
       className={cn(
         'z-[9999] overflow-hidden rounded-full px-3 py-1.5 text-xs font-medium',
         'glass text-[rgb(var(--color-text))] shadow-lg',
-        'data-[state=delayed-open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=delayed-open]:fade-in-0 data-[state=delayed-open]:zoom-in-95',
+        'data-[state=delayed-open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=delayed-open]:fade-in-0 motion-safe:data-[state=delayed-open]:zoom-in-95',
         className
       )}
       {...props}

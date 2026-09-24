@@ -86,7 +86,7 @@ export const VolumeControl = memo(function VolumeControl({ volume, onVolumeChang
             onClick={toggleMute}
             disabled={disabled}
             aria-label={muted ? t('playback.unmute') : t('playback.mute')}
-            className="shrink-0 flex items-center justify-center rounded-full text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text))] transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+            className="-m-1.5 grid h-7 w-7 shrink-0 place-items-center rounded-full text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text))] transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <VolumeIcon className="w-4 h-4" aria-hidden="true" />
           </button>
@@ -105,7 +105,8 @@ export const VolumeControl = memo(function VolumeControl({ volume, onVolumeChang
             onValueChange={(v) => onVolumeChange(round2(v))}
             onClick={handleDoubleClickReset}
             disabled={disabled}
-            aria-label={`${t('playback.volume')}: ${percent}%`}
+            aria-label={t('playback.volume')}
+            aria-valuetext={`${percent}%`}
             className="w-20 sm:w-24"
           />
         </TooltipTrigger>

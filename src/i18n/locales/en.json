@@ -26,7 +26,6 @@
   },
   "effects": {
     "none": "Original",
-    "resetHint": "Double-click to reset",
     "originalHint": "Playing the original track, no effects applied.",
     "speedUp": "Speed Up",
     "slowReverb": "Slow + Reverb",
@@ -45,7 +44,6 @@
     "underwaterDeep": "Deep",
     "nightcoreBeats": "Nightcore Beats",
     "betaBadge": "Beta",
-    "nightcoreBeatsHint": "Layer a 4/4 beat over the speed-up",
     "beatVolume": "Beat Volume",
     "apply": "Apply Effects",
     "processing": "Processing..."
@@ -63,7 +61,9 @@
     "shuffle": "Shuffle",
     "repeatOff": "Repeat: off",
     "repeatAll": "Repeat the playlist",
-    "repeatOne": "Repeat this track"
+    "repeatOne": "Repeat this track",
+    "saved": "Saved",
+    "savedAs": "Saved as {{name}}"
   },
   "track": {
     "title": "Track",
@@ -97,7 +97,6 @@
   },
   "waveform": {
     "title": "Waveform Timeline",
-    "caption": "Scrub between raw and FX audio",
     "playing": "Now playing",
     "idle": "Ready",
     "scrub": "Scrub timeline",
@@ -105,7 +104,8 @@
     "fx": "FX",
     "toggleRemaining": "Toggle remaining time",
     "tempo": "{{bpm}} BPM · {{meter}}",
-    "tempoScaled": "{{bpm}} ({{original}}) BPM · {{meter}}"
+    "tempoScaled": "{{bpm}} BPM · {{meter}}",
+    "position": "{{current}} of {{total}}"
   },
   "language": {
     "open": "Open language modal",
@@ -122,7 +122,6 @@
   "settings": {
     "open": "Settings",
     "title": "Settings",
-    "subtitle": "Scene, equalizer and language",
     "moods": "Moods",
     "mood": {
       "light": "Daybreak",
@@ -142,17 +141,36 @@
     "close": "Close settings",
     "scene": "Scene",
     "livingWorld": "Living world",
-    "livingWorldHint": "The scene moves with your music (off saves battery)",
-    "restUi": "Rest the interface",
-    "restUiHint": "Panels fade while you listen, back as soon as you move"
+    "restUi": "Hide the interface in fullscreen",
+    "eqPresets": {
+      "flat": "Flat",
+      "acoustic": "Acoustic",
+      "bass_booster": "More bass",
+      "bass_reducer": "Less bass",
+      "classical": "Classical",
+      "dance": "Dance",
+      "deep": "Deep",
+      "electronic": "Electronic",
+      "hiphop": "Hip-hop",
+      "jazz": "Jazz",
+      "latin": "Latin",
+      "loudness": "Loudness",
+      "lounge": "Lounge",
+      "piano": "Piano",
+      "pop": "Pop",
+      "rnb": "R&B",
+      "rock": "Rock",
+      "small_speakers": "Small speakers",
+      "spoken_word": "Spoken word",
+      "treble_booster": "More treble",
+      "treble_reducer": "Less treble",
+      "vocal_booster": "Clear vocals"
+    }
   },
   "studio": {
     "effects": "Effects",
-    "adjustments": "Adjustments",
     "mood": "Mood",
     "moods": "Moods",
-    "active": "Active",
-    "inactive": "Inactive",
     "levels": "Levels"
   },
   "playlist": {
@@ -160,7 +178,7 @@
     "add": "Add music",
     "addFolder": "Add a folder",
     "clear": "Clear the playlist",
-    "clearConfirm": "Remove every track?",
+    "clearConfirm": "Remove all {{count}} tracks from this device?",
     "clearYes": "Clear",
     "cancel": "Cancel",
     "remove": "Remove from the playlist",
@@ -178,5 +196,19 @@
   "welcome": {
     "resume": "Pick up where you left off",
     "resumeHint": "Tracks in your playlist: {{count}}"
+  },
+  "errors": {
+    "loadFailed": "This file couldn't be read. Try another copy of the track, or another format.",
+    "tooLarge": "This file is too big to open here (up to {{max}} MB).",
+    "processFailed": "The effect couldn't be rendered. Try again, or pick another effect.",
+    "exportFailed": "The export didn't go through. Try again; if it keeps failing, this browser may not support the format.",
+    "noAudio": "Load a track first.",
+    "generic": "Something went wrong. Try again."
+  },
+  "crash": {
+    "title": "Something went wrong",
+    "body": "Reverie hit an unexpected error. Your tracks are still kept on this device.",
+    "retry": "Try again",
+    "reload": "Reload"
   }
 }

@@ -1,4 +1,4 @@
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useRef, useState } from 'react';
 import type { ChangeEvent, DragEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, Upload } from 'lucide-react';
@@ -21,6 +21,10 @@ interface FileUploaderProps {
 export const FileUploader = memo(function FileUploader({ onFilesSelect, isLoading, hasFile }: FileUploaderProps) {
   const { t } = useTranslation();
   const [isDragging, setIsDragging] = useState(false);
+  // The picker opens from a real button (focusable, Enter/Space for free); the
+  // input itself stays out of the tab order and out of sight.
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const openPicker = useCallback(() => inputRef.current?.click(), []);
   const { onInputClick, restore } = usePickerFullscreenRestore();
 
   const handleDrop = useCallback(
@@ -57,6 +61,7 @@ export const FileUploader = memo(function FileUploader({ onFilesSelect, isLoadin
 
   const input = (
     <input
+      ref={inputRef}
       type="file"
       accept="audio/*"
       multiple
@@ -64,6 +69,7 @@ export const FileUploader = memo(function FileUploader({ onFilesSelect, isLoadin
       onChange={handleFileInput}
       className="hidden"
       id="file-input"
+      tabIndex={-1}
       disabled={isLoading}
       aria-label={t('upload.browse')}
     />
@@ -75,11 +81,9 @@ export const FileUploader = memo(function FileUploader({ onFilesSelect, isLoadin
     return (
       <div role="region" aria-label={t('upload.title')}>
         {input}
-        <Button asChild variant="glass" size="sm" className={cn('h-10 px-4', isLoading && 'pointer-events-none opacity-60')}>
-          <label htmlFor="file-input" className="cursor-pointer">
-            <Plus className="h-4 w-4 text-[rgb(var(--color-accent))]" aria-hidden="true" />
-            <span className="hidden sm:inline">{t('playlist.add')}</span>
-          </label>
+        <Button type="button" variant="glass" size="sm" className="h-10 px-4 disabled:opacity-60" onClick={openPicker} disabled={isLoading}>
+          <Plus className="h-4 w-4 text-[rgb(var(--color-accent-text))]" aria-hidden="true" />
+          {t('playlist.add')}
         </Button>
       </div>
     );
@@ -96,10 +100,12 @@ export const FileUploader = memo(function FileUploader({ onFilesSelect, isLoadin
       aria-label={t('upload.title')}
     >
       {input}
-      <label
-        htmlFor="file-input"
+      <button
+        type="button"
+        onClick={openPicker}
+        disabled={isLoading}
         className={cn(
-          'group pane relative flex flex-col items-center justify-center px-8 py-12 text-center transition-colors duration-200 sm:py-14',
+          'group pane relative flex w-full flex-col items-center justify-center px-8 py-12 text-center transition-colors duration-200 sm:py-14',
           isDragging && '[outline:2px_solid_rgba(var(--color-accent),0.75)] [outline-offset:-2px]',
           isLoading ? 'cursor-not-allowed opacity-50' : 'ios-button cursor-pointer'
         )}
@@ -120,15 +126,15 @@ export const FileUploader = memo(function FileUploader({ onFilesSelect, isLoadin
             <Upload className="h-6 w-6 text-[rgb(var(--color-accent-text))] transition-transform duration-300 group-hover:-translate-y-0.5" />
           }
         />
-        <p className="text-lg font-semibold text-[rgb(var(--color-text))] sm:text-xl">{t('upload.dragDrop')}</p>
-        <p className="mt-2 text-sm text-[rgb(var(--color-text-secondary))]">
+        <span className="block text-lg font-semibold text-[rgb(var(--color-text))] sm:text-xl">{t('upload.dragDrop')}</span>
+        <span className="mt-2 block text-sm text-[rgb(var(--color-text-secondary))]">
           {t('upload.or')}{' '}
           <span className="font-medium text-[rgb(var(--color-accent-text))] underline-offset-4 group-hover:underline">
             {t('upload.browse')}
           </span>
-        </p>
-        <p className="mt-5 text-xs uppercase tracking-wide text-[rgb(var(--color-text-secondary))]">{t('upload.formats')}</p>
-      </label>
+        </span>
+        <span className="mt-5 block text-xs uppercase tracking-wide text-[rgb(var(--color-text-secondary))]">{t('upload.formats')}</span>
+      </button>
     </div>
   );
 });

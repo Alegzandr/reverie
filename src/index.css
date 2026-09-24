@@ -52,7 +52,7 @@
     --color-background: 244, 245, 249;
     --color-surface: 253, 253, 255;
     --color-text: 18, 23, 44;
-    --color-text-secondary: 94, 105, 130;
+    --color-text-secondary: 78, 88, 112;
     --color-border: 217, 217, 231;
     --color-accent: 255, 138, 163;
     --color-accent-hover: 255, 159, 183;
@@ -68,6 +68,9 @@
     --aurora-violet: 167, 139, 250;
     --aurora-pink: 244, 114, 182;
     --aurora-cyan: 56, 224, 232;
+    /* Dream Indigo, the deepest brand ink: the play orb's jewel base and the
+       type on bright accent fills, identical in every mood (light included). */
+    --dream-deep: 13, 9, 31;
 
     /* Waveform hot core - the luminous spine running through the played bars
        and the playhead. On dark moods it reads as near-white light; on the
@@ -101,7 +104,9 @@
     --secondary-foreground: rgb(var(--color-text));
     --muted: rgba(var(--color-border), 0.4);
     --muted-foreground: rgb(var(--color-text-secondary));
-    --ring: rgb(var(--color-accent));
+    /* Focus reads in the accent-as-type hue: bright on dark moods, the deep
+       rose on daybreak, so the ring clears 3:1 against every plate. */
+    --ring: rgb(var(--color-accent-text));
     --destructive: rgb(239, 68, 68);
     --destructive-foreground: #ffffff;
 
@@ -151,7 +156,7 @@
 
   /* Visible focus for every interactive control (WCAG 2.1 AA) */
   :focus-visible {
-    outline: 2px solid rgba(var(--color-accent), 0.9);
+    outline: 2px solid rgb(var(--color-accent-text));
     outline-offset: 2px;
   }
 }
@@ -241,15 +246,14 @@
      (inset shadow on the .play variant) and the --hud-glow halo, not from a
      bright flat fill. */
   .btn-orb {
-    --orb-deep: 13, 9, 31;
     background-image:
       radial-gradient(118% 82% at 32% 2%, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 46%),
       linear-gradient(
         180deg,
         rgb(var(--color-accent-hover)) 0%,
         rgb(var(--color-accent)) 16%,
-        color-mix(in oklab, rgb(var(--color-accent)) 50%, rgb(var(--orb-deep))) 46%,
-        color-mix(in oklab, rgb(var(--color-accent)) 36%, rgb(var(--orb-deep))) 100%
+        color-mix(in oklab, rgb(var(--color-accent)) 50%, rgb(var(--dream-deep))) 46%,
+        color-mix(in oklab, rgb(var(--color-accent)) 36%, rgb(var(--dream-deep))) 100%
       );
     transition: box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
       transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
@@ -399,6 +403,8 @@
     transform: scale(1.08);
   }
 
+  /* The focus ring rides the thumb (where the eye already is), solid, in the
+     accent-as-type hue so it clears 3:1 on every mood. */
   .slider:focus-visible {
     outline: none;
   }
@@ -406,7 +412,29 @@
   .slider:focus-visible::-webkit-slider-thumb {
     box-shadow:
       0 2px 8px -1px rgba(0, 0, 0, 0.4),
-      0 0 0 6px rgba(var(--color-accent), 0.4);
+      0 0 0 3px rgb(var(--color-background)),
+      0 0 0 5px rgb(var(--color-accent-text));
+  }
+
+  .slider:focus-visible::-moz-range-thumb {
+    box-shadow:
+      0 2px 8px -1px rgba(0, 0, 0, 0.4),
+      0 0 0 3px rgb(var(--color-background)),
+      0 0 0 5px rgb(var(--color-accent-text));
+  }
+
+  /* On daybreak a white thumb on a white plate vanishes: give it an ink rim. */
+  :root:not(.dark) .slider::-webkit-slider-thumb,
+  :root:not(.dark) .eq-slider::-webkit-slider-thumb {
+    box-shadow:
+      0 2px 6px -1px rgba(0, 0, 0, 0.3),
+      inset 0 0 0 2px rgb(var(--color-accent-text));
+  }
+  :root:not(.dark) .slider::-moz-range-thumb,
+  :root:not(.dark) .eq-slider::-moz-range-thumb {
+    box-shadow:
+      0 2px 6px -1px rgba(0, 0, 0, 0.3),
+      inset 0 0 0 2px rgb(var(--color-accent-text));
   }
 
   /* Vertical EQ fader. Built on the same native range input as `.slider`, but
@@ -469,7 +497,15 @@
   .eq-slider:focus-visible::-webkit-slider-thumb {
     box-shadow:
       0 2px 8px -1px rgba(0, 0, 0, 0.4),
-      0 0 0 6px rgba(var(--color-accent), 0.4);
+      0 0 0 3px rgb(var(--color-background)),
+      0 0 0 5px rgb(var(--color-accent-text));
+  }
+
+  .eq-slider:focus-visible::-moz-range-thumb {
+    box-shadow:
+      0 2px 8px -1px rgba(0, 0, 0, 0.4),
+      0 0 0 3px rgb(var(--color-background)),
+      0 0 0 5px rgb(var(--color-accent-text));
   }
 
   /* Legibility ground behind the welcome stage. The photo scenes carry their own
@@ -954,15 +990,15 @@
     inset: 0;
     border-radius: inherit;
     pointer-events: none;
-    box-shadow: inset 0 0 calc(20px + var(--audio-level) * 40px) -18px
-      rgba(var(--hud-glow), calc(var(--audio-mid) * 0.35 + var(--audio-level) * 0.2));
-    transition: box-shadow 90ms linear;
+    box-shadow: inset 0 0 calc(20px + var(--audio-level) * 24px) -18px
+      rgba(var(--hud-glow), calc(var(--audio-mid) * 0.22 + var(--audio-level) * 0.12));
+    transition: box-shadow 700ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   :root:not(.dark) .pane {
     background:
       repeating-linear-gradient(to bottom, rgba(var(--hud-line), 0.07) 0 1px, transparent 1px 4px),
-      linear-gradient(165deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0.34) 50%, rgba(255, 255, 255, 0.24));
+      linear-gradient(165deg, rgba(255, 255, 255, 0.76), rgba(255, 255, 255, 0.62) 50%, rgba(255, 255, 255, 0.52));
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.9),
       inset 0 0 0 1px rgba(var(--color-border), 0.55),
@@ -1030,6 +1066,19 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+  }
+
+  /* Under 1024 CSS px the app only shows for a desktop zoomed in to read (see
+     useViewportGate): the cockpit keeps its desktop proportions and the root
+     scrolls sideways, rather than squeezing the consoles into a layout it was
+     never drawn for. */
+  @media (max-width: 1023px) {
+    #root {
+      overflow-x: auto;
+    }
+    .app-shell {
+      min-width: 1024px;
+    }
   }
 
   /* ── Visor rails ─────────────────────────────────────────────────────────
@@ -1148,6 +1197,20 @@
       );
   }
 
+  /* Singularity's disk and Echo Valley's dusk sky run bright behind the
+     consoles and the now-playing type: a denser floor keeps them legible. */
+  [data-mood='nocturne'] .console > .pane,
+  [data-mood='horizon'] .console > .pane {
+    background:
+      repeating-linear-gradient(to bottom, rgba(var(--hud-line), 0.05) 0 1px, transparent 1px 4px),
+      linear-gradient(
+        165deg,
+        rgba(var(--color-surface), 0.7) 0%,
+        rgba(var(--color-surface), 0.58) 45%,
+        rgba(var(--color-surface), 0.5) 100%
+      );
+  }
+
   .stage-grid {
     flex: 1;
     min-height: 0;
@@ -1205,38 +1268,6 @@
     position: relative;
   }
 
-  /* ── The resting interface ───────────────────────────────────────────────
-     While music plays and nothing stirs, the panes fade back and the world
-     takes the screen; any movement brings them straight back. Every fade is
-     on the glass itself or on its content, never on a glass's ancestor (that
-     would switch its blur off for the whole fade). */
-  .recede,
-  .top-bar > *,
-  .top-bar::before,
-  .dock-wrap > *,
-  .dock-wrap::before,
-  .stage-wave {
-    transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .is-resting {
-    cursor: none;
-  }
-
-  .is-resting .recede,
-  .is-resting .top-bar > *,
-  .is-resting .top-bar::before {
-    opacity: 0;
-    transition-duration: 1.6s;
-  }
-
-  .is-resting .dock-wrap > *,
-  .is-resting .dock-wrap::before,
-  .is-resting .stage-wave {
-    opacity: 0.35;
-    transition-duration: 1.6s;
-  }
-
   /* ── World switcher ──────────────────────────────────────────────────── */
   .world-switcher {
     display: flex;
@@ -1262,12 +1293,14 @@
     align-items: center;
     gap: 9px;
     border-radius: 9999px;
-    outline: none;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease, padding 0.3s ease;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
   }
 
+  /* An outline, not a shadow: the active chip's own inset ring must not be
+     able to swallow the focus ring (the checked chip is the one that takes focus). */
   .world-chip:focus-visible {
-    box-shadow: 0 0 0 2px rgba(var(--color-accent), 0.9);
+    outline: 2px solid rgb(var(--color-accent-text));
+    outline-offset: 2px;
   }
 
   .world-chip-thumb {
@@ -1320,7 +1353,12 @@
     inset: -60px -80px -40px -80px;
     z-index: -1;
     pointer-events: none;
-    background: radial-gradient(60% 70% at 32% 72%, rgba(var(--scene-veil), 0.5), transparent 75%);
+    background: radial-gradient(60% 70% at 32% 72%, rgba(var(--scene-veil), var(--now-playing-veil, 0.62)), transparent 75%);
+  }
+
+  [data-mood='horizon'] .now-playing::before,
+  [data-mood='nocturne'] .now-playing::before {
+    --now-playing-veil: 0.8;
   }
 
   .now-playing-art {
@@ -1368,6 +1406,7 @@
     font-size: 13px;
     font-variant-numeric: tabular-nums;
     color: rgb(var(--color-text-secondary));
+    text-shadow: 0 1px 14px rgba(var(--scene-veil), 0.9);
   }
 
   .now-playing-meta > span + span::before {
@@ -1392,9 +1431,10 @@
     font-size: 12px;
     font-weight: 500;
     color: rgb(var(--color-text-secondary));
-    background: rgba(var(--color-surface), 0.42);
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
+    /* Dense enough to read without a blur of its own: the chip rides the
+       ribbon's caption row, and a stack of small blurs over a live canvas is
+       pure cost. */
+    background: rgba(var(--color-surface), 0.66);
   }
 
   .wave-chip.is-live {
@@ -1734,7 +1774,8 @@
   .cockpit-boot .now-playing {
     animation: boot-readout 800ms cubic-bezier(0.22, 1, 0.36, 1) 260ms both;
   }
-  .cockpit-boot .stage-wave {
+  /* On the ribbon's own glass and its caption row, never their wrapper. */
+  .cockpit-boot .wave-stage > * {
     animation: boot-plate 760ms cubic-bezier(0.22, 1, 0.36, 1) 340ms both;
   }
 
@@ -1763,7 +1804,7 @@
     .cockpit-boot .dock-wrap::before,
     .cockpit-boot .console > .pane,
     .cockpit-boot .now-playing,
-    .cockpit-boot .stage-wave {
+    .cockpit-boot .wave-stage > * {
       animation: none;
     }
   }
@@ -1772,8 +1813,8 @@
 
 @layer utilities {
   .immersive .wf-aura {
-    opacity: calc(0.7 + var(--audio-level) * 0.5 + var(--audio-treble) * 0.5);
-    transition: opacity 90ms linear;
+    opacity: calc(0.75 + var(--audio-level) * 0.2);
+    transition: opacity 900ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -1790,24 +1831,17 @@
 
   /* ── Corner readout - small uppercase instrument label in the hairline hue. */
   .hud-readout {
-    font-size: 10px;
-    line-height: 1;
+    font-size: 11px;
+    line-height: 1.2;
     letter-spacing: 0.16em;
     text-transform: uppercase;
     font-weight: 600;
-    color: rgb(var(--hud-line));
-    opacity: 0.6;
-  }
-
-  :root:not(.dark) .hud-readout {
     color: rgb(var(--color-text-secondary));
-    opacity: 0.85;
   }
 
   /* ── Graduated tick ruler - a thin instrument scale, faded at both ends.
-     The tick tape lives on a ::before one period (9px) wider than the ruler, so
-     the immersive scroll can be a composited translate instead of repainting
-     background-position every frame. */
+     Still on purpose: a perpetually scrolling tape was motion with nothing to
+     say, next to controls the listener is reading. */
   .hud-ruler {
     position: relative;
     height: 7px;
@@ -1820,87 +1854,12 @@
   .hud-ruler::before {
     content: '';
     position: absolute;
-    inset: 0 -9px 0 0;
+    inset: 0;
     background: repeating-linear-gradient(
       to right,
       rgba(var(--hud-line), 0.7) 0 1px,
       transparent 1px 9px
     );
-  }
-
-  /* The ruler tape slowly scrolls in immersive mode - ambient telemetry that's
-     always alive (one tick period = 9px, so the loop is seamless). Desktop +
-     no-reduce only; the tape is dead-still otherwise. */
-  @media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (pointer: fine) {
-    .immersive .hud-ruler::before {
-      animation: hud-ruler-scroll 0.6s linear infinite;
-    }
-  }
-
-  @keyframes hud-ruler-scroll {
-    to { transform: translate3d(-9px, 0, 0); }
-  }
-
-  /* ── Segmented VU-meter (LevelMeter) ────────────────────────────────────
-     Hardware-module readout. `reactive` segments fill to a setting value;
-     `scroll` segments run a staggered travelling wave (free ambient telemetry).
-     Both freeze flat under reduced-motion. */
-  /* Height comes from the consumer (e.g. `h-4`); segments size in % against it. */
-  .level-meter {
-    display: flex;
-    align-items: flex-end;
-    gap: 2px;
-  }
-
-  .level-seg {
-    flex: 1 1 0;
-    min-width: 1px;
-    height: 22%;
-    border-radius: 1px;
-    background: rgba(var(--hud-line), 0.18);
-    transition: height 180ms ease-out, background-color 180ms ease-out,
-      box-shadow 180ms ease-out, opacity 180ms ease-out;
-  }
-
-  /* Reactive: lit segments rise toward the head and glow; the fill count tracks
-     the value, so turning a control visibly drives the meter. */
-  .level-seg.is-lit {
-    height: calc(42% + var(--i) * 3.2%);
-    background: linear-gradient(
-      to top,
-      rgba(var(--color-ambient), 0.85),
-      rgba(var(--color-accent), 0.95)
-    );
-    box-shadow: 0 0 8px -2px rgba(var(--hud-glow), 0.7);
-  }
-
-  .level-meter-scroll .level-seg {
-    background: linear-gradient(
-      to top,
-      rgba(var(--color-ambient), 0.7),
-      rgba(var(--color-accent), 0.9)
-    );
-    /* The wave scales a fixed full-travel box from its base (composited)
-       instead of animating `height`, which would relayout the whole flex row
-       on every frame × every segment. 0.227 = the old 20% floor ÷ 88%. */
-    height: 88%;
-    transform-origin: bottom;
-    animation: level-wave 1.8s ease-in-out infinite;
-    animation-delay: calc(var(--i) * -0.09s);
-  }
-
-  @keyframes level-wave {
-    0%, 100% { transform: scaleY(0.227); opacity: 0.4; }
-    50% { transform: scaleY(1); opacity: 1; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .immersive .hud-ruler::before { animation: none; }
-    .level-meter-scroll .level-seg {
-      animation: none;
-      height: 40%;
-      opacity: 0.6;
-    }
   }
 
 }
@@ -1980,6 +1939,13 @@
     to { transform: translateX(-50%); }
   }
 
+  /* A title that keeps moving must be stoppable (WCAG 2.2.2): pointing at it
+     or focusing into it holds it still to be read. */
+  .marquee:hover .marquee-track,
+  :focus-within > .marquee .marquee-track {
+    animation-play-state: paused;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .marquee-track { animation: none; }
   }
@@ -2012,7 +1978,8 @@
     transition: opacity 320ms cubic-bezier(0.22, 1, 0.36, 1) 90ms;
   }
   .chrome-autohide .console > .pane,
-  .chrome-autohide .stage-center {
+  .chrome-autohide .stage-center > :not(.stage-wave),
+  .chrome-autohide .wave-stage > * {
     transition:
       opacity 380ms cubic-bezier(0.22, 1, 0.36, 1) 70ms,
       scale 620ms cubic-bezier(0.16, 1, 0.3, 1) 70ms;
@@ -2043,7 +2010,8 @@
     transition: opacity 520ms cubic-bezier(0.4, 0, 0.2, 1) 220ms;
   }
   .chrome-idle .console > .pane,
-  .chrome-idle .stage-center {
+  .chrome-idle .stage-center > :not(.stage-wave),
+  .chrome-idle .wave-stage > * {
     opacity: 0;
     scale: 0.975;
     pointer-events: none;
@@ -2056,21 +2024,87 @@
     transition: opacity 420ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
+  /* The one-line readout left on the visor while the cockpit rests: type set
+     straight on the glass (no plate), a hairline of progress beneath. It lands
+     after the rails have gone and leaves first when they come back. */
+  .idle-readout {
+    position: fixed;
+    left: calc(var(--visor-radius) + 20px);
+    bottom: calc(var(--visor-radius) + 4px);
+    z-index: 30;
+    width: min(420px, 36vw);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 240ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .chrome-idle .idle-readout {
+    opacity: 1;
+    transition: opacity 900ms cubic-bezier(0.22, 1, 0.36, 1) 700ms;
+  }
+  .idle-readout-line {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    min-width: 0;
+    white-space: nowrap;
+    text-shadow: 0 1px 18px rgba(var(--scene-veil), 0.9);
+  }
+  .idle-readout-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 15px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    color: rgb(var(--color-text));
+  }
+  .idle-readout-artist {
+    flex-shrink: 0;
+    max-width: 45%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgb(var(--color-text-secondary));
+  }
+  .idle-readout-track {
+    position: relative;
+    display: block;
+    height: 1px;
+    margin-top: 10px;
+    overflow: hidden;
+    background: rgba(var(--hud-line), 0.28);
+  }
+  .idle-readout-fill {
+    position: absolute;
+    inset: 0;
+    transform: scaleX(0);
+    transform-origin: left;
+    background: rgb(var(--color-accent));
+    box-shadow: 0 0 8px rgba(var(--hud-glow), 0.8);
+  }
+
   /* No travel, no recoil: the chrome simply appears and disappears. */
   @media (prefers-reduced-motion: reduce) {
+    .idle-readout,
+    .chrome-idle .idle-readout {
+      transition: none;
+    }
     .chrome-autohide .top-bar,
     .chrome-autohide .dock-wrap,
     .chrome-autohide .top-bar::before,
     .chrome-autohide .dock-wrap::before,
     .chrome-autohide .console > .pane,
-    .chrome-autohide .stage-center,
+    .chrome-autohide .stage-center > :not(.stage-wave),
+    .chrome-autohide .wave-stage > *,
     .chrome-autohide .console > .pane > *,
     .chrome-idle .top-bar,
     .chrome-idle .dock-wrap,
     .chrome-idle .top-bar::before,
     .chrome-idle .dock-wrap::before,
     .chrome-idle .console > .pane,
-    .chrome-idle .stage-center,
+    .chrome-idle .stage-center > :not(.stage-wave),
+    .chrome-idle .wave-stage > *,
     .chrome-idle .console > .pane > * {
       transition: none;
     }
@@ -2080,7 +2114,8 @@
       visibility: hidden;
     }
     .chrome-idle .console > .pane,
-    .chrome-idle .stage-center {
+    .chrome-idle .stage-center > :not(.stage-wave),
+    .chrome-idle .wave-stage > * {
       scale: none;
     }
   }

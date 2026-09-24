@@ -6,7 +6,7 @@ import { prefersReducedMotion } from "./scenes/motion";
 import { EffectSlider } from "./EffectSlider";
 import { EffectRow } from "./EffectRow";
 import { BeatToggle } from "./BeatToggle";
-import { LevelMeter } from "./LevelMeter";
+import { useRadioGroupKeys } from "../hooks/useRadioGroupKeys";
 import { EFFECT_DEFAULTS } from "../constants";
 import {
     formatSpeedMultiplier,
@@ -59,6 +59,7 @@ const EFFECT_DEFS: { mode: EffectMode; icon: LucideIcon; labelKey: string }[] = 
     { mode: "8d-audio", icon: Radio, labelKey: "effects.8dAudio" },
     { mode: "bass-boost", icon: Volume2, labelKey: "effects.bassBoost" },
 ];
+const EFFECT_MODES = EFFECT_DEFS.map((fx) => fx.mode);
 
 export const EffectControls = memo(function EffectControls({ onChange, disabled, initialSettings }: EffectControlsProps) {
     const { t } = useTranslation();
@@ -175,6 +176,8 @@ export const EffectControls = memo(function EffectControls({ onChange, disabled,
     const handleSelect = (next: EffectMode) => {
         setMode((current) => (current === next ? "none" : next));
     };
+    // Arrow keys walk the group like any radiogroup: they select, never toggle off.
+    const handleGroupKeys = useRadioGroupKeys(EFFECT_MODES, setMode);
 
     const bassIntensityLabel = formatBassIntensityLabel(
         bassBoostIntensity,
@@ -187,13 +190,11 @@ export const EffectControls = memo(function EffectControls({ onChange, disabled,
         }
     );
 
-    // The slider(s) each mode exposes, and (via `meterIndex`) which one drives the
-    // reactive VU-meter so the readout tracks the setting as you turn it.
+    // The slider(s) each mode exposes.
     const D = EFFECT_DEFAULTS;
     const modeSliders: Record<
         Exclude<EffectMode, "none">,
         {
-            meterIndex: number;
             sliders: {
                 id: string;
                 label: string;
@@ -209,8 +210,7 @@ export const EffectControls = memo(function EffectControls({ onChange, disabled,
         }
     > = {
         "speed-up": {
-            meterIndex: 0,
-            sliders: [
+                sliders: [
                 {
                     id: "speed-slider",
                     label: t("effects.speed"),
@@ -229,8 +229,7 @@ export const EffectControls = memo(function EffectControls({ onChange, disabled,
             ],
         },
         "slow-reverb": {
-            meterIndex: 1,
-            sliders: [
+                sliders: [
                 {
                     id: "slow-speed-slider",
                     label: t("effects.slowSpeed"),
@@ -243,7 +242,6 @@ export const EffectControls = memo(function EffectControls({ onChange, disabled,
                     formatValue: (v) => formatSpeedMultiplier(v, 2),
                     markers: [
                         `${D.SLOW_REVERB.SPEED_MIN.toFixed(2)}x`,
-                        `${D.SLOW_REVERB.SPEED_DEFAULT.toFixed(2)}x`,
                         `${D.SLOW_REVERB.SPEED_MAX.toFixed(2)}x`,
                     ],
                 },
@@ -265,8 +263,7 @@ export const EffectControls = memo(function EffectControls({ onChange, disabled,
             ],
         },
         "8d-audio": {
-            meterIndex: 0,
-            sliders: [
+                sliders: [
                 {
                     id: "rotation-slider",
                     label: t("effects.rotationSpeed"),
@@ -285,8 +282,7 @@ export const EffectControls = memo(function EffectControls({ onChange, disabled,
             ],
         },
         "bass-boost": {
-            meterIndex: 0,
-            sliders: [
+                sliders: [
                 {
                     id: "bass-slider",
                     label: t("effects.bassIntensity"),
@@ -319,42 +315,38 @@ export const EffectControls = memo(function EffectControls({ onChange, disabled,
     };
 
     const active = mode === "none" ? null : modeSliders[mode];
-    const meterSlider = active?.sliders[active.meterIndex];
-    const activeLevel =
-        meterSlider && meterSlider.max > meterSlider.min
-            ? (meterSlider.value - meterSlider.min) / (meterSlider.max - meterSlider.min)
-            : 0;
 
     return (
         <div className="flex flex-col gap-5">
-            {/* Effects - exclusive modes listed as rows; the chosen one is Active. */}
+            {/* Effects - exclusive modes as a radiogroup; the chosen one is checked. */}
             <div className="space-y-2.5">
-                <h2 className="pane-title mb-1">{t("studio.effects")}</h2>
-                <div className="space-y-2">
-                    {EFFECT_DEFS.map((fx) => (
+                <h2 id="effects-title" className="pane-title mb-1">{t("studio.effects")}</h2>
+                <div
+                    role="radiogroup"
+                    aria-labelledby="effects-title"
+                    data-own-arrows
+                    onKeyDown={handleGroupKeys}
+                    className="space-y-2"
+                >
+                    {EFFECT_DEFS.map((fx, i) => (
                         <EffectRow
                             key={fx.mode}
                             icon={fx.icon}
                             label={t(fx.labelKey)}
                             mode={fx.mode}
                             active={mode === fx.mode}
+                            focusable={mode === "none" ? i === 0 : mode === fx.mode}
                             disabled={disabled}
                             onSelect={handleSelect}
-                            statusLabel={mode === fx.mode ? t("studio.active") : t("studio.inactive")}
                         />
                     ))}
                 </div>
             </div>
 
-            {/* Adjustments - the single clear control(s) for the Active effect.
+            {/* Adjustments - the single clear control(s) for the checked effect.
                Keyed on `mode` so switching re-mounts and the new control eases in:
                motion that signals the state change, not decoration. */}
             <div className="space-y-3">
-                <div className="flex items-center justify-between gap-4">
-                    <span className="hud-readout">{t("studio.adjustments")}</span>
-                    {/* Reactive VU-meter: fills to the active effect's parameter. */}
-                    <LevelMeter value={activeLevel} variant="reactive" className="h-4 w-24" />
-                </div>
                 <div className="hud-ruler" aria-hidden="true" />
                 <div
                     key={mode}
@@ -371,7 +363,6 @@ export const EffectControls = memo(function EffectControls({ onChange, disabled,
                                     <BeatToggle
                                         label={t("effects.nightcoreBeats")}
                                         badge={t("effects.betaBadge")}
-                                        description={t("effects.nightcoreBeatsHint")}
                                         pressed={enableBeats}
                                         onToggle={() => setEnableBeats((v) => !v)}
                                         disabled={disabled}

@@ -104,7 +104,6 @@ export const TrackRow = memo(function TrackRow({
         onClick={() => onPlay(track.id)}
         onKeyDown={(e) => onKeyNav(track.id, e)}
         aria-current={active ? 'true' : undefined}
-        aria-label={`${track.title}${track.artist ? ` - ${track.artist}` : ''}`}
       >
         <span className="track-index" aria-hidden="true">
           {active ? (
@@ -130,7 +129,7 @@ export const TrackRow = memo(function TrackRow({
             )}
           </span>
         </span>
-        <span className="track-duration">{track.duration ? formatClock(track.duration) : '–:––'}</span>
+        <span className="track-duration">{track.duration ? formatClock(track.duration) : <span aria-hidden="true">–:––</span>}</span>
       </button>
       <button
         type="button"

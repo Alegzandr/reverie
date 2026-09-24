@@ -31,8 +31,12 @@ interface UseAudioPlaybackParams {
 
 /** Stored repeat preference; the pre-playlist boolean ('true') meant "loop this track". */
 function readStoredRepeat(): RepeatMode {
-  if (typeof localStorage === 'undefined') return 'off';
-  const raw = localStorage.getItem(AUDIO_PROCESSING.REPEAT_STORAGE_KEY);
+  let raw: string | null = null;
+  try {
+    raw = localStorage.getItem(AUDIO_PROCESSING.REPEAT_STORAGE_KEY);
+  } catch {
+    return 'off';
+  }
   if (raw === 'true') return 'one';
   return isRepeatMode(raw) ? raw : 'off';
 }

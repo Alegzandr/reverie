@@ -26,7 +26,6 @@
   },
   "effects": {
     "none": "Original",
-    "resetHint": "Doppelklick zum Zurücksetzen",
     "originalHint": "Originaltrack wird abgespielt – keine Effekte angewendet.",
     "speedUp": "Beschleunigen",
     "slowReverb": "Langsam + Hall",
@@ -45,7 +44,6 @@
     "underwaterDeep": "Tief",
     "nightcoreBeats": "Nightcore-Beats",
     "betaBadge": "Beta",
-    "nightcoreBeatsHint": "Einen 4/4-Beat über das Tempo legen",
     "beatVolume": "Beat-Lautstärke",
     "apply": "Effekte anwenden",
     "processing": "Verarbeitung..."
@@ -63,7 +61,9 @@
     "shuffle": "Zufallswiedergabe",
     "repeatOff": "Wiederholen: aus",
     "repeatAll": "Playlist wiederholen",
-    "repeatOne": "Diesen Titel wiederholen"
+    "repeatOne": "Diesen Titel wiederholen",
+    "saved": "Gespeichert",
+    "savedAs": "Gespeichert als {{name}}"
   },
   "track": {
     "title": "Track",
@@ -97,7 +97,6 @@
   },
   "waveform": {
     "title": "Wellenform-Zeitleiste",
-    "caption": "Springe zwischen Roh- und Effekt-Audio",
     "playing": "Wird abgespielt",
     "idle": "Bereit",
     "scrub": "Zeitleiste anpassen",
@@ -105,7 +104,8 @@
     "fx": "FX",
     "toggleRemaining": "Verbleibende Zeit anzeigen",
     "tempo": "{{bpm}} BPM · {{meter}}",
-    "tempoScaled": "{{bpm}} ({{original}}) BPM · {{meter}}"
+    "tempoScaled": "{{bpm}} BPM · {{meter}}",
+    "position": "{{current}} von {{total}}"
   },
   "language": {
     "open": "Sprachauswahl öffnen",
@@ -122,7 +122,6 @@
   "settings": {
     "open": "Einstellungen",
     "title": "Einstellungen",
-    "subtitle": "Szene, Equalizer und Sprache",
     "moods": "Stimmungen",
     "mood": {
       "light": "Morgengrauen",
@@ -142,17 +141,36 @@
     "close": "Einstellungen schließen",
     "scene": "Szene",
     "livingWorld": "Lebendige Welt",
-    "livingWorldHint": "Die Szene bewegt sich mit deiner Musik (aus spart Akku)",
-    "restUi": "Oberfläche ruhen lassen",
-    "restUiHint": "Die Panels blenden beim Zuhören aus und kehren zurück, sobald du dich bewegst"
+    "restUi": "Oberfläche im Vollbild ausblenden",
+    "eqPresets": {
+      "flat": "Neutral",
+      "acoustic": "Akustik",
+      "bass_booster": "Mehr Bass",
+      "bass_reducer": "Weniger Bass",
+      "classical": "Klassik",
+      "dance": "Dance",
+      "deep": "Tief",
+      "electronic": "Elektronisch",
+      "hiphop": "Hip-Hop",
+      "jazz": "Jazz",
+      "latin": "Latin",
+      "loudness": "Loudness",
+      "lounge": "Lounge",
+      "piano": "Klavier",
+      "pop": "Pop",
+      "rnb": "R&B",
+      "rock": "Rock",
+      "small_speakers": "Kleine Lautsprecher",
+      "spoken_word": "Sprache",
+      "treble_booster": "Mehr Höhen",
+      "treble_reducer": "Weniger Höhen",
+      "vocal_booster": "Klare Stimmen"
+    }
   },
   "studio": {
     "effects": "Effekte",
-    "adjustments": "Einstellungen",
     "mood": "Stimmung",
     "moods": "Stimmungen",
-    "active": "Aktiv",
-    "inactive": "Inaktiv",
     "levels": "Pegel"
   },
   "playlist": {
@@ -160,7 +178,7 @@
     "add": "Musik hinzufügen",
     "addFolder": "Ordner hinzufügen",
     "clear": "Playlist leeren",
-    "clearConfirm": "Alle Titel entfernen?",
+    "clearConfirm": "Alle {{count}} Titel von diesem Gerät entfernen?",
     "clearYes": "Leeren",
     "cancel": "Abbrechen",
     "remove": "Aus der Playlist entfernen",
@@ -178,5 +196,19 @@
   "welcome": {
     "resume": "Weiterhören, wo du aufgehört hast",
     "resumeHint": "Titel in deiner Playlist: {{count}}"
+  },
+  "errors": {
+    "loadFailed": "Diese Datei ließ sich nicht lesen. Versuch es mit einer anderen Kopie des Titels oder einem anderen Format.",
+    "tooLarge": "Diese Datei ist zu groß, um sie hier zu öffnen (maximal {{max}} MB).",
+    "processFailed": "Der Effekt ließ sich nicht berechnen. Versuch es erneut oder wähle einen anderen Effekt.",
+    "exportFailed": "Der Export hat nicht geklappt. Versuch es erneut; wenn es weiter scheitert, unterstützt dieser Browser das Format vielleicht nicht.",
+    "noAudio": "Lade zuerst einen Titel.",
+    "generic": "Etwas ist schiefgelaufen. Versuch es erneut."
+  },
+  "crash": {
+    "title": "Etwas ist schiefgelaufen",
+    "body": "Reverie ist auf einen unerwarteten Fehler gestoßen. Deine Titel sind weiterhin auf diesem Gerät gespeichert.",
+    "retry": "Erneut versuchen",
+    "reload": "Neu laden"
   }
 }

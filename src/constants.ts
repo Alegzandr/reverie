@@ -77,11 +77,14 @@ export const PLAYLIST = {
 // RESTING INTERFACE
 // ============================================================================
 
+export const EXPORT_NOTICE = {
+    /** How long (ms) the Export pill answers "Saved" and names the file after a download. */
+    VISIBLE_MS: 4000,
+} as const;
+
 export const UI_REST = {
-    /** Preference: let the panels fade back while you listen (default on). */
+    /** Preference: let the fullscreen cockpit step aside while you listen (default on). */
     STORAGE_KEY: "reverie:rest-ui",
-    /** Stillness (ms) before the interface recedes and leaves the world to itself. */
-    IDLE_MS: 9000,
 } as const;
 
 // ============================================================================

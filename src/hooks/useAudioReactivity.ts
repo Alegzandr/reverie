@@ -47,29 +47,25 @@ export function useAudioReactivity({ getAnalyser, getLoudness, isPlaying, target
 
     const e = energy.current;
 
-    // Cache the last published (3-decimal-rounded) values so flat/steady frames
-    // skip the five style writes entirely - each setProperty forces a style recalc.
+    // Cache the last published (hundredth-rounded) values so flat/steady frames
+    // skip the style writes entirely - each setProperty forces a style recalc.
     const last = { level: -1, bass: -1, mid: -1, treble: -1, pulse: -1 };
 
     const publish = () => {
-      const rl = Math.round(e.level * 1000);
-      const rb = Math.round(e.bass * 1000);
-      const rm = Math.round(e.mid * 1000);
-      const rt = Math.round(e.treble * 1000);
-      const rp = Math.round(e.pulse * 1000);
-      if (rl === last.level && rb === last.bass && rm === last.mid && rt === last.treble && rp === last.pulse) {
-        return;
-      }
-      last.level = rl;
-      last.bass = rb;
-      last.mid = rm;
-      last.treble = rt;
-      last.pulse = rp;
-      root.style.setProperty('--audio-level', e.level.toFixed(3));
-      root.style.setProperty('--audio-bass', e.bass.toFixed(3));
-      root.style.setProperty('--audio-mid', e.mid.toFixed(3));
-      root.style.setProperty('--audio-treble', e.treble.toFixed(3));
-      root.style.setProperty('--audio-pulse', e.pulse.toFixed(3));
+      // Hundredths are finer than any glow can show, and each write on <html>
+      // restyles the whole tree: quantise, and only touch what changed.
+      const q = (v: number) => Math.round(v * 100);
+      const put = (key: keyof typeof last, name: string, v: number) => {
+        const r = q(v);
+        if (r === last[key]) return;
+        last[key] = r;
+        root.style.setProperty(name, (r / 100).toFixed(2));
+      };
+      put('level', '--audio-level', e.level);
+      put('bass', '--audio-bass', e.bass);
+      put('mid', '--audio-mid', e.mid);
+      put('treble', '--audio-treble', e.treble);
+      put('pulse', '--audio-pulse', e.pulse);
     };
 
     const clear = () => {

@@ -26,7 +26,6 @@
   },
   "effects": {
     "none": "Original",
-    "resetHint": "Clique duas vezes para redefinir",
     "originalHint": "Reproduzindo a faixa original, nenhum efeito aplicado.",
     "speedUp": "Acelerar",
     "slowReverb": "Lento + Reverb",
@@ -45,7 +44,6 @@
     "underwaterDeep": "Profundo",
     "nightcoreBeats": "Batida nightcore",
     "betaBadge": "Beta",
-    "nightcoreBeatsHint": "Adiciona uma percussão 4/4 à aceleração",
     "beatVolume": "Volume da batida",
     "apply": "Aplicar efeitos",
     "processing": "Processando..."
@@ -63,7 +61,9 @@
     "shuffle": "Aleatório",
     "repeatOff": "Repetir: desligado",
     "repeatAll": "Repetir a playlist",
-    "repeatOne": "Repetir esta faixa"
+    "repeatOne": "Repetir esta faixa",
+    "saved": "Salvo",
+    "savedAs": "Salvo como {{name}}"
   },
   "track": {
     "title": "Faixa",
@@ -97,7 +97,6 @@
   },
   "waveform": {
     "title": "Linha do tempo da forma de onda",
-    "caption": "Percorra entre áudio bruto e com efeitos",
     "playing": "A reproduzir",
     "idle": "Pronto",
     "scrub": "Mover na linha do tempo",
@@ -105,7 +104,8 @@
     "fx": "FX",
     "toggleRemaining": "Mostrar o tempo restante",
     "tempo": "{{bpm}} BPM · {{meter}}",
-    "tempoScaled": "{{bpm}} ({{original}}) BPM · {{meter}}"
+    "tempoScaled": "{{bpm}} BPM · {{meter}}",
+    "position": "{{current}} de {{total}}"
   },
   "language": {
     "open": "Abrir seletor de idioma",
@@ -122,7 +122,6 @@
   "settings": {
     "open": "Definições",
     "title": "Definições",
-    "subtitle": "Cena, equalizador e idioma",
     "moods": "Ambientes",
     "mood": {
       "light": "Alvorada",
@@ -142,17 +141,36 @@
     "close": "Fechar definições",
     "scene": "Cena",
     "livingWorld": "Mundo vivo",
-    "livingWorldHint": "A cena se move com sua música (desligado economiza bateria)",
-    "restUi": "Deixar a interface descansar",
-    "restUiHint": "Os painéis se apagam enquanto você ouve e voltam assim que você se mexe"
+    "restUi": "Ocultar a interface em tela cheia",
+    "eqPresets": {
+      "flat": "Plano",
+      "acoustic": "Acústico",
+      "bass_booster": "Mais graves",
+      "bass_reducer": "Menos graves",
+      "classical": "Clássica",
+      "dance": "Dance",
+      "deep": "Profundo",
+      "electronic": "Eletrônica",
+      "hiphop": "Hip-hop",
+      "jazz": "Jazz",
+      "latin": "Latina",
+      "loudness": "Loudness",
+      "lounge": "Lounge",
+      "piano": "Piano",
+      "pop": "Pop",
+      "rnb": "R&B",
+      "rock": "Rock",
+      "small_speakers": "Caixas pequenas",
+      "spoken_word": "Voz falada",
+      "treble_booster": "Mais agudos",
+      "treble_reducer": "Menos agudos",
+      "vocal_booster": "Vocais em destaque"
+    }
   },
   "studio": {
     "effects": "Efeitos",
-    "adjustments": "Ajustes",
     "mood": "Ambiente",
     "moods": "Ambientes",
-    "active": "Ativo",
-    "inactive": "Inativo",
     "levels": "Níveis"
   },
   "playlist": {
@@ -160,7 +178,7 @@
     "add": "Adicionar música",
     "addFolder": "Adicionar uma pasta",
     "clear": "Limpar a playlist",
-    "clearConfirm": "Remover todas as faixas?",
+    "clearConfirm": "Remover as {{count}} faixas deste dispositivo?",
     "clearYes": "Limpar",
     "cancel": "Cancelar",
     "remove": "Remover da playlist",
@@ -178,5 +196,19 @@
   "welcome": {
     "resume": "Continue de onde parou",
     "resumeHint": "Faixas na sua playlist: {{count}}"
+  },
+  "errors": {
+    "loadFailed": "Não foi possível ler este arquivo. Tente outra cópia da faixa ou outro formato.",
+    "tooLarge": "Este arquivo é grande demais para abrir aqui (máximo de {{max}} MB).",
+    "processFailed": "Não foi possível aplicar o efeito. Tente de novo ou escolha outro efeito.",
+    "exportFailed": "A exportação não foi concluída. Tente de novo; se continuar falhando, este navegador talvez não suporte o formato.",
+    "noAudio": "Carregue uma faixa primeiro.",
+    "generic": "Algo deu errado. Tente de novo."
+  },
+  "crash": {
+    "title": "Algo deu errado",
+    "body": "O Reverie encontrou um erro inesperado. Suas faixas continuam guardadas neste dispositivo.",
+    "retry": "Tentar de novo",
+    "reload": "Recarregar"
   }
 }

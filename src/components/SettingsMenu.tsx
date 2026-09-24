@@ -1,4 +1,4 @@
-import { memo, useState } from 'react';
+import { memo, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Settings, Check, RotateCcw } from 'lucide-react';
@@ -9,7 +9,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from '@/components/ui/dialog';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Select } from '@/components/ui/select';
@@ -17,21 +16,23 @@ import { useEq } from '../contexts/EqContext';
 import { useMood } from '../contexts/MoodContext';
 import { toggleUiRest, useUiRestPreference } from '../hooks/useUiRest';
 import { BeatToggle } from './BeatToggle';
-import { EQ_PRESETS, EQ_CUSTOM } from '../contexts/eqPresets';
+import { EQ_PRESETS, EQ_CUSTOM, eqPresetKey } from '../contexts/eqPresets';
 import { AUDIO_EFFECTS } from '../constants';
 import { cn } from '@/lib/utils';
 
+// Each language named in itself. No flags: a flag is a country, not a language,
+// and Windows renders them as bare letter pairs anyway.
 const languages = [
-  { code: 'en', name: 'English', flag: '🇬🇧' },
-  { code: 'fr', name: 'Français', flag: '🇫🇷' },
-  { code: 'es', name: 'Español', flag: '🇪🇸' },
-  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
-  { code: 'pt', name: 'Português', flag: '🇵🇹' },
-  { code: 'ru', name: 'Русский', flag: '🇷🇺' },
-  { code: 'zh', name: '简体中文', flag: '🇨🇳' },
-  { code: 'ja', name: '日本語', flag: '🇯🇵' },
-  { code: 'ko', name: '한국어', flag: '🇰🇷' },
-  { code: 'hi', name: 'हिन्दी', flag: '🇮🇳' },
+  { code: 'en', name: 'English' },
+  { code: 'fr', name: 'Français' },
+  { code: 'es', name: 'Español' },
+  { code: 'de', name: 'Deutsch' },
+  { code: 'pt', name: 'Português' },
+  { code: 'ru', name: 'Русский' },
+  { code: 'zh', name: '简体中文' },
+  { code: 'ja', name: '日本語' },
+  { code: 'ko', name: '한국어' },
+  { code: 'hi', name: 'हिन्दी' },
 ];
 
 const EQ = AUDIO_EFFECTS.EQUALIZER;
@@ -51,6 +52,12 @@ export const SettingsMenu = memo(function SettingsMenu({ trigger }: SettingsMenu
   const { livingWorld, toggleLivingWorld } = useMood();
   const restUi = useUiRestPreference();
   const [open, setOpen] = useState(false);
+  // Closing hands focus back to the gear (keyboard users land where they left),
+  // but that focus must not pop the gear's tooltip open: it's held shut until
+  // the pointer or focus next leaves the trigger.
+  const gearRef = useRef<HTMLButtonElement | null>(null);
+  const [tipOpen, setTipOpen] = useState(false);
+  const holdTipRef = useRef(false);
 
   const isCustom = presetName === EQ_CUSTOM;
   const isFlat = presetName === 'Flat';
@@ -59,7 +66,7 @@ export const SettingsMenu = memo(function SettingsMenu({ trigger }: SettingsMenu
   // built-in presets, each labelled by its own name.
   const presetOptions = [
     ...(isCustom ? [{ value: EQ_CUSTOM, label: t('settings.eqCustom') }] : []),
-    ...EQ_PRESETS.map((preset) => ({ value: preset.name, label: preset.name })),
+    ...EQ_PRESETS.map((preset) => ({ value: preset.name, label: t(`settings.eqPresets.${eqPresetKey(preset.name)}`) })),
   ];
 
   return (
@@ -67,10 +74,18 @@ export const SettingsMenu = memo(function SettingsMenu({ trigger }: SettingsMenu
       {trigger ? (
         <DialogTrigger asChild>{trigger}</DialogTrigger>
       ) : (
-        <Tooltip>
+        <Tooltip open={tipOpen} onOpenChange={(next) => setTipOpen(next && !holdTipRef.current)}>
           <TooltipTrigger asChild>
             <DialogTrigger asChild>
-              <Button type="button" variant="glass" size="icon" aria-label={t('settings.open')}>
+              <Button
+                ref={gearRef}
+                type="button"
+                variant="glass"
+                size="icon"
+                aria-label={t('settings.open')}
+                onPointerLeave={() => (holdTipRef.current = false)}
+                onBlur={() => (holdTipRef.current = false)}
+              >
                 <Settings className="w-5 h-5 text-[rgb(var(--color-text))]" aria-hidden="true" />
               </Button>
             </DialogTrigger>
@@ -81,14 +96,16 @@ export const SettingsMenu = memo(function SettingsMenu({ trigger }: SettingsMenu
 
       <DialogContent
         closeLabel={t('settings.close')}
-        // Closing the dialog returns focus to the gear trigger, which is also a
-        // TooltipTrigger - that focus would pop its tooltip open. Suppress the
-        // auto-focus restore so the tooltip stays closed after exiting settings.
-        onCloseAutoFocus={(e) => e.preventDefault()}
+        onCloseAutoFocus={(e) => {
+          if (trigger) return;
+          e.preventDefault();
+          holdTipRef.current = true;
+          gearRef.current?.focus();
+        }}
+        aria-describedby={undefined}
       >
         <DialogHeader>
           <DialogTitle>{t('settings.title')}</DialogTitle>
-          <DialogDescription>{t('settings.subtitle')}</DialogDescription>
         </DialogHeader>
 
         <div className="max-h-[64vh] overflow-y-auto pr-1 -mr-1">
@@ -97,18 +114,8 @@ export const SettingsMenu = memo(function SettingsMenu({ trigger }: SettingsMenu
             <h3 className="text-[11px] uppercase tracking-wide text-[rgb(var(--color-text-secondary))] mb-2">
               {t('settings.scene')}
             </h3>
-            <BeatToggle
-              label={t('settings.livingWorld')}
-              description={t('settings.livingWorldHint')}
-              pressed={livingWorld}
-              onToggle={toggleLivingWorld}
-            />
-            <BeatToggle
-              label={t('settings.restUi')}
-              description={t('settings.restUiHint')}
-              pressed={restUi}
-              onToggle={toggleUiRest}
-            />
+            <BeatToggle label={t('settings.livingWorld')} pressed={livingWorld} onToggle={toggleLivingWorld} />
+            <BeatToggle label={t('settings.restUi')} pressed={restUi} onToggle={toggleUiRest} />
           </section>
 
           {/* Listening equalizer - shapes playback for comfort only; it is never
@@ -204,16 +211,15 @@ export const SettingsMenu = memo(function SettingsMenu({ trigger }: SettingsMenu
                     key={lang.code}
                     type="button"
                     variant={active ? 'accent' : 'outline'}
+                    aria-pressed={active}
+                    lang={lang.code}
                     onClick={() => i18n.changeLanguage(lang.code)}
                     className={cn(
                       'h-auto justify-between gap-2 px-3 py-2.5 rounded-2xl',
                       !active && 'text-[rgb(var(--color-text))]'
                     )}
                   >
-                    <span className="flex items-center gap-2 min-w-0">
-                      <span className="text-lg shrink-0">{lang.flag}</span>
-                      <span className="text-sm font-semibold truncate">{lang.name}</span>
-                    </span>
+                    <span className="text-sm font-semibold truncate">{lang.name}</span>
                     {active && <Check className="w-4 h-4 shrink-0" aria-hidden="true" />}
                   </Button>
                 );

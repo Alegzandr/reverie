@@ -1,5 +1,8 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
+// The boundary sits above the React tree's i18n hooks (and may be catching a
+// crash in them), so it reads the shared instance directly.
+import i18n from 'i18next';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -66,18 +69,16 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           <div className="min-h-full flex items-center justify-center p-6">
           <div className="glass rounded-3xl p-8 max-w-2xl w-full space-y-6 bg-[rgba(var(--color-surface),0.95)] shadow-[0_20px_70px_-40px_rgba(var(--color-accent),0.3)] border border-[rgba(var(--color-border),0.6)]">
             <div className="flex items-center justify-center">
-              <div className="w-20 h-20 rounded-[20px] bg-[rgba(255,80,80,0.15)] flex items-center justify-center">
-                <AlertTriangle className="w-10 h-10 text-red-500" />
+              <div className="w-20 h-20 rounded-[20px] bg-[rgba(var(--color-accent),0.15)] flex items-center justify-center">
+                <AlertTriangle className="w-10 h-10 text-[rgb(var(--color-accent-text))]" aria-hidden="true" />
               </div>
             </div>
 
             <div className="text-center space-y-3">
               <h1 className="text-2xl font-bold text-[rgb(var(--color-text))]">
-                Oops! Something went wrong
+                {i18n.t('crash.title')}
               </h1>
-              <p className="text-[15px] text-[rgb(var(--color-text-secondary))]">
-                The application encountered an unexpected error. Don't worry, your data is safe.
-              </p>
+              <p className="text-[15px] text-[rgb(var(--color-text-secondary))]">{i18n.t('crash.body')}</p>
             </div>
 
             {import.meta.env.DEV && (
@@ -109,20 +110,17 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 onClick={this.handleReset}
                 className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-[rgb(var(--color-text))] text-[rgb(var(--color-background))] font-semibold text-[15px] hover:opacity-90 transition-opacity ios-button"
               >
-                <RefreshCw className="w-5 h-5" />
-                Try Again
+                <RefreshCw className="w-5 h-5" aria-hidden="true" />
+                {i18n.t('crash.retry')}
               </button>
               <button
                 onClick={() => window.location.reload()}
                 className="flex-1 px-6 py-3 rounded-2xl bg-[rgba(var(--color-border),0.3)] text-[rgb(var(--color-text))] font-semibold text-[15px] hover:bg-[rgba(var(--color-border),0.4)] transition-colors ios-button"
               >
-                Reload Page
+                {i18n.t('crash.reload')}
               </button>
             </div>
 
-            <p className="text-xs text-center text-[rgb(var(--color-text-secondary))]">
-              If the problem persists, try refreshing the page or clearing your browser cache.
-            </p>
           </div>
           </div>
         </div>

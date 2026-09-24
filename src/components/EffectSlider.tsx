@@ -1,6 +1,4 @@
-import { useTranslation } from "react-i18next";
 import { Slider } from "@/components/ui/slider";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { useDoubleClickReset } from "@/hooks/useDoubleClickReset";
 
 interface EffectSliderProps {
@@ -24,7 +22,8 @@ interface EffectSliderProps {
  * large so the result, not the mechanism, leads.
  *
  * Double-clicking the track restores the default value - a quick escape from a
- * dialed-in setting without nudging the thumb back by hand.
+ * dialed-in setting without nudging the thumb back by hand. It stays a quiet
+ * accelerator: no hover hint competes with the value.
  */
 export function EffectSlider({
     id,
@@ -39,7 +38,6 @@ export function EffectSlider({
     formatValue,
     markers,
 }: EffectSliderProps) {
-    const { t } = useTranslation();
     const formattedValue = formatValue(value);
     const handleDoubleClickReset = useDoubleClickReset(
         () => onChange(defaultValue),
@@ -51,33 +49,28 @@ export function EffectSlider({
             <div className="flex items-end justify-between gap-3">
                 <label
                     htmlFor={id}
-                    className="text-sm font-medium text-[rgb(var(--color-text-secondary))]"
+                    className="min-w-0 text-sm font-medium text-[rgb(var(--color-text-secondary))] [overflow-wrap:anywhere] [hyphens:auto]"
                 >
                     {label}
                 </label>
                 <span
-                    className="text-2xl font-semibold tabular-nums text-[rgb(var(--color-accent-text))]"
-                    aria-live="polite"
+                    className="shrink-0 text-2xl font-semibold tabular-nums text-[rgb(var(--color-accent-text))]"
+                    aria-hidden="true"
                 >
                     {formattedValue}
                 </span>
             </div>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Slider
-                        id={id}
-                        min={min}
-                        max={max}
-                        step={step}
-                        value={value}
-                        onValueChange={onChange}
-                        onClick={handleDoubleClickReset}
-                        disabled={disabled}
-                        aria-label={`${label}: ${formattedValue}`}
-                    />
-                </TooltipTrigger>
-                <TooltipContent>{t("effects.resetHint")}</TooltipContent>
-            </Tooltip>
+            <Slider
+                id={id}
+                min={min}
+                max={max}
+                step={step}
+                value={value}
+                onValueChange={onChange}
+                onClick={handleDoubleClickReset}
+                disabled={disabled}
+                aria-valuetext={formattedValue}
+            />
             {markers && (
                 <div className="flex justify-between text-xs text-[rgb(var(--color-text-secondary))]">
                     {markers.map((marker, index) => (

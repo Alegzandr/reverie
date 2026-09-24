@@ -131,4 +131,21 @@ describe('EffectControls', () => {
     await userEvent.click(screen.getByText('effects.8dAudio'));
     expect(onChange).toHaveBeenCalledTimes(1);
   });
+
+  it('reads as a radiogroup: one tab stop, arrows select without toggling off', async () => {
+    const onChange = vi.fn();
+    render(<EffectControls onChange={onChange} />);
+
+    const checked = screen.getByRole('radio', { name: 'effects.slowReverb' });
+    expect(checked).toHaveAttribute('aria-checked', 'true');
+    expect(checked).toHaveAttribute('tabindex', '0');
+    expect(screen.getByRole('radio', { name: 'effects.speedUp' })).toHaveAttribute('tabindex', '-1');
+
+    checked.focus();
+    await userEvent.keyboard('{ArrowDown}');
+    expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ mode: 'speed-up' }));
+    expect(screen.getByRole('radio', { name: 'effects.speedUp' })).toHaveFocus();
+    await userEvent.keyboard('{ArrowUp}');
+    expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ mode: 'slow-reverb' }));
+  });
 });

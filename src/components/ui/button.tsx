@@ -26,7 +26,7 @@ const buttonVariants = cva(
         // Dream-Indigo base keeps the white glyph legible in every palette; the
         // inset accent hairline + a --hud-glow halo seat it in the scene.
         play:
-          'btn-orb text-white shadow-[inset_0_1.5px_0_0_rgba(255,255,255,0.42),inset_0_0_0_1px_rgba(var(--color-accent),0.5),0_4px_10px_-2px_rgba(13,9,31,0.5),0_12px_30px_-8px_rgba(var(--hud-glow),0.5)] hover:shadow-[inset_0_1.5px_0_0_rgba(255,255,255,0.5),inset_0_0_0_1px_rgba(var(--color-accent),0.65),0_4px_10px_-2px_rgba(13,9,31,0.5),0_16px_40px_-8px_rgba(var(--hud-glow),0.72)]',
+          'btn-orb text-white shadow-[inset_0_1.5px_0_0_rgba(255,255,255,0.42),inset_0_0_0_1px_rgba(var(--color-accent),0.5),0_4px_10px_-2px_rgba(var(--dream-deep),0.5),0_12px_30px_-8px_rgba(var(--hud-glow),0.5)] hover:shadow-[inset_0_1.5px_0_0_rgba(255,255,255,0.5),inset_0_0_0_1px_rgba(var(--color-accent),0.65),0_4px_10px_-2px_rgba(var(--dream-deep),0.5),0_16px_40px_-8px_rgba(var(--hud-glow),0.72)]',
         // High-contrast solid - generic inverse surface.
         inverse:
           'bg-[rgb(var(--color-text))] text-[rgb(var(--color-background))] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.25),0_10px_24px_-10px_rgba(var(--color-text),0.45)] hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.32),0_16px_34px_-10px_rgba(var(--color-accent),0.6)]',
@@ -43,9 +43,11 @@ const buttonVariants = cva(
         ghost: 'text-[rgb(var(--color-text))] hover:bg-[rgba(var(--color-border),0.3)]',
         // Quiet committing action (export). A dark glass pill that recedes into the
         // transport; identity comes from an Aurora-tinted icon, not a loud fill.
-        // Hover warms the border to Aurora and firms the surface.
+        // Hover warms the border to Aurora and firms the surface. No backdrop blur of
+        // its own: it always sits on a rail or pane that already blurs (glass is
+        // never nested), so a denser fill does the job for free.
         glass:
-          'border border-[rgba(var(--color-border),0.85)] bg-[rgba(var(--color-surface),0.6)] text-[rgb(var(--color-text))] backdrop-blur-md shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_10px_26px_-18px_rgba(0,0,0,0.7)] hover:border-[rgba(var(--aurora-violet),0.6)] hover:bg-[rgba(var(--color-surface),0.88)] hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_12px_30px_-16px_rgba(var(--aurora-violet),0.5)]',
+          'border border-[rgba(var(--color-border),0.85)] bg-[rgba(var(--color-surface),0.72)] text-[rgb(var(--color-text))] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_10px_26px_-18px_rgba(0,0,0,0.7)] hover:border-[rgba(var(--aurora-violet),0.6)] hover:bg-[rgba(var(--color-surface),0.88)] hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_12px_30px_-16px_rgba(var(--aurora-violet),0.5)]',
         // Disabled / unavailable surface (no opacity dimming - flat muted fill).
         muted: 'bg-[rgba(var(--color-border),0.5)] text-[rgb(var(--color-text-secondary))]',
       },

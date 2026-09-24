@@ -397,7 +397,7 @@ export const WaveformTimeline = memo(function WaveformTimeline({
             </span>
           )}
         </div>
-        <p className="text-sm font-semibold tabular-nums text-[rgb(var(--color-text))] [text-shadow:0_1px_12px_rgba(0,0,0,0.35)]" aria-live="polite">
+        <p className="text-sm font-semibold tabular-nums text-[rgb(var(--color-text))] [text-shadow:0_1px_12px_rgba(var(--scene-veil),0.6)]">
           {formatClock(second)}
           <span className="text-[rgb(var(--color-text-secondary))] font-normal">
             {' / '}
@@ -441,6 +441,7 @@ export const WaveformTimeline = memo(function WaveformTimeline({
             aria-valuemin={0}
             aria-valuemax={Math.round(duration) || 0}
             aria-valuenow={second || 0}
+            aria-valuetext={t('waveform.position', { current: formatClock(second || 0), total: formatClock(duration) })}
             tabIndex={0}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}

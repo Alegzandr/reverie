@@ -8,7 +8,6 @@ import { SettingsMenu } from './SettingsMenu';
 import { OverlayScrollbar } from './OverlayScrollbar';
 import { WorldSwitcher } from './WorldSwitcher';
 import { Logo } from './Logo';
-import { Badge } from './ui/badge';
 import { SHELL_CLASS } from './shell';
 
 interface WelcomeScreenProps {
@@ -21,6 +20,8 @@ interface WelcomeScreenProps {
   errorBanner: ReactNode;
   /** Tracks already waiting in the remembered playlist (0 = none). */
   playlistCount: number;
+  /** The track the resume lands on (the last one playing, else the first). */
+  resumeTitle: string | null;
   onResume: () => void;
 }
 
@@ -36,6 +37,7 @@ export function WelcomeScreen({
   uploadRevision,
   errorBanner,
   playlistCount,
+  resumeTitle,
   onResume,
 }: WelcomeScreenProps) {
   const { t } = useTranslation();
@@ -79,27 +81,28 @@ export function WelcomeScreen({
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-semibold text-[rgb(var(--color-text))]">{t('welcome.resume')}</span>
-                  <span className="block text-xs tabular-nums text-[rgb(var(--color-text-secondary))]">
-                    {t('welcome.resumeHint', { count: playlistCount })}
+                  <span className="flex min-w-0 gap-2 text-xs tabular-nums text-[rgb(var(--color-text-secondary))]">
+                    {resumeTitle && <span className="min-w-0 truncate text-[rgb(var(--color-text))]">{resumeTitle}</span>}
+                    <span className="shrink-0">{t('welcome.resumeHint', { count: playlistCount })}</span>
                   </span>
                 </span>
-                <Play className="h-5 w-5 shrink-0 text-[rgb(var(--color-accent))] transition-transform group-hover:translate-x-0.5" fill="currentColor" aria-hidden="true" />
+                <Play className="h-5 w-5 shrink-0 text-[rgb(var(--color-accent-text))] transition-transform group-hover:translate-x-0.5" fill="currentColor" aria-hidden="true" />
               </button>
             )}
           </div>
 
-          <ul className="mt-10 flex flex-wrap items-center justify-center gap-3">
+          {/* What it does, as a plain line of type - not pills, which read as
+              buttons and invited clicks that did nothing. */}
+          <ul className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-[rgba(var(--color-text),0.88)]">
             {[
-              { icon: Zap, label: t('effects.speedUp') },
               { icon: Waves, label: t('effects.slowReverb') },
+              { icon: Zap, label: t('effects.speedUp') },
               { icon: Radio, label: t('effects.8dAudio') },
               { icon: Volume2, label: t('effects.bassBoost') },
             ].map(({ icon: Icon, label }) => (
-              <li key={label}>
-                <Badge variant="hud" className="gap-2">
-                  <Icon className="h-4 w-4 text-[rgb(var(--color-accent-text))]" aria-hidden="true" />
-                  {label}
-                </Badge>
+              <li key={label} className="flex items-center gap-2 [text-shadow:0_1px_14px_rgba(var(--scene-veil),0.9)]">
+                <Icon className="h-4 w-4 text-[rgb(var(--color-accent-text))]" aria-hidden="true" />
+                {label}
               </li>
             ))}
           </ul>

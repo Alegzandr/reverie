@@ -62,4 +62,16 @@ describe('FileUploader', () => {
 
     expect(event.defaultPrevented).toBe(true);
   });
+
+  it('opens the picker from a real, keyboard-reachable button', async () => {
+    render(<FileUploader onFilesSelect={vi.fn()} />);
+    const input = screen.getByLabelText('upload.browse') as HTMLInputElement;
+    const click = vi.spyOn(input, 'click');
+
+    await userEvent.tab();
+    const trigger = screen.getByRole('button');
+    expect(trigger).toHaveFocus();
+    await userEvent.keyboard('{Enter}');
+    expect(click).toHaveBeenCalled();
+  });
 });

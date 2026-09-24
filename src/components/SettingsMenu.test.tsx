@@ -63,7 +63,7 @@ describe('SettingsMenu', () => {
     await userEvent.click(screen.getByLabelText('settings.open'));
     // Custom combobox: open the listbox, then pick an option.
     await userEvent.click(screen.getByRole('combobox', { name: 'settings.eqPreset' }));
-    await userEvent.click(screen.getByRole('option', { name: 'Rock' }));
+    await userEvent.click(screen.getByRole('option', { name: 'settings.eqPresets.rock' }));
     expect(mockSetPreset).toHaveBeenCalledWith('Rock');
   });
 

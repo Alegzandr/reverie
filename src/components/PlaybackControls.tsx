@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Play, Pause, Download, Repeat, Repeat1, Shuffle, SkipBack, SkipForward } from 'lucide-react';
+import { Play, Pause, Download, Check, Repeat, Repeat1, Shuffle, SkipBack, SkipForward } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -31,8 +31,12 @@ interface PlaybackControlsProps {
   duration: number;
   onSeek: (time: number) => void;
   hasAudio: boolean;
+  /** False while the selected track couldn't be read: nothing of the previous one plays under its name. */
+  canPlay?: boolean;
   canExport: boolean;
   isExporting?: boolean;
+  /** Name of the file the last export just saved (cleared after a short while). */
+  savedAs?: string | null;
   disabled?: boolean;
   getAnalyser: () => AnalyserNode | null;
 }
@@ -104,14 +108,16 @@ export const PlaybackControls = memo(function PlaybackControls({
   duration,
   onSeek,
   hasAudio,
+  canPlay = true,
   canExport,
   isExporting,
+  savedAs = null,
   disabled,
   getAnalyser,
 }: PlaybackControlsProps) {
   const { t } = useTranslation();
 
-  const playEnabled = hasAudio && !disabled;
+  const playEnabled = hasAudio && canPlay && !disabled;
   const exportEnabled = canExport && !disabled && !isExporting;
   const RepeatIcon = repeat === 'one' ? Repeat1 : Repeat;
 
@@ -133,7 +139,7 @@ export const PlaybackControls = memo(function PlaybackControls({
             variant={playEnabled ? 'play' : 'muted'}
             size="icon"
             onClick={isPlaying ? onStop : onPlay}
-            disabled={disabled || !hasAudio}
+            disabled={!playEnabled}
             aria-label={isPlaying ? t('playback.pause') : t('playback.play')}
             className="relative h-12 w-12"
           >
@@ -151,12 +157,12 @@ export const PlaybackControls = memo(function PlaybackControls({
         )}
       </div>
 
-      <TransportTimeline className="min-w-0 flex-1" clock={clock} duration={duration} onSeek={onSeek} disabled={disabled || !hasAudio} />
+      <TransportTimeline className="min-w-0 flex-1" clock={clock} duration={duration} onSeek={onSeek} disabled={disabled || !hasAudio || !canPlay} />
 
       <div className="flex shrink-0 items-center gap-1.5">
         {onToggleShuffle && (
           <TransportButton label={t('playback.shuffle')} onClick={onToggleShuffle} disabled={disabled} pressed={shuffle}>
-            <Shuffle className={cn('h-[18px] w-[18px]', shuffle && 'text-[rgb(var(--color-accent))]')} aria-hidden="true" />
+            <Shuffle className={cn('h-[18px] w-[18px]', shuffle && 'text-[rgb(var(--color-accent-text))]')} aria-hidden="true" />
           </TransportButton>
         )}
         <TransportButton
@@ -165,7 +171,7 @@ export const PlaybackControls = memo(function PlaybackControls({
           disabled={disabled || !hasAudio}
           pressed={repeat !== 'off'}
         >
-          <RepeatIcon className={cn('h-[18px] w-[18px]', repeat !== 'off' && 'text-[rgb(var(--color-accent))]')} aria-hidden="true" />
+          <RepeatIcon className={cn('h-[18px] w-[18px]', repeat !== 'off' && 'text-[rgb(var(--color-accent-text))]')} aria-hidden="true" />
         </TransportButton>
 
         {hasAudio && (
@@ -174,22 +180,36 @@ export const PlaybackControls = memo(function PlaybackControls({
 
         {hasAudio && <VolumeControl volume={volume} onVolumeChange={onVolumeChange} disabled={disabled} />}
 
-        {/* Export - the quiet committing action: a glass pill with a mood-tinted icon. */}
-        <Button
-          variant={exportEnabled ? 'glass' : 'muted'}
-          size="pill"
-          onClick={onExport}
-          disabled={disabled || !canExport || isExporting}
-          aria-label={isExporting ? t('playback.exporting') : t('playback.export')}
-          className="ml-1 shrink-0 px-5"
-        >
-          {isExporting ? (
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-[rgb(var(--color-accent))] border-t-transparent" aria-hidden="true" />
-          ) : (
-            <Download className={cn('h-5 w-5', exportEnabled && 'text-[rgb(var(--color-accent))]')} aria-hidden="true" />
-          )}
-          <span className="hidden lg:inline">{isExporting ? t('playback.exporting') : t('playback.export')}</span>
-        </Button>
+        {/* Export - the quiet committing action: a glass pill with a mood-tinted icon.
+            It answers in place: a spinner while it renders, then "Saved" and the
+            file's name (tooltip + a polite announcement) for a few seconds. */}
+        <Tooltip open={!!savedAs}>
+          <TooltipTrigger asChild>
+            <Button
+              variant={exportEnabled ? 'glass' : 'muted'}
+              size="pill"
+              onClick={onExport}
+              disabled={disabled || !canExport || isExporting}
+              aria-label={isExporting ? t('playback.exporting') : t('playback.export')}
+              className="ml-1 shrink-0 px-5"
+            >
+              {isExporting ? (
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-[rgb(var(--color-accent))] border-t-transparent motion-reduce:animate-none" aria-hidden="true" />
+              ) : savedAs ? (
+                <Check className="h-5 w-5 text-[rgb(var(--color-accent-text))]" aria-hidden="true" />
+              ) : (
+                <Download className={cn('h-5 w-5', exportEnabled && 'text-[rgb(var(--color-accent-text))]')} aria-hidden="true" />
+              )}
+              <span className="hidden lg:inline">
+                {isExporting ? t('playback.exporting') : savedAs ? t('playback.saved') : t('playback.export')}
+              </span>
+            </Button>
+          </TooltipTrigger>
+          {savedAs && <TooltipContent>{savedAs}</TooltipContent>}
+        </Tooltip>
+        <span className="sr-only" role="status">
+          {isExporting ? t('playback.exporting') : savedAs ? t('playback.savedAs', { name: savedAs }) : ''}
+        </span>
       </div>
     </div>
   );

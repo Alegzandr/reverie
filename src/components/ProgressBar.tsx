@@ -5,24 +5,23 @@ import { Progress } from '@/components/ui/progress';
 interface ProgressBarProps {
   progress: number;
   isProcessing?: boolean;
-  message?: string;
+  /** What is happening, already translated by the caller. */
+  message: string;
 }
 
 export function ProgressBar({ progress, isProcessing, message }: ProgressBarProps) {
   if (!isProcessing && progress === 0) return null;
 
   return (
-    <Card className="rounded-2xl p-5">
+    <Card className="rounded-2xl p-5" role="status">
       <div className="flex items-center gap-3 mb-4">
-        <Loader2 className="w-5 h-5 text-[rgb(var(--color-accent-text))] animate-spin flex-shrink-0" />
-        <span className="text-sm font-medium text-[rgb(var(--color-text))]">
-          {message || 'Processing...'}
-        </span>
-        <span className="ml-auto text-sm font-semibold text-[rgb(var(--color-accent-text))]">
+        <Loader2 className="w-5 h-5 text-[rgb(var(--color-accent-text))] animate-spin motion-reduce:animate-none flex-shrink-0" aria-hidden="true" />
+        <span className="text-sm font-medium text-[rgb(var(--color-text))]">{message}</span>
+        <span className="ml-auto text-sm font-semibold text-[rgb(var(--color-accent-text))]" aria-hidden="true">
           {Math.round(progress)}%
         </span>
       </div>
-      <Progress value={progress} />
+      <Progress value={progress} aria-label={message} />
     </Card>
   );
 }

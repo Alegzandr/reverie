@@ -7,7 +7,7 @@ import { AUDIO_EFFECTS } from '../constants';
  * exports.
  */
 export interface EqPreset {
-  /** Display name; not translated, used verbatim in the picker and persistence. */
+  /** Stable id, persisted as-is; the picker shows its translation (see eqPresetKey). */
   name: string;
   /** One gain in dB per band, same order as AUDIO_EFFECTS.EQUALIZER.BANDS. */
   gains: number[];
@@ -53,6 +53,11 @@ export const EQ_PRESETS: EqPreset[] = [
   { name: 'Treble reducer', gains: [0, 0, 1, -1, -2, -4] },
   { name: 'Vocal booster', gains: [-2, -2, 2, 2, 1, -1] },
 ];
+
+/** i18n key suffix for a preset's display name (`settings.eqPresets.<key>`). */
+export function eqPresetKey(name: string): string {
+  return name.toLowerCase().replace(/\s+/g, '_');
+}
 
 /** Whether two gain arrays are equal band-for-band. */
 export function gainsEqual(a: number[], b: number[]): boolean {
