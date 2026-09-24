@@ -220,10 +220,15 @@ vec3 clumpAt(float k, float row) {
   return vec3(c, r);
 }
 
-/* The arch parameter nearest a point of the plate (inverse of clumpAt). */
+/* The arch parameter nearest a point of the plate (inverse of clumpAt). It
+   must stay continuous: plate() only visits the clumps within a few steps of
+   it, so a jump drops clumps on one side of a line and the blossom shows a
+   straight vertical seam (branching at |x| = ARCH_X jumped by up to 4 steps
+   above the arch's centre). */
 float archParam(vec2 q) {
-  if (abs(q.x) <= ARCH_X && q.y >= ARCH_CY - 0.4) return atan(q.x / ARCH_X, (q.y - ARCH_CY) / ARCH_Y);
-  return sign(q.x) * (PI * 0.5 + max(abs(q.x) - ARCH_X, 0.0) / DROOP_RUN);
+  float ax = abs(q.x);
+  float ellipse = atan(min(ax, ARCH_X) / ARCH_X, max((q.y - ARCH_CY) / ARCH_Y, 1e-3));
+  return sign(q.x) * (ellipse + max(ax - ARCH_X, 0.0) / DROOP_RUN);
 }
 
 /* A trunk's centre line: leaning in over the lane, gnarled. */
