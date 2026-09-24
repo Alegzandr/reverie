@@ -50,6 +50,10 @@ const float FOG = 0.045;
    through them as ghost trees. */
 const vec2 LANE_HAZE = vec2(12.0, 25.0);
 const vec2 LANE_FADE = vec2(23.0, 28.0);
+/* Depths (m) over which the sun's glow joins the haze. Nearer, backlit wood
+   and blossom keep their own colour against the light: at full glow a limb
+   ten metres off took on the sky's gold and read as see-through. */
+const vec2 SUN_VEIL = vec2(10.0, 22.0);
 /* The far wood closing the lane: its height above the horizon (base, plus
    noise), how far it parts where the sun comes through, and how much of the
    blossom's colour survives the haze. */
@@ -144,6 +148,12 @@ vec3 laneFog(vec3 rd) {
   vec2 dir = v / max(d, 1e-4);
   float shafts = smoothstep(0.5, 0.8, noise2(dir * 3.0 + vec2(uTime * 0.01, 0.0))) * exp(-d * 2.5) * smoothstep(0.0, 0.05, d);
   return HAZE + SUN_WARM * (exp(-d * 7.0) * 0.32 + shafts * 0.08) * sunPulse();
+}
+
+/* The haze a thing at depth z sinks into: the plain warm air near, the
+   sun's glow and shafts only once it is far enough down the lane. */
+vec3 hazeAt(vec3 fogCol, float z) {
+  return mix(HAZE, fogCol, smoothstep(SUN_VEIL.x, SUN_VEIL.y, z));
 }
 
 /* A cell pattern of small shapes on the ground, and how resolved it is here:
@@ -404,7 +414,7 @@ vec3 paintPetals(vec3 col, vec2 sp, vec3 ro, float solidZ, vec3 fogCol) {
     float notch = smoothstep(0.0, 0.25, length(e - vec2(1.0, 0.0)));
     float shape = (1.0 - smoothstep(1.0 - soft, 1.0 + soft, r)) * notch;
     float fade = smoothstep(0.35, 1.0, z) * (1.0 - smoothstep(PETAL_DEPTH * 0.6, PETAL_DEPTH, z));
-    vec3 pc = mix(fogCol, PETAL * (0.3 + 0.4 * flip), exp(-z * FOG));
+    vec3 pc = mix(hazeAt(fogCol, z), PETAL * (0.3 + 0.4 * flip), exp(-z * FOG));
     col = mix(col, pc, shape * present * fade * 0.9);
   }
   return col;
@@ -447,7 +457,7 @@ vec3 world(vec2 fragCoord) {
       }
       c.a *= fade;
       if (c.a <= 0.0) continue;
-      acc += trans * c.a * mix(fogCol, c.rgb, fog);
+      acc += trans * c.a * mix(hazeAt(fogCol, z), c.rgb, fog);
       trans *= 1.0 - c.a;
       if (trans < 0.5 && solidZ > 1e5) solidZ = z;
       if (trans < 0.01) break;
@@ -458,7 +468,7 @@ vec3 world(vec2 fragCoord) {
   vec3 back;
   if (groundZ < 1e5) {
     vec3 g = vec3(ro.x + sp.x * groundZ / FOCAL, 0.0, ro.z + groundZ);
-    back = mix(fogCol, groundColor(g, groundZ), exp(-groundZ * FOG));
+    back = mix(hazeAt(fogCol, groundZ), groundColor(g, groundZ), exp(-groundZ * FOG));
     solidZ = min(solidZ, groundZ);
   } else {
     back = laneSky(rd, fogCol);
