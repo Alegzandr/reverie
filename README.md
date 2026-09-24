@@ -25,7 +25,7 @@ Everything is **live**: press play, move any control, and the sound changes inst
 - **Made for long sessions**: next/previous, shuffle, repeat the playlist or one track, drag to reorder, filter long lists, keyboard and media keys.
 
 ### Make it yours
-- **🪐 Moods** — eight living worlds rendered in real time and listening to the music: Nebula Drift, Borealis, Moon Tide, Echo Valley, Sakura Dusk, City Pop, Singularity and Daybreak. Switch in one tap from the top bar; your choice is remembered.
+- **🪐 Moods** — eight living worlds rendered in real time and listening to the music: Nebula Drift, Borealis, Moon Tide, Echo Valley, Sakura Lane, City Pop, Singularity and Daybreak. Switch in one tap from the top bar; your choice is remembered.
 - **💓 Breathe with the music** — the world, the glass and the play button react to what's playing. When you stop touching anything, the interface fades away and leaves you with the world.
 - **📊 See your track** — a live waveform doubles as the seek bar and previews the effect you're applying, alongside a compact spectrum meter.
 - **🌍 Ten languages** — English, French, Spanish, German, Portuguese, Russian, Chinese, Japanese, Korean, Hindi.

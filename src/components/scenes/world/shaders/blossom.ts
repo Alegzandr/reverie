@@ -43,6 +43,15 @@ const int PETAL_SLICES = 8;
 const float PETAL_DEPTH = 14.0;
 const float PETAL_CELL = 0.75;
 const float FOG = 0.045;
+/* The lane only draws ROWS pairs of trees, so the farthest ones melt into the
+   haze before the last row's depth (never under 28.5 m) instead of popping. */
+const vec2 LANE_FADE = vec2(14.0, 28.0);
+/* The far wood closing the lane: its height above the horizon (base, plus
+   noise), how far it parts where the sun comes through, and how much of the
+   blossom's colour survives the haze. */
+const vec2 FAR_WOOD_H = vec2(0.014, 0.022);
+const float FAR_WOOD_GAP = 0.45;
+const float FAR_WOOD_TINT = 0.35;
 /* A single blossom's size, metres. */
 const float FLORET = 0.05;
 /* A bunch of flowers on a spur, metres: the grain of a clump. */
@@ -104,8 +113,9 @@ vec3 clouds(vec3 rd, vec3 c) {
 }
 
 /* Where the ray escapes: golden sky, the sun straight down the lane, clouds,
-   and a far wood along the horizon beyond the orchard. */
-vec3 laneSky(vec3 rd) {
+   and a far wood along the horizon beyond the orchard - lost in the same haze
+   as the far end of the path, so ground and sky meet without a seam. */
+vec3 laneSky(vec3 rd, vec3 fogCol) {
   float y = rd.y;
   vec3 c = mix(SKY_GOLD * 0.6, SKY_PEACH * 0.7, smoothstep(0.0, 0.1, y));
   c = mix(c, SKY_LAVENDER * 0.55, smoothstep(0.06, 0.32, y));
@@ -113,9 +123,14 @@ vec3 laneSky(vec3 rd) {
   c = clouds(rd, c);
   float d = length(rd.xy - SUN_DIR);
   c += SUN_WARM * (exp(-d * 7.0) * 0.35 + exp(-d * 26.0) * 0.8) * sunPulse();
-  float wood = 0.012 + 0.018 * fbm2(vec2(rd.x * 7.0, 2.0));
-  float aa = 1.0 / uRes.y;
-  return mix(c, mix(GRASS * 0.8, HAZE, 0.6), 1.0 - smoothstep(wood - aa, wood + aa, y));
+  /* Rounded crowns, parting a little where the lane opens onto the sun. */
+  float crowns = FAR_WOOD_H.x + FAR_WOOD_H.y * fbm2(vec2(rd.x * 9.0, 2.0));
+  float wood = crowns * mix(FAR_WOOD_GAP, 1.0, smoothstep(0.02, 0.2, abs(rd.x)));
+  float aa = 1.5 / uRes.y;
+  /* Thicker air toward its foot: pure haze at the horizon, a faint hint of
+     blossom at the crowns. */
+  vec3 far = mix(fogCol, BLOOM_MID + HAZE, FAR_WOOD_TINT * smoothstep(0.0, wood, y));
+  return mix(c, far, 1.0 - smoothstep(wood - aa, wood + aa, y));
 }
 
 /* The warm air down the lane, and the sun's shafts slanting through it. */
@@ -416,14 +431,17 @@ vec3 world(vec2 fragCoord) {
       vec2 q = vec2(ro.x + sp.x * z / FOCAL, EYE + ro.y + sp.y * z / FOCAL);
       float px = z / (FOCAL * uRes.y);
       float fog = exp(-z * FOG);
+      float fade = 1.0 - smoothstep(LANE_FADE.x, LANE_FADE.y, z);
+      if (fade <= 0.0) continue;
       vec4 c;
       if (part == 0) {
         vec3 glow;
         c = lantern(q, row, sign(q.x), z, px, glow);
-        acc += trans * glow * fog;
+        acc += trans * glow * fog * fade;
       } else {
         c = plate(q, row + 1.0, px);
       }
+      c.a *= fade;
       if (c.a <= 0.0) continue;
       acc += trans * c.a * mix(fogCol, c.rgb, fog);
       trans *= 1.0 - c.a;
@@ -439,7 +457,7 @@ vec3 world(vec2 fragCoord) {
     back = mix(fogCol, groundColor(g, groundZ), exp(-groundZ * FOG));
     solidZ = min(solidZ, groundZ);
   } else {
-    back = laneSky(rd);
+    back = laneSky(rd, fogCol);
   }
   vec3 col = acc + trans * back;
   return paintPetals(col, sp, ro, solidZ, fogCol);
