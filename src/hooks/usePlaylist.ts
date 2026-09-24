@@ -30,6 +30,7 @@ import { readAudioTags } from '../utils/audioTags';
 import { probeDuration } from '../utils/audioProbe';
 import { readStoredBool, writeStored } from '../utils/storage';
 import { releaseCoverUrl } from '../utils/coverUrl';
+import { sameContent } from '../utils/fileDigest';
 
 interface PlaylistState {
   tracks: PlaylistTrack[];
@@ -230,6 +231,9 @@ export function usePlaylist() {
   const persistedRef = useRef<{ ids: Set<string>; order: string }>({ ids: new Set(), order: '' });
   const scanQueueRef = useRef<string[]>([]);
   const scanningRef = useRef(false);
+  // Tracks scanned but not yet written: a scan can beat the first write, and its
+  // patch then finds no record - so the insert itself must carry scanned=true.
+  const scannedRef = useRef(new Set<string>());
   const writeChainRef = useRef<Promise<void>>(Promise.resolve());
 
   const enqueueWrite = useCallback((op: () => Promise<void>) => {
@@ -259,6 +263,7 @@ export function usePlaylist() {
           cover: tags.cover ?? track.cover,
           duration: track.duration ?? duration,
         };
+        scannedRef.current.add(id);
         dispatch({ type: 'patch', id, patch });
         enqueueWrite(() =>
           patchTrack(id, {
@@ -335,7 +340,8 @@ export function usePlaylist() {
     }
     if (added.length) {
       requestPersistentStorage();
-      const records = added.map((t) => toRecord(t, false));
+      const records = added.map((t) => toRecord(t, scannedRef.current.has(t.id)));
+      for (const t of added) scannedRef.current.delete(t.id);
       enqueueWrite(() => saveTracks(records, ids));
     }
     if (removed.length) enqueueWrite(() => removeTracks(removed, ids));
@@ -348,31 +354,68 @@ export function usePlaylist() {
 
   // ── Actions ────────────────────────────────────────────────────────────────
 
+  // The add in flight while it hashes: the next add waits for it, so its
+  // duplicate check sees every track the previous one kept.
+  const addInFlightRef = useRef<Promise<unknown> | null>(null);
+
   /**
-   * Add files to the end of the list. Returns one id per input file, in input
-   * order - the existing id when that exact file is already in the list, so a
-   * re-dropped song is found rather than duplicated.
+   * Add files to the end of the list. Resolves to one id per input file, in
+   * input order - the existing id when that song is already in the list (same
+   * file, or byte-identical content under another name), so a re-dropped song
+   * is found rather than duplicated.
+   *
+   * Only a size collision triggers a content hash; with none (the usual case)
+   * the tracks are committed synchronously, before the promise even settles.
    */
   const addFiles = useCallback(
-    (files: File[]): string[] => {
-      const byKey = new Map(stateRef.current.tracks.map((t) => [fileKey(t.file), t.id]));
-      const now = Date.now();
-      const fresh: PlaylistTrack[] = [];
-      const ids = files.map((file, i) => {
-        const key = fileKey(file);
-        const existing = byKey.get(key);
-        if (existing) return existing;
-        const track = trackFromFile(file, now + i);
-        byKey.set(key, track.id);
-        fresh.push(track);
-        return track.id;
+    (files: File[]): Promise<string[]> => {
+      const run = async (): Promise<string[]> => {
+        const known = new Map<string, PlaylistTrack>();
+        for (const t of stateRef.current.tracks) known.set(t.id, t);
+        for (const t of pendingRef.current.values()) known.set(t.id, t);
+        const byKey = new Map([...known.values()].map((t) => [fileKey(t.file), t.id]));
+        const bySize = new Map<number, PlaylistTrack[]>();
+        const indexBySize = (t: PlaylistTrack) => bySize.set(t.size, [...(bySize.get(t.size) ?? []), t]);
+        known.forEach(indexBySize);
+
+        const now = Date.now();
+        const fresh: PlaylistTrack[] = [];
+        const ids: string[] = [];
+        for (const [i, file] of files.entries()) {
+          const key = fileKey(file);
+          let existing = byKey.get(key);
+          for (const candidate of existing ? [] : bySize.get(file.size) ?? []) {
+            if (await sameContent(file, candidate.file)) {
+              existing = candidate.id;
+              break;
+            }
+          }
+          if (existing) {
+            ids.push(existing);
+            continue;
+          }
+          const track = trackFromFile(file, now + i);
+          byKey.set(key, track.id);
+          indexBySize(track);
+          fresh.push(track);
+          ids.push(track.id);
+        }
+        if (fresh.length) {
+          for (const t of fresh) pendingRef.current.set(t.id, t);
+          dispatch({ type: 'add', tracks: fresh, random: Math.random });
+          queueScan(fresh.map((t) => t.id));
+        }
+        return ids;
+      };
+
+      const previous = addInFlightRef.current;
+      const result = previous ? previous.then(run, run) : run();
+      const settled = result.catch(() => undefined);
+      addInFlightRef.current = settled;
+      void settled.then(() => {
+        if (addInFlightRef.current === settled) addInFlightRef.current = null;
       });
-      if (fresh.length) {
-        for (const t of fresh) pendingRef.current.set(t.id, t);
-        dispatch({ type: 'add', tracks: fresh, random: Math.random });
-        queueScan(fresh.map((t) => t.id));
-      }
-      return ids;
+      return result;
     },
     [queueScan],
   );

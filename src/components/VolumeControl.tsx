@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef } from 'react';
+import { SpeakerHighIcon, SpeakerLowIcon, SpeakerXIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
-import { Volume2, Volume1, VolumeX } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useDoubleClickReset } from '@/hooks/useDoubleClickReset';
@@ -71,13 +71,13 @@ export const VolumeControl = memo(function VolumeControl({ volume, onVolumeChang
   }, []);
 
   const muted = volume === 0;
-  const VolumeIcon = muted ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
+  const VolumeIcon = muted ? SpeakerXIcon : volume < 0.5 ? SpeakerLowIcon : SpeakerHighIcon;
   const percent = Math.round(volume * 100);
 
   return (
     <div
       ref={wrapperRef}
-      className={`flex items-center gap-2 px-2 py-2 rounded-full hover:bg-[rgba(var(--color-border),0.3)] transition-colors ${className}`}
+      className={`flex h-10 items-center gap-2.5 px-3 rounded-full hover:bg-[rgba(var(--color-border),0.3)] transition-colors ${className}`}
     >
       <Tooltip>
         <TooltipTrigger asChild>
@@ -107,7 +107,7 @@ export const VolumeControl = memo(function VolumeControl({ volume, onVolumeChang
             disabled={disabled}
             aria-label={t('playback.volume')}
             aria-valuetext={`${percent}%`}
-            className="w-20 sm:w-24"
+            className="slider-quiet w-24"
           />
         </TooltipTrigger>
         <TooltipContent>{`${t('playback.volume')}: ${percent}%`}</TooltipContent>

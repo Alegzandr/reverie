@@ -60,14 +60,6 @@ describe('MoodContext', () => {
     expect(document.documentElement.classList.contains('dark')).toBe(true);
   });
 
-  it('toggles and remembers the living world', () => {
-    const { result } = renderMoodHook();
-    expect(result.current.livingWorld).toBe(true);
-    act(() => result.current.toggleLivingWorld());
-    expect(result.current.livingWorld).toBe(false);
-    expect(localStorage.getItem('reverie:living-world')).toBe('false');
-  });
-
   it('throws when used outside of provider', () => {
     expect(() => renderHook(() => useMood())).toThrow('useMood must be used within MoodProvider');
   });

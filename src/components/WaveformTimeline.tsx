@@ -1,12 +1,12 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { MusicNoteIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
-import { Music } from 'lucide-react';
 import { WAVEFORM, AUDIO_PROCESSING } from '../constants';
 import { useScrubber } from '../hooks/useScrubber';
 import { useWaveform } from '../hooks/useWaveform';
 import { DurationToggle } from './DurationToggle';
 import { useMood } from '../contexts/MoodContext';
-import { shapeEnvelope } from '../utils/waveform';
+import { normalizeEnvelope, shapeEnvelope } from '../utils/waveform';
 import { formatClock } from '../utils/formatters';
 import { createWaveInstrument, type WaveInstrument } from './waveInstrument';
 import { prefersReducedMotion } from './scenes/motion';
@@ -95,7 +95,8 @@ export const WaveformTimeline = memo(function WaveformTimeline({
       : t('waveform.tempoScaled', { bpm: effective, meter, original: detectedBpm });
   }, [detectedBpm, detectedMeter, rate, t]);
 
-  const { bars: sourceBars } = useWaveform({ buffer, bars: barCount });
+  const { bars: rawBars } = useWaveform({ buffer, bars: barCount });
+  const sourceBars = useMemo(() => normalizeEnvelope(rawBars), [rawBars]);
   // Preview the active effect by reshaping the source envelope in step with the sound.
   const bars = useMemo(() => shapeEnvelope(sourceBars, options), [sourceBars, options]);
 
@@ -119,9 +120,9 @@ export const WaveformTimeline = memo(function WaveformTimeline({
   // itself never re-subscribes on prop churn - it just reads the ref). The
   // playhead ratio is deliberately NOT here: it ticks 60×/s through the clock
   // subscription, not through renders.
-  const frameRef = useRef({ env: bars, isPlaying, reducedMotion: reduceMotion, fx });
+  const frameRef = useRef({ env: bars, isPlaying, reducedMotion: reduceMotion, fx, duration });
   useEffect(() => {
-    frameRef.current = { env: bars, isPlaying, reducedMotion: reduceMotion, fx };
+    frameRef.current = { env: bars, isPlaying, reducedMotion: reduceMotion, fx, duration };
   });
 
   // The analyser prop is stable in practice, but route it through a ref so the
@@ -150,7 +151,11 @@ export const WaveformTimeline = memo(function WaveformTimeline({
     onSeek,
     surfaceRef: contentRef,
     getTime: () => clock.get(),
-    onDragVisual: (r) => setDragRatio(r),
+    // Only the reduced-motion static paint reads this state; the live loop
+    // reads dragRatioRef, so a re-render per pointer move would be pure waste.
+    onDragVisual: (r) => {
+      if (reduceMotion) setDragRatio(r);
+    },
     onDragStart: (event) => {
       lastClientXRef.current = event.clientX;
     },
@@ -162,7 +167,7 @@ export const WaveformTimeline = memo(function WaveformTimeline({
     },
     onDragEnd: () => {
       stopEdgeScroll();
-      setDragRatio(null);
+      if (reduceMotion) setDragRatio(null);
     },
   });
 
@@ -375,7 +380,7 @@ export const WaveformTimeline = memo(function WaveformTimeline({
     const onScroll = () => drawNow();
     viewport?.addEventListener('scroll', onScroll, { passive: true });
     return () => viewport?.removeEventListener('scroll', onScroll);
-  }, [reduceMotion, drawNow, bars, dragRatio, isPlaying, fx, mood, resizeTick]);
+  }, [reduceMotion, drawNow, bars, dragRatio, isPlaying, fx, mood, resizeTick, duration]);
 
   return (
     <div className="wave-stage relative flex h-full flex-col gap-2.5">
@@ -392,7 +397,7 @@ export const WaveformTimeline = memo(function WaveformTimeline({
               the original in parentheses when the speed shifts it. */}
           {tempoLabel != null && (
             <span className="wave-chip tabular-nums">
-              <Music className="w-3 h-3 shrink-0" aria-hidden="true" />
+              <MusicNoteIcon className="w-3 h-3 shrink-0" aria-hidden="true" />
               {tempoLabel}
             </span>
           )}

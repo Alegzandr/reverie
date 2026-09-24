@@ -58,7 +58,9 @@ export function createAudioFeed(getAnalyser: () => AnalyserNode | null): AudioFe
   let bassBaseline = 0;
   let sinceKick = NO_KICK;
   let rowClock = 0;
-  const dirty: number[] = [];
+  // Double-buffered so the per-frame hand-off to the uploader allocates nothing.
+  let dirty: number[] = [];
+  let spareDirty: number[] = [];
 
   const frame: AudioFrame = { level: 0, bass: 0, mid: 0, treble: 0, playing: 0, kicks: [NO_KICK, NO_KICK, NO_KICK, NO_KICK] };
   const feed = { head: 0, headFraction: 0 };
@@ -182,7 +184,12 @@ export function createAudioFeed(getAnalyser: () => AnalyserNode | null): AudioFe
       return wrote;
     },
     consumeDirty() {
-      return dirty.splice(0, dirty.length);
+      // The caller is done with the previous batch by the next frame.
+      const out = dirty;
+      dirty = spareDirty;
+      dirty.length = 0;
+      spareDirty = out;
+      return out;
     },
     dispose() {
       attach(null);

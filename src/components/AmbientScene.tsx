@@ -32,15 +32,15 @@ function canRenderLive(): boolean {
 }
 
 export const AmbientScene = memo(function AmbientScene() {
-  const { def, livingWorld } = useMood();
+  const { def } = useMood();
   const [capable] = useState(canRenderLive);
   const [still] = useState(prefersReducedMotion);
   const [failed, setFailed] = useState(false);
   const [live, setLive] = useState(false);
 
-  const runWorld = livingWorld && capable && !failed;
+  const runWorld = capable && !failed;
 
-  // Leaving the live world (toggle off) drops back to the poster immediately.
+  // Leaving the live world (GPU failure) drops back to the poster immediately.
   useEffect(() => {
     if (runWorld) return;
     const id = window.setTimeout(() => setLive(false), 0);

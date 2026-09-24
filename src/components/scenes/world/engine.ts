@@ -40,12 +40,12 @@ export interface WorldEngine {
 
 type UniformName =
   | 'uRes' | 'uTime' | 'uTravel' | 'uLevel' | 'uBass' | 'uMid' | 'uTreble' | 'uPlaying' | 'uKicks'
-  | 'uAccent' | 'uAmbient' | 'uGlow' | 'uBackground' | 'uLight' | 'uPointer' | 'uFade' | 'uSpec' | 'uSpecHead'
+  | 'uColA' | 'uColB' | 'uColC' | 'uBg' | 'uBackground' | 'uLight' | 'uPointer' | 'uFade' | 'uSpec' | 'uSpecHead'
   | 'uNoise3' | 'uNoise2' | 'uJitter' | 'uSeed';
 
 const UNIFORMS: UniformName[] = [
   'uRes', 'uTime', 'uTravel', 'uLevel', 'uBass', 'uMid', 'uTreble', 'uPlaying', 'uKicks',
-  'uAccent', 'uAmbient', 'uGlow', 'uBackground', 'uLight', 'uPointer', 'uFade', 'uSpec', 'uSpecHead',
+  'uColA', 'uColB', 'uColC', 'uBg', 'uBackground', 'uLight', 'uPointer', 'uFade', 'uSpec', 'uSpecHead',
   'uNoise3', 'uNoise2', 'uJitter', 'uSeed',
 ];
 
@@ -66,6 +66,14 @@ const UNIT = { spec: 0, noise3: 1, noise2: 2, current: 3, history: 4, snapshot: 
 const STILL_TIME = 24;
 
 /** Halton(2,3) - well-spread sub-pixel offsets for the jitter sequence. */
+/** The worlds' display gamma: mood tokens are authored sRGB, shaded as light. */
+const WORLD_GAMMA = 2.2;
+const toLinear = (c: [number, number, number]): [number, number, number] => [
+  c[0] ** WORLD_GAMMA,
+  c[1] ** WORLD_GAMMA,
+  c[2] ** WORLD_GAMMA,
+];
+
 function halton(index: number, base: number): number {
   let f = 1;
   let r = 0;
@@ -84,6 +92,11 @@ const parseTriplet = (value: string, fallback: [number, number, number]): [numbe
   if (m.length < 3 || m.some((n) => Number.isNaN(n))) return fallback;
   return [m[0] / 255, m[1] / 255, m[2] / 255];
 };
+
+// Deterministic (fixed seeds) and ~30 ms to build: computed once per page, not
+// per engine mount (GPU recovery, StrictMode, context restore). ~1.1 MB.
+let noiseCache: { noise3: ReturnType<typeof buildNoise3D>; noise2: ReturnType<typeof buildNoise2D> } | null = null;
+const sharedNoise = () => (noiseCache ??= { noise3: buildNoise3D(), noise2: buildNoise2D() });
 
 export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngineOptions): WorldEngine | null {
   const gl = canvas.getContext('webgl2', {
@@ -120,8 +133,11 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
   const programs = new Map<WorldId, Program | 'failed'>();
   const pending = new Map<WorldId, { program: WebGLProgram; fs: WebGLShader }>();
 
-  const noise3 = buildNoise3D();
-  const noise2 = buildNoise2D();
+  const { noise3, noise2 } = sharedNoise();
+  // Pass-program uniform locations, looked up once per link (a per-frame
+  // getUniformLocation is a string lookup and a fresh object each call).
+  let accumLoc: { blend: WebGLUniformLocation | null } = { blend: null };
+  let presentLoc: { mix: WebGLUniformLocation | null; seed: WebGLUniformLocation | null } = { mix: null, seed: null };
 
   const linkSync = (fragment: string): WebGLProgram | null => {
     if (!vs) return null;
@@ -189,7 +205,18 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
     floatTargets = !!gl.getExtension('EXT_color_buffer_float');
     accumProg = linkSync(ACCUMULATE_SHADER);
     presentProg = linkSync(PRESENT_SHADER);
-    return !!(accumProg && presentProg);
+    if (!accumProg || !presentProg) return false;
+    // Samplers and the sharpen amount never change: set once per link.
+    gl.useProgram(accumProg);
+    gl.uniform1i(gl.getUniformLocation(accumProg, 'uCurrent'), UNIT.current);
+    gl.uniform1i(gl.getUniformLocation(accumProg, 'uHistory'), UNIT.history);
+    accumLoc = { blend: gl.getUniformLocation(accumProg, 'uBlend') };
+    gl.useProgram(presentProg);
+    gl.uniform1i(gl.getUniformLocation(presentProg, 'uImage'), UNIT.current);
+    gl.uniform1i(gl.getUniformLocation(presentProg, 'uSnapshot'), UNIT.snapshot);
+    gl.uniform1f(gl.getUniformLocation(presentProg, 'uSharpen'), SCENE_WORLD.PRESENT_SHARPEN);
+    presentLoc = { mix: gl.getUniformLocation(presentProg, 'uMix'), seed: gl.getUniformLocation(presentProg, 'uSeed') };
+    return true;
   };
 
   const makeTarget = (w: number, h: number): Target | null => {
@@ -325,6 +352,11 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
     }
     gl.deleteShader(job.fs);
     const loc = Object.fromEntries(UNIFORMS.map((u) => [u, gl.getUniformLocation(job.program, u)])) as Program['loc'];
+    // Texture units are fixed for the program's life: bind the samplers once.
+    gl.useProgram(job.program);
+    gl.uniform1i(loc.uSpec, UNIT.spec);
+    gl.uniform1i(loc.uNoise3, UNIT.noise3);
+    gl.uniform1i(loc.uNoise2, UNIT.noise2);
     const entry: Program = { program: job.program, loc };
     programs.set(id, entry);
     return entry;
@@ -336,12 +368,20 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
   let colC: [number, number, number] = [0.47, 0.39, 0.94];
   let bg: [number, number, number] = [0.04, 0.02, 0.07];
   let light = 0;
+  let linA = toLinear(colA);
+  let linB = toLinear(colB);
+  let linC = toLinear(colC);
+  let linBg = toLinear(bg);
   const palette = createMoodPaletteCache(() => {
     const cs = getComputedStyle(canvas);
     colA = parseTriplet(cs.getPropertyValue('--color-accent').trim(), colA);
     colB = parseTriplet(cs.getPropertyValue('--color-ambient').trim(), colB);
     colC = parseTriplet(cs.getPropertyValue('--hud-glow').trim(), colC);
     bg = parseTriplet(cs.getPropertyValue('--color-background').trim(), bg);
+    linA = toLinear(colA);
+    linB = toLinear(colB);
+    linC = toLinear(colC);
+    linBg = toLinear(bg);
     light = document.documentElement.classList.contains('dark') ? 0 : 1;
   });
 
@@ -362,6 +402,8 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
   let raf = 0;
   let lastNow = -1;
   let lastDraw = 0;
+  /** World-clock seconds not yet folded into time/travel (frames the idle throttle skipped). */
+  let pendingDt = 0;
   let disposed = false;
   let readyFired = false;
   let scale: number = options.fixedScale ?? SCENE_WORLD.RENDER_SCALE_START;
@@ -411,9 +453,10 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
     gl.uniform1f(loc.uTreble, f.treble);
     gl.uniform1f(loc.uPlaying, f.playing);
     gl.uniform4f(loc.uKicks, f.kicks[0], f.kicks[1], f.kicks[2], f.kicks[3]);
-    gl.uniform3f(loc.uAccent, colA[0], colA[1], colA[2]);
-    gl.uniform3f(loc.uAmbient, colB[0], colB[1], colB[2]);
-    gl.uniform3f(loc.uGlow, colC[0], colC[1], colC[2]);
+    gl.uniform3f(loc.uColA, linA[0], linA[1], linA[2]);
+    gl.uniform3f(loc.uColB, linB[0], linB[1], linB[2]);
+    gl.uniform3f(loc.uColC, linC[0], linC[1], linC[2]);
+    gl.uniform3f(loc.uBg, linBg[0], linBg[1], linBg[2]);
     gl.uniform3f(loc.uBackground, bg[0], bg[1], bg[2]);
     gl.uniform1f(loc.uLight, light);
     gl.uniform2f(loc.uPointer, pointer[0], pointer[1]);
@@ -423,9 +466,6 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
     // One row behind "now" plus the sub-row fraction: scrolls smoothly and never
     // blends into the row that's about to be overwritten.
     gl.uniform1f(loc.uSpecHead, feed.head - 1 + feed.headFraction);
-    gl.uniform1i(loc.uSpec, UNIT.spec);
-    gl.uniform1i(loc.uNoise3, UNIT.noise3);
-    gl.uniform1i(loc.uNoise2, UNIT.noise2);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   };
 
@@ -445,17 +485,17 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
     drawWorld(prog, w, h);
 
     // 2. Fold it into the running history.
-    const [prev, next] = frameIndex % 2 === 0 ? history : [history[1], history[0]];
+    const even = frameIndex % 2 === 0;
+    const prev = even ? history[0] : history[1];
+    const next = even ? history[1] : history[0];
     gl.bindFramebuffer(gl.FRAMEBUFFER, next.fbo);
     gl.useProgram(accumProg);
     gl.activeTexture(gl.TEXTURE0 + UNIT.current);
     gl.bindTexture(gl.TEXTURE_2D, scene.tex);
     gl.activeTexture(gl.TEXTURE0 + UNIT.history);
     gl.bindTexture(gl.TEXTURE_2D, prev.tex);
-    gl.uniform1i(gl.getUniformLocation(accumProg, 'uCurrent'), UNIT.current);
-    gl.uniform1i(gl.getUniformLocation(accumProg, 'uHistory'), UNIT.history);
     const weight = resetHistory ? 0 : SCENE_WORLD.TAA_HISTORY_WEIGHT;
-    gl.uniform1f(gl.getUniformLocation(accumProg, 'uBlend'), weight);
+    gl.uniform1f(accumLoc.blend, weight);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     resetHistory = false;
 
@@ -464,13 +504,10 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
     gl.useProgram(presentProg);
     gl.activeTexture(gl.TEXTURE0 + UNIT.current);
     gl.bindTexture(gl.TEXTURE_2D, next.tex);
-    gl.uniform1i(gl.getUniformLocation(presentProg, 'uImage'), UNIT.current);
     gl.activeTexture(gl.TEXTURE0 + UNIT.snapshot);
     gl.bindTexture(gl.TEXTURE_2D, (snapshot ?? next).tex);
-    gl.uniform1i(gl.getUniformLocation(presentProg, 'uSnapshot'), UNIT.snapshot);
-    gl.uniform1f(gl.getUniformLocation(presentProg, 'uMix'), snapshot ? crossfade : 1);
-    gl.uniform1f(gl.getUniformLocation(presentProg, 'uSharpen'), SCENE_WORLD.PRESENT_SHARPEN);
-    gl.uniform1f(gl.getUniformLocation(presentProg, 'uSeed'), frameIndex % 64);
+    gl.uniform1f(presentLoc.mix, snapshot ? crossfade : 1);
+    gl.uniform1f(presentLoc.seed, frameIndex % 64);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     lastPresented = next;
     frameIndex += 1;
@@ -511,6 +548,7 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
     const dt = still ? 0 : frameDeltaSeconds(now, lastNow);
     const deltaMs = lastNow < 0 ? 16.7 : now - lastNow;
     lastNow = now;
+    pendingDt += dt;
 
     if (!still) {
       feed.update(dt);
@@ -548,16 +586,23 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
     }
     if (!prog) {
       // Still compiling (parallel compile): keep polling; the photo stays up.
+      // The world starts from where it was, not with the wait's worth of drift.
+      pendingDt = 0;
       if (still) schedule();
       return;
     }
 
     if (!still) {
+      // The whole span since the last draw: advancing by only this rAF's delta
+      // made the idle-throttled drift run at a refresh-dependent fraction of
+      // its speed (~1/2 at 60 Hz, ~1/5 at 144 Hz).
+      const span = pendingDt;
       const f = feed.frame;
-      time += dt;
-      travel += dt * WORLD_SPEED[current] * (0.6 + f.level * 0.5 + f.bass * 0.3) * (0.6 + 0.4 * Math.max(f.playing, 0.3));
+      time += span;
+      travel += span * WORLD_SPEED[current] * (0.6 + f.level * 0.5 + f.bass * 0.3) * (0.6 + 0.4 * Math.max(f.playing, 0.3));
       adaptScale(now, deltaMs);
     }
+    pendingDt = 0;
     palette.ensure();
     uploadHistory();
     render(prog);

@@ -1,7 +1,7 @@
-import { memo, useCallback, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { FolderPlusIcon, HardDriveIcon, PlaylistIcon, PlusIcon, MagnifyingGlassIcon, TrashIcon } from '@phosphor-icons/react';
 import type { ChangeEvent, DragEvent, KeyboardEvent, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FolderPlus, HardDrive, ListMusic, Plus, Search, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { PLAYLIST } from '../../constants';
@@ -116,6 +116,16 @@ export const PlaylistPanel = memo(function PlaylistPanel({
   const reorderable = !query;
   const total = totalDuration(tracks);
 
+  // Row handlers read the list through refs: were they to close over `visible`
+  // or `drop`, every scan patch / drag step would hand all rows a new callback
+  // and defeat TrackRow's memo (O(rows) renders per change).
+  const navRef = useRef({ visible, reorderable, count: tracks.length });
+  const dropRef = useRef(drop);
+  useEffect(() => {
+    navRef.current = { visible, reorderable, count: tracks.length };
+    dropRef.current = drop;
+  }, [visible, reorderable, tracks.length, drop]);
+
   const focusRow = useCallback((id: string | undefined) => {
     if (!id) return;
     requestAnimationFrame(() => {
@@ -125,6 +135,7 @@ export const PlaylistPanel = memo(function PlaylistPanel({
 
   const onKeyNav = useCallback(
     (id: string, e: KeyboardEvent<HTMLButtonElement>) => {
+      const { visible, reorderable, count } = navRef.current;
       const pos = visible.findIndex((v) => v.track.id === id);
       if (pos < 0) return;
       const { index } = visible[pos];
@@ -135,7 +146,7 @@ export const PlaylistPanel = memo(function PlaylistPanel({
         const step = key === 'ArrowUp' ? -1 : 1;
         if (e.altKey && reorderable) {
           const to = index + step;
-          if (to >= 0 && to < tracks.length) {
+          if (to >= 0 && to < count) {
             onMove(index, to);
             focusRow(id);
           }
@@ -149,7 +160,7 @@ export const PlaylistPanel = memo(function PlaylistPanel({
         focusRow((visible[pos + 1] ?? visible[pos - 1])?.track.id);
       }
     },
-    [visible, reorderable, tracks.length, onMove, onRemove, focusRow],
+    [onMove, onRemove, focusRow],
   );
 
   const onDragStart = useCallback((index: number, e: DragEvent<HTMLLIElement>) => {
@@ -170,6 +181,7 @@ export const PlaylistPanel = memo(function PlaylistPanel({
       const from = dragFromRef.current;
       if (from === null) return;
       e.preventDefault();
+      const drop = dropRef.current;
       const side = drop?.index === index ? drop.side : 'before';
       let to = side === 'after' ? index + 1 : index;
       if (from < to) to -= 1;
@@ -177,7 +189,7 @@ export const PlaylistPanel = memo(function PlaylistPanel({
       dragFromRef.current = null;
       setDrop(null);
     },
-    [drop, onMove],
+    [onMove],
   );
 
   const onDragEnd = useCallback(() => {
@@ -195,7 +207,7 @@ export const PlaylistPanel = memo(function PlaylistPanel({
           <h2 className="pane-title">{t('playlist.title')}</h2>
           {tracks.length > 0 && (
             <p className="mt-1 flex items-center gap-1.5 text-xs tabular-nums text-[rgb(var(--color-text-secondary))]">
-              <ListMusic className="h-3.5 w-3.5" aria-hidden="true" />
+              <PlaylistIcon className="h-3.5 w-3.5" aria-hidden="true" />
               {tracks.length}
               {total > 0 && <span aria-hidden="true">·</span>}
               {total > 0 && formatClock(total)}
@@ -204,10 +216,10 @@ export const PlaylistPanel = memo(function PlaylistPanel({
         </div>
         <div className="flex items-center gap-0.5">
           <PickButton label={t('playlist.add')} onFiles={onAddFiles} className={iconButton}>
-            <Plus className="h-4 w-4" aria-hidden="true" />
+            <PlusIcon className="h-4 w-4" aria-hidden="true" />
           </PickButton>
           <PickButton folder label={t('playlist.addFolder')} onFiles={onAddFiles} className={iconButton}>
-            <FolderPlus className="h-4 w-4" aria-hidden="true" />
+            <FolderPlusIcon className="h-4 w-4" aria-hidden="true" />
           </PickButton>
           {tracks.length > 0 && (
             <Tooltip>
@@ -219,7 +231,7 @@ export const PlaylistPanel = memo(function PlaylistPanel({
                   aria-label={t('playlist.clear')}
                   aria-expanded={confirmClear}
                 >
-                  <Trash2 className="h-4 w-4" aria-hidden="true" />
+                  <TrashIcon className="h-4 w-4" aria-hidden="true" />
                 </button>
               </TooltipTrigger>
               <TooltipContent>{t('playlist.clear')}</TooltipContent>
@@ -260,7 +272,7 @@ export const PlaylistPanel = memo(function PlaylistPanel({
 
       {tracks.length >= PLAYLIST.FILTER_MIN_TRACKS && (
         <label className="mx-4 mb-2 flex items-center gap-2 rounded-full border border-[rgba(var(--color-border),0.5)] bg-[rgba(var(--color-surface),0.35)] px-3 py-1.5 focus-within:border-[rgba(var(--color-accent),0.6)]">
-          <Search className="h-3.5 w-3.5 shrink-0 text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
+          <MagnifyingGlassIcon className="h-3.5 w-3.5 shrink-0 text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
           <input
             type="search"
             value={filter}
@@ -275,7 +287,7 @@ export const PlaylistPanel = memo(function PlaylistPanel({
       {tracks.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-4 px-8 pb-8 text-center">
           <span className="grid h-14 w-14 place-items-center rounded-2xl bg-[rgba(var(--color-accent),0.12)] text-[rgb(var(--color-accent-text))]">
-            <ListMusic className="h-6 w-6" aria-hidden="true" />
+            <PlaylistIcon className="h-6 w-6" aria-hidden="true" />
           </span>
           <div>
             <p className="text-sm font-semibold text-[rgb(var(--color-text))]">{t('playlist.empty')}</p>
@@ -301,8 +313,10 @@ export const PlaylistPanel = memo(function PlaylistPanel({
                 playing={isPlaying && track.id === activeId}
                 reorderable={reorderable}
                 dropSide={drop?.index === index ? drop.side : null}
-                clock={clock}
-                duration={duration}
+                // Only the active row draws progress; the others get stable
+                // placeholders so a speed change doesn't re-render the list.
+                clock={track.id === activeId ? clock : null}
+                duration={track.id === activeId ? duration : 0}
                 onPlay={onPlay}
                 onRemove={onRemove}
                 onKeyNav={onKeyNav}
@@ -325,7 +339,7 @@ export const PlaylistPanel = memo(function PlaylistPanel({
           storageError ? 'text-[rgb(var(--color-accent-text))]' : 'text-[rgb(var(--color-text-secondary))]',
         )}
       >
-        <HardDrive className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+        <HardDriveIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
         {/* Two lines rather than an ellipsis: the promise (or the storage
             warning) is the whole point of this line - it must be readable. */}
         <span className="line-clamp-2">{storageError ? t('playlist.storageFull') : t('playlist.stored')}</span>

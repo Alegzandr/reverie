@@ -1,13 +1,14 @@
-import { memo, useState, useEffect, useRef } from "react";
+import { memo, useCallback, useState, useEffect, useRef } from "react";
+import { LightningIcon, WavesIcon, HeadphonesIcon, SpeakerHifiIcon } from "@phosphor-icons/react";
+import type { Icon } from "@phosphor-icons/react";
 import { useTranslation } from "react-i18next";
-import { Zap, Waves, Radio, Volume2 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 import { prefersReducedMotion } from "./scenes/motion";
 import { EffectSlider } from "./EffectSlider";
 import { EffectRow } from "./EffectRow";
 import { BeatToggle } from "./BeatToggle";
 import { useRadioGroupKeys } from "../hooks/useRadioGroupKeys";
 import { EFFECT_DEFAULTS } from "../constants";
+import { loadEffectPrefs, saveEffectPrefs, settingsFromPrefs, type EffectPrefs } from "../utils/effectPrefs";
 import {
     formatSpeedMultiplier,
     formatPercentage,
@@ -36,10 +37,6 @@ export interface EffectSettings {
 interface EffectControlsProps {
     onChange: (settings: EffectSettings) => void;
     disabled?: boolean;
-    // Seeds the internal state on mount. Lets a parent restore the live settings
-    // when this component is remounted (e.g. the desktop gate flips during a
-    // window drag), instead of snapping back to the slow-reverb defaults.
-    initialSettings?: EffectSettings;
 }
 
 // Listed effects - Slow + Reverb leads as the signature late-night mood. There is
@@ -53,93 +50,44 @@ interface EffectControlsProps {
 // slider grows past this on demand and simply scrolls; that's a deliberate act.)
 const ADJUSTMENTS_MIN_HEIGHT = '13rem';
 
-const EFFECT_DEFS: { mode: EffectMode; icon: LucideIcon; labelKey: string }[] = [
-    { mode: "slow-reverb", icon: Waves, labelKey: "effects.slowReverb" },
-    { mode: "speed-up", icon: Zap, labelKey: "effects.speedUp" },
-    { mode: "8d-audio", icon: Radio, labelKey: "effects.8dAudio" },
-    { mode: "bass-boost", icon: Volume2, labelKey: "effects.bassBoost" },
+const EFFECT_DEFS: { mode: EffectMode; icon: Icon; labelKey: string }[] = [
+    { mode: "slow-reverb", icon: WavesIcon, labelKey: "effects.slowReverb" },
+    { mode: "speed-up", icon: LightningIcon, labelKey: "effects.speedUp" },
+    { mode: "8d-audio", icon: HeadphonesIcon, labelKey: "effects.8dAudio" },
+    { mode: "bass-boost", icon: SpeakerHifiIcon, labelKey: "effects.bassBoost" },
 ];
 const EFFECT_MODES = EFFECT_DEFS.map((fx) => fx.mode);
 
-export const EffectControls = memo(function EffectControls({ onChange, disabled, initialSettings }: EffectControlsProps) {
+export const EffectControls = memo(function EffectControls({ onChange, disabled }: EffectControlsProps) {
     const { t } = useTranslation();
-    // Slow + Reverb leads - the brand's signature late-night mood, and the first
-    // effect listed, so the Active row sits at the top on load. `initialSettings`
-    // (when provided) overrides these seeds for the active mode's parameters so a
-    // remount restores the live values instead of resetting to defaults.
-    const [mode, setMode] = useState<EffectMode>(
-        initialSettings?.mode ?? "slow-reverb"
-    );
-    const [speedMultiplier, setSpeedMultiplier] = useState<number>(
-        initialSettings?.mode === "speed-up"
-            ? initialSettings.speedMultiplier
-            : EFFECT_DEFAULTS.SPEED_UP.DEFAULT
-    );
-    const [slowSpeed, setSlowSpeed] = useState<number>(
-        initialSettings?.mode === "slow-reverb"
-            ? initialSettings.speedMultiplier
-            : EFFECT_DEFAULTS.SLOW_REVERB.SPEED_DEFAULT
-    );
-    const [reverbAmount, setReverbAmount] = useState<number>(
-        initialSettings?.mode === "slow-reverb"
-            ? initialSettings.reverbAmount
-            : EFFECT_DEFAULTS.SLOW_REVERB.REVERB_DEFAULT
-    );
-    const [rotationSpeed, setRotationSpeed] = useState<number>(
-        initialSettings?.rotationSpeed ??
-            EFFECT_DEFAULTS.EIGHT_D_AUDIO.ROTATION_DEFAULT
-    );
-    const [bassBoostIntensity, setBassBoostIntensity] = useState<number>(
-        initialSettings?.bassBoostIntensity ??
-            EFFECT_DEFAULTS.BASS_BOOST_UI.INTENSITY_DEFAULT
-    );
-    const [bassUnderwater, setBassUnderwater] = useState<number>(
-        initialSettings?.bassUnderwater ??
-            EFFECT_DEFAULTS.BASS_BOOST_UI.UNDERWATER_DEFAULT
-    );
-    const [enableBeats, setEnableBeats] = useState<boolean>(
-        initialSettings?.enableBeats ??
-            EFFECT_DEFAULTS.NIGHTCORE_BEATS.ENABLED_DEFAULT
-    );
-    const [beatsVolume, setBeatsVolume] = useState<number>(
-        initialSettings?.beatsVolume ??
-            EFFECT_DEFAULTS.NIGHTCORE_BEATS.VOLUME_DEFAULT
-    );
+    // Seeded from the remembered console (untouched track on a first visit), and
+    // written back on every change - which also makes a remount (the desktop gate
+    // flipping during a window drag) come back exactly as it was left.
+    const [seed] = useState(loadEffectPrefs);
+    const [mode, setMode] = useState<EffectMode>(seed.mode);
+    const [speedMultiplier, setSpeedMultiplier] = useState<number>(seed.speedUp);
+    const [slowSpeed, setSlowSpeed] = useState<number>(seed.slowSpeed);
+    const [reverbAmount, setReverbAmount] = useState<number>(seed.reverbAmount);
+    const [rotationSpeed, setRotationSpeed] = useState<number>(seed.rotationSpeed);
+    const [bassBoostIntensity, setBassBoostIntensity] = useState<number>(seed.bassBoostIntensity);
+    const [bassUnderwater, setBassUnderwater] = useState<number>(seed.bassUnderwater);
+    const [enableBeats, setEnableBeats] = useState<boolean>(seed.enableBeats);
+    const [beatsVolume, setBeatsVolume] = useState<number>(seed.beatsVolume);
 
     useEffect(() => {
-        if (mode === "none") {
-            // Bypass: play the untouched track - no time-stretch, no reverb, no spatialiser.
-            onChange({ mode: "none", speedMultiplier: 1, reverbAmount: 0 });
-        } else if (mode === "speed-up") {
-            onChange({
-                mode: "speed-up",
-                speedMultiplier,
-                reverbAmount: 0,
-                enableBeats,
-                beatsVolume,
-            });
-        } else if (mode === "slow-reverb") {
-            onChange({
-                mode: "slow-reverb",
-                speedMultiplier: slowSpeed,
-                reverbAmount,
-            });
-        } else if (mode === "8d-audio") {
-            onChange({
-                mode: "8d-audio",
-                speedMultiplier: 1,
-                reverbAmount: 0,
-                rotationSpeed,
-            });
-        } else {
-            onChange({
-                mode: "bass-boost",
-                speedMultiplier: 1,
-                reverbAmount: 0,
-                bassBoostIntensity,
-                bassUnderwater,
-            });
-        }
+        const prefs: EffectPrefs = {
+            mode,
+            speedUp: speedMultiplier,
+            slowSpeed,
+            reverbAmount,
+            rotationSpeed,
+            bassBoostIntensity,
+            bassUnderwater,
+            enableBeats,
+            beatsVolume,
+        };
+        saveEffectPrefs(prefs);
+        onChange(settingsFromPrefs(prefs));
     }, [
         mode,
         speedMultiplier,
@@ -173,9 +121,9 @@ export const EffectControls = memo(function EffectControls({ onChange, disabled,
     // Effects are exclusive: selecting an inactive one makes it Active. Clicking the
     // *already-active* effect powers it off, dropping back to "none" - the untouched
     // track. "Original" is therefore a state, never a row.
-    const handleSelect = (next: EffectMode) => {
+    const handleSelect = useCallback((next: EffectMode) => {
         setMode((current) => (current === next ? "none" : next));
-    };
+    }, []);
     // Arrow keys walk the group like any radiogroup: they select, never toggle off.
     const handleGroupKeys = useRadioGroupKeys(EFFECT_MODES, setMode);
 

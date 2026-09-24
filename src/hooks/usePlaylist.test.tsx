@@ -9,6 +9,14 @@ vi.mock('../utils/audioProbe', () => ({ probeDuration: vi.fn(async () => 42) }))
 
 const file = (name: string, lastModified = 1) => new File([name], `${name}.mp3`, { type: 'audio/mpeg', lastModified });
 
+// Let background scans + writes land before the next test swaps the database.
+async function settled(count: number) {
+  await waitFor(async () => {
+    const records = (await loadStoredPlaylist())?.records ?? [];
+    expect(records.length === count && records.every((r) => r.scanned)).toBe(true);
+  });
+}
+
 async function renderRestored() {
   const hook = renderHook(() => usePlaylist());
   await waitFor(() => expect(hook.result.current.restored).toBe(true));
@@ -24,14 +32,14 @@ describe('usePlaylist', () => {
   it('adds files in order, dedupes a re-added file, and fills durations in the background', async () => {
     const { result } = await renderRestored();
     let ids: string[] = [];
-    act(() => {
-      ids = result.current.addFiles([file('a'), file('b')]);
+    await act(async () => {
+      ids = await result.current.addFiles([file('a'), file('b')]);
     });
     expect(result.current.tracks.map((t) => t.title)).toEqual(['a', 'b']);
 
     let again: string[] = [];
-    act(() => {
-      again = result.current.addFiles([file('a')]);
+    await act(async () => {
+      again = await result.current.addFiles([file('a')]);
     });
     expect(again).toEqual([ids[0]]);
     expect(result.current.tracks).toHaveLength(2);
@@ -39,11 +47,40 @@ describe('usePlaylist', () => {
     await waitFor(() => expect(result.current.tracks.every((t) => t.duration === 42)).toBe(true));
   });
 
+  it('dedupes byte-identical files even under another name or date, but keeps same-size different songs', async () => {
+    const { result } = await renderRestored();
+    const song = (name: string, body: string, lastModified = 1) =>
+      new File([body], `${name}.mp3`, { type: 'audio/mpeg', lastModified });
+    let ids: string[] = [];
+    await act(async () => {
+      ids = await result.current.addFiles([song('a', 'same'), song('a (copy)', 'same', 9), song('b', 'diff')]);
+    });
+    expect(ids[1]).toBe(ids[0]);
+    expect(result.current.tracks.map((t) => t.title)).toEqual(['a', 'b']);
+
+    let again: string[] = [];
+    await act(async () => {
+      again = await result.current.addFiles([song('renamed', 'diff', 5), song('c', 'news')]);
+    });
+    expect(again[0]).toBe(ids[2]);
+    expect(result.current.tracks.map((t) => t.title)).toEqual(['a', 'b', 'c']);
+    await settled(3);
+  });
+
+  it('commits a batch with no size collision synchronously', async () => {
+    const { result } = await renderRestored();
+    act(() => {
+      void result.current.addFiles([file('a'), file('bb')]);
+    });
+    expect(result.current.tracks).toHaveLength(2);
+    await settled(2);
+  });
+
   it('persists the list and restores it, order and session included, on a fresh mount', async () => {
     const first = await renderRestored();
     let ids: string[] = [];
-    act(() => {
-      ids = first.result.current.addFiles([file('a'), file('b'), file('c')]);
+    await act(async () => {
+      ids = await first.result.current.addFiles([file('a'), file('b'), file('c')]);
     });
     act(() => first.result.current.moveTrack(2, 0));
     act(() => first.result.current.setActive(ids[1]));
@@ -59,8 +96,8 @@ describe('usePlaylist', () => {
   it('navigates, wraps only when asked, and keeps the cursor when the playing track is removed', async () => {
     const { result } = await renderRestored();
     let ids: string[] = [];
-    act(() => {
-      ids = result.current.addFiles([file('a'), file('b'), file('c')]);
+    await act(async () => {
+      ids = await result.current.addFiles([file('a'), file('b'), file('c')]);
     });
     act(() => result.current.setActive(ids[2]));
     expect(result.current.neighbor(1, false)).toBeNull();
@@ -71,23 +108,25 @@ describe('usePlaylist', () => {
     // 'b' is gone but still playing: next is what followed it, previous what preceded it.
     expect(result.current.neighbor(1, false)).toBe(ids[2]);
     expect(result.current.neighbor(-1, false)).toBe(ids[0]);
+    await settled(2);
   });
 
   it('skips broken files when advancing on its own', async () => {
     const { result } = await renderRestored();
     let ids: string[] = [];
-    act(() => {
-      ids = result.current.addFiles([file('a'), file('b'), file('c')]);
+    await act(async () => {
+      ids = await result.current.addFiles([file('a'), file('b'), file('c')]);
     });
     act(() => result.current.setActive(ids[0]));
     act(() => result.current.markBroken(ids[1], true));
     expect(result.current.nextForAutoAdvance(false)).toBe(ids[2]);
+    await settled(3);
   });
 
   it('clears everything, stored copies included', async () => {
     const { result } = await renderRestored();
-    act(() => {
-      result.current.addFiles([file('a'), file('b')]);
+    await act(async () => {
+      await result.current.addFiles([file('a'), file('b')]);
     });
     await waitFor(async () => expect((await loadStoredPlaylist())?.records).toHaveLength(2));
     act(() => result.current.clear());

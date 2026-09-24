@@ -354,14 +354,23 @@ export const MEDIA_RECORDER_FORMATS = {
 // ============================================================================
 
 export const WAVEFORM = {
-    /** Number of bars to display in waveform timeline */
-    BAR_COUNT: 96,
+    /** Envelope samples across the unstretched clip - dense enough that the ribbon's contour carries real detail at desktop widths */
+    BAR_COUNT: 192,
 
     /** Minimum number of bars to display */
     MIN_BAR_COUNT: 24,
 
     /** Minimum bar height percentage */
     MIN_BAR_HEIGHT_PERCENT: 8,
+
+    /** Display normalisation: the loudest sample reaches this share of the ribbon's half-height */
+    NORMALIZED_PEAK: 0.94,
+
+    /** Percentile (0..1) of the envelope treated as the track's "quiet" level, ignoring silent intros/outros */
+    CONTRAST_FLOOR_PERCENTILE: 0.1,
+
+    /** Share of that quiet level kept as baseline; below 1 expands dynamics so a mastered-loud track stops reading as a flat band */
+    CONTRAST_FLOOR_KEEP: 0.6,
 
     /** Width (px) of the left/right edge zones that trigger auto-scroll while scrubbing an overflowing clip */
     EDGE_SCROLL_ZONE_PX: 48,
@@ -466,9 +475,9 @@ export const NIGHTCORE = {
      * the site root - a hardcoded '/sounds/...' 404s on GitHub Pages.
      */
     SAMPLES: {
-        kick: `${import.meta.env.BASE_URL}sounds/nightcore-kick.wav`,
-        clap: `${import.meta.env.BASE_URL}sounds/nightcore-clap.wav`,
-        finish: `${import.meta.env.BASE_URL}sounds/nightcore-finish.wav`,
+        kick: `${import.meta.env.BASE_URL}sounds/nightcore-kick.flac`,
+        clap: `${import.meta.env.BASE_URL}sounds/nightcore-clap.flac`,
+        finish: `${import.meta.env.BASE_URL}sounds/nightcore-finish.flac`,
     },
     /**
      * Per-role level trims so the pre-rendered samples sit together (the crash matches
@@ -611,6 +620,13 @@ export const TEMPO_DETECTION = {
 // ============================================================================
 
 export const EFFECT_DEFAULTS = {
+    /**
+     * A first visit hears the untouched track; afterwards the console reopens on
+     * whatever the listener left (active effect + every slider), kept under this key.
+     */
+    MODE_DEFAULT: "none",
+    STORAGE_KEY: "reverie:effects",
+
     /** Speed-up effect defaults */
     SPEED_UP: {
         DEFAULT: 1.2,

@@ -1,5 +1,5 @@
-import { Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { CircleNotchIcon } from '@phosphor-icons/react';
 import { Progress } from '@/components/ui/progress';
 
 interface ProgressBarProps {
@@ -15,7 +15,7 @@ export function ProgressBar({ progress, isProcessing, message }: ProgressBarProp
   return (
     <Card className="rounded-2xl p-5" role="status">
       <div className="flex items-center gap-3 mb-4">
-        <Loader2 className="w-5 h-5 text-[rgb(var(--color-accent-text))] animate-spin motion-reduce:animate-none flex-shrink-0" aria-hidden="true" />
+        <CircleNotchIcon className="w-5 h-5 text-[rgb(var(--color-accent-text))] animate-spin motion-reduce:animate-none flex-shrink-0" aria-hidden="true" />
         <span className="text-sm font-medium text-[rgb(var(--color-text))]">{message}</span>
         <span className="ml-auto text-sm font-semibold text-[rgb(var(--color-accent-text))]" aria-hidden="true">
           {Math.round(progress)}%

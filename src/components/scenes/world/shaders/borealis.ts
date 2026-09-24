@@ -81,11 +81,16 @@ float boreCrest(float x, float seed) {
 
 /* One range: a filtered silhouette, a gentle darkening toward the water, and a
    crisp snow cap riding the crest on the high ground. */
-vec3 boreRange(vec3 col, vec2 q, float seed, float height, float snowiness, vec3 rockTop, vec3 rockFoot, vec3 snowWest, vec3 snowEast) {
-  float h = SHORE + 0.003 + boreCrest(q.x, seed) * height;
-  float d = q.y - h;
+/* Split from boreRange so both silhouettes (and their fwidth) resolve in
+   uniform flow, before world() decides whether this pixel needs the air. */
+float boreLand(vec2 q, float seed, float height, out float h, out float d) {
+  h = SHORE + 0.003 + boreCrest(q.x, seed) * height;
+  d = q.y - h;
   float aa = fwidth(d) + 0.0003;
-  float land = 1.0 - smoothstep(-aa, aa, d);
+  return 1.0 - smoothstep(-aa, aa, d);
+}
+
+vec3 boreRange(vec3 col, vec2 q, float seed, float h, float d, float land, float snowiness, vec3 rockTop, vec3 rockFoot, vec3 snowWest, vec3 snowEast) {
   if (land <= 0.0) return col;
   float rise = clamp((q.y - SHORE) / max(h - SHORE, 0.001), 0.0, 1.0);
   vec3 rock = mix(rockFoot, rockTop, smoothstep(0.0, 1.0, rise));
@@ -114,14 +119,23 @@ vec3 world(vec2 fragCoord) {
      with clean snow caps - rose with twilight in the west, aurora-green east. */
   vec3 dusk = mix(uColA, vec3(1.0, 0.55, 0.3), 0.45);
   vec3 green = boreGreen();
-  vec3 air = boreSky(vec2(q.x, SHORE + 0.03));
-  vec3 rock = mix(uBg, uColB, 0.06) * 0.42;
-  col = boreRange(col, vec2(q.x * 0.85 + 0.37 + uTravel * 0.001, q.y), 61.0, 0.12, 0.0,
-    mix(rock, air, 0.55), mix(rock, air, 0.68),
-    mix(air, dusk * 0.4 + 0.1, 0.35), mix(air, green * 0.2 + 0.06, 0.35));
-  col = boreRange(col, vec2(q.x * 1.2 + uTravel * 0.002, q.y), 41.0, 0.27, 1.0,
-    rock * 1.15, mix(rock * 0.7, air, 0.12),
-    dusk * 0.11 + vec3(0.045, 0.045, 0.06), green * 0.05 + vec3(0.03, 0.04, 0.055));
+  vec2 qFar = vec2(q.x * 0.85 + 0.37 + uTravel * 0.001, q.y);
+  vec2 qNear = vec2(q.x * 1.2 + uTravel * 0.002, q.y);
+  float hFar, dFar, hNear, dNear;
+  float landFar = boreLand(qFar, 61.0, 0.12, hFar, dFar);
+  float landNear = boreLand(qNear, 41.0, 0.27, hNear, dNear);
+  /* The air tint is a whole second sky: only rock pixels ever read it, so the
+     open sky (and its reflection) skips it - identical output, far less work. */
+  if (landFar > 0.0 || landNear > 0.0) {
+    vec3 air = boreSky(vec2(q.x, SHORE + 0.03));
+    vec3 rock = mix(uBg, uColB, 0.06) * 0.42;
+    col = boreRange(col, qFar, 61.0, hFar, dFar, landFar, 0.0,
+      mix(rock, air, 0.55), mix(rock, air, 0.68),
+      mix(air, dusk * 0.4 + 0.1, 0.35), mix(air, green * 0.2 + 0.06, 0.35));
+    col = boreRange(col, qNear, 41.0, hNear, dNear, landNear, 1.0,
+      rock * 1.15, mix(rock * 0.7, air, 0.12),
+      dusk * 0.11 + vec3(0.045, 0.045, 0.06), green * 0.05 + vec3(0.03, 0.04, 0.055));
+  }
 
   /* Mirror: the lake holds it all, a shade darker and cooler, glassy near the shore. */
   vec3 lake = col * mix(0.82, 0.55, depth) + uColB * 0.003;

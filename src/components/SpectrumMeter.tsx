@@ -43,6 +43,22 @@ export const SpectrumMeter = memo(function SpectrumMeter({ getAnalyser, isPlayin
       return v ? `rgb(${v})` : fallback;
     };
 
+    // CSS size cached off a ResizeObserver: a per-frame clientWidth read can
+    // force a synchronous layout after React/--audio-* writes dirtied the tree.
+    let cssW = canvas.clientWidth;
+    let cssH = canvas.clientHeight;
+    const ro =
+      typeof ResizeObserver !== 'undefined'
+        ? new ResizeObserver(() => {
+            cssW = canvas.clientWidth;
+            cssH = canvas.clientHeight;
+            // A settled (reduced-motion) or hidden loop repaints at the new size.
+            cancelAnimationFrame(raf);
+            raf = requestAnimationFrame(draw);
+          })
+        : null;
+    ro?.observe(canvas);
+
     // Idle-throttle clock.
     let last = 0;
     // Cached palette + gradient; the mood-palette cache re-resolves only when the
@@ -67,9 +83,14 @@ export const SpectrumMeter = memo(function SpectrumMeter({ getAnalyser, isPlayin
       }
       last = now;
 
+      // Hidden below xl (display:none): keep the loop ticking so it resumes on
+      // widen, but skip the analyser read and every draw call.
+      if (cssW === 0 || cssH === 0) {
+        if (!reduceMotion) raf = requestAnimationFrame(draw);
+        return;
+      }
+
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const cssW = canvas.clientWidth;
-      const cssH = canvas.clientHeight;
       if (canvas.width !== Math.round(cssW * dpr) || canvas.height !== Math.round(cssH * dpr)) {
         canvas.width = Math.round(cssW * dpr);
         canvas.height = Math.round(cssH * dpr);
@@ -107,9 +128,14 @@ export const SpectrumMeter = memo(function SpectrumMeter({ getAnalyser, isPlayin
       }
 
       palette.ensure();
+      // Mirrored round the rail's centre line (the waveform's instrument axis),
+      // so the meter sits on the same axis as the buttons beside it instead of
+      // settling as a strip along the bottom edge. Ambient at the axis, accent
+      // at both tips.
       if (!grad || gradH !== cssH) {
-        grad = ctx.createLinearGradient(0, cssH, 0, 0);
-        grad.addColorStop(0, ambient);
+        grad = ctx.createLinearGradient(0, 0, 0, cssH);
+        grad.addColorStop(0, accent);
+        grad.addColorStop(0.5, ambient);
         grad.addColorStop(1, accent);
         gradH = cssH;
       }
@@ -117,14 +143,16 @@ export const SpectrumMeter = memo(function SpectrumMeter({ getAnalyser, isPlayin
 
       const barW = (cssW - BAR_GAP * (BAR_COUNT - 1)) / BAR_COUNT;
       const radius = Math.min(barW / 2, 2);
+      // One path, one fill: the bars never overlap (BAR_GAP), so the pixels
+      // match 28 separate fills at a fraction of the draw calls.
+      ctx.beginPath();
       for (let i = 0; i < BAR_COUNT; i++) {
         const h = Math.max(2, levels[i] * cssH);
         const x = i * (barW + BAR_GAP);
-        const y = cssH - h;
-        ctx.beginPath();
+        const y = (cssH - h) / 2;
         ctx.roundRect(x, y, barW, h, radius);
-        ctx.fill();
       }
+      ctx.fill();
 
       // No-reduce: always keep animating (live spectrum or the idle wave).
       // Reduced motion: run only until the bars settle to the static baseline.
@@ -137,7 +165,10 @@ export const SpectrumMeter = memo(function SpectrumMeter({ getAnalyser, isPlayin
     };
 
     raf = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      ro?.disconnect();
+    };
   }, [getAnalyser, isPlaying]);
 
   return (

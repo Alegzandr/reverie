@@ -1,10 +1,10 @@
 import { memo } from "react";
-import type { LucideIcon } from "lucide-react";
+import type { Icon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import type { EffectMode } from "./EffectControls";
 
 interface EffectRowProps {
-    icon: LucideIcon;
+    icon: Icon;
     label: string;
     mode: EffectMode;
     active: boolean;

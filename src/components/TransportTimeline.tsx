@@ -75,9 +75,17 @@ export function TransportTimeline({
     });
   }, [clock, syncToClock, draggingRef]);
 
+  // Mono digits: size both clocks to the longest string the track can show, so
+  // an hour-long track never clips and the bar never shifts while it plays
+  // (the trailing clock also carries the "-" of the remaining-time mode).
+  const clockCh = formatClock(duration).length;
+
   return (
     <div className={`flex items-center gap-3 min-w-0 ${className}`}>
-      <span className="text-xs font-medium tabular-nums text-[rgb(var(--color-text-secondary))] w-10 text-right shrink-0">
+      <span
+        className="text-xs font-medium tabular-nums text-[rgb(var(--color-text-secondary))] text-right shrink-0"
+        style={{ width: `${clockCh}ch` }}
+      >
         {formatClock(second)}
       </span>
 
@@ -122,7 +130,8 @@ export function TransportTimeline({
         duration={duration}
         current={second}
         storageKey={AUDIO_PROCESSING.DURATION_DISPLAY_STORAGE_KEY_FOOTER}
-        className="text-xs font-medium tabular-nums text-[rgb(var(--color-text-secondary))] w-12 text-left shrink-0 transition-colors hover:text-[rgb(var(--color-text))] focus-visible:text-[rgb(var(--color-text))] cursor-pointer"
+        style={{ width: `${clockCh + 1}ch` }}
+        className="text-xs font-medium tabular-nums text-[rgb(var(--color-text-secondary))] text-left shrink-0 transition-colors hover:text-[rgb(var(--color-text))] focus-visible:text-[rgb(var(--color-text))] cursor-pointer"
       />
     </div>
   );

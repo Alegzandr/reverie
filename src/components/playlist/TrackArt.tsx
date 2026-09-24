@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Music2 } from 'lucide-react';
+import { MusicNoteIcon } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { coverUrl } from '../../utils/coverUrl';
 
@@ -28,7 +28,7 @@ function hueOf(text: string): number {
 export const TrackArt = memo(function TrackArt({ title, cover, className, iconClassName }: TrackArtProps) {
   const url = coverUrl(cover);
   if (url) {
-    return <img src={url} alt="" className={cn('object-cover', className)} draggable={false} />;
+    return <img src={url} alt="" loading="lazy" decoding="async" className={cn('object-cover', className)} draggable={false} />;
   }
   const h = hueOf(title);
   return (
@@ -39,7 +39,7 @@ export const TrackArt = memo(function TrackArt({ title, cover, className, iconCl
       }}
       aria-hidden="true"
     >
-      <Music2 className={cn('text-white/80', iconClassName)} aria-hidden="true" />
+      <MusicNoteIcon className={cn('text-white/80', iconClassName)} aria-hidden="true" />
     </span>
   );
 });

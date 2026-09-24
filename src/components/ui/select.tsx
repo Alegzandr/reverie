@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Check, ChevronDown } from 'lucide-react';
+import { CheckIcon, CaretDownIcon } from '@phosphor-icons/react';
 
 import { cn } from '@/lib/utils';
 
@@ -169,7 +169,7 @@ export function Select({ value, onValueChange, options, 'aria-label': ariaLabel,
         )}
       >
         <span className="truncate">{selected?.label}</span>
-        <ChevronDown
+        <CaretDownIcon
           className={cn(
             'h-4 w-4 shrink-0 text-[rgb(var(--color-text-secondary))] transition-transform duration-200',
             open && 'rotate-180 text-[rgb(var(--color-accent-text))]',
@@ -225,7 +225,7 @@ export function Select({ value, onValueChange, options, 'aria-label': ariaLabel,
                 )}
               >
                 <span className="truncate">{opt.label}</span>
-                {isSelected && <Check className="h-4 w-4 shrink-0" aria-hidden="true" />}
+                {isSelected && <CheckIcon className="h-4 w-4 shrink-0" aria-hidden="true" />}
               </li>
             );
           })}

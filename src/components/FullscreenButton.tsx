@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useState } from 'react';
+import { CornersOutIcon, CornersInIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
-import { Maximize, Minimize } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
@@ -45,9 +45,9 @@ export const FullscreenButton = memo(function FullscreenButton() {
       <TooltipTrigger asChild>
         <Button type="button" variant="glass" size="icon" aria-label={label} onClick={toggle}>
           {isFullscreen ? (
-            <Minimize className="w-5 h-5 text-[rgb(var(--color-text))]" aria-hidden="true" />
+            <CornersInIcon className="w-5 h-5 text-[rgb(var(--color-text))]" aria-hidden="true" />
           ) : (
-            <Maximize className="w-5 h-5 text-[rgb(var(--color-text))]" aria-hidden="true" />
+            <CornersOutIcon className="w-5 h-5 text-[rgb(var(--color-text))]" aria-hidden="true" />
           )}
         </Button>
       </TooltipTrigger>

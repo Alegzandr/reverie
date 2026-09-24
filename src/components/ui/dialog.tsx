@@ -1,6 +1,6 @@
 import * as React from 'react';
+import { XIcon } from '@phosphor-icons/react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
-import { X } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
@@ -51,7 +51,7 @@ const DialogContent = React.forwardRef<
           aria-label={closeLabel}
           className="absolute right-5 top-5 p-2 rounded-full ios-button bg-[rgba(var(--color-surface),0.8)] text-[rgb(var(--color-text))] focus-visible:ring-2 focus-visible:ring-ring outline-none"
         >
-          <X className="w-4 h-4" />
+          <XIcon className="w-4 h-4" />
         </DialogPrimitive.Close>
       )}
     </DialogPrimitive.Content>

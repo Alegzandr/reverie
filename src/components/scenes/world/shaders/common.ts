@@ -24,10 +24,14 @@ uniform float uMid;
 uniform float uTreble;
 uniform float uPlaying;   // 0..1 eased: music is flowing
 uniform vec4 uKicks;      // seconds since the last four kicks (large = none)
-uniform vec3 uAccent;     // mood tokens as authored (sRGB 0..1) ...
-uniform vec3 uAmbient;
-uniform vec3 uGlow;
-uniform vec3 uBackground;
+/* Mood tokens as light (linear), which is what the worlds shade with. The
+   engine linearises them on the CPU once per palette read: a per-pixel pow on
+   frame-constant values was twelve log2/exp2 pairs for nothing. */
+uniform vec3 uColA;
+uniform vec3 uColB;
+uniform vec3 uColC;
+uniform vec3 uBg;
+uniform vec3 uBackground; // the background as authored (sRGB 0..1), for the fade
 uniform float uLight;     // 1 on the light palette
 uniform vec2 uPointer;    // eased pointer, -1..1
 uniform float uFade;      // world intro/outro 0..1
@@ -40,11 +44,6 @@ uniform sampler2D uNoise2;
 
 out vec4 outColor;
 
-/* ... and as light (linear), which is what the worlds shade with. Assigned in main. */
-vec3 uColA;
-vec3 uColB;
-vec3 uColC;
-vec3 uBg;
 
 #define PI 3.14159265
 #define TAU 6.28318531
@@ -171,10 +170,6 @@ vec3 tonemap(vec3 x) {
 vec3 world(vec2 fragCoord);
 
 void main() {
-  uColA = pow(uAccent, vec3(2.2));
-  uColB = pow(uAmbient, vec3(2.2));
-  uColC = pow(uGlow, vec3(2.2));
-  uBg = pow(uBackground, vec3(2.2));
   vec3 col = world(gl_FragCoord.xy + uJitter);
   col = tonemap(max(col, 0.0));
   col = pow(col, vec3(1.0 / 2.2));
@@ -205,6 +200,7 @@ void main() {
   vec3 mx = cur;
   for (int y = -1; y <= 1; y++) {
     for (int x = -1; x <= 1; x++) {
+      if (x == 0 && y == 0) continue; /* the centre is cur, already folded in */
       vec3 c = texelFetch(uCurrent, clamp(p + ivec2(x, y), ivec2(0), hi), 0).rgb;
       mn = min(mn, c);
       mx = max(mx, c);

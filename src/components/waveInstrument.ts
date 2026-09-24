@@ -57,6 +57,8 @@ export interface InstrumentFrame {
   /** Horizontal scroll offset of the clip viewport in CSS px. */
   scrollLeft: number;
   isPlaying: boolean;
+  /** Track length in seconds (effective timeline), for the time graduation. */
+  duration: number;
   /** True under prefers-reduced-motion: static ribbons, no live overlays. */
   reducedMotion: boolean;
   fx: InstrumentFx;
@@ -95,6 +97,7 @@ const BOOT_MS = 950;
  *  made the stage legible (see `.cockpit-boot` in index.css) - not under it. */
 const BOOT_DELAY_MS = 380;
 const FLAME_BINS = 22;
+/** Horizontal reach of one spectral bin behind the playhead (px). */
 const FLAME_STRIP_W = 5;
 /** Flame bins rise and settle this slowly (1/s): a breath, not a flicker. */
 const FLAME_ATTACK = 5;
@@ -112,6 +115,18 @@ const PULSE_COOLDOWN_MS = 1400;
  * phrase instead of shaking on every transient.
  */
 const ENERGY_SETTLE_S = 0.9;
+/** Time graduation: the finest "nice" step (s) whose ticks sit at least this far apart. */
+const TICK_MIN_GAP_PX = 56;
+const TICK_STEPS_S = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 1200];
+/** Every Nth tick is a major one (longer, brighter). */
+const TICK_MAJOR_EVERY = 4;
+const TICK_MINOR_LEN = 3;
+const TICK_MAJOR_LEN = 6;
+/** Soft halo around the played contour - light spilling off the glass edge. */
+const HALO_WIDTH = 5;
+/** Playhead reticle carets on the rims. */
+const CARET_HALF_W = 4;
+const CARET_DEPTH = 5;
 
 const parseTriplet = (value: string, fallback: Rgb): Rgb => {
   const m = value.split(',').map((p) => parseFloat(p));
@@ -392,6 +407,28 @@ export function createWaveInstrument(
     ctx.fillStyle = rgba(hairline, 0.22);
     ctx.fillRect(visL, mid - 0.5, visR - visL, 1);
 
+    // 1b - time graduation along both rims: the HUD's ruler, so the clip reads
+    // as a measured timeline rather than a floating shape. Past ticks take the
+    // accent, future ones stay in the hairline hue.
+    if (frame.duration > 0) {
+      const pxPerS = contentWidth / frame.duration;
+      const stepS = TICK_STEPS_S.find((s) => s * pxPerS >= TICK_MIN_GAP_PX) ?? TICK_STEPS_S[TICK_STEPS_S.length - 1];
+      const stepPx = stepS * pxPerS;
+      const k0 = Math.max(1, Math.ceil(visL / stepPx));
+      const k1 = Math.floor(Math.min(visR, contentWidth - 1) / stepPx);
+      for (let k = k0; k <= k1; k++) {
+        const x = Math.round(k * stepPx) + 0.5;
+        const major = k % TICK_MAJOR_EVERY === 0;
+        const len = major ? TICK_MAJOR_LEN : TICK_MINOR_LEN;
+        const played = x <= playX;
+        ctx.fillStyle = played
+          ? rgba(accent, major ? 0.55 : 0.32)
+          : rgba(hairline, major ? 0.4 : 0.22);
+        ctx.fillRect(x - 0.5, 1, 1, len);
+        ctx.fillRect(x - 0.5, cssH - 1 - len, 1, len);
+      }
+    }
+
     if (n > 1) {
       const step = contentWidth / (n - 1);
       const i0 = Math.max(0, Math.floor(visL / step));
@@ -420,12 +457,23 @@ export function createWaveInstrument(
         ctx.rect(visL, 0, Math.min(playX, visR) - visL, cssH);
         ctx.clip();
         traceRibbon(i0, i1, contentWidth, mid, amp);
+        // Halo first, under the body: a wide faint stroke reads as light
+        // bleeding off the glass edge (shadowBlur would re-rasterise the whole
+        // path every frame; a second stroke is nearly free).
+        if (!lowPower) {
+          if (additive) ctx.globalCompositeOperation = 'lighter';
+          ctx.strokeStyle = rgba(accent, glow(0.1 + 0.08 * level));
+          ctx.lineWidth = HALO_WIDTH;
+          ctx.lineJoin = 'round';
+          ctx.stroke();
+          ctx.globalCompositeOperation = 'source-over';
+        }
         ctx.fillStyle = playedGrad!;
         ctx.fill();
         // Same crisp contour as the ghost, in the accent: both sides of the
         // playhead read as ONE silhouette, only the light changes.
-        ctx.strokeStyle = rgba(accent, 0.55);
-        ctx.lineWidth = 1;
+        ctx.strokeStyle = rgba(mix(accent, core, 0.25), 0.7);
+        ctx.lineWidth = 1.25;
         ctx.stroke();
 
         // Inner glow filling the WHOLE played body, rising continuously toward
@@ -464,18 +512,40 @@ export function createWaveInstrument(
 
     // 5 - spectral flame: the track's real spectrum licking along the spine
     // behind the playhead (bass hugs the playhead, air trails off).
-    if (live && !lowPower && n > 1) {
-      if (additive) ctx.globalCompositeOperation = 'lighter';
-      for (let i = 0; i < FLAME_BINS; i++) {
-        const x = playX - (i + 1) * FLAME_STRIP_W;
-        if (x < visL || x > visR) continue;
-        // Capped just above the envelope so the flame licks the silhouette
+    // One continuous, curve-smoothed tongue (discrete strips read as a
+    // barcode), fading out as it trails away from "now".
+    const flameLen = FLAME_BINS * FLAME_STRIP_W;
+    if (live && !lowPower && n > 1 && playX > visL && playX - flameLen < visR) {
+      const flameH = (i: number) => {
+        const x = playX - i * FLAME_STRIP_W;
+        // Capped inside the envelope so the flame licks the silhouette
         // without breaking out of it.
-        const h = Math.max(MIN_HALF_HEIGHT, envAt(x, contentWidth) * amp) * (0.3 + 0.35 * bins[i]);
-        const tint = mix(core, ambient, i / (FLAME_BINS - 1));
-        ctx.fillStyle = rgba(tint, glow((0.05 + 0.07 * bins[i]) * (1 - 0.5 * fx.muffle)));
-        ctx.fillRect(x, mid - h, FLAME_STRIP_W - 1, h * 2);
+        const b = i === 0 ? bins[0] : bins[Math.min(FLAME_BINS - 1, i - 1)];
+        return Math.max(MIN_HALF_HEIGHT, envAt(x, contentWidth) * amp) * (0.3 + 0.4 * b);
+      };
+      ctx.beginPath();
+      ctx.moveTo(playX, mid - flameH(0));
+      for (let i = 1; i <= FLAME_BINS; i++) {
+        const xPrev = playX - (i - 1) * FLAME_STRIP_W;
+        const xCur = playX - i * FLAME_STRIP_W;
+        ctx.quadraticCurveTo(xPrev, mid - flameH(i - 1), (xPrev + xCur) / 2, mid - (flameH(i - 1) + flameH(i)) / 2);
       }
+      ctx.lineTo(playX - flameLen, mid);
+      for (let i = FLAME_BINS; i >= 1; i--) {
+        const xCur = playX - i * FLAME_STRIP_W;
+        const xNext = playX - (i - 1) * FLAME_STRIP_W;
+        ctx.quadraticCurveTo(xCur, mid + flameH(i), (xCur + xNext) / 2, mid + (flameH(i) + flameH(i - 1)) / 2);
+      }
+      ctx.lineTo(playX, mid + flameH(0));
+      ctx.closePath();
+      const damp = 1 - 0.5 * fx.muffle;
+      const tongue = ctx.createLinearGradient(playX - flameLen, 0, playX, 0);
+      tongue.addColorStop(0, rgba(ambient, 0));
+      tongue.addColorStop(0.55, rgba(mix(core, ambient, 0.5), glow(0.07 * damp)));
+      tongue.addColorStop(1, rgba(core, glow((0.12 + 0.1 * bins[0]) * damp)));
+      if (additive) ctx.globalCompositeOperation = 'lighter';
+      ctx.fillStyle = tongue;
+      ctx.fill();
       ctx.globalCompositeOperation = 'source-over';
     }
 
@@ -599,6 +669,18 @@ export function createWaveInstrument(
       blade.addColorStop(1, rgba(accent, 0.15));
       ctx.fillStyle = blade;
       ctx.fillRect(playX - 1, VERTICAL_PAD, 2, cssH - VERTICAL_PAD * 2);
+
+      // Reticle carets on both rims: the beam reads as a reading head locked
+      // onto the ruler, and the position stays findable on a busy scene.
+      ctx.fillStyle = rgba(core, 0.9);
+      for (const [y, dir] of [[0, 1], [cssH, -1]] as const) {
+        ctx.beginPath();
+        ctx.moveTo(playX - CARET_HALF_W, y);
+        ctx.lineTo(playX + CARET_HALF_W, y);
+        ctx.lineTo(playX, y + dir * CARET_DEPTH);
+        ctx.closePath();
+        ctx.fill();
+      }
 
       const headR = 3.5;
       ctx.fillStyle = rgba(core, 0.98);

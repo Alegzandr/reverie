@@ -5,9 +5,6 @@ import { MOODS, DEFAULT_MOOD, isMoodId } from './moods';
 import type { MoodId, MoodDef } from './moods';
 
 const STORAGE_KEY = 'mood';
-/** Whether the live world runs (off = its still poster). One preference across
- *  every mood; missing/anything-but-'false' means on. */
-const LIVING_WORLD_KEY = 'reverie:living-world';
 /** How long `.mood-shifting` stays on <html> to ease the palette across a switch.
  *  Slightly longer than the 600ms colour transition in index.css, so the tween
  *  finishes before the class is pulled (yanking it mid-tween would snap the
@@ -18,9 +15,6 @@ interface MoodContextType {
   mood: MoodId;
   def: MoodDef;
   setMood: (id: MoodId) => void;
-  /** The real-time world is running (vs. its still poster). */
-  livingWorld: boolean;
-  toggleLivingWorld: () => void;
 }
 
 const MoodContext = createContext<MoodContextType | undefined>(undefined);
@@ -48,13 +42,8 @@ function readInitialMood(): MoodId {
   return isMoodId(saved) ? saved : DEFAULT_MOOD;
 }
 
-function readInitialLivingWorld(): boolean {
-  return readStored(LIVING_WORLD_KEY) !== 'false';
-}
-
 export function MoodProvider({ children }: { children: ReactNode }) {
   const [mood, setMoodState] = useState<MoodId>(readInitialMood);
-  const [livingWorld, setLivingWorld] = useState<boolean>(readInitialLivingWorld);
   // Tracks the palette already painted, so we cross-fade only on a real change
   // (not the first apply). Null until the first effect run.
   const paintedMood = useRef<MoodId | null>(null);
@@ -95,19 +84,11 @@ export function MoodProvider({ children }: { children: ReactNode }) {
     setMoodState(id);
   }, []);
 
-  const toggleLivingWorld = useCallback(() => {
-    setLivingWorld((prev) => {
-      const next = !prev;
-      writeStored(LIVING_WORLD_KEY, String(next));
-      return next;
-    });
-  }, []);
-
   // Stable value object so memoised consumers (AmbientScene, WorldSwitcher, …)
   // can bail out when the provider re-renders for an unrelated reason.
   const value = useMemo(
-    () => ({ mood, def: MOODS[mood], setMood, livingWorld, toggleLivingWorld }),
-    [mood, setMood, livingWorld, toggleLivingWorld],
+    () => ({ mood, def: MOODS[mood], setMood }),
+    [mood, setMood],
   );
 
   return (

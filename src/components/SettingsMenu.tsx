@@ -1,7 +1,7 @@
 import { memo, useRef, useState } from 'react';
+import { GearSixIcon, CheckIcon, ArrowCounterClockwiseIcon } from '@phosphor-icons/react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Settings, Check, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -13,7 +13,6 @@ import {
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Select } from '@/components/ui/select';
 import { useEq } from '../contexts/EqContext';
-import { useMood } from '../contexts/MoodContext';
 import { toggleUiRest, useUiRestPreference } from '../hooks/useUiRest';
 import { BeatToggle } from './BeatToggle';
 import { EQ_PRESETS, EQ_CUSTOM, eqPresetKey } from '../contexts/eqPresets';
@@ -49,7 +48,6 @@ interface SettingsMenuProps {
 export const SettingsMenu = memo(function SettingsMenu({ trigger }: SettingsMenuProps = {}) {
   const { i18n, t } = useTranslation();
   const { gains, presetName, setPreset, setBandGain, reset } = useEq();
-  const { livingWorld, toggleLivingWorld } = useMood();
   const restUi = useUiRestPreference();
   const [open, setOpen] = useState(false);
   // Closing hands focus back to the gear (keyboard users land where they left),
@@ -86,7 +84,7 @@ export const SettingsMenu = memo(function SettingsMenu({ trigger }: SettingsMenu
                 onPointerLeave={() => (holdTipRef.current = false)}
                 onBlur={() => (holdTipRef.current = false)}
               >
-                <Settings className="w-5 h-5 text-[rgb(var(--color-text))]" aria-hidden="true" />
+                <GearSixIcon className="w-5 h-5 text-[rgb(var(--color-text))]" aria-hidden="true" />
               </Button>
             </DialogTrigger>
           </TooltipTrigger>
@@ -109,12 +107,11 @@ export const SettingsMenu = memo(function SettingsMenu({ trigger }: SettingsMenu
         </DialogHeader>
 
         <div className="max-h-[64vh] overflow-y-auto pr-1 -mr-1">
-          {/* Scene - the living world and the resting interface. */}
+          {/* Scene - the resting interface. */}
           <section className="mb-5 space-y-2">
             <h3 className="text-[11px] uppercase tracking-wide text-[rgb(var(--color-text-secondary))] mb-2">
               {t('settings.scene')}
             </h3>
-            <BeatToggle label={t('settings.livingWorld')} pressed={livingWorld} onToggle={toggleLivingWorld} />
             <BeatToggle label={t('settings.restUi')} pressed={restUi} onToggle={toggleUiRest} />
           </section>
 
@@ -133,7 +130,7 @@ export const SettingsMenu = memo(function SettingsMenu({ trigger }: SettingsMenu
                   onClick={reset}
                   className="h-7 gap-1.5 px-2 text-[rgb(var(--color-text-secondary))]"
                 >
-                  <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
+                  <ArrowCounterClockwiseIcon className="w-3.5 h-3.5" aria-hidden="true" />
                   <span className="text-xs">{t('settings.eqReset')}</span>
                 </Button>
               )}
@@ -220,7 +217,7 @@ export const SettingsMenu = memo(function SettingsMenu({ trigger }: SettingsMenu
                     )}
                   >
                     <span className="text-sm font-semibold truncate">{lang.name}</span>
-                    {active && <Check className="w-4 h-4 shrink-0" aria-hidden="true" />}
+                    {active && <CheckIcon className="w-4 h-4 shrink-0" aria-hidden="true" />}
                   </Button>
                 );
               })}

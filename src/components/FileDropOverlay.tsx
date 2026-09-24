@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { ListPlusIcon, PlayIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
-import { ListPlus, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { collectDroppedAudio } from '../utils/fileCollect';
 
@@ -91,9 +91,9 @@ export const FileDropOverlay = memo(function FileDropOverlay({ onFilesDrop, disa
 
   if (!isDragging || disabled) return null;
 
-  const zones: { id: DropIntent; icon: typeof Play; label: string }[] = [
-    { id: 'play', icon: Play, label: t('upload.dropPlay') },
-    { id: 'queue', icon: ListPlus, label: t('upload.dropQueue') },
+  const zones: { id: DropIntent; icon: typeof PlayIcon; label: string }[] = [
+    { id: 'play', icon: PlayIcon, label: t('upload.dropPlay') },
+    { id: 'queue', icon: ListPlusIcon, label: t('upload.dropQueue') },
   ];
 
   return (

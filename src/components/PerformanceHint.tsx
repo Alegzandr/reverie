@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
+import { LightningIcon, XIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
-import { Zap, X } from 'lucide-react';
 import { detectGpuTier } from './scenes/webgl/gpu';
 
 const DISMISS_KEY = 'reverie:gpu-hint-dismissed';
@@ -68,7 +68,7 @@ export function PerformanceHint() {
       }`}
     >
       <div className="flex items-start gap-3 rounded-2xl border border-[rgba(var(--hud-line),0.45)] bg-[rgba(var(--color-surface),0.85)] px-4 py-3 shadow-[0_18px_50px_-26px_rgba(var(--hud-glow),0.7)] backdrop-blur-xl">
-        <Zap className="mt-0.5 h-4 w-4 shrink-0 text-[rgb(var(--color-accent-text))]" aria-hidden="true" />
+        <LightningIcon className="mt-0.5 h-4 w-4 shrink-0 text-[rgb(var(--color-accent-text))]" aria-hidden="true" />
         <div className="min-w-0">
           <p className="text-sm font-semibold text-[rgb(var(--color-text))]">
             {t('performance.title')}
@@ -82,7 +82,7 @@ export function PerformanceHint() {
           aria-label={t('performance.dismiss')}
           className="ios-button -mr-1 -mt-1 shrink-0 cursor-pointer rounded-full p-1 text-[rgb(var(--color-text-secondary))] outline-none hover:text-[rgb(var(--color-text))] focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <X className="h-4 w-4" aria-hidden="true" />
+          <XIcon className="h-4 w-4" aria-hidden="true" />
         </button>
       </div>
     </div>

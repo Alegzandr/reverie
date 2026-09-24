@@ -45,8 +45,7 @@ vec3 world(vec2 fragCoord) {
   vec3 rd = normalize(uv.x * rt + uv.y * up + 1.4 * fw);
   vec3 sun = normalize(DAY_SUN);
 
-  vec3 sky = daySky(rd);
-  if (rd.y >= -0.005) return sky;
+  if (rd.y >= -0.005) return daySky(rd);
 
   float t0 = (CLOUD_TOP - ro.y) / rd.y;
   float t1 = min((CLOUD_BASE - ro.y) / rd.y, 60.0);
@@ -61,13 +60,14 @@ vec3 world(vec2 fragCoord) {
   /* The music warms the cloud tops, and the sun-side rims catch the low end. */
   float glow = 0.9 + uLevel * 0.45;
   float rimLift = 0.6 + uBass * 0.5 + kickFlash(2.2) * 0.35;
+  /* Constant along the ray: hoisted out of the march (ANGLE doesn't promise to). */
+  float forward = pow(max(dot(rd, sun), 0.0), 6.0);
   for (int i = 0; i < STEPS; i++) {
     vec3 p = ro + rd * t;
     float d = dayDensity(p);
     if (d > 0.01) {
       float toward = dayDensity(p + sun * 0.35);
       float light = clamp(0.35 + (d - toward) * 2.2, 0.0, 1.0);
-      float forward = pow(max(dot(rd, sun), 0.0), 6.0);
       vec3 c = mix(shade, lit * glow, light) + rim * forward * light * rimLift;
       float a = 1.0 - exp(-d * dt * 2.2);
       col += T * a * c;

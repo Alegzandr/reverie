@@ -1,5 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { WarningIcon, ArrowClockwiseIcon } from '@phosphor-icons/react';
 // The boundary sits above the React tree's i18n hooks (and may be catching a
 // crash in them), so it reads the shared instance directly.
 import i18n from 'i18next';
@@ -70,7 +70,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           <div className="glass rounded-3xl p-8 max-w-2xl w-full space-y-6 bg-[rgba(var(--color-surface),0.95)] shadow-[0_20px_70px_-40px_rgba(var(--color-accent),0.3)] border border-[rgba(var(--color-border),0.6)]">
             <div className="flex items-center justify-center">
               <div className="w-20 h-20 rounded-[20px] bg-[rgba(var(--color-accent),0.15)] flex items-center justify-center">
-                <AlertTriangle className="w-10 h-10 text-[rgb(var(--color-accent-text))]" aria-hidden="true" />
+                <WarningIcon className="w-10 h-10 text-[rgb(var(--color-accent-text))]" aria-hidden="true" />
               </div>
             </div>
 
@@ -110,7 +110,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 onClick={this.handleReset}
                 className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-[rgb(var(--color-text))] text-[rgb(var(--color-background))] font-semibold text-[15px] hover:opacity-90 transition-opacity ios-button"
               >
-                <RefreshCw className="w-5 h-5" aria-hidden="true" />
+                <ArrowClockwiseIcon className="w-5 h-5" aria-hidden="true" />
                 {i18n.t('crash.retry')}
               </button>
               <button

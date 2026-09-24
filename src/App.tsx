@@ -29,10 +29,11 @@ import { useMediaSession } from './hooks/useMediaSession';
 import { useUiRestPreference } from './hooks/useUiRest';
 import { useFullscreenAutoHide } from './hooks/useFullscreenAutoHide';
 import { useEq } from './contexts/EqContext';
-import { EFFECT_EXPORT_LABELS, EFFECT_DEFAULTS, AUDIO_PROCESSING, EXPORT_NOTICE } from './constants';
+import { EFFECT_EXPORT_LABELS, AUDIO_PROCESSING, EXPORT_NOTICE } from './constants';
 import { describeError } from './utils/errorMessages';
 import type { AudioProcessingOptions } from './utils/audioProcessor';
 import { stripExtension } from './utils/playlistModel';
+import { loadEffectPrefs, settingsFromPrefs } from './utils/effectPrefs';
 import { prefersReducedMotion } from './components/scenes/motion';
 
 /** Length of the session power-on choreography (keep in step with `.cockpit-boot`). */
@@ -87,6 +88,19 @@ function yieldsKeys(target: HTMLElement | null): boolean {
   if (!target) return false;
   const tag = target.tagName;
   return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable;
+}
+
+/**
+ * Listening EQ: a comfort setting kept in its own context (and localStorage),
+ * pushed to the playback graph whenever it changes - never touches the export.
+ * A leaf of its own so an EQ drag re-renders nothing but this null component.
+ */
+function EqBridge({ setEq }: { setEq: (gains: number[]) => void }) {
+  const { gains } = useEq();
+  useEffect(() => {
+    setEq(gains);
+  }, [gains, setEq]);
+  return null;
 }
 
 function App() {
@@ -146,13 +160,6 @@ function App() {
     return () => provideWorldAnalyser(null);
   }, [getAnalyser]);
 
-  // Listening EQ: a comfort setting kept in its own context (and localStorage).
-  // Pushed to the playback graph whenever it changes - never touches the export.
-  const { gains: eqGains } = useEq();
-  useEffect(() => {
-    setEq(eqGains);
-  }, [eqGains, setEq]);
-
   // Desktop-only: narrow viewports are gated (no bypass). Live on resize.
   const viewportTooNarrow = useIsViewportTooNarrow();
 
@@ -182,13 +189,9 @@ function App() {
     updateMetaTag('twitter:description', t('meta.description'));
   }, [i18n.language, t]);
 
-  // Source of truth for the live effect settings, passed back as
-  // `initialSettings` so a remount restores them instead of the defaults.
-  const [effectSettings, setEffectSettings] = useState<EffectSettings>({
-    mode: 'slow-reverb',
-    speedMultiplier: EFFECT_DEFAULTS.SLOW_REVERB.SPEED_DEFAULT,
-    reverbAmount: EFFECT_DEFAULTS.SLOW_REVERB.REVERB_DEFAULT,
-  });
+  // Live effect settings (export label, playback rate), seeded from what the
+  // listener left last time - the same source EffectControls restores from.
+  const [effectSettings, setEffectSettings] = useState<EffectSettings>(() => settingsFromPrefs(loadEffectPrefs()));
   const effectOptions = useMemo(() => toOptions(effectSettings), [effectSettings]);
 
   const [uploadRevision, setUploadRevision] = useState(0);
@@ -227,7 +230,8 @@ function App() {
   const artist = activeTrack?.artist ?? null;
   const cover = activeTrack?.cover ?? null;
   const loadedDetails = useTrackDetails(originalFile, metadata);
-  const details = activeBroken ? [t('playlist.broken')] : loadedDetails;
+  const brokenLabel = t('playlist.broken');
+  const details = useMemo(() => (activeBroken ? [brokenLabel] : loadedDetails), [activeBroken, brokenLabel, loadedDetails]);
 
   const handlePlay = useCallback(() => {
     if (activeBroken) return;
@@ -492,7 +496,7 @@ function App() {
           <div className="console console-left">
             <aside className="pane flex min-h-0 flex-col" aria-label={t('studio.effects')}>
               <ScrollFade className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5">
-                <EffectControls onChange={handleEffectChange} disabled={state.isExporting} initialSettings={effectSettings} />
+                <EffectControls onChange={handleEffectChange} disabled={state.isExporting} />
               </ScrollFade>
             </aside>
           </div>
@@ -584,6 +588,7 @@ function App() {
 
   return (
     <>
+      <EqBridge setEq={setEq} />
       <AmbientScene />
       {stage}
     </>

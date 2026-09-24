@@ -1,6 +1,6 @@
-import { Sunrise, MountainSnow, Moon, Orbit, Sparkles, Sunset } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
 import type { WorldId } from '../components/scenes/world/worlds';
+import { SunIcon, MountainsIcon, MoonIcon, PlanetIcon, SparkleIcon, SunHorizonIcon } from '@phosphor-icons/react';
+import type { Icon } from '@phosphor-icons/react';
 
 /**
  * Mood registry. A mood is a palette (the colour tokens in index.css) plus a
@@ -19,7 +19,7 @@ export interface MoodDef {
   id: MoodId;
   /** i18n key under `settings.mood.<key>` for the label. */
   labelKey: string;
-  icon: LucideIcon;
+  icon: Icon;
   /** Which base the mood sits on - toggles the `.dark` root class. */
   base: 'light' | 'dark';
   /** The living world painted behind the interface. */
@@ -27,12 +27,12 @@ export interface MoodDef {
 }
 
 export const MOODS: Record<MoodId, MoodDef> = {
-  aurora: { id: 'aurora', labelKey: 'aurora', icon: Sparkles, base: 'dark', world: 'nebula' },
-  dark: { id: 'dark', labelKey: 'dark', icon: MountainSnow, base: 'dark', world: 'borealis' },
-  tidal: { id: 'tidal', labelKey: 'tidal', icon: Moon, base: 'dark', world: 'tide' },
-  horizon: { id: 'horizon', labelKey: 'horizon', icon: Sunset, base: 'dark', world: 'valley' },
-  nocturne: { id: 'nocturne', labelKey: 'nocturne', icon: Orbit, base: 'dark', world: 'singularity' },
-  light: { id: 'light', labelKey: 'light', icon: Sunrise, base: 'light', world: 'daybreak' },
+  aurora: { id: 'aurora', labelKey: 'aurora', icon: SparkleIcon, base: 'dark', world: 'nebula' },
+  dark: { id: 'dark', labelKey: 'dark', icon: MountainsIcon, base: 'dark', world: 'borealis' },
+  tidal: { id: 'tidal', labelKey: 'tidal', icon: MoonIcon, base: 'dark', world: 'tide' },
+  horizon: { id: 'horizon', labelKey: 'horizon', icon: SunHorizonIcon, base: 'dark', world: 'valley' },
+  nocturne: { id: 'nocturne', labelKey: 'nocturne', icon: PlanetIcon, base: 'dark', world: 'singularity' },
+  light: { id: 'light', labelKey: 'light', icon: SunIcon, base: 'light', world: 'daybreak' },
 };
 
 /** Switcher order: the default first, then from the calmest night to daylight. */

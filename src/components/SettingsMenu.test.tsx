@@ -29,11 +29,6 @@ vi.mock('../contexts/EqContext', () => ({
   }),
 }));
 
-const mockToggleLivingWorld = vi.fn();
-vi.mock('../contexts/MoodContext', () => ({
-  useMood: () => ({ livingWorld: true, toggleLivingWorld: mockToggleLivingWorld }),
-}));
-
 const renderMenu = () =>
   render(
     <TooltipProvider>

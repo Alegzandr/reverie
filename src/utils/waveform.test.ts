@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { shapeEnvelope } from './waveform';
+import { normalizeEnvelope, shapeEnvelope } from './waveform';
+import { WAVEFORM } from '../constants';
 import type { AudioProcessingOptions } from './audioProcessor';
 
 const base: AudioProcessingOptions = {
@@ -37,5 +38,28 @@ describe('shapeEnvelope', () => {
     expect(Math.max(...out)).toBeGreaterThan(0.5);
     expect(Math.min(...out)).toBeLessThan(0.5);
     expect(out.every((v) => v >= 0 && v <= 1)).toBe(true);
+  });
+});
+
+describe('normalizeEnvelope', () => {
+  it('leaves a silent envelope untouched', () => {
+    expect(normalizeEnvelope([0, 0, 0])).toEqual([0, 0, 0]);
+  });
+
+  it('lifts the peak to the display ceiling and widens a compressed band', () => {
+    const bars = [0.55, 0.6, 0.58, 0.7, 0.62, 0.56, 0.68, 0.6, 0.57, 0.66];
+    const out = normalizeEnvelope(bars);
+    expect(Math.max(...out)).toBeCloseTo(WAVEFORM.NORMALIZED_PEAK);
+    const inSpread = Math.max(...bars) - Math.min(...bars);
+    const outSpread = Math.max(...out) - Math.min(...out);
+    expect(outSpread).toBeGreaterThan(inSpread * 2);
+  });
+
+  it('keeps order and holds silence at zero', () => {
+    const out = normalizeEnvelope([0, 0.3, 0.5, 0.4, 0]);
+    expect(out[0]).toBe(0);
+    expect(out[4]).toBe(0);
+    expect(out[2]).toBeGreaterThan(out[3]);
+    expect(out[3]).toBeGreaterThan(out[1]);
   });
 });

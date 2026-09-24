@@ -67,6 +67,23 @@ export function computeWaveform(buffer: AudioBuffer, bars: number): number[] {
 }
 
 /**
+ * Stretch an envelope's dynamics for display. `sqrt(mean |x|)` over a loud,
+ * compressed master lands every bar in a narrow band, which draws as a flat
+ * tube; remapping from just under the track's quiet level up to its peak lets
+ * the silhouette show the song's structure. Relative only - effect previews
+ * (shapeEnvelope) run after this, so a bass boost still visibly adds body.
+ */
+export function normalizeEnvelope(bars: number[]): number[] {
+  const peak = bars.reduce((m, b) => (b > m ? b : m), 0);
+  if (peak <= 0) return bars;
+  const sorted = bars.slice().sort((a, b) => a - b);
+  const quiet = sorted[Math.floor((sorted.length - 1) * WAVEFORM.CONTRAST_FLOOR_PERCENTILE)];
+  const floor = Math.min(quiet * WAVEFORM.CONTRAST_FLOOR_KEEP, peak * 0.9);
+  const span = peak - floor;
+  return bars.map((b) => WAVEFORM.NORMALIZED_PEAK * Math.min(1, Math.max(0, (b - floor) / span)));
+}
+
+/**
  * Reshape a source amplitude envelope to preview the active effect.
  *
  * The live audio graph never bakes a processed buffer, so the waveform reflects the
@@ -75,7 +92,7 @@ export function computeWaveform(buffer: AudioBuffer, bars: number): number[] {
  * rotation makes perceived loudness swell and dip across the track. Speed isn't shaped
  * here: the whole clip stays on screen and the playhead simply travels faster.
  *
- * Pure and cheap (operates on the ~96 display bars), so it can run on every tweak.
+ * Pure and cheap (operates on the ~200 display bars), so it can run on every tweak.
  */
 export function shapeEnvelope(bars: number[], options?: AudioProcessingOptions | null): number[] {
   if (!options || bars.length === 0) return bars;

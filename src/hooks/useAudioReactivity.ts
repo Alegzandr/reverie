@@ -51,16 +51,15 @@ export function useAudioReactivity({ getAnalyser, getLoudness, isPlaying, target
     // skip the style writes entirely - each setProperty forces a style recalc.
     const last = { level: -1, bass: -1, mid: -1, treble: -1, pulse: -1 };
 
+    // Hundredths are finer than any glow can show, and each write on <html>
+    // restyles the whole tree: quantise, and only touch what changed.
+    const put = (key: keyof typeof last, name: string, v: number) => {
+      const r = Math.round(v * 100);
+      if (r === last[key]) return;
+      last[key] = r;
+      root.style.setProperty(name, (r / 100).toFixed(2));
+    };
     const publish = () => {
-      // Hundredths are finer than any glow can show, and each write on <html>
-      // restyles the whole tree: quantise, and only touch what changed.
-      const q = (v: number) => Math.round(v * 100);
-      const put = (key: keyof typeof last, name: string, v: number) => {
-        const r = q(v);
-        if (r === last[key]) return;
-        last[key] = r;
-        root.style.setProperty(name, (r / 100).toFixed(2));
-      };
       put('level', '--audio-level', e.level);
       put('bass', '--audio-bass', e.bass);
       put('mid', '--audio-mid', e.mid);

@@ -1,10 +1,10 @@
 import { memo, useCallback, useRef, useState } from 'react';
+import { PlusIcon, UploadSimpleIcon } from '@phosphor-icons/react';
 import type { ChangeEvent, DragEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { AuroraOrb } from './AuroraOrb';
+import { DropReticle } from './DropReticle';
 import { collectDroppedAudio, collectPickedAudio } from '../utils/fileCollect';
 import { usePickerFullscreenRestore } from '../hooks/usePickerFullscreenRestore';
 
@@ -82,7 +82,7 @@ export const FileUploader = memo(function FileUploader({ onFilesSelect, isLoadin
       <div role="region" aria-label={t('upload.title')}>
         {input}
         <Button type="button" variant="glass" size="sm" className="h-10 px-4 disabled:opacity-60" onClick={openPicker} disabled={isLoading}>
-          <Plus className="h-4 w-4 text-[rgb(var(--color-accent-text))]" aria-hidden="true" />
+          <PlusIcon className="h-4 w-4 text-[rgb(var(--color-accent-text))]" aria-hidden="true" />
           {t('playlist.add')}
         </Button>
       </div>
@@ -113,17 +113,11 @@ export const FileUploader = memo(function FileUploader({ onFilesSelect, isLoadin
         {isDragging && (
           <span className="pointer-events-none absolute inset-0 rounded-[inherit] bg-[rgba(var(--color-accent),0.08)]" aria-hidden="true" />
         )}
-        <AuroraOrb
-          withEcho
-          echoWrapperClassName="mb-6"
-          className={cn(
-            'relative transition-transform duration-300 group-hover:scale-105',
-            isDragging
-              ? 'scale-105 shadow-[0_0_0_4px_rgba(var(--color-accent),0.18),0_22px_50px_-20px_rgba(var(--color-accent),0.9)]'
-              : 'shadow-[0_18px_44px_-22px_rgba(var(--color-accent),0.75)]'
-          )}
+        <DropReticle
+          active={isDragging}
+          className="mb-5"
           icon={
-            <Upload className="h-6 w-6 text-[rgb(var(--color-accent-text))] transition-transform duration-300 group-hover:-translate-y-0.5" />
+            <UploadSimpleIcon className="h-7 w-7 transition-transform duration-300 group-hover:-translate-y-0.5" />
           }
         />
         <span className="block text-lg font-semibold text-[rgb(var(--color-text))] sm:text-xl">{t('upload.dragDrop')}</span>

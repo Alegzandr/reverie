@@ -25,7 +25,7 @@ A mood = **palette + living world**, under the one shared visor HUD:
 | `nocturne` | Singularity | `singularity` - a total eclipse face-on, photographic: steep K-corona, tapering helmet streamers, polar plumes, rose prominences, one diamond bead | dark |
 | `light` | Daybreak | `daybreak` - a sunlit sea of clouds | light |
 
-Each `MoodDef` carries an `id`, an i18n `labelKey`, a Lucide `icon`, its `base` and its `world`; `worldPoster()` / `worldThumb()` resolve the stills in `public/worlds/`. One surface switches it: the **world switcher** (`WorldSwitcher`), centred in the top bar and on the welcome stage - a radiogroup of round world thumbnails where the active one opens out to show its name. Arrow keys walk it like any radiogroup.
+Each `MoodDef` carries an `id`, an i18n `labelKey`, a Phosphor `icon`, its `base` and its `world`; `worldPoster()` / `worldThumb()` resolve the stills in `public/worlds/`. One surface switches it: the **world switcher** (`WorldSwitcher`), centred in the top bar and on the welcome stage - a radiogroup of round world thumbnails where the active one opens out to show its name. Arrow keys walk it like any radiogroup.
 
 ## HUD language (the visor)
 
@@ -206,9 +206,10 @@ Listening is playlist-first. Load one file or a whole folder and every track joi
 
 ## Iconography & Brand Assets
 
-- **UI icons**: [Lucide](https://lucide.dev) (`lucide-react`). Consistent stroke weight, no mixed icon families.
-- **Brand mark** (`public/favicon.svg`): a reverberating Aurora sound wave on the Dream field. A bold main wave, a lower-opacity "ghost" wave (the reverb tail), and radiating echo arcs (reverb and 8D spatiality), with violet/cyan pulse dots at each end. Rounded-square badge.
-- **Generated assets** (rendered from SVG): `icon-192.png`, `icon-512.png` (full-bleed, mark kept inside the maskable safe zone with ~18% padding), `apple-touch-icon.png` (180px), `og-image.png` (1200x630: badge + `reverie` wordmark + tagline "Slowed + reverb · 8D audio · speed · bass boost"). Regenerate from the source SVGs if the mark changes.
+- **UI icons**: [Phosphor](https://phosphoricons.com) (`@phosphor-icons/react`, `XxxIcon` exports). Regular weight everywhere; `weight="fill"` only for the solid transport glyphs (play, pause, skip). No mixed icon families.
+- **Brand mark** (`public/favicon.svg`): a moon over a still horizon on the Dream field, its moonglade drawn as Aurora sound waves that fade and narrow downward (the reverb tail), with a few violet/cyan stars. Rounded-square badge.
+- **Generated assets** (rendered from SVG): `icon-192.png`, `icon-512.png` (full-bleed, mark kept inside the maskable safe zone with ~18% padding), `apple-touch-icon.png` (180px). Regenerate from the source SVGs if the mark changes.
+- **Social card** (`og-image.png`, 1200x630): the default mood's world (Nebula poster) seen through the visor, with HUD corner brackets, the badge, the Geist Mono wordmark, the tagline and the effects line. Source: `scripts/og/og-card.html` (aurora tokens copied from `src/index.css`); render with `npm run og` (local headless Chrome, `CHROME_PATH` to override). Re-render when the default mood, its poster or the mark changes, and bump the `?v=` on `og:image`/`twitter:image` in `index.html` so platforms drop their cached copy.
 - **Gradient direction**: Aurora runs left to right (violet to cyan) across the mark and accents; the Dream field runs diagonally (top-left to bottom-right).
 
 ## Accessibility

@@ -1,7 +1,7 @@
 import { memo } from 'react';
+import { PlayIcon, PauseIcon, DownloadSimpleIcon, CheckIcon, RepeatIcon, RepeatOnceIcon, ShuffleIcon, SkipBackIcon, SkipForwardIcon } from '@phosphor-icons/react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Play, Pause, Download, Check, Repeat, Repeat1, Shuffle, SkipBack, SkipForward } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -119,14 +119,14 @@ export const PlaybackControls = memo(function PlaybackControls({
 
   const playEnabled = hasAudio && canPlay && !disabled;
   const exportEnabled = canExport && !disabled && !isExporting;
-  const RepeatIcon = repeat === 'one' ? Repeat1 : Repeat;
+  const RepeatGlyph = repeat === 'one' ? RepeatOnceIcon : RepeatIcon;
 
   return (
     <div className="flex items-center gap-4">
       <div className="flex shrink-0 items-center gap-1.5">
         {onPrevious && (
           <TransportButton label={t('playback.previous')} onClick={onPrevious} disabled={disabled || !hasAudio || !hasPrevious}>
-            <SkipBack className="h-[18px] w-[18px]" fill="currentColor" aria-hidden="true" />
+            <SkipBackIcon className="h-[18px] w-[18px]" weight="fill" aria-hidden="true" />
           </TransportButton>
         )}
         <div className="relative shrink-0">
@@ -144,41 +144,46 @@ export const PlaybackControls = memo(function PlaybackControls({
             className="relative h-12 w-12"
           >
             {isPlaying ? (
-              <Pause className="h-[18px] w-[18px]" fill="currentColor" strokeWidth={0} aria-hidden="true" />
+              <PauseIcon className="h-[18px] w-[18px]" weight="fill" aria-hidden="true" />
             ) : (
-              <Play className="h-[18px] w-[18px] translate-x-[1px]" fill="currentColor" strokeWidth={0} aria-hidden="true" />
+              <PlayIcon className="h-[18px] w-[18px] translate-x-[1px]" weight="fill" aria-hidden="true" />
             )}
           </Button>
         </div>
         {onNext && (
           <TransportButton label={t('playback.next')} onClick={onNext} disabled={disabled || !hasAudio || !hasNext}>
-            <SkipForward className="h-[18px] w-[18px]" fill="currentColor" aria-hidden="true" />
+            <SkipForwardIcon className="h-[18px] w-[18px]" weight="fill" aria-hidden="true" />
           </TransportButton>
         )}
       </div>
 
       <TransportTimeline className="min-w-0 flex-1" clock={clock} duration={duration} onSeek={onSeek} disabled={disabled || !hasAudio || !canPlay} />
 
-      <div className="flex shrink-0 items-center gap-1.5">
-        {onToggleShuffle && (
-          <TransportButton label={t('playback.shuffle')} onClick={onToggleShuffle} disabled={disabled} pressed={shuffle}>
-            <Shuffle className={cn('h-[18px] w-[18px]', shuffle && 'text-[rgb(var(--color-accent-text))]')} aria-hidden="true" />
+      <div className="flex shrink-0 items-center gap-4">
+        {/* Play-order modes, then the output (meter + level), then Export: three
+            groups spaced like the lead cluster, so the rail reads in phrases. */}
+        <div className="flex items-center gap-1.5">
+          {onToggleShuffle && (
+            <TransportButton label={t('playback.shuffle')} onClick={onToggleShuffle} disabled={disabled} pressed={shuffle}>
+              <ShuffleIcon className={cn('h-[18px] w-[18px]', shuffle && 'text-[rgb(var(--color-accent-text))]')} aria-hidden="true" />
+            </TransportButton>
+          )}
+          <TransportButton
+            label={t(REPEAT_LABEL[repeat])}
+            onClick={onToggleRepeat}
+            disabled={disabled || !hasAudio}
+            pressed={repeat !== 'off'}
+          >
+            <RepeatGlyph className={cn('h-[18px] w-[18px]', repeat !== 'off' && 'text-[rgb(var(--color-accent-text))]')} aria-hidden="true" />
           </TransportButton>
-        )}
-        <TransportButton
-          label={t(REPEAT_LABEL[repeat])}
-          onClick={onToggleRepeat}
-          disabled={disabled || !hasAudio}
-          pressed={repeat !== 'off'}
-        >
-          <RepeatIcon className={cn('h-[18px] w-[18px]', repeat !== 'off' && 'text-[rgb(var(--color-accent-text))]')} aria-hidden="true" />
-        </TransportButton>
+        </div>
 
         {hasAudio && (
-          <SpectrumMeter getAnalyser={getAnalyser} isPlaying={isPlaying} className="ml-1 hidden h-8 w-20 shrink-0 xl:block" />
+          <div className="flex items-center gap-1">
+            <SpectrumMeter getAnalyser={getAnalyser} isPlaying={isPlaying} className="hidden h-6 w-20 shrink-0 xl:block" />
+            <VolumeControl volume={volume} onVolumeChange={onVolumeChange} disabled={disabled} />
+          </div>
         )}
-
-        {hasAudio && <VolumeControl volume={volume} onVolumeChange={onVolumeChange} disabled={disabled} />}
 
         {/* Export - the quiet committing action: a glass pill with a mood-tinted icon.
             It answers in place: a spinner while it renders, then "Saved" and the
@@ -187,18 +192,18 @@ export const PlaybackControls = memo(function PlaybackControls({
           <TooltipTrigger asChild>
             <Button
               variant={exportEnabled ? 'glass' : 'muted'}
-              size="pill"
+              size="icon"
               onClick={onExport}
               disabled={disabled || !canExport || isExporting}
               aria-label={isExporting ? t('playback.exporting') : t('playback.export')}
-              className="ml-1 shrink-0 px-5"
+              className="w-auto shrink-0 px-4 text-sm"
             >
               {isExporting ? (
-                <div className="h-5 w-5 animate-spin rounded-full border-2 border-[rgb(var(--color-accent))] border-t-transparent motion-reduce:animate-none" aria-hidden="true" />
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-[rgb(var(--color-accent))] border-t-transparent motion-reduce:animate-none" aria-hidden="true" />
               ) : savedAs ? (
-                <Check className="h-5 w-5 text-[rgb(var(--color-accent-text))]" aria-hidden="true" />
+                <CheckIcon className="h-[18px] w-[18px] text-[rgb(var(--color-accent-text))]" aria-hidden="true" />
               ) : (
-                <Download className={cn('h-5 w-5', exportEnabled && 'text-[rgb(var(--color-accent-text))]')} aria-hidden="true" />
+                <DownloadSimpleIcon className={cn('h-[18px] w-[18px]', exportEnabled && 'text-[rgb(var(--color-accent-text))]')} aria-hidden="true" />
               )}
               <span className="hidden lg:inline">
                 {isExporting ? t('playback.exporting') : savedAs ? t('playback.saved') : t('playback.export')}

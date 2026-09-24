@@ -1,7 +1,7 @@
 import { useRef } from 'react';
+import { LightningIcon, WavesIcon, HeadphonesIcon, SpeakerHifiIcon, ShieldCheckIcon, PlaylistIcon, PlayIcon } from '@phosphor-icons/react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Zap, Waves, Radio, Volume2, ShieldCheck, ListMusic, Play } from 'lucide-react';
 import { FileUploader } from './FileUploader';
 import { ProgressBar } from './ProgressBar';
 import { SettingsMenu } from './SettingsMenu';
@@ -77,7 +77,7 @@ export function WelcomeScreen({
             {playlistCount > 0 && !isLoading && (
               <button type="button" onClick={onResume} className="pane ios-button group flex w-full items-center gap-4 px-5 py-4 text-left">
                 <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[rgba(var(--color-accent),0.14)] text-[rgb(var(--color-accent-text))]">
-                  <ListMusic className="h-5 w-5" aria-hidden="true" />
+                  <PlaylistIcon className="h-5 w-5" aria-hidden="true" />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-semibold text-[rgb(var(--color-text))]">{t('welcome.resume')}</span>
@@ -86,7 +86,7 @@ export function WelcomeScreen({
                     <span className="shrink-0">{t('welcome.resumeHint', { count: playlistCount })}</span>
                   </span>
                 </span>
-                <Play className="h-5 w-5 shrink-0 text-[rgb(var(--color-accent-text))] transition-transform group-hover:translate-x-0.5" fill="currentColor" aria-hidden="true" />
+                <PlayIcon className="h-5 w-5 shrink-0 text-[rgb(var(--color-accent-text))] transition-transform group-hover:translate-x-0.5" weight="fill" aria-hidden="true" />
               </button>
             )}
           </div>
@@ -95,10 +95,10 @@ export function WelcomeScreen({
               buttons and invited clicks that did nothing. */}
           <ul className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-[rgba(var(--color-text),0.88)]">
             {[
-              { icon: Waves, label: t('effects.slowReverb') },
-              { icon: Zap, label: t('effects.speedUp') },
-              { icon: Radio, label: t('effects.8dAudio') },
-              { icon: Volume2, label: t('effects.bassBoost') },
+              { icon: WavesIcon, label: t('effects.slowReverb') },
+              { icon: LightningIcon, label: t('effects.speedUp') },
+              { icon: HeadphonesIcon, label: t('effects.8dAudio') },
+              { icon: SpeakerHifiIcon, label: t('effects.bassBoost') },
             ].map(({ icon: Icon, label }) => (
               <li key={label} className="flex items-center gap-2 [text-shadow:0_1px_14px_rgba(var(--scene-veil),0.9)]">
                 <Icon className="h-4 w-4 text-[rgb(var(--color-accent-text))]" aria-hidden="true" />
@@ -109,7 +109,7 @@ export function WelcomeScreen({
 
           {/* The privacy promise is a design principle, not a footnote. */}
           <p className="mt-8 flex items-center gap-2 text-xs font-medium text-[rgba(var(--color-text),0.85)]">
-            <ShieldCheck className="h-4 w-4 text-[rgb(var(--color-accent-text))]" aria-hidden="true" />
+            <ShieldCheckIcon className="h-4 w-4 text-[rgb(var(--color-accent-text))]" aria-hidden="true" />
             {t('features.private.desc')}
           </p>
         </div>

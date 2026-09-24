@@ -92,8 +92,10 @@ export function createEffectChain(ctx: AudioContext): EffectChain {
 
   const dryGain = ctx.createGain();
   const wetGain = ctx.createGain();
+  // Impulses are assigned on first attach (applyEffectOptions), not here: the
+  // chain is rebuilt on every play/seek/advance, and each assignment makes the
+  // browser FFT-partition the IR synchronously - for effects that are mostly off.
   const convolver = ctx.createConvolver();
-  convolver.buffer = getDecayingNoiseImpulse(ctx, REVERB_SECONDS, REVERB_DECAY_SECONDS);
   const mix = ctx.createGain();
 
   // Listening EQ: one biquad per band, chained in series. Starts flat (0 dB) so
@@ -113,7 +115,6 @@ export function createEffectChain(ctx: AudioContext): EffectChain {
   osc.type = 'sine';
 
   const eightDConvolver = ctx.createConvolver();
-  eightDConvolver.buffer = getEightDBedImpulse(ctx);
   const eightDBed = ctx.createGain();
   eightDBed.gain.value = 0;
   const out = ctx.createGain();
@@ -183,6 +184,10 @@ export function applyEffectOptions(
   if (reverbAudible !== chain.reverbRouted) {
     chain.reverbRouted = reverbAudible;
     if (reverbAudible) {
+      // Kept once set, so a later detach still rings the tail out.
+      if (!chain.convolver.buffer) {
+        chain.convolver.buffer = getDecayingNoiseImpulse(ctx, REVERB_SECONDS, REVERB_DECAY_SECONDS);
+      }
       chain.underwaterLowpass.connect(chain.convolver);
     } else {
       try {
@@ -195,6 +200,7 @@ export function applyEffectOptions(
   if (eightD !== chain.bedRouted) {
     chain.bedRouted = eightD;
     if (eightD) {
+      if (!chain.eightDConvolver.buffer) chain.eightDConvolver.buffer = getEightDBedImpulse(ctx);
       chain.mix.connect(chain.eightDConvolver);
     } else {
       try {

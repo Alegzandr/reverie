@@ -124,10 +124,11 @@ export function usePlaylistPlayer(playlist: PlaylistApi, audio: PlayerAudio) {
   const addFiles = useCallback(
     (files: File[], mode: 'append' | 'play' = 'append') => {
       if (!files.length) return;
-      const ids = addToList(files);
-      if (!ids.length) return;
-      if (mode === 'play') void playTrack(ids[0], { autoplay: true });
-      else if (!audioRef.current.hasSession) void playTrack(ids[0], { autoplay: false });
+      void addToList(files).then((ids) => {
+        if (!ids.length) return;
+        if (mode === 'play') void playTrack(ids[0], { autoplay: true });
+        else if (!audioRef.current.hasSession) void playTrack(ids[0], { autoplay: false });
+      });
     },
     [addToList, playTrack],
   );

@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatClock } from '../utils/formatters';
 import { useDurationDisplayMode, toggleDurationDisplay } from '../hooks/useDurationDisplayMode';
@@ -9,6 +10,7 @@ interface DurationToggleProps {
   /** Storage key identifying this toggle's own persisted preference (kept independent per host). */
   storageKey: string;
   className?: string;
+  style?: CSSProperties;
 }
 
 /**
@@ -17,7 +19,7 @@ interface DurationToggleProps {
  * useDurationDisplayMode), so each host (footer, waveform header) keeps its own
  * choice independently and remembers it across reloads.
  */
-export function DurationToggle({ duration, current, storageKey, className = '' }: DurationToggleProps) {
+export function DurationToggle({ duration, current, storageKey, className = '', style }: DurationToggleProps) {
   const { t } = useTranslation();
   const showRemaining = useDurationDisplayMode(storageKey);
   return (
@@ -25,6 +27,7 @@ export function DurationToggle({ duration, current, storageKey, className = '' }
       type="button"
       onClick={() => toggleDurationDisplay(storageKey)}
       className={className}
+      style={style}
       aria-label={t('waveform.toggleRemaining')}
       aria-pressed={showRemaining}
     >

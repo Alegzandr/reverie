@@ -15,6 +15,12 @@
       content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'" />
     <meta name="referrer" content="no-referrer" />
 
+    <!-- The UI's only face: fetched with the HTML instead of after ~750 kB of JS
+         parses and React first renders text (Vite rewrites this to the same
+         hashed file the @font-face points at, so it's one download). -->
+    <link rel="preload" as="font" type="font/woff2" crossorigin
+      href="/node_modules/@fontsource-variable/geist-mono/files/geist-mono-latin-wght-normal.woff2" />
+
     <!-- GitHub Pages SPA Redirect Script -->
     <script>
       // Single Page Apps for GitHub Pages
@@ -69,7 +75,7 @@
     <meta property="og:url" content="https://alegzandr.github.io/reverie/" />
     <meta property="og:title" content="Reverie - Slowed + Reverb, 8D & Speed" />
     <meta property="og:description" content="Free online audio editor - Transform your music instantly in your browser. Create sped up versions, slow + reverb remixes, immersive 8D audio, or bass boosted tracks. No download required. 100% free online tool with client-side processing." />
-    <meta property="og:image" content="https://alegzandr.github.io/reverie/og-image.png" />
+    <meta property="og:image" content="https://alegzandr.github.io/reverie/og-image.png?v=2" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="Reverie - Free online audio editor" />
@@ -90,7 +96,7 @@
     <meta name="twitter:url" content="https://alegzandr.github.io/reverie/" />
     <meta name="twitter:title" content="Reverie - Slowed + Reverb, 8D & Speed" />
     <meta name="twitter:description" content="Free online audio editor - Create sped up, slow + reverb, 8D audio, or bass boosted tracks instantly in your browser. No download required. 100% free online tool." />
-    <meta name="twitter:image" content="https://alegzandr.github.io/reverie/og-image.png" />
+    <meta name="twitter:image" content="https://alegzandr.github.io/reverie/og-image.png?v=2" />
     <meta name="twitter:image:alt" content="Reverie - Free online audio editor" />
 
     <!-- Canonical URL -->

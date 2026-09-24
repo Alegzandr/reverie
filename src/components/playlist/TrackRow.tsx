@@ -1,7 +1,7 @@
 import { memo, useLayoutEffect, useRef } from 'react';
+import { WarningCircleIcon, PlayIcon, XIcon } from '@phosphor-icons/react';
 import type { DragEvent, KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertCircle, Play, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatClock } from '../../utils/formatters';
 import type { PlaylistTrack } from '../../utils/playlistModel';
@@ -20,7 +20,7 @@ interface TrackRowProps {
   reorderable: boolean;
   dropSide: DropSide | null;
   /** Playhead source for the active row's progress hairline (effective time). */
-  clock: PlaybackClock;
+  clock: PlaybackClock | null;
   duration: number;
   onPlay: (id: string) => void;
   onRemove: (id: string) => void;
@@ -111,7 +111,7 @@ export const TrackRow = memo(function TrackRow({
           ) : (
             <>
               <span className="track-number">{String(index + 1).padStart(2, '0')}</span>
-              <Play className="track-play" fill="currentColor" strokeWidth={0} />
+              <PlayIcon className="track-play" weight="fill" />
             </>
           )}
         </span>
@@ -121,7 +121,7 @@ export const TrackRow = memo(function TrackRow({
           <span className="track-sub">
             {track.broken ? (
               <span className="inline-flex items-center gap-1 text-[rgb(var(--color-accent-text))]">
-                <AlertCircle className="h-3 w-3" aria-hidden="true" />
+                <WarningCircleIcon className="h-3 w-3" aria-hidden="true" />
                 {t('playlist.broken')}
               </span>
             ) : (
@@ -138,9 +138,9 @@ export const TrackRow = memo(function TrackRow({
         aria-label={t('playlist.remove')}
         tabIndex={-1}
       >
-        <X className="h-3.5 w-3.5" aria-hidden="true" />
+        <XIcon className="h-3.5 w-3.5" aria-hidden="true" />
       </button>
-      {active && <ActiveProgress clock={clock} duration={duration} />}
+      {active && clock && <ActiveProgress clock={clock} duration={duration} />}
     </li>
   );
 });

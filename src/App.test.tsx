@@ -53,8 +53,6 @@ vi.mock('./contexts/MoodContext', () => ({
     mood: 'light',
     def: { id: 'light', base: 'light', world: 'daybreak' },
     setMood: mockSetMood,
-    livingWorld: false,
-    toggleLivingWorld: vi.fn(),
   }),
 }));
 

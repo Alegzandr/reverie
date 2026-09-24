@@ -50,8 +50,8 @@ describe('usePlaylistPlayer', () => {
   it('advances to the next track when one ends, and stops at the end without repeat', async () => {
     const { hook, audio } = setup({ hasSession: true });
     const [a, b] = [file('a'), file('b')];
-    act(() => {
-      hook.result.current.playlist.addFiles([a, b]);
+    await act(async () => {
+      await hook.result.current.playlist.addFiles([a, b]);
     });
     const firstId = hook.result.current.playlist.tracks[0].id;
     await act(async () => {
@@ -69,8 +69,8 @@ describe('usePlaylistPlayer', () => {
 
   it('restarts the track on "previous" once past its opening seconds', async () => {
     const { hook, audio, clock } = setup({ hasSession: true });
-    act(() => {
-      hook.result.current.playlist.addFiles([file('a'), file('b')]);
+    await act(async () => {
+      await hook.result.current.playlist.addFiles([file('a'), file('b')]);
     });
     clock.set(20);
     act(() => hook.result.current.player.previous());
@@ -79,8 +79,8 @@ describe('usePlaylistPlayer', () => {
 
   it('resumes a stored position, but starts over near the very end', async () => {
     const { hook, audio } = setup();
-    act(() => {
-      hook.result.current.playlist.addFiles([file('a')]);
+    await act(async () => {
+      await hook.result.current.playlist.addFiles([file('a')]);
     });
     const id = hook.result.current.playlist.tracks[0].id;
     await act(async () => {
@@ -97,8 +97,8 @@ describe('usePlaylistPlayer', () => {
 
   it('marks a file that fails to decode as broken', async () => {
     const { hook } = setup({ loadAudioFile: vi.fn(async () => undefined) });
-    act(() => {
-      hook.result.current.playlist.addFiles([file('bad')]);
+    await act(async () => {
+      await hook.result.current.playlist.addFiles([file('bad')]);
     });
     const id = hook.result.current.playlist.tracks[0].id;
     await act(async () => {

@@ -1,0 +1,153 @@
+<!doctype html>
+<!--
+  Source of public/og-image.png (1200x630). Render with `node scripts/og/render.mjs`.
+  Mirrors the default mood (aurora / Nebula world) seen through the visor, so the
+  share card previews the app people actually land on. Tokens are copied from
+  src/index.css ([data-mood='aurora'] + :root visor tokens): keep them in sync.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      @font-face {
+        font-family: 'Geist Mono';
+        src: url('../../node_modules/@fontsource-variable/geist-mono/files/geist-mono-latin-wght-normal.woff2')
+          format('woff2-variations');
+        font-weight: 100 900;
+      }
+
+      :root {
+        --text: 236, 234, 250;
+        --text-secondary: 168, 160, 196;
+        --accent-text: 196, 140, 252;
+        --hud-line: 168, 196, 244;
+        --hud-glow: 120, 100, 240;
+        --scene-veil: 8, 10, 24;
+        --visor-rim: 3, 4, 10;
+        --aurora-violet: 167, 139, 250;
+        --aurora-cyan: 56, 224, 232;
+      }
+
+      * { margin: 0; box-sizing: border-box; }
+
+      html, body {
+        width: 1200px;
+        height: 630px;
+        overflow: hidden;
+        background: rgb(var(--visor-rim));
+        font-family: 'Geist Mono', ui-monospace, monospace;
+        -webkit-font-smoothing: antialiased;
+        color: rgb(var(--text));
+      }
+
+      /* The visor opening: the world is only ever seen through the glass. */
+      .visor {
+        position: absolute;
+        inset: 14px;
+        border-radius: 40px;
+        overflow: hidden;
+        background: url('../../public/worlds/nebula.webp') 62% 0% / 1260px auto no-repeat, rgb(9, 6, 18);
+        box-shadow: inset 0 0 0 1px rgba(var(--hud-line), 0.16);
+      }
+
+      /* Same job as .aurora-stage::before: a static pool of veil keeps the type
+         legible where the filaments cross it. */
+      .visor::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(ellipse 52% 60% at 30% 62%, rgba(var(--scene-veil), 0.78), transparent 72%),
+          linear-gradient(to top, rgba(var(--scene-veil), 0.55), transparent 40%);
+      }
+
+      /* Glass curvature: a faint vignette plus a sheen near the crown. */
+      .visor::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background:
+          radial-gradient(ellipse 120% 90% at 50% 45%, transparent 62%, rgba(var(--visor-rim), 0.55) 100%),
+          linear-gradient(170deg, rgba(var(--hud-line), 0.06), transparent 30%);
+        box-shadow: inset 0 0 60px rgba(var(--hud-glow), 0.12);
+      }
+
+      /* HUD corner brackets. */
+      .bracket {
+        position: absolute;
+        width: 22px;
+        height: 22px;
+        border: 1.5px solid rgba(var(--hud-line), 0.5);
+        z-index: 2;
+      }
+      .bracket.tl { top: 40px; left: 40px; border-right: 0; border-bottom: 0; border-top-left-radius: 6px; }
+      .bracket.tr { top: 40px; right: 40px; border-left: 0; border-bottom: 0; border-top-right-radius: 6px; }
+      .bracket.bl { bottom: 40px; left: 40px; border-right: 0; border-top: 0; border-bottom-left-radius: 6px; }
+      .bracket.br { bottom: 40px; right: 40px; border-left: 0; border-top: 0; border-bottom-right-radius: 6px; }
+
+      .stage {
+        position: absolute;
+        z-index: 2;
+        left: 96px;
+        top: 200px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 30px;
+      }
+      .brand img {
+        width: 92px;
+        height: 92px;
+        filter: drop-shadow(0 0 24px rgba(var(--hud-glow), 0.45));
+      }
+      .wordmark {
+        font-size: 104px;
+        font-weight: 300;
+        letter-spacing: 0.14em;
+        line-height: 1;
+        text-transform: lowercase;
+        text-shadow: 0 0 40px rgba(var(--hud-glow), 0.35);
+      }
+
+      .rule {
+        margin: 34px 0 26px;
+        width: 520px;
+        height: 1px;
+        background: linear-gradient(to right, rgba(var(--aurora-violet), 0.8), rgba(var(--aurora-cyan), 0.5) 55%, transparent);
+      }
+
+      .tagline {
+        font-size: 27px;
+        font-weight: 350;
+        letter-spacing: -0.01em;
+        color: rgb(var(--text));
+      }
+
+      .effects {
+        margin-top: 18px;
+        font-size: 17px;
+        letter-spacing: 0.06em;
+        color: rgb(var(--text-secondary));
+      }
+      .effects span { color: rgba(var(--accent-text), 0.9); padding: 0 10px; }
+    </style>
+  </head>
+  <body>
+    <div class="visor"></div>
+    <i class="bracket tl"></i><i class="bracket tr"></i><i class="bracket bl"></i><i class="bracket br"></i>
+
+
+    <main class="stage">
+      <div class="brand">
+        <img src="../../public/favicon.svg" alt="" />
+        <h1 class="wordmark">reverie</h1>
+      </div>
+      <div class="rule"></div>
+      <p class="tagline">Dreamy edits for your favorite tracks</p>
+      <p class="effects">slowed + reverb<span>·</span>8D audio<span>·</span>speed<span>·</span>bass boost</p>
+    </main>
+  </body>
+</html>

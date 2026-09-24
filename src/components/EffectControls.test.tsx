@@ -13,8 +13,8 @@ describe('EffectControls', () => {
     const onChange = vi.fn();
     render(<EffectControls onChange={onChange} />);
 
-    // Slow + Reverb is the default active mode.
-    expect(onChange).toHaveBeenCalledWith({ mode: 'slow-reverb', speedMultiplier: 0.9, reverbAmount: 0.7 });
+    // A first visit hears the untouched track.
+    expect(onChange).toHaveBeenCalledWith({ mode: 'none', speedMultiplier: 1, reverbAmount: 0 });
 
     await userEvent.click(screen.getByText('effects.speedUp'));
     expect(onChange).toHaveBeenLastCalledWith({
@@ -78,7 +78,8 @@ describe('EffectControls', () => {
     const onChange = vi.fn();
     render(<EffectControls onChange={onChange} />);
 
-    // Slow + Reverb starts Active; clicking it again powers it off.
+    await userEvent.click(screen.getByText('effects.slowReverb'));
+    // Clicking the Active effect again powers it off.
     await userEvent.click(screen.getByText('effects.slowReverb'));
     expect(onChange).toHaveBeenLastCalledWith({ mode: 'none', speedMultiplier: 1, reverbAmount: 0 });
 
@@ -90,6 +91,7 @@ describe('EffectControls', () => {
   it('restores a slider to its default on a quick double-click', async () => {
     const onChange = vi.fn();
     render(<EffectControls onChange={onChange} />);
+    await userEvent.click(screen.getByText('effects.slowReverb'));
 
     const slowSpeedSlider = screen.getByLabelText(/effects\.slowSpeed/);
     fireEvent.change(slowSpeedSlider, { target: { value: '0.6' } });
@@ -108,6 +110,7 @@ describe('EffectControls', () => {
   it('does not reset a slider when the two clicks are too far apart', async () => {
     const onChange = vi.fn();
     render(<EffectControls onChange={onChange} />);
+    await userEvent.click(screen.getByText('effects.slowReverb'));
 
     const slowSpeedSlider = screen.getByLabelText(/effects\.slowSpeed/);
     fireEvent.change(slowSpeedSlider, { target: { value: '0.6' } });
@@ -135,6 +138,7 @@ describe('EffectControls', () => {
   it('reads as a radiogroup: one tab stop, arrows select without toggling off', async () => {
     const onChange = vi.fn();
     render(<EffectControls onChange={onChange} />);
+    await userEvent.click(screen.getByText('effects.slowReverb'));
 
     const checked = screen.getByRole('radio', { name: 'effects.slowReverb' });
     expect(checked).toHaveAttribute('aria-checked', 'true');
@@ -147,5 +151,39 @@ describe('EffectControls', () => {
     expect(screen.getByRole('radio', { name: 'effects.speedUp' })).toHaveFocus();
     await userEvent.keyboard('{ArrowUp}');
     expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ mode: 'slow-reverb' }));
+  });
+
+  it('starts on the untouched track on a first visit', () => {
+    render(<EffectControls onChange={vi.fn()} />);
+    for (const name of ['effects.slowReverb', 'effects.speedUp', 'effects.8dAudio', 'effects.bassBoost']) {
+      expect(screen.getByRole('radio', { name })).toHaveAttribute('aria-checked', 'false');
+    }
+  });
+
+  it('reopens on the last active effect with every slider as it was left', async () => {
+    const first = render(<EffectControls onChange={vi.fn()} />);
+    await userEvent.click(screen.getByText('effects.slowReverb'));
+    fireEvent.change(screen.getByLabelText(/effects\.slowSpeed/), { target: { value: '0.6' } });
+    await userEvent.click(screen.getByText('effects.8dAudio'));
+    fireEvent.change(screen.getByLabelText(/effects\.rotationSpeed/), { target: { value: '1.2' } });
+    first.unmount();
+
+    const onChange = vi.fn();
+    render(<EffectControls onChange={onChange} />);
+    expect(onChange).toHaveBeenLastCalledWith({ mode: '8d-audio', speedMultiplier: 1, reverbAmount: 0, rotationSpeed: 1.2 });
+    // The effect switched away from keeps its tuning too.
+    await userEvent.click(screen.getByText('effects.slowReverb'));
+    expect(onChange).toHaveBeenLastCalledWith({ mode: 'slow-reverb', speedMultiplier: 0.6, reverbAmount: 0.7 });
+  });
+
+  it('remembers powering the effect off', async () => {
+    const first = render(<EffectControls onChange={vi.fn()} />);
+    await userEvent.click(screen.getByText('effects.bassBoost'));
+    await userEvent.click(screen.getByText('effects.bassBoost'));
+    first.unmount();
+
+    const onChange = vi.fn();
+    render(<EffectControls onChange={onChange} />);
+    expect(onChange).toHaveBeenLastCalledWith({ mode: 'none', speedMultiplier: 1, reverbAmount: 0 });
   });
 });
