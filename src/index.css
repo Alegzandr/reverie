@@ -845,6 +845,9 @@
     --color-ambient: 255, 122, 150;
     --hud-line: 255, 202, 156;
     --hud-glow: 255, 150, 120;
+    /* The valley's neon wireframe grid runs thin, saturated lines right behind
+       the floating type: dim the whole view a touch, as City Pop does. */
+    --scene-veil-floor: 0.22;
   }
 
   /* Sakura - a cherry-tree lane at golden hour. Petal pink over a deep plum. */
@@ -1560,9 +1563,10 @@
     text-shadow: 0 1px 14px rgba(var(--scene-veil), 0.9);
   }
 
-  /* City Pop's lit-window skyline is fine, high-contrast detail that wide soft
-     halos can't smooth out; a tight dark rim keeps the floating type crisp. */
-  [data-mood='citypop'] :is(.now-playing-kicker, .now-playing-title, .now-playing-meta, .now-playing-next, .idle-readout-line, .welcome-stage) {
+  /* City Pop's lit-window skyline and Echo Valley's neon wireframes are fine,
+     high-contrast detail that wide soft halos can't smooth out; a tight dark rim
+     keeps the floating type crisp. */
+  :is([data-mood='citypop'], [data-mood='horizon']) :is(.now-playing-kicker, .now-playing-title, .now-playing-meta, .now-playing-next, .idle-readout-line, .welcome-stage) {
     text-shadow:
       0 0 2px rgba(var(--scene-veil), 0.9),
       0 1px 4px rgba(var(--scene-veil), 0.8),
