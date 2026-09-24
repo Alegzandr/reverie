@@ -22,7 +22,7 @@ A mood = **palette + living world**, under the one shared visor HUD:
 | `dark` | Borealis | `borealis` - green aurora arcs over snowy crests and a mirror lake | dark |
 | `tidal` | Moon Tide | `tide` - a stylised mirror sea under the moon | dark |
 | `horizon` | Echo Valley | `valley` - a fjord at dusk: sheer cliffs wall behind wall in a mirror of water, a soft warm aurora above | dark |
-| `nocturne` | Singularity | `singularity` - a total eclipse face-on: a black disc, its combed corona, one diamond bead | dark |
+| `nocturne` | Singularity | `singularity` - a total eclipse face-on, photographic: steep K-corona, tapering helmet streamers, polar plumes, rose prominences, one diamond bead | dark |
 | `light` | Daybreak | `daybreak` - a sunlit sea of clouds | light |
 
 Each `MoodDef` carries an `id`, an i18n `labelKey`, a Lucide `icon`, its `base` and its `world`; `worldPoster()` / `worldThumb()` resolve the stills in `public/worlds/`. One surface switches it: the **world switcher** (`WorldSwitcher`), centred in the top bar and on the welcome stage - a radiogroup of round world thumbnails where the active one opens out to show its name. Arrow keys walk it like any radiogroup.
@@ -34,7 +34,7 @@ Everything in the chrome reads as light projected on a helmet visor: see-through
 - **`.pane`** - the holographic plate: a near-clear surface tint that thins toward the bottom, 4px scanlines in `--hud-line`, a luminous hairline, an inner bloom in `--hud-glow`, over `blur(22px) saturate(170%)`. `::before` masks a hairline frame down to four lit **corner brackets**; `::after` is the inner glow that breathes with the music's mids.
 - **Visor rails** - `.top-bar::before` and `.dock-wrap::before` paint full-width plates whose elliptical corner radii sum to the whole width, so the top bar and the dock bow toward the centre like the rim of a visor, each with a lit hairline edge. The bow overhangs only the open centre.
 - **Consoles** - `.console-left` / `.console-right` are perspective wrappers around the side panes, which swing their outer edge toward the viewer (`rotateY(±var(--hud-rake))`, hinged on the inner edge): a cockpit "V" around the view. Each console is its own perspective root (never the grid, which would flatten the centre's glass), and the raked plates carry a raised fill because backdrop blur flattens under a 3D pose.
-- **`.helmet`** - a fixed overlay above the interface (below every popover, never taking a pointer): the visor's rounded rim, a breath of glare at the top-left, and two graduated horizon rulers on the side edges. Its hairline brightens faintly with `--audio-level`.
+- **`.helmet`** - a fixed overlay above the interface (below every popover, never taking a pointer): the visor's rounded rim (true black in every mood, daybreak included - on OLED the helmet melts into the screen's edge), a breath of glare at the top-left, and two graduated horizon rulers on the side edges. Its hairline brightens faintly with `--audio-level`.
 - **`.pane-title`** - section heads as instrument labels: small caps, 0.2em tracking, a lit diamond tick. **`.hud-readout`** - small uppercase labels (11px, `--color-text-secondary`, full opacity: they must read at AA on every mood).
 
 ## Audio reactivity (breathe with the music)

@@ -898,10 +898,13 @@
     background-position: center, right top;
   }
 
-  /* Daylight through the visor: the rim reads as tinted shade, not a bezel. */
-  :root:not(.dark) .helmet {
-    --visor-rim: 96, 104, 140;
-    --visor-rim-alpha: 0.4;
+  /* Daylight through the visor: the rim stays true black (on OLED the helmet
+     simply disappears into the screen's edge, in every mood), only its inner
+     shade is lighter so the bright sky doesn't read as vignetted. */
+  :root:not(.dark) .helmet::before {
+    box-shadow:
+      0 0 0 60px rgba(var(--visor-rim), var(--visor-rim-alpha)),
+      inset 0 0 70px -30px rgba(var(--visor-rim), 0.45);
   }
 
   @media (prefers-reduced-motion: reduce) {

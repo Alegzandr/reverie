@@ -105,23 +105,39 @@ vec3 world(vec2 fragCoord) {
     float vertical = smoothstep(WATER, max(h, WATER + 0.001), q.y);
     vec3 rock = mix(haze * 0.8, ink, 0.45 + pow(near, 0.8) * 0.55);
     rock = mix(rock * 0.7, rock, vertical);
-    /* Strata: faint vertical grain in the rock, and the inner faces - turned
-       to the open sea - catching the last warm light. */
-    rock *= 0.9 + 0.2 * noise2(vec2(ax * mix(90.0, 45.0, near) + fi * 7.0, q.y * 3.0));
+    /* Relief: a height field of vertical fissures and horizontal ledges, lit
+       from the sky above (its slope read against a sample just below), so the
+       walls read as carved rock rather than cut paper. Finer and fainter far off. */
+    vec2 rp = vec2(ax * mix(30.0, 15.0, near) + fi * 7.0 + side * 2.3, q.y * mix(14.0, 7.0, near));
+    float fissure = 1.0 - abs(fbm2(rp * vec2(1.0, 0.5)) * 2.0 - 1.0);
+    float ledge = smoothstep(0.45, 0.75, fbm2(rp * vec2(0.3, 2.2) + 9.0));
+    float relief = fissure * fissure * 0.6 + ledge * 0.4;
+    vec2 rq = rp + vec2(0.0, -0.25);
+    float fissureB = 1.0 - abs(fbm2(rq * vec2(1.0, 0.5)) * 2.0 - 1.0);
+    float below = fissureB * fissureB * 0.6 + smoothstep(0.45, 0.75, fbm2(rq * vec2(0.3, 2.2) + 9.0)) * 0.4;
+    float lit = clamp(0.5 + (relief - below) * 5.0, 0.0, 1.0);
+    rock *= mix(1.0, 0.6 + 0.8 * lit, 0.14 + near * 0.22);
+    rock *= 0.9 + 0.16 * relief;
+    /* The inner faces - turned to the open sea - catching the last warm light. */
     float innerFace = 1.0 - smoothstep(gap, gap + face * 2.5, ax);
     rock += mix(uColA, vec3(1.0, 0.6, 0.45), 0.4) * innerFace * (0.05 + (1.0 - near) * 0.05) * (1.0 - vertical * 0.6);
     /* The aurora's glow grazing each crest. */
     /* (Bounded: far above a crest the unbounded exp overflows, and inf * 0 in
        the mix below would be NaN - a black hole in the sky.) */
     rock += mix(uColB, vec3(0.9, 0.6, 0.8), 0.5) * exp(min(dist, 0.0) / 0.0022) * (0.1 + (1.0 - near) * 0.06);
-    /* Mist pooled at the waterline between the walls. */
-    rock = mix(rock, haze * 1.25, (1.0 - smoothstep(WATER, WATER + 0.02 + (1.0 - near) * 0.03, q.y)) * (0.45 - near * 0.35));
+    /* Mist pooled at the waterline between the walls, in drifting banks. */
+    float bank = fbm2(vec2(q.x * 3.0 + fi * 4.0 + uTime * 0.006, (q.y - WATER) * 40.0));
+    float mistH = 0.02 + (1.0 - near) * 0.03 + bank * 0.025;
+    rock = mix(rock, haze * 1.25, (1.0 - smoothstep(WATER, WATER + mistH, q.y)) * (0.5 - near * 0.35) * (0.6 + 0.6 * bank));
     col = mix(col, rock, body);
   }
 
-  /* Water: darker and cooler than what it holds, a faint sheen far off. */
-  vec3 water = col * mix(0.7, 0.45, depth) + uColC * 0.004;
+  /* Water: darker and cooler than what it holds, a faint sheen far off, and
+     fine wind lines - slow, and deaf to the music like the rock. */
+  float wind = fbm2(vec2(p.x * 2.0 + uTime * 0.004, p.y * 60.0 / (0.3 + depth)));
+  vec3 water = col * mix(0.72, 0.45, depth) * (0.88 + 0.24 * wind) + uColC * 0.004;
   water += mix(uColB, vec3(1.0, 0.7, 0.6), 0.4) * exp(-depth * 40.0) * 0.03;
+  water += mix(uColA, vec3(1.0, 0.75, 0.6), 0.4) * exp(-abs(p.x) * 9.0) * smoothstep(0.62, 0.8, wind) * (1.0 - depth) * 0.05;
   col = mix(col, water, under);
   return col;
 }
