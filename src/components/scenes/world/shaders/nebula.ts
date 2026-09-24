@@ -55,6 +55,9 @@ float lace(vec2 p, float seed, out float across, out float along) {
   return n * band * knots * bundles;
 }
 
+/* Nod: a hair of dolly - the nearer lace (larger k) swells more than the far. */
+const float NOD_DOLLY = 0.008;
+
 vec3 world(vec2 fragCoord) {
   vec2 uv = (fragCoord - 0.5 * uRes) / uRes.y;
 
@@ -69,7 +72,7 @@ vec3 world(vec2 fragCoord) {
   for (int k = 0; k < 3; k++) {
     float fk = float(k);
     float depth = 1.0 - fk * 0.3;
-    vec2 p = uv * (1.0 + fk * 0.16) + uPointer * 0.012 * (fk + 1.0) + vec2(fk * 0.07, -fk * 0.05);
+    vec2 p = uv * (1.0 + fk * 0.16) / (1.0 + uNod * NOD_DOLLY * (fk + 1.0)) + uPointer * 0.012 * (fk + 1.0) + vec2(fk * 0.07, -fk * 0.05);
     float across;
     float along;
     float h = lace(p, fk * 1.93, across, along);

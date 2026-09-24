@@ -42,9 +42,12 @@ float streamers(float th, float rr) {
   return s;
 }
 
+/* Nod: a hair of dolly toward the eclipse; the stars behind hold. */
+const float NOD_DOLLY = 0.015;
+
 vec3 world(vec2 fragCoord) {
   vec2 uv = (fragCoord - 0.5 * uRes) / uRes.y;
-  vec2 d = uv - EC_C - uPointer * 0.006;
+  vec2 d = (uv - EC_C - uPointer * 0.006) / (1.0 + uNod * NOD_DOLLY);
   float r = length(d);
   vec2 dir = d / max(r, 1e-4);
   float th = atan(d.y, d.x);
@@ -118,7 +121,7 @@ vec3 world(vec2 fragCoord) {
 
   /* The diamond bead, with a short four-point glint. */
   vec2 bead = EC_C + vec2(cos(BEAD_ANGLE), sin(BEAD_ANGLE)) * EC_R;
-  vec2 b = uv - uPointer * 0.006 - bead;
+  vec2 b = (uv - uPointer * 0.006 - EC_C) / (1.0 + uNod * NOD_DOLLY) + EC_C - bead;
   float bb = dot(b, b);
   float breath = 1.0 + uBass * 0.35 * uPlaying;
   col += pearl * (0.000032 / (bb + 0.000009)) * breath;

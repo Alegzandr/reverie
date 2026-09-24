@@ -30,6 +30,8 @@ export interface AudioFeed {
   /** Advance by dt seconds; returns true when the history texture has new rows. */
   update(dt: number): boolean;
   frame: AudioFrame;
+  /** This frame's auto-gained bands (0..1, BANDS long) - read-only for consumers. */
+  bands: Float32Array;
   /** R8 history (BANDS × HISTORY_ROWS), row-major; rows written ring-style. */
   history: Uint8Array;
   /** Index of the newest written row. */
@@ -139,6 +141,7 @@ export function createAudioFeed(getAnalyser: () => AnalyserNode | null): AudioFe
 
   return {
     frame,
+    bands,
     history,
     get head() {
       return feed.head;

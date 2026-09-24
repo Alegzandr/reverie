@@ -7,6 +7,8 @@
  */
 export const DAYBREAK = /* glsl */ `
 const float CLOUD_TOP = 0.0;
+/* How far the eye sinks toward the cloud tops on a nod. */
+const float NOD_DROP = 0.035;
 const float CLOUD_BASE = -1.6;
 const vec3 DAY_SUN = vec3(0.0, 0.1, 1.0);
 
@@ -38,7 +40,7 @@ vec3 daySky(vec3 rd) {
 
 vec3 world(vec2 fragCoord) {
   vec2 uv = (fragCoord - 0.5 * uRes) / uRes.y;
-  vec3 ro = vec3(uPointer.x * 0.3, 0.9 + sin(uTime * 0.12) * 0.06, uTravel * 0.9);
+  vec3 ro = vec3(uPointer.x * 0.3, 0.9 + sin(uTime * 0.12) * 0.06 - uNod * NOD_DROP, uTravel * 0.9);
   vec3 fw = normalize(vec3(uPointer.x * 0.05, -0.12 - uPointer.y * 0.03, 1.0));
   vec3 rt = normalize(cross(vec3(0.0, 1.0, 0.0), fw));
   vec3 up = cross(fw, rt);

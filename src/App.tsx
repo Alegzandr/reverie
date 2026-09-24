@@ -19,7 +19,7 @@ import { NowPlaying } from './components/NowPlaying';
 import { IdleReadout } from './components/IdleReadout';
 import { PlaylistPanel } from './components/playlist/PlaylistPanel';
 import { Tooltip, TooltipTrigger, TooltipContent } from './components/ui/tooltip';
-import { provideWorldAnalyser } from './components/scenes/world/analyserSource';
+import { provideWorldAnalyser, provideWorldBeat } from './components/scenes/world/analyserSource';
 import { useAudioProcessor } from './hooks/useAudioProcessor';
 import type { AudioMetadata } from './hooks/useAudioFile';
 import { useAudioReactivity } from './hooks/useAudioReactivity';
@@ -136,6 +136,7 @@ function App() {
     reset,
     getAnalyser,
     getLoudness,
+    getBeatGrid,
   } = useAudioProcessor({ onTrackEnd });
 
   const hasSession = !!(originalFile || originalBuffer || processedBuffer);
@@ -159,6 +160,11 @@ function App() {
     provideWorldAnalyser(getAnalyser);
     return () => provideWorldAnalyser(null);
   }, [getAnalyser]);
+  // ...and nods on the track's beat grid, read against the playhead.
+  useEffect(() => {
+    provideWorldBeat({ getGrid: getBeatGrid, getPosition: playbackClock.get });
+    return () => provideWorldBeat(null);
+  }, [getBeatGrid, playbackClock]);
 
   // Desktop-only: narrow viewports are gated (no bypass). Live on resize.
   const viewportTooNarrow = useIsViewportTooNarrow();

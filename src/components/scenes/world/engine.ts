@@ -2,7 +2,10 @@ import { SCENE_WORLD } from '../../../constants';
 import { IDLE_FRAME_MS, createFrameGate, frameDeltaSeconds } from '../frameClock';
 import { createMoodPaletteCache } from '../paletteReader';
 import { createAudioFeed, type AudioFeed } from './audioFeed';
+import { currentWorldBeat } from './analyserSource';
+import { createBeatClock } from './beatClock';
 import { createBeatCrop } from './beatCrop';
+import { createGridFollower } from './gridFollower';
 import { buildNoise2D, buildNoise3D } from './noiseTextures';
 import { ACCUMULATE_SHADER, PRELUDE, PRESENT_SHADER, VERTEX_SHADER } from './shaders/common';
 import { WORLD_SHADERS, WORLD_SPEED, type WorldId } from './worlds';
@@ -41,12 +44,12 @@ export interface WorldEngine {
 
 type UniformName =
   | 'uRes' | 'uTime' | 'uTravel' | 'uLevel' | 'uBass' | 'uMid' | 'uTreble' | 'uPlaying' | 'uKicks'
-  | 'uColA' | 'uColB' | 'uColC' | 'uBg' | 'uBackground' | 'uLight' | 'uPointer' | 'uFade' | 'uSpec' | 'uSpecHead'
+  | 'uColA' | 'uColB' | 'uColC' | 'uBg' | 'uBackground' | 'uLight' | 'uPointer' | 'uNod' | 'uFade' | 'uSpec' | 'uSpecHead'
   | 'uNoise3' | 'uNoise2' | 'uJitter' | 'uSeed';
 
 const UNIFORMS: UniformName[] = [
   'uRes', 'uTime', 'uTravel', 'uLevel', 'uBass', 'uMid', 'uTreble', 'uPlaying', 'uKicks',
-  'uColA', 'uColB', 'uColC', 'uBg', 'uBackground', 'uLight', 'uPointer', 'uFade', 'uSpec', 'uSpecHead',
+  'uColA', 'uColB', 'uColC', 'uBg', 'uBackground', 'uLight', 'uPointer', 'uNod', 'uFade', 'uSpec', 'uSpecHead',
   'uNoise3', 'uNoise2', 'uJitter', 'uSeed',
 ];
 
@@ -114,6 +117,8 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
   const { still, getAnalyser } = options;
   const parallel = gl.getExtension('KHR_parallel_shader_compile');
   const feed: AudioFeed = createAudioFeed(getAnalyser);
+  const beat = createBeatClock();
+  const follower = createGridFollower();
   const crop = createBeatCrop();
 
   // ── GPU resources ──────────────────────────────────────────────────────────
@@ -227,7 +232,7 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
       crop: gl.getUniformLocation(presentProg, 'uCrop'),
     };
     // The still (reduced-motion) world never crops; the live loop overwrites this each frame.
-    gl.uniform3f(presentLoc.crop, 1, 0, 0);
+    gl.uniform1f(presentLoc.crop, 1);
     return true;
   };
 
@@ -443,6 +448,16 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
   const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
   ro?.observe(canvas);
 
+  /**
+   * How far ahead of a grid beat to start a nod: its attack, so it peaks on the
+   * hit, less the time the hit takes to reach the speakers after the playhead.
+   */
+  const nodLead = () => {
+    const ctx = getAnalyser()?.context as AudioContext | undefined;
+    const latency = ctx ? (ctx.outputLatency || ctx.baseLatency || 0) : 0;
+    return SCENE_WORLD.BEAT_CROP.ATTACK_SECONDS - latency;
+  };
+
   const uploadHistory = () => {
     const rows = feed.consumeDirty();
     if (!rows.length || !specTex) return;
@@ -478,6 +493,7 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
     gl.uniform3f(loc.uBackground, bg[0], bg[1], bg[2]);
     gl.uniform1f(loc.uLight, light);
     gl.uniform2f(loc.uPointer, pointer[0], pointer[1]);
+    gl.uniform1f(loc.uNod, crop.nod);
     gl.uniform1f(loc.uFade, fade);
     gl.uniform2f(loc.uJitter, jx, jy);
     gl.uniform1f(loc.uSeed, frameIndex % 64);
@@ -526,7 +542,7 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
     gl.bindTexture(gl.TEXTURE_2D, (snapshot ?? next).tex);
     gl.uniform1f(presentLoc.mix, snapshot ? crossfade : 1);
     gl.uniform1f(presentLoc.seed, frameIndex % 64);
-    if (!still) gl.uniform3f(presentLoc.crop, crop.frame.zoom, crop.frame.panX, crop.frame.panY);
+    if (!still) gl.uniform1f(presentLoc.crop, crop.zoom);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     lastPresented = next;
     frameIndex += 1;
@@ -578,7 +594,12 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
 
     if (!still) {
       feed.update(dt);
-      crop.update(dt, feed.frame.kicks[0], feed.frame.bass, feed.frame.playing);
+      // The track's own beat grid once it's analysed; the live clock until then.
+      const live = beat.update(dt, feed.bands, feed.frame.level);
+      const source = currentWorldBeat();
+      const grid = source?.getGrid();
+      const onGrid = source && grid?.times.length ? follower.update(grid, source.getPosition(), nodLead()) : null;
+      crop.update(dt, onGrid ?? live);
       pointer[0] += (pointerTarget[0] - pointer[0]) * Math.min(1, dt * 1.5);
       pointer[1] += (pointerTarget[1] - pointer[1]) * Math.min(1, dt * 1.5);
     }

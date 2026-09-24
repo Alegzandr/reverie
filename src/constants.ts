@@ -177,30 +177,118 @@ export const SCENE_WORLD = {
     /** Cross-fade (ms) from the old world's last frame into the new one on a mood switch. */
     WORLD_FADE_IN_MS: 1400,
     /**
-     * Beat crop (the edit-style "pan crop"): the presented frame punches in on
-     * each kick and slides its crop window, like keyframed zooms synced to a
-     * track. Zooms are fractions of the frame (0.03 = 3 %), times in seconds.
+     * Beat clock: the tempo-locked pulse the world nods along with (see beatClock.ts).
+     * Onset envelope sampled at RATE; tempo and phase re-estimated over the last WINDOW.
      */
-    BEAT_CROP: {
-        /** Resting crop while music plays - the margin the pan slides within. */
-        REST_ZOOM: 0.014,
-        /** Extra zoom a full-strength kick punches in. */
-        PUNCH_ZOOM: 0.028,
-        /** Snap-in time (ease-out) and the ease-out settle back to rest. */
-        ATTACK_SECONDS: 0.055,
-        RELEASE_SECONDS: 0.42,
-        /** Crop-window slide per kick (fraction of the frame), and its easing rate (1/s). */
-        PAN: 0.006,
-        PAN_RATE: 5,
-        /** Kick strength from the bass energy at the hit: floor + bass * gain, capped at 1. */
-        STRENGTH_FLOOR: 0.55,
-        STRENGTH_BASS_GAIN: 0.6,
-        /** Dense kicks (fast tempos, rolls) punch softer: full strength from this mean gap up. */
-        CALM_GAP_SECONDS: 0.42,
-        DENSE_STRENGTH: 0.45,
-        /** Smoothing of the mean kick gap per new kick. */
-        GAP_SMOOTHING: 0.3,
+    BEAT_CLOCK: {
+        RATE: 60,
+        WINDOW_SECONDS: 6,
+        /** Nothing is estimated before this much music has been heard. */
+        MIN_HISTORY_SECONDS: 2.5,
+        ESTIMATE_INTERVAL_SECONDS: 0.15,
+        /** Local average removed from the onset envelope, so only hits stand out. */
+        DETREND_SECONDS: 0.3,
+        /** A band's rise over two envelope samples that counts as fully "hit". */
+        RISE: 0.12,
+        /** Tempo search range, lag grid (envelope samples) and the prior's centre / width. */
+        MIN_BPM: 60,
+        MAX_BPM: 200,
+        LAG_STEP: 0.5,
+        PRIOR_BPM: 115,
+        PRIOR_OCTAVES: 0.7,
+        /** Faster than this (seconds) nods every other beat - headbanging at 170 isn't a nod. */
+        NOD_MIN_PERIOD: 0.42,
+        /**
+         * Pulse clarity (the onset envelope's autocorrelation at its beat) mapped to
+         * confidence. Measured: piano ballads sit ~0.15, hip-hop ~0.3, four-on-the-floor 0.5-0.8.
+         */
+        CLARITY_LOW: 0.2,
+        CLARITY_HIGH: 0.4,
+        /** Longest lag the clarity looks at (seconds). */
+        CLARITY_MAX_LAG_SECONDS: 1.5,
+        /** Overall level under which the clock doesn't trust anything. */
+        MIN_LEVEL: 0.04,
+        /** Confidence easing: grows in over a couple of bars, leaves quicker at a breakdown. */
+        CONFIDENCE_RISE_SECONDS: 1.5,
+        CONFIDENCE_FALL_SECONDS: 0.6,
+        /** Below this confidence a fresh estimate re-locks the clock outright. */
+        RELOCK_CONFIDENCE: 0.15,
+        /** Same tempo within this (octaves): nudge period / phase by these gains per estimate. */
+        SAME_TEMPO_OCTAVES: 0.05,
+        PERIOD_GAIN: 0.2,
+        PHASE_GAIN: 0.25,
+        /** Consecutive estimates a new tempo must hold before the clock jumps to it. */
+        TEMPO_SWITCH_ESTIMATES: 4,
+        /** Nods start this early so they peak on the hit (attack + the analyser's lag). */
+        NOD_LEAD_SECONDS: 0.075,
     },
+    /** Beat crop: the head nod's envelope (the worlds' parallax) and the hair of zoom on top. */
+    BEAT_CROP: {
+        /** Zoom (fraction of the frame) a fully confident nod adds in the present pass. */
+        NOD_ZOOM: 0.004,
+        /** Dip-in time and the settle back (fraction of the nod period), both eased in and out. */
+        ATTACK_SECONDS: 0.06,
+        RELEASE_PERIODS: 0.6,
+    },
+} as const;
+
+// ============================================================================
+// BEAT GRID (whole-track beat analysis for the worlds' nod - see utils/beatGrid.ts)
+// ============================================================================
+
+export const BEAT_GRID = {
+    /** The track is decimated to about this rate before analysis (drum bands end well below 11 kHz). */
+    ANALYSIS_RATE_HZ: 22050,
+    FFT_SIZE: 1024,
+    /** Onset envelope frames per second. */
+    ENV_RATE: 100,
+    /** Log-spaced analysis bands between these edges (only the drum bands are weighted). */
+    BANDS: 48,
+    MIN_HZ: 32,
+    MAX_HZ: 10000,
+    /** A band rising this many dB over RISE_FRAMES counts as fully "hit". */
+    RISE_DB: 9,
+    RISE_FRAMES: 2,
+    /** Tempo search range and the prior's centre / width (octaves). */
+    MIN_BPM: 60,
+    MAX_BPM: 200,
+    PRIOR_BPM: 110,
+    PRIOR_OCTAVES: 0.8,
+    /** Metrical support: the autocorrelation two and four beats on, and its weights in a tempo's score. */
+    METER_MULTIPLES: [2, 4],
+    METER_WEIGHTS: [0.35, 0.15],
+    /** How hard the beat tracker holds the tempo against a stray onset (Ellis's tightness). */
+    TIGHTNESS: 100,
+    /** Faster than this (seconds, ~133 BPM) the world nods every other beat. */
+    NOD_MIN_PERIOD: 0.45,
+    /** Beats each side weighed when picking which of a pair to nod on. */
+    PARITY_BEATS: 8,
+    /** Harmonic/percussive split: median lengths along time (frames) and across bands. */
+    HARMONIC_MEDIAN_FRAMES: 21,
+    PERCUSSIVE_MEDIAN_BANDS: 9,
+    /**
+     * Drums: the percussive share of the drum bands' energy, averaged over this
+     * half-window around a nod, and its mapping. Measured: piano ballad ~0.2,
+     * drumless intros ~0.2, hip-hop / house / rock with drums 0.5-0.7.
+     */
+    DRUM_WINDOW_SECONDS: 1.5,
+    DRUMS_LOW: 0.35,
+    DRUMS_HIGH: 0.52,
+    /**
+     * Drum loudness around a nod against the song's mean over its audible frames:
+     * only a near-empty breakdown fails it (a lighter verse sits ~20 dB under a drop).
+     */
+    DRUM_LEVEL_LOW: 0.003,
+    DRUM_LEVEL_HIGH: 0.012,
+    /** Nod amount from the same drum level: ACCENT_FLOOR at or under LOW, full at HIGH and up. */
+    ACCENT_FLOOR: 0.55,
+    ACCENT_LEVEL_LOW: 0.02,
+    ACCENT_LEVEL_HIGH: 0.6,
+    /** Hits near the nod against the track's typical hit: below LOW the drums have dropped out. */
+    PRESENCE_LOW: 0.15,
+    PRESENCE_HIGH: 0.45,
+    /** Frames this far (dB) under the loudest are silence: no nods. */
+    SILENCE_DB: 45,
 } as const;
 
 // ============================================================================

@@ -1,71 +1,50 @@
 import { describe, expect, it } from 'vitest';
 import { SCENE_WORLD } from '../../../constants';
-import { createBeatCrop, type BeatCrop } from './beatCrop';
+import type { BeatClockFrame } from './beatClock';
+import { createBeatCrop } from './beatCrop';
 
 const C = SCENE_WORLD.BEAT_CROP;
 const DT = 1 / 60;
-const NO_KICK = 1e3;
 
-/** Plays `seconds` at 60 fps with a kick every `gap` seconds (none when omitted); returns the zoom trace. */
-function play(crop: BeatCrop, seconds: number, gap?: number, bass = 0.7, playing = 1): number[] {
-  const zooms: number[] = [];
-  let age = NO_KICK;
-  for (let t = 0; t < seconds; t += DT) {
-    age = gap !== undefined && age >= gap ? 0 : Math.min(NO_KICK, age + DT);
-    zooms.push(crop.update(DT, age, bass, playing).zoom);
-  }
-  return zooms;
-}
+const clock = (nod: boolean, confidence = 1, period = 0.5): BeatClockFrame => ({ nod, confidence, period });
 
 describe('createBeatCrop', () => {
-  it('rests at the plain frame without music', () => {
+  it('rests at the plain frame until the clock nods', () => {
     const crop = createBeatCrop();
-    play(crop, 1, 0.5, 0.7, 0);
-    expect(crop.frame).toEqual({ zoom: 1, panX: 0, panY: 0 });
+    for (let i = 0; i < 60; i += 1) crop.update(DT, clock(false));
+    expect(crop.zoom).toBe(1);
+    expect(crop.nod).toBe(0);
   });
 
-  it('does not read the feed\'s initial "no kick" age as a hit', () => {
+  it('dips in over the attack, then settles fully before the next beat', () => {
     const crop = createBeatCrop();
-    const zooms = play(crop, 0.3);
-    expect(Math.max(...zooms)).toBeCloseTo(1 + C.REST_ZOOM, 6);
-  });
-
-  it('snaps in on a kick, then settles back to the resting crop', () => {
-    const crop = createBeatCrop();
-    play(crop, 0.1);
-    crop.update(DT, 0, 1, 1);
-    const trace = play(crop, 1);
-    const peak = Math.max(...trace);
-    expect(peak).toBeGreaterThan(1 + C.REST_ZOOM + C.PUNCH_ZOOM * 0.8);
-    expect(peak).toBeLessThanOrEqual(1 + C.REST_ZOOM + C.PUNCH_ZOOM + 1e-9);
-    expect(trace.indexOf(peak) * DT).toBeLessThanOrEqual(C.ATTACK_SECONDS + DT);
-    expect(trace[trace.length - 1]).toBeCloseTo(1 + C.REST_ZOOM, 6);
-  });
-
-  it('punches softer when kicks come dense', () => {
-    const calm = Math.max(...play(createBeatCrop(), 4, 0.5).slice(-60));
-    const dense = Math.max(...play(createBeatCrop(), 4, 0.22).slice(-60));
-    expect(dense).toBeLessThan(calm);
-  });
-
-  it('keeps the crop window inside the magnified frame', () => {
-    const crop = createBeatCrop();
-    for (let i = 0; i < 400; i += 1) {
-      const f = crop.update(DT, i % 20 === 0 ? 0 : (i % 20) * DT, 1, 1);
-      const margin = (1 - 1 / f.zoom) / 2;
-      expect(Math.abs(f.panX)).toBeLessThanOrEqual(margin);
-      expect(Math.abs(f.panY)).toBeLessThanOrEqual(margin);
+    crop.update(DT, clock(true));
+    const trace: number[] = [];
+    for (let t = DT; t < 0.5; t += DT) {
+      crop.update(DT, clock(false));
+      trace.push(crop.nod);
     }
+    const peakAt = trace.indexOf(Math.max(...trace)) * DT;
+    expect(Math.max(...trace)).toBeCloseTo(1, 1);
+    expect(peakAt).toBeLessThanOrEqual(C.ATTACK_SECONDS + DT);
+    expect(trace[trace.length - 1]).toBe(0);
+    expect(crop.zoom).toBe(1);
   });
 
-  it('alternates the slide side from one kick to the next', () => {
+  it('scales the nod by the clock confidence', () => {
     const crop = createBeatCrop();
-    play(crop, 0.1);
-    crop.update(DT, 0, 1, 1);
-    play(crop, 0.4);
-    const first = Math.sign(crop.frame.panX);
-    crop.update(DT, 0, 1, 1);
-    play(crop, 0.4);
-    expect(Math.sign(crop.frame.panX)).toBe(-first);
+    crop.update(DT, clock(true, 0.4));
+    for (let t = 0; t < C.ATTACK_SECONDS; t += DT) crop.update(DT, clock(false, 0.4));
+    expect(crop.nod).toBeCloseTo(0.4, 2);
+    expect(crop.zoom).toBeCloseTo(1 + C.NOD_ZOOM * 0.4, 4);
+  });
+
+  it('starts a new nod from wherever the last one was (no jump)', () => {
+    const crop = createBeatCrop();
+    crop.update(DT, clock(true));
+    for (let i = 0; i < 8; i += 1) crop.update(DT, clock(false));
+    const before = crop.nod;
+    crop.update(DT, clock(true));
+    expect(Math.abs(crop.nod - before)).toBeLessThan(0.1);
   });
 });

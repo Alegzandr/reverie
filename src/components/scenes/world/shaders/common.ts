@@ -34,6 +34,7 @@ uniform vec3 uBg;
 uniform vec3 uBackground; // the background as authored (sRGB 0..1), for the fade
 uniform float uLight;     // 1 on the light palette
 uniform vec2 uPointer;    // eased pointer, -1..1
+uniform float uNod;       // 0..1 head nod on the beat (beat clock x its confidence); near layers move, the far ones hold
 uniform float uFade;      // world intro/outro 0..1
 uniform vec2 uJitter;     // sub-pixel offset, new every frame (temporal anti-aliasing)
 uniform float uSeed;      // per-frame noise seed: march jitter averages out across frames
@@ -224,8 +225,8 @@ uniform sampler2D uSnapshot;
 uniform float uMix;
 uniform float uSharpen;
 uniform float uSeed;
-// Beat crop: zoom (>= 1) and crop-window centre offset (fraction of the frame).
-uniform vec3 uCrop;
+// Beat crop: the head-nod zoom (>= 1) around the frame's centre.
+uniform float uCrop;
 out vec4 outColor;
 float hash(vec2 p) {
   vec3 p3 = fract(vec3(p.xyx) * 0.1031);
@@ -234,9 +235,9 @@ float hash(vec2 p) {
 }
 void main() {
   vec2 size = vec2(textureSize(uImage, 0));
-  // At rest (zoom 1, no pan) this lands on texel centres: bilinear taps then
-  // read exactly what texelFetch did, so the crop costs no sharpness.
-  vec2 uv = ((gl_FragCoord.xy / size - 0.5) / uCrop.x + 0.5 + uCrop.yz);
+  // At rest (zoom 1) this lands on texel centres: bilinear taps then read
+  // exactly what texelFetch did, so the crop costs no sharpness.
+  vec2 uv = (gl_FragCoord.xy / size - 0.5) / uCrop + 0.5;
   vec2 px = 1.0 / size;
   vec3 c = texture(uImage, uv).rgb;
   vec3 n = texture(uImage, uv + vec2(0.0, px.y)).rgb

@@ -7,6 +7,7 @@ import { loadBeatSamples } from '../utils/beatSamples';
 import { useAudioFile } from './useAudioFile';
 import { useAudioPlayback } from './useAudioPlayback';
 import { useAudioExport } from './useAudioExport';
+import { peekBeatGrid } from '../utils/beatGridStore';
 
 export interface ProcessingState {
   isLoading: boolean;
@@ -82,6 +83,7 @@ export function useAudioProcessor({ onTrackEnd }: UseAudioProcessorOptions = {})
     resetPlayback,
     getAnalyser,
     getLoudness,
+    getBeatGrid,
   } = useAudioPlayback({
     getAudioContext,
     getBufferDuration,
@@ -121,6 +123,8 @@ export function useAudioProcessor({ onTrackEnd }: UseAudioProcessorOptions = {})
     // the first hits. The cache is app-wide, so this runs once; a failure is the
     // scheduler's silent-bed concern, not this load's.
     void loadBeatSamples(audioProcessor.getAudioContext()).catch(() => {});
+    // Start the worlds' beat analysis now (in a worker) so the grid is ready by the first beats.
+    if (nextBuffer) peekBeatGrid(nextBuffer);
     // Measure the track's tempo once so the Nightcore grid has a BPM to lock to.
     // Cheap (a few ms) and cached per buffer; failure just leaves the fallback tempo.
     if (nextBuffer) {
@@ -238,5 +242,6 @@ export function useAudioProcessor({ onTrackEnd }: UseAudioProcessorOptions = {})
     reset,
     getAnalyser,
     getLoudness,
+    getBeatGrid,
   };
 }

@@ -512,6 +512,9 @@ float swellHeight(vec2 w) {
   return vnoise(w * vec2(0.35, 2.2)) * 0.65 + vnoise(w * vec2(0.9, 5.3) + 7.1) * 0.35;
 }
 
+/* A nod lowers the eye a hair: the bay packs toward the horizon, the far city holds. */
+const float NOD_SINK = 0.03;
+
 vec3 world(vec2 fragCoord) {
   float aspect = uRes.x / uRes.y;
   vec2 p = vec2((fragCoord.x / uRes.x - 0.5) * aspect, fragCoord.y / uRes.y);
@@ -523,7 +526,8 @@ vec3 world(vec2 fragCoord) {
      into a still mirror. */
   float below = SHORE - p.y;
   float depth = below / SHORE;
-  float z = 1.0 / (below + 0.004);
+  float sunk = below * (1.0 + uNod * NOD_SINK);
+  float z = 1.0 / (sunk + 0.004);
   vec2 w = vec2(p.x * z, z - uTime * 0.9);
   float settle = 1.0 - smoothstep(0.25, 0.7, fwidth(w.y) * 5.3);
   float e = 0.02;
@@ -534,7 +538,7 @@ vec3 world(vec2 fragCoord) {
      A per-frame jitter along the column blurs it, the accumulation averages. */
   /* Swell lines on top of it, packed by perspective: they cut the mirror
      into slivers, each torn a little sideways from its neighbours. */
-  float phase = 0.9 / (below + 0.004) + uTime * 0.3;
+  float phase = 0.9 / (sunk + 0.004) + uTime * 0.3;
   float settleLines = 1.0 - smoothstep(0.2, 0.6, fwidth(phase));
   float line = sin(phase * TAU + noise2(vec2(p.x * 4.0, floor(phase) * 0.7)) * 3.0);
   float sliver = mix(1.0, 0.75 + 0.4 * smoothstep(-0.5, 0.9, line), settleLines);

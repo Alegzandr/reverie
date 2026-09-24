@@ -9,6 +9,8 @@ import { isRepeatMode, nextRepeatMode, type RepeatMode } from '../utils/playlist
 import { EQ_FLAT_GAINS } from '../contexts/eqPresets';
 import { getBufferLoudness, type LoudnessProfile } from '../utils/audioLoudness';
 import { createPlaybackClock, type MutablePlaybackClock } from '../utils/playbackClock';
+import type { BeatGrid } from '../utils/beatGrid';
+import { peekBeatGrid } from '../utils/beatGridStore';
 
 export interface PlaybackState {
   isPlaying: boolean;
@@ -387,6 +389,13 @@ export function useAudioPlayback({
     return buffer ? getBufferLoudness(buffer) : null;
   }, []);
 
+  // The active track's beat grid for the worlds' nod, once its background
+  // analysis has landed (null until then - the worlds use their live clock).
+  const getBeatGrid = useCallback((): BeatGrid | null => {
+    const buffer = activeBufferRef.current;
+    return buffer ? peekBeatGrid(buffer) : null;
+  }, []);
+
   return {
     state,
     /** Playhead position store - subscribe/read without re-rendering per frame. */
@@ -402,5 +411,6 @@ export function useAudioPlayback({
     resetPlayback,
     getAnalyser,
     getLoudness,
+    getBeatGrid,
   };
 }

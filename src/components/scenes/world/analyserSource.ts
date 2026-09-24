@@ -1,3 +1,5 @@
+import type { BeatGrid } from '../../../utils/beatGrid';
+
 /**
  * Where the living world hears the music. The scene is mounted once at the app
  * root - above the welcome/workspace split, so the world never recompiles or
@@ -14,4 +16,20 @@ export function provideWorldAnalyser(next: AnalyserAccessor | null): void {
 
 export function currentWorldAnalyser(): AnalyserNode | null {
   return accessor ? accessor() : null;
+}
+
+/** The active track's beat grid (null until analysed) and the playhead it's read against. */
+export interface WorldBeatSource {
+  getGrid: () => BeatGrid | null;
+  getPosition: () => number;
+}
+
+let beatSource: WorldBeatSource | null = null;
+
+export function provideWorldBeat(next: WorldBeatSource | null): void {
+  beatSource = next;
+}
+
+export function currentWorldBeat(): WorldBeatSource | null {
+  return beatSource;
 }
