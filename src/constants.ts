@@ -176,6 +176,31 @@ export const SCENE_WORLD = {
     SCALE_STEP_UP: 1.04,
     /** Cross-fade (ms) from the old world's last frame into the new one on a mood switch. */
     WORLD_FADE_IN_MS: 1400,
+    /**
+     * Beat crop (the edit-style "pan crop"): the presented frame punches in on
+     * each kick and slides its crop window, like keyframed zooms synced to a
+     * track. Zooms are fractions of the frame (0.03 = 3 %), times in seconds.
+     */
+    BEAT_CROP: {
+        /** Resting crop while music plays - the margin the pan slides within. */
+        REST_ZOOM: 0.014,
+        /** Extra zoom a full-strength kick punches in. */
+        PUNCH_ZOOM: 0.028,
+        /** Snap-in time (ease-out) and the ease-out settle back to rest. */
+        ATTACK_SECONDS: 0.055,
+        RELEASE_SECONDS: 0.42,
+        /** Crop-window slide per kick (fraction of the frame), and its easing rate (1/s). */
+        PAN: 0.006,
+        PAN_RATE: 5,
+        /** Kick strength from the bass energy at the hit: floor + bass * gain, capped at 1. */
+        STRENGTH_FLOOR: 0.55,
+        STRENGTH_BASS_GAIN: 0.6,
+        /** Dense kicks (fast tempos, rolls) punch softer: full strength from this mean gap up. */
+        CALM_GAP_SECONDS: 0.42,
+        DENSE_STRENGTH: 0.45,
+        /** Smoothing of the mean kick gap per new kick. */
+        GAP_SMOOTHING: 0.3,
+    },
 } as const;
 
 // ============================================================================

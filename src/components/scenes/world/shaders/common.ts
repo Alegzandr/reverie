@@ -224,6 +224,8 @@ uniform sampler2D uSnapshot;
 uniform float uMix;
 uniform float uSharpen;
 uniform float uSeed;
+// Beat crop: zoom (>= 1) and crop-window centre offset (fraction of the frame).
+uniform vec3 uCrop;
 out vec4 outColor;
 float hash(vec2 p) {
   vec3 p3 = fract(vec3(p.xyx) * 0.1031);
@@ -231,16 +233,19 @@ float hash(vec2 p) {
   return fract((p3.x + p3.y) * p3.z);
 }
 void main() {
-  ivec2 p = ivec2(gl_FragCoord.xy);
-  ivec2 hi = textureSize(uImage, 0) - 1;
-  vec3 c = texelFetch(uImage, p, 0).rgb;
-  vec3 n = texelFetch(uImage, clamp(p + ivec2(0, 1), ivec2(0), hi), 0).rgb
-    + texelFetch(uImage, clamp(p - ivec2(0, 1), ivec2(0), hi), 0).rgb
-    + texelFetch(uImage, clamp(p + ivec2(1, 0), ivec2(0), hi), 0).rgb
-    + texelFetch(uImage, clamp(p - ivec2(1, 0), ivec2(0), hi), 0).rgb;
+  vec2 size = vec2(textureSize(uImage, 0));
+  // At rest (zoom 1, no pan) this lands on texel centres: bilinear taps then
+  // read exactly what texelFetch did, so the crop costs no sharpness.
+  vec2 uv = ((gl_FragCoord.xy / size - 0.5) / uCrop.x + 0.5 + uCrop.yz);
+  vec2 px = 1.0 / size;
+  vec3 c = texture(uImage, uv).rgb;
+  vec3 n = texture(uImage, uv + vec2(0.0, px.y)).rgb
+    + texture(uImage, uv - vec2(0.0, px.y)).rgb
+    + texture(uImage, uv + vec2(px.x, 0.0)).rgb
+    + texture(uImage, uv - vec2(px.x, 0.0)).rgb;
   c = max(c + (c - n * 0.25) * uSharpen, 0.0);
   if (uMix < 1.0) {
-    vec3 before = texelFetch(uSnapshot, clamp(p, ivec2(0), textureSize(uSnapshot, 0) - 1), 0).rgb;
+    vec3 before = texture(uSnapshot, uv).rgb;
     c = mix(before, c, smoothstep(0.0, 1.0, uMix));
   }
   c += (hash(gl_FragCoord.xy + uSeed * 7.13) - 0.5) / 255.0;

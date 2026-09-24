@@ -2,6 +2,7 @@ import { SCENE_WORLD } from '../../../constants';
 import { IDLE_FRAME_MS, createFrameGate, frameDeltaSeconds } from '../frameClock';
 import { createMoodPaletteCache } from '../paletteReader';
 import { createAudioFeed, type AudioFeed } from './audioFeed';
+import { createBeatCrop } from './beatCrop';
 import { buildNoise2D, buildNoise3D } from './noiseTextures';
 import { ACCUMULATE_SHADER, PRELUDE, PRESENT_SHADER, VERTEX_SHADER } from './shaders/common';
 import { WORLD_SHADERS, WORLD_SPEED, type WorldId } from './worlds';
@@ -113,6 +114,7 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
   const { still, getAnalyser } = options;
   const parallel = gl.getExtension('KHR_parallel_shader_compile');
   const feed: AudioFeed = createAudioFeed(getAnalyser);
+  const crop = createBeatCrop();
 
   // ── GPU resources ──────────────────────────────────────────────────────────
   let vs: WebGLShader | null = null;
@@ -137,7 +139,11 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
   // Pass-program uniform locations, looked up once per link (a per-frame
   // getUniformLocation is a string lookup and a fresh object each call).
   let accumLoc: { blend: WebGLUniformLocation | null } = { blend: null };
-  let presentLoc: { mix: WebGLUniformLocation | null; seed: WebGLUniformLocation | null } = { mix: null, seed: null };
+  let presentLoc: { mix: WebGLUniformLocation | null; seed: WebGLUniformLocation | null; crop: WebGLUniformLocation | null } = {
+    mix: null,
+    seed: null,
+    crop: null,
+  };
 
   const linkSync = (fragment: string): WebGLProgram | null => {
     if (!vs) return null;
@@ -215,7 +221,13 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
     gl.uniform1i(gl.getUniformLocation(presentProg, 'uImage'), UNIT.current);
     gl.uniform1i(gl.getUniformLocation(presentProg, 'uSnapshot'), UNIT.snapshot);
     gl.uniform1f(gl.getUniformLocation(presentProg, 'uSharpen'), SCENE_WORLD.PRESENT_SHARPEN);
-    presentLoc = { mix: gl.getUniformLocation(presentProg, 'uMix'), seed: gl.getUniformLocation(presentProg, 'uSeed') };
+    presentLoc = {
+      mix: gl.getUniformLocation(presentProg, 'uMix'),
+      seed: gl.getUniformLocation(presentProg, 'uSeed'),
+      crop: gl.getUniformLocation(presentProg, 'uCrop'),
+    };
+    // The still (reduced-motion) world never crops; the live loop overwrites this each frame.
+    gl.uniform3f(presentLoc.crop, 1, 0, 0);
     return true;
   };
 
@@ -227,8 +239,10 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
     gl.bindTexture(gl.TEXTURE_2D, tex);
     if (floatTargets) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, w, h, 0, gl.RGBA, gl.HALF_FLOAT, null);
     else gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    // Linear for the present pass's beat crop (sub-pixel zoom/pan); the
+    // accumulation reads texels directly and is unaffected.
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
@@ -512,6 +526,7 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
     gl.bindTexture(gl.TEXTURE_2D, (snapshot ?? next).tex);
     gl.uniform1f(presentLoc.mix, snapshot ? crossfade : 1);
     gl.uniform1f(presentLoc.seed, frameIndex % 64);
+    if (!still) gl.uniform3f(presentLoc.crop, crop.frame.zoom, crop.frame.panX, crop.frame.panY);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     lastPresented = next;
     frameIndex += 1;
@@ -563,6 +578,7 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
 
     if (!still) {
       feed.update(dt);
+      crop.update(dt, feed.frame.kicks[0], feed.frame.bass, feed.frame.playing);
       pointer[0] += (pointerTarget[0] - pointer[0]) * Math.min(1, dt * 1.5);
       pointer[1] += (pointerTarget[1] - pointer[1]) * Math.min(1, dt * 1.5);
     }
