@@ -55,9 +55,6 @@ float lace(vec2 p, float seed, out float across, out float along) {
   return n * band * knots * bundles;
 }
 
-/* Nod: a hair of dolly - the nearer lace (larger k) swells more than the far. */
-const float NOD_DOLLY = 0.008;
-
 vec3 world(vec2 fragCoord) {
   vec2 uv = (fragCoord - 0.5 * uRes) / uRes.y;
 
@@ -69,10 +66,12 @@ vec3 world(vec2 fragCoord) {
   float lift = 1.0 + (uLevel * 0.45 + uBass * 0.25) * uPlaying;
 
   vec3 col = vec3(0.0);
+  float laceSum = 0.0;
+  float nearSum = 0.0;
   for (int k = 0; k < 3; k++) {
     float fk = float(k);
     float depth = 1.0 - fk * 0.3;
-    vec2 p = uv * (1.0 + fk * 0.16) / (1.0 + uNod * NOD_DOLLY * (fk + 1.0)) + uPointer * 0.012 * (fk + 1.0) + vec2(fk * 0.07, -fk * 0.05);
+    vec2 p = uv * (1.0 + fk * 0.16) + uPointer * 0.012 * (fk + 1.0) + vec2(fk * 0.07, -fk * 0.05);
     float across;
     float along;
     float h = lace(p, fk * 1.93, across, along);
@@ -89,7 +88,12 @@ vec3 world(vec2 fragCoord) {
     float light = depth * (lift + (kickFlash(2.5) * 0.5 + glide) * uPlaying);
     col += blue * h * (2.1 + shimmer) * light;
     col += rose * h2 * (2.3 + shimmer) * light;
+    /* The layer that parallaxes most with the pointer is the nearest. */
+    laceSum += h + h2;
+    nearSum += (h + h2) * (fk + 1.0) / 3.0;
   }
+  /* Nearness for the nod: the lace moves by its depth, the stars behind hold. */
+  gNear = nearSum / (laceSum + 1e-4) * smoothstep(0.0, 0.15, laceSum);
 
   /* A whisper of the gas the lace is made of - never a fog bank. */
   float r = length(uv - SHELL_C);

@@ -1,19 +1,18 @@
 import { SCENE_WORLD } from '../../../constants';
+import type { NodTiming } from './gridFollower';
 
 /**
  * A tempo-locked pulse to nod along with. Raw onsets are too ragged for that
  * (missed kicks, piano attacks, hi-hat rolls), so the clock listens to a few
  * seconds of kick/snare onsets, finds the period and phase that line up best
  * with them (a comb search), and runs a phase-locked clock on it. The clock
- * keeps nodding through a missing kick, fires a touch early so the motion lands
- * on the hit rather than after it, and reports how sure it is: a pulse that
- * doesn't stand out of the texture (ballads, ambient, breakdowns) fades the
- * nods out instead of guessing.
+ * keeps its beat through a missing kick, knows where the next one falls (so a
+ * nod can move into it), and reports how sure it is: a pulse that doesn't
+ * stand out of the texture (ballads, ambient, breakdowns) fades the nods out
+ * instead of guessing. It stands in until the track's own beat grid is ready.
  */
 
 export interface BeatClockFrame {
-  /** True on the frame a nod should start (already led so it peaks on the beat). */
-  nod: boolean;
   /** 0..1: how clearly there's a pulse to follow right now. */
   confidence: number;
   /** Seconds between nods (the beat, or every other beat at fast tempos). */
@@ -23,6 +22,8 @@ export interface BeatClockFrame {
 export interface BeatClock {
   /** Advance by dt seconds with the feed's current bands and overall level. */
   update(dt: number, bands: Float32Array, level: number): BeatClockFrame;
+  /** Where the music sits between two beats right now; null until the clock has locked. */
+  timing(out: NodTiming): NodTiming | null;
   frame: BeatClockFrame;
 }
 
@@ -68,9 +69,8 @@ export function createBeatClock(): BeatClock {
   let locked = false;
   let pendingPeriod = 0;
   let pendingCount = 0;
-  let sinceNod = Infinity;
 
-  const frame: BeatClockFrame = { nod: false, confidence: 0, period };
+  const frame: BeatClockFrame = { confidence: 0, period };
 
   /** Envelope value `ago` samples before the newest (fractional, linear). */
   const at = (ago: number) => {
@@ -222,6 +222,18 @@ export function createBeatClock(): BeatClock {
 
   return {
     frame,
+    timing(out) {
+      if (!locked) return null;
+      // The phase is read off onsets the analyser has already smoothed: the
+      // music is a touch ahead of it.
+      const since = (phase * period + C.ANALYSER_LAG_SECONDS) % period;
+      out.sincePrev = since;
+      out.untilNext = period - since;
+      out.prevStrength = frame.confidence;
+      out.nextStrength = frame.confidence;
+      out.period = period;
+      return out;
+    },
     update(dt, bands, level) {
       sampleClock += dt * C.RATE;
       while (sampleClock >= 1) {
@@ -250,12 +262,7 @@ export function createBeatClock(): BeatClock {
       const tau = rawConfidence > frame.confidence ? C.CONFIDENCE_RISE_SECONDS : C.CONFIDENCE_FALL_SECONDS;
       frame.confidence += (rawConfidence - frame.confidence) * Math.min(1, dt / tau);
 
-      const lead = C.NOD_LEAD_SECONDS / period;
-      const before = phase + lead;
       phase += dt / period;
-      sinceNod += dt;
-      frame.nod = locked && Math.floor(phase + lead) > Math.floor(before) && sinceNod > period * 0.6;
-      if (frame.nod) sinceNod = 0;
       phase -= Math.floor(phase);
       frame.period = period;
       return frame;

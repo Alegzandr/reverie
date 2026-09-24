@@ -10,8 +10,6 @@
  */
 export const BOREALIS = /* glsl */ `
 const float SHORE = 0.5;
-/* Nod: the near range looms off the shore more than the far one. */
-const float NOD_LOOM = 0.035;
 
 /* Aurora green, pulled a little toward the mood's ambient so each palette
    still owns its sky. */
@@ -121,8 +119,8 @@ vec3 world(vec2 fragCoord) {
      with clean snow caps - rose with twilight in the west, aurora-green east. */
   vec3 dusk = mix(uColA, vec3(1.0, 0.55, 0.3), 0.45);
   vec3 green = boreGreen();
-  vec2 qFar = vec2(q.x * 0.85 + 0.37 + uTravel * 0.001, SHORE + (q.y - SHORE) / (1.0 + uNod * NOD_LOOM * 0.3));
-  vec2 qNear = vec2(q.x * 1.2 + uTravel * 0.002, SHORE + (q.y - SHORE) / (1.0 + uNod * NOD_LOOM));
+  vec2 qFar = vec2(q.x * 0.85 + 0.37 + uTravel * 0.001, q.y);
+  vec2 qNear = vec2(q.x * 1.2 + uTravel * 0.002, q.y);
   float hFar, dFar, hNear, dNear;
   float landFar = boreLand(qFar, 61.0, 0.12, hFar, dFar);
   float landNear = boreLand(qNear, 41.0, 0.27, hNear, dNear);
@@ -138,6 +136,9 @@ vec3 world(vec2 fragCoord) {
       rock * 1.15, mix(rock * 0.7, air, 0.12),
       dusk * 0.11 + vec3(0.045, 0.045, 0.06), green * 0.05 + vec3(0.03, 0.04, 0.055));
   }
+
+  /* Nearness for the nod: the lake at your feet and the near range move, the far range and the sky hold. */
+  gNear = mix(mix(landFar * 0.05, 0.15, landNear), depth, under);
 
   /* Mirror: the lake holds it all, a shade darker and cooler, glassy near the shore. */
   vec3 lake = col * mix(0.82, 0.55, depth) + uColB * 0.003;

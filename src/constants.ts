@@ -219,16 +219,18 @@ export const SCENE_WORLD = {
         PHASE_GAIN: 0.25,
         /** Consecutive estimates a new tempo must hold before the clock jumps to it. */
         TEMPO_SWITCH_ESTIMATES: 4,
-        /** Nods start this early so they peak on the hit (attack + the analyser's lag). */
-        NOD_LEAD_SECONDS: 0.075,
+        /** How far the clock's phase trails the music (the analyser's smoothing), measured. */
+        ANALYSER_LAG_SECONDS: 0.015,
     },
-    /** Beat crop: the head nod's envelope (the worlds' parallax) and the hair of zoom on top. */
+    /** The head nod (beatCrop.ts), applied in the present pass after the temporal accumulation. */
     BEAT_CROP: {
-        /** Zoom (fraction of the frame) a fully confident nod adds in the present pass. */
-        NOD_ZOOM: 0.004,
-        /** Dip-in time and the settle back (fraction of the nod period), both eased in and out. */
-        ATTACK_SECONDS: 0.06,
-        RELEASE_PERIODS: 0.6,
+        /** How far the nearest things rise at a full nod (fraction of the frame height); the horizon holds. */
+        NOD_LIFT: 0.007,
+        /** Gaussian widths as fractions of the beat: the move into the beat, and the settle after it. */
+        RISE_PERIODS: 0.1,
+        SETTLE_PERIODS: 0.28,
+        /** How long the head takes to come to rest when the music stops (s). */
+        REST_SECONDS: 0.4,
     },
 } as const;
 

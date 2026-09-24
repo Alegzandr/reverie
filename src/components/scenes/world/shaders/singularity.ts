@@ -16,6 +16,8 @@
 export const SINGULARITY = /* glsl */ `
 const vec2 EC_C = vec2(0.0, 0.1);
 const float EC_R = 0.15;
+/* How near the eclipse counts for the nod's parallax: it floats in front of the stars, not at your feet. */
+const float ECLIPSE_NEAR = 0.5;
 /* The solar equator's tilt, and where the bead sits on the limb. */
 const float EQ_TILT = 0.32;
 const float BEAD_ANGLE = 2.4;
@@ -42,12 +44,9 @@ float streamers(float th, float rr) {
   return s;
 }
 
-/* Nod: a hair of dolly toward the eclipse; the stars behind hold. */
-const float NOD_DOLLY = 0.015;
-
 vec3 world(vec2 fragCoord) {
   vec2 uv = (fragCoord - 0.5 * uRes) / uRes.y;
-  vec2 d = (uv - EC_C - uPointer * 0.006) / (1.0 + uNod * NOD_DOLLY);
+  vec2 d = uv - EC_C - uPointer * 0.006;
   float r = length(d);
   vec2 dir = d / max(r, 1e-4);
   float th = atan(d.y, d.x);
@@ -100,6 +99,8 @@ vec3 world(vec2 fragCoord) {
 
   /* The disc: earthshine, barely there, over true shadow. */
   float disc = 1.0 - smoothstep(EC_R - aa, EC_R + aa, r);
+  /* Nearness for the nod: the eclipse and its inner corona move, the stars hold. */
+  gNear = ECLIPSE_NEAR * (1.0 - smoothstep(EC_R, EC_R * 4.0, r));
   vec3 earthshine = vec3(0.005, 0.006, 0.011) * (0.6 + 0.8 * fbm2(d * 18.0 + 4.0)) * (1.0 - r / EC_R * 0.5);
   col = mix(col, earthshine, disc);
 
@@ -121,7 +122,7 @@ vec3 world(vec2 fragCoord) {
 
   /* The diamond bead, with a short four-point glint. */
   vec2 bead = EC_C + vec2(cos(BEAD_ANGLE), sin(BEAD_ANGLE)) * EC_R;
-  vec2 b = (uv - uPointer * 0.006 - EC_C) / (1.0 + uNod * NOD_DOLLY) + EC_C - bead;
+  vec2 b = uv - uPointer * 0.006 - bead;
   float bb = dot(b, b);
   float breath = 1.0 + uBass * 0.35 * uPlaying;
   col += pearl * (0.000032 / (bb + 0.000009)) * breath;

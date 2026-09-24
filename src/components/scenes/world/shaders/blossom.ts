@@ -23,9 +23,9 @@ const float HORIZON_Y = 0.42;
 const float FOCAL = 1.15;
 /* World units: metres, heights measured up from the path. */
 const float EYE = 1.6;
-/* How far the eye drops on a nod: the lanterns overhead dip, the far lane holds. */
-const float NOD_DROP = 0.06;
 const float SPACING = 3.0;
+/* Depth (lane units) from which things count as fully near for the nod's parallax. */
+const float NEAR_Z = 4.0;
 const float ROW_X = 2.3;
 /* The arch the crowns draw over the lane: an ellipse, then drooping outward. */
 const float ARCH_X = 2.05;
@@ -431,7 +431,7 @@ vec3 world(vec2 fragCoord) {
   float aspect = uRes.x / uRes.y;
   vec2 p = vec2((fragCoord.x / uRes.x - 0.5) * aspect, fragCoord.y / uRes.y);
   vec2 sp = vec2(p.x, p.y - HORIZON_Y);
-  vec3 ro = vec3(uPointer.x * 0.15 + sin(uTime * 0.11) * 0.05, sin(uTime * 0.37) * 0.01 - uNod * NOD_DROP, uTravel * LANE_SPEED);
+  vec3 ro = vec3(uPointer.x * 0.15 + sin(uTime * 0.11) * 0.05, sin(uTime * 0.37) * 0.01, uTravel * LANE_SPEED);
   vec3 rd = normalize(vec3(sp, FOCAL));
   vec3 fogCol = laneFog(rd);
 
@@ -481,6 +481,9 @@ vec3 world(vec2 fragCoord) {
     back = laneSky(rd, fogCol);
   }
   vec3 col = acc + trans * back;
+  /* Nearness for the nod: the lanterns at your side and the path at your feet
+     move, the far end of the lane holds. */
+  gNear = clamp(NEAR_Z / solidZ, 0.0, 1.0);
   return paintPetals(col, sp, ro, solidZ, fogCol);
 }
 `;

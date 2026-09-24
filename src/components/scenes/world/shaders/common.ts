@@ -34,7 +34,6 @@ uniform vec3 uBg;
 uniform vec3 uBackground; // the background as authored (sRGB 0..1), for the fade
 uniform float uLight;     // 1 on the light palette
 uniform vec2 uPointer;    // eased pointer, -1..1
-uniform float uNod;       // 0..1 head nod on the beat (beat clock x its confidence); near layers move, the far ones hold
 uniform float uFade;      // world intro/outro 0..1
 uniform vec2 uJitter;     // sub-pixel offset, new every frame (temporal anti-aliasing)
 uniform float uSeed;      // per-frame noise seed: march jitter averages out across frames
@@ -45,6 +44,11 @@ uniform sampler2D uNoise2;
 
 out vec4 outColor;
 
+/* How near what this pixel shows is: 0 on the horizon and in the sky, 1 at
+   your feet. The world sets it; it rides out in alpha so the present pass can
+   move near things more than far ones on a nod (parallax, after the temporal
+   accumulation - no smear). */
+float gNear = 0.0;
 
 #define PI 3.14159265
 #define TAU 6.28318531
@@ -176,7 +180,7 @@ void main() {
   col = pow(col, vec3(1.0 / 2.2));
   float f = smoothstep(0.0, 1.0, uFade);
   col = mix(uBackground, col, f);
-  outColor = vec4(col, 1.0);
+  outColor = vec4(col, clamp(gNear, 0.0, 1.0));
 }
 `;
 
@@ -196,20 +200,21 @@ out vec4 outColor;
 void main() {
   ivec2 p = ivec2(gl_FragCoord.xy);
   ivec2 hi = textureSize(uCurrent, 0) - 1;
-  vec3 cur = texelFetch(uCurrent, p, 0).rgb;
-  vec3 mn = cur;
-  vec3 mx = cur;
+  vec4 cur = texelFetch(uCurrent, p, 0);
+  vec4 mn = cur;
+  vec4 mx = cur;
   for (int y = -1; y <= 1; y++) {
     for (int x = -1; x <= 1; x++) {
       if (x == 0 && y == 0) continue; /* the centre is cur, already folded in */
-      vec3 c = texelFetch(uCurrent, clamp(p + ivec2(x, y), ivec2(0), hi), 0).rgb;
+      vec4 c = texelFetch(uCurrent, clamp(p + ivec2(x, y), ivec2(0), hi), 0);
       mn = min(mn, c);
       mx = max(mx, c);
     }
   }
-  vec3 widen = (mx - mn) * 0.35;
-  vec3 hist = clamp(texelFetch(uHistory, p, 0).rgb, mn - widen, mx + widen);
-  outColor = vec4(mix(cur, hist, uBlend), 1.0);
+  /* Nearness (alpha) is resolved like colour: jittered edges average out. */
+  vec4 widen = (mx - mn) * 0.35;
+  vec4 hist = clamp(texelFetch(uHistory, p, 0), mn - widen, mx + widen);
+  outColor = mix(cur, hist, uBlend);
 }
 `;
 
@@ -225,28 +230,65 @@ uniform sampler2D uSnapshot;
 uniform float uMix;
 uniform float uSharpen;
 uniform float uSeed;
-// Beat crop: the head-nod zoom (>= 1) around the frame's centre.
-uniform float uCrop;
+// The head nod: its envelope (0..1) and how far the nearest things rise at
+// its peak (fraction of the frame height).
+uniform float uNod;
+uniform float uNodLift;
 out vec4 outColor;
 float hash(vec2 p) {
   vec3 p3 = fract(vec3(p.xyx) * 0.1031);
   p3 += dot(p3, p3.yzx + 33.33);
   return fract((p3.x + p3.y) * p3.z);
 }
+/* Catmull-Rom in 9 bilinear taps: a sub-pixel shift that stays sharp (a plain
+   bilinear read at half a texel is a two-texel average - the nod would blur
+   the frame on every beat). */
+vec3 sharpSample(sampler2D tex, vec2 uv, vec2 size) {
+  vec2 pos = uv * size;
+  vec2 t1 = floor(pos - 0.5) + 0.5;
+  vec2 f = pos - t1;
+  vec2 w0 = f * (-0.5 + f * (1.0 - 0.5 * f));
+  vec2 w1 = 1.0 + f * f * (-2.5 + 1.5 * f);
+  vec2 w2 = f * (0.5 + f * (2.0 - 1.5 * f));
+  vec2 w3 = f * f * (-0.5 + 0.5 * f);
+  vec2 w12 = w1 + w2;
+  vec2 t0 = (t1 - 1.0) / size;
+  vec2 t3 = (t1 + 2.0) / size;
+  vec2 t12 = (t1 + w2 / w12) / size;
+  vec3 c = texture(tex, vec2(t0.x, t0.y)).rgb * w0.x * w0.y
+    + texture(tex, vec2(t12.x, t0.y)).rgb * w12.x * w0.y
+    + texture(tex, vec2(t3.x, t0.y)).rgb * w3.x * w0.y
+    + texture(tex, vec2(t0.x, t12.y)).rgb * w0.x * w12.y
+    + texture(tex, vec2(t12.x, t12.y)).rgb * w12.x * w12.y
+    + texture(tex, vec2(t3.x, t12.y)).rgb * w3.x * w12.y
+    + texture(tex, vec2(t0.x, t3.y)).rgb * w0.x * w3.y
+    + texture(tex, vec2(t12.x, t3.y)).rgb * w12.x * w3.y
+    + texture(tex, vec2(t3.x, t3.y)).rgb * w3.x * w3.y;
+  return max(c, 0.0);
+}
 void main() {
   vec2 size = vec2(textureSize(uImage, 0));
-  // At rest (zoom 1) this lands on texel centres: bilinear taps then read
-  // exactly what texelFetch did, so the crop costs no sharpness.
-  vec2 uv = (gl_FragCoord.xy / size - 0.5) / uCrop + 0.5;
+  // At rest (uNod 0) this lands on texel centres: the taps read exactly what
+  // texelFetch did, so the nod costs nothing when it's still.
+  vec2 uv = gl_FragCoord.xy / size;
+  // Parallax: near things rise with the nod, the horizon holds. A backward
+  // warp: read from below by the nearness found there - the nearest within
+  // the lift, so a near edge rises over the far one instead of staying put
+  // while its inside slides. No zoom: a uniform magnification puts every
+  // pixel on a different sub-pixel phase and softens the frame on each beat.
+  float lift = uNod * uNodLift;
+  float near = max(texture(uImage, uv).a,
+    max(texture(uImage, uv - vec2(0.0, lift * 0.5)).a, texture(uImage, uv - vec2(0.0, lift)).a));
+  uv.y -= lift * near;
   vec2 px = 1.0 / size;
-  vec3 c = texture(uImage, uv).rgb;
+  vec3 c = sharpSample(uImage, uv, size);
   vec3 n = texture(uImage, uv + vec2(0.0, px.y)).rgb
     + texture(uImage, uv - vec2(0.0, px.y)).rgb
     + texture(uImage, uv + vec2(px.x, 0.0)).rgb
     + texture(uImage, uv - vec2(px.x, 0.0)).rgb;
   c = max(c + (c - n * 0.25) * uSharpen, 0.0);
   if (uMix < 1.0) {
-    vec3 before = texture(uSnapshot, uv).rgb;
+    vec3 before = sharpSample(uSnapshot, uv, vec2(textureSize(uSnapshot, 0)));
     c = mix(before, c, smoothstep(0.0, 1.0, uMix));
   }
   c += (hash(gl_FragCoord.xy + uSeed * 7.13) - 0.5) / 255.0;

@@ -1,21 +1,20 @@
 import type { BeatGrid } from '../../../utils/beatGrid';
-import type { BeatClockFrame } from './beatClock';
 
 /**
- * Plays a track's beat grid against the playhead: a nod fires on the frame the
- * (led) playhead crosses a grid time. The playhead is in source-audio seconds,
- * so a speed change stretches the nods with the music; a seek or a new track
- * re-aims at the next beat without firing the ones jumped over, and a paused
- * playhead fires nothing.
+ * Where the playhead sits between two beats: what the nod's shape is drawn
+ * from. Both the track's beat grid and the live clock produce it.
  */
-
-export interface GridFollower {
-  /** `lead`: seconds of source audio to fire ahead, so the nod peaks as the hit is heard. */
-  update(grid: BeatGrid, position: number, lead: number): BeatClockFrame;
+export interface NodTiming {
+  /** Seconds since the last beat (Infinity when there is none). */
+  sincePrev: number;
+  /** Seconds to the next beat (Infinity when there is none). */
+  untilNext: number;
+  /** 0..1 strengths of those two beats (how much each one nods). */
+  prevStrength: number;
+  nextStrength: number;
+  /** Seconds between beats. */
+  period: number;
 }
-
-/** A playhead move larger than a frame's worth of playback: a seek, not play. */
-const SEEK_JUMP_SECONDS = 0.5;
 
 /** Index of the first grid time strictly after t. */
 function firstAfter(times: Float64Array, t: number): number {
@@ -29,31 +28,18 @@ function firstAfter(times: Float64Array, t: number): number {
   return lo;
 }
 
-export function createGridFollower(): GridFollower {
-  let current: BeatGrid | null = null;
-  let next = 0;
-  let last = 0;
-  const frame: BeatClockFrame = { nod: false, confidence: 0, period: 0.5 };
-
-  return {
-    update(grid, position, lead) {
-      frame.nod = false;
-      frame.period = grid.period || frame.period;
-      const look = position + lead;
-      const step = position - last;
-      if (grid !== current || step < 0 || step > SEEK_JUMP_SECONDS) {
-        current = grid;
-        next = firstAfter(grid.times, look);
-      } else if (step > 0) {
-        let fired = -1;
-        while (next < grid.times.length && grid.times[next] <= look) fired = next++;
-        if (fired >= 0) {
-          frame.nod = true;
-          frame.confidence = grid.strength[fired];
-        }
-      }
-      last = position;
-      return frame;
-    },
-  };
+/**
+ * The grid read at a playhead position (source-audio seconds). Stateless: a
+ * seek, a speed change or a new track needs no bookkeeping, and a paused
+ * playhead simply holds still.
+ */
+export function gridTiming(grid: BeatGrid, position: number, out: NodTiming): NodTiming {
+  const next = firstAfter(grid.times, position);
+  const prev = next - 1;
+  out.sincePrev = prev >= 0 ? position - grid.times[prev] : Infinity;
+  out.untilNext = next < grid.times.length ? grid.times[next] - position : Infinity;
+  out.prevStrength = prev >= 0 ? grid.strength[prev] : 0;
+  out.nextStrength = next < grid.times.length ? grid.strength[next] : 0;
+  out.period = grid.period;
+  return out;
 }

@@ -18,9 +18,8 @@
  */
 export const VALLEY = /* glsl */ `
 const float WATER = 0.4;
-/* Nod: how much the near walls loom, and how far the eye sinks over the lake. */
-const float NOD_LOOM = 0.035;
-const float NOD_SINK = 0.03;
+/* How near the nearest fjord wall counts for the nod's parallax (the lake at your feet is 1). */
+const float WALL_NEAR = 0.35;
 const int WALLS = 4;
 const vec2 SUN_POS = vec2(0.0, 0.5);
 const float SUN_R = 0.19;
@@ -129,8 +128,6 @@ vec3 fjordWalls(vec2 q, vec3 col) {
     float fi = float(i);
     float near = fi / float(WALLS - 1);               /* 0 far .. 1 near */
     float px = q.x + uPointer.x * 0.02 * near;
-    /* A nod: the near walls loom up out of the water more than the far ones. */
-    float qy = WATER + (q.y - WATER) / (1.0 + uNod * NOD_LOOM * near);
     float side = px < 0.0 ? -1.0 : 1.0;
     float ax = abs(px);
     /* Each wall pair leaves a gap that narrows with distance - the fjord's
@@ -150,12 +147,14 @@ vec3 fjordWalls(vec2 q, vec3 col) {
     float ridge = tall * mix(hA, hB, f) + run * mix(0.03, 0.14, near);
     float h = WATER + min(inner, ridge);
     float ramp = step(inner, ridge);
-    float dist = qy - h;
+    float dist = q.y - h;
     float edge = fwidth(dist) + 0.0005;
     float body = (1.0 - smoothstep(-edge, edge, dist)) * step(0.0005, run);
+    /* Nearness for the nod: the near walls move a little, the far ones hold. */
+    gNear = mix(gNear, near * WALL_NEAR, body);
     /* Facets turned toward the channel face the sun; the rest are in shade. */
     float toSun = max(ramp, step(hA, hB));
-    float vH = clamp((qy - WATER) / max(h - WATER, 1e-3), 0.0, 1.0);
+    float vH = clamp((q.y - WATER) / max(h - WATER, 1e-3), 0.0, 1.0);
     vec3 rock = mix(ROCK_DEEP, ROCK_LIT * (0.4 + 0.6 * vH), toSun * (0.55 + 0.45 * (1.0 - near)));
     rock = mix(rock * 0.6, rock, vH);
     /* Aerial perspective: far walls sink into the warm air. */
@@ -173,7 +172,7 @@ vec3 fjordWalls(vec2 q, vec3 col) {
     col = mix(col, rock, body);
     col += crestCol * crest * step(0.0005, run) * (0.35 + 0.35 * near) * (1.0 + climb * 0.5);
     /* Mist pooled on the water at the walls' feet. */
-    float mist = (1.0 - smoothstep(WATER, WATER + 0.015 + 0.02 * (1.0 - near), qy)) * step(qy, h) * step(0.0005, run);
+    float mist = (1.0 - smoothstep(WATER, WATER + 0.015 + 0.02 * (1.0 - near), q.y)) * step(q.y, h) * step(0.0005, run);
     col = mix(col, haze * 1.2, mist * (0.45 - near * 0.3));
   }
   return col;
@@ -187,12 +186,14 @@ vec3 world(vec2 fragCoord) {
 
   /* The lake: the scene mirrored, barely stirred - and never by the music. */
   float below = WATER - p.y;
-  float z = 0.1 / (below * (1.0 + uNod * NOD_SINK));
+  float z = 0.1 / below;
   vec2 w = vec2(p.x * z * 4.0, z);
   float ripple = sin(z * 22.0 - uTime * 0.9) * 0.6 + sin(z * 47.0 + p.x * 6.0 + uTime * 0.7) * 0.4 + (noise2(vec2(p.x * 30.0, z * 8.0)) - 0.5) * 0.4;
   float settle = 1.0 - smoothstep(0.3, 1.2, fwidth(z * 47.0));
   vec2 m = vec2(p.x + ripple * settle * 0.006 * below * 4.0, WATER + below * (1.0 + ripple * settle * 0.025));
   vec3 refl = fjordWalls(m, duskSky(m)) * WATER_TINT;
+  /* The lake's own nearness, not its reflection's: the water at your feet moves. */
+  gNear = below / WATER;
   float fres = smoothstep(0.0, WATER, below);
   vec3 col = refl * mix(0.62, 0.3, fres);
 

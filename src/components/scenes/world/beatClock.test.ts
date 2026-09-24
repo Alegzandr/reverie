@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { SCENE_WORLD } from '../../../constants';
 import { createBeatClock } from './beatClock';
+import type { NodTiming } from './gridFollower';
 
 const DT = 1 / 60;
 const BANDS = SCENE_WORLD.BANDS;
@@ -23,7 +24,9 @@ function play(seconds: number, hitAt: (t: number) => boolean, opts: { level?: nu
   const clock = createBeatClock();
   const bands = new Float32Array(BANDS);
   const rand = rng(7);
-  const nods: number[] = [];
+  const beats: number[] = [];
+  const timing: NodTiming = { sincePrev: 0, untilNext: 0, prevStrength: 0, nextStrength: 0, period: 0 };
+  let lastSince = Infinity;
   let lastHit = -1;
   let note = 20;
   let confidence = 0;
@@ -37,29 +40,36 @@ function play(seconds: number, hitAt: (t: number) => boolean, opts: { level?: nu
       bands[b] = 0.15 + 0.05 * rand() + hit * 0.7 + (opts.tones && Math.abs(b - note) < 2 ? 0.7 : 0);
     }
     const frame = clock.update(DT, bands, opts.level ?? 0.5);
-    if (frame.nod) nods.push(t);
+    // The clock's beat instants: where its time-since-beat wraps back to zero.
+    const now = clock.timing(timing);
+    if (now && now.sincePrev < lastSince) beats.push(t - now.sincePrev);
+    lastSince = now ? now.sincePrev : Infinity;
     confidence = frame.confidence;
     period = frame.period;
   }
-  return { nods, confidence, period };
+  return { beats, confidence, period };
 }
 
 /** A hit on each frame that crosses a multiple of `beat` seconds (offset `phase`). */
 const every = (beat: number, phase = 0) => (t: number) => Math.floor((t - phase) / beat) !== Math.floor((t - phase - DT) / beat);
 
 describe('createBeatClock', () => {
-  it('locks onto a steady groove and nods on its beat', () => {
-    const { nods, confidence, period } = play(12, every(0.5, 0.2));
+  it('locks onto a steady groove and places its beats on the hits', () => {
+    const { beats, confidence, period } = play(12, every(0.5, 0.2));
     expect(period).toBeCloseTo(0.5, 1);
     expect(confidence).toBeGreaterThan(0.8);
-    // Nods lead the hit by NOD_LEAD so the motion peaks on it.
-    const lead = SCENE_WORLD.BEAT_CLOCK.NOD_LEAD_SECONDS;
-    const late = nods.filter((t) => t > 6);
+    const late = beats.filter((t) => t > 6);
     expect(late.length).toBeGreaterThan(10);
     for (const t of late) {
-      const offBeat = (((t + lead - 0.2) % 0.5) + 0.5) % 0.5;
+      const offBeat = (((t - 0.2) % 0.5) + 0.5) % 0.5;
       expect(Math.min(offBeat, 0.5 - offBeat)).toBeLessThan(0.04);
     }
+  });
+
+  it('has no timing before it has heard enough to lock', () => {
+    const clock = createBeatClock();
+    clock.update(DT, new Float32Array(BANDS), 0.5);
+    expect(clock.timing({ sincePrev: 0, untilNext: 0, prevStrength: 0, nextStrength: 0, period: 0 })).toBeNull();
   });
 
   it('nods every other beat at drum-and-bass tempos', () => {

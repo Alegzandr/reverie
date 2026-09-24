@@ -1,58 +1,50 @@
 import { SCENE_WORLD } from '../../../constants';
-import type { BeatClockFrame } from './beatClock';
+import type { NodTiming } from './gridFollower';
 
 /**
- * The head nod: on each of the beat clock's nods an envelope dips in and eases
- * back before the next one, scaled by how sure the clock is of the pulse (so it
- * grows in with the groove and fades at a breakdown). The worlds read it as
- * `uNod` and move their near layers more than the far ones (the parallax); the
- * present pass adds a hair of zoom on top, after the temporal accumulation so
- * the TAA history never sees it.
+ * The head nod's envelope, drawn from where the music sits between two beats.
+ * A head doesn't jolt after the hit - it moves into it: the envelope rises
+ * just before each beat, peaks on it and settles over the following part of
+ * the beat, all on smooth (Gaussian) curves - no edge, no step, however the
+ * frames fall. Each side is scaled by its beat's strength, so the nods grow
+ * in with the drums and fade at a breakdown. The present pass turns it into
+ * parallax (near things rise more than far ones) and a hair of zoom, after the
+ * temporal accumulation so nothing smears.
  */
 
 export interface BeatCrop {
-  /** Advance by dt seconds with the clock's frame; returns the zoom (>= 1). */
-  update(dt: number, clock: BeatClockFrame): number;
-  readonly zoom: number;
-  /** 0..1 nod envelope, for the worlds' parallax. */
+  /** Advance by dt seconds; `playing` (0..1) fades the nod out when the music stops. */
+  update(dt: number, timing: NodTiming | null, playing: number): number;
+  /** 0..1 nod envelope. */
   readonly nod: number;
 }
 
-/** Eased both ways: a head accelerates into a nod and settles out of it - no hard edges. */
-const easeInOut = (x: number) => x * x * (3 - 2 * x);
+/** The envelope of one beat at `from` seconds from it (negative: before), for a beat period. */
+export function nodShape(from: number, period: number): number {
+  const C = SCENE_WORLD.BEAT_CROP;
+  const width = period * (from < 0 ? C.RISE_PERIODS : C.SETTLE_PERIODS);
+  return Math.exp(-((from / width) ** 2));
+}
 
 export function createBeatCrop(): BeatCrop {
-  const C = SCENE_WORLD.BEAT_CROP;
-  let zoom = 1;
-  /** Seconds since the current nod started (large when none is running). */
-  let sinceNod = Infinity;
-  let from = 0;
-  let peak = 0;
-  let envelope = 0;
+  let nod = 0;
+  let live = 0;
 
   return {
-    get zoom() {
-      return zoom;
-    },
     get nod() {
-      return envelope;
+      return nod;
     },
-    update(dt, clock) {
-      if (clock.nod && clock.confidence > 0) {
-        from = envelope;
-        peak = clock.confidence;
-        sinceNod = 0;
-      } else {
-        sinceNod += dt;
+    update(dt, timing, playing) {
+      // Music stopping (pause, end) lets the head come to rest instead of freezing mid-nod.
+      live += (Math.min(1, Math.max(0, playing)) - live) * Math.min(1, dt / SCENE_WORLD.BEAT_CROP.REST_SECONDS);
+      if (!timing || !(timing.period > 0)) {
+        nod = 0;
+        return nod;
       }
-      if (sinceNod < C.ATTACK_SECONDS) {
-        envelope = from + (peak - from) * easeInOut(sinceNod / C.ATTACK_SECONDS);
-      } else {
-        const x = Math.min(1, (sinceNod - C.ATTACK_SECONDS) / (clock.period * C.RELEASE_PERIODS));
-        envelope = peak * (1 - easeInOut(x));
-      }
-      zoom = 1 + C.NOD_ZOOM * envelope;
-      return zoom;
+      const after = timing.prevStrength * nodShape(timing.sincePrev, timing.period);
+      const before = timing.nextStrength * nodShape(-timing.untilNext, timing.period);
+      nod = Math.max(after, before) * live;
+      return nod;
     },
   };
 }

@@ -283,9 +283,6 @@ float rockTop(float x) {
   return h * (0.78 + 0.35 * crag(x, 2.0)) - 0.003;
 }
 
-/* A nod lowers the eye a hair: the sea packs toward the horizon, the near rocks rise. */
-const float NOD_SINK = 0.03;
-
 vec3 world(vec2 fragCoord) {
   float aspect = uRes.x / uRes.y;
   vec2 p0 = vec2((fragCoord.x / uRes.x - 0.5) * aspect, fragCoord.y / uRes.y);
@@ -296,8 +293,10 @@ vec3 world(vec2 fragCoord) {
   } else {
     /* The sea plane under your eye; the waves' slopes tilt its mirror. */
     float below = HORIZON - p.y;
+    /* Nearness for the nod: the sea at your feet moves, the horizon holds. */
+    gNear = below / HORIZON;
     vec3 rd = normalize(vec3(p.x, -below, FOCAL));
-    float s = EYE / (below * (1.0 + uNod * NOD_SINK));
+    float s = EYE / below;
     vec2 w = vec2(p.x, FOCAL) * s;
     vec2 g = swellSlope(w);
     vec3 n = normalize(vec3(-g.x, 1.0, -g.y));
@@ -328,7 +327,7 @@ vec3 world(vec2 fragCoord) {
   /* The near rocks, over everything, with their own parallax. */
   float rx = p0.x + uPointer.x * 0.035;
   float rt = rockTop(rx);
-  float rdist = p0.y - rt - uNod * NOD_SINK * (HORIZON - rt);
+  float rdist = p0.y - rt;
   float raa = fwidth(rdist) + 1.0 / uRes.y;
   float rock = 1.0 - smoothstep(-raa, raa, rdist);
   if (rock > 0.0) {
@@ -344,6 +343,7 @@ vec3 world(vec2 fragCoord) {
     float wet = smoothstep(0.74, 0.8, fbm2(p0 * vec2(110.0, 28.0) + 4.0)) * exp(rdist / 0.02) * toMoon;
     rc += ROCK_RIM * wet * 0.1;
     col = mix(col, rc, rock);
+    gNear = mix(gNear, 1.0, rock);
   }
   return col;
 }
