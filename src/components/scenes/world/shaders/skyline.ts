@@ -232,7 +232,7 @@ float neonStutter(float seed) {
 /* One row of towers. */
 vec3 towers(vec2 q, vec3 col, float row) {
   float near = row / float(ROWS - 1);        /* 0 far .. 1 near */
-  float px = q.x + uPointer.x * 0.012 * (near + 0.3);
+  float px = q.x;
   float base = SHORE + 0.004;
   Tower t = pickTower(px, row, q.y);
   float top = base + t.h;
@@ -407,7 +407,7 @@ vec3 towers(vec2 q, vec3 col, float row) {
 
 /* The lattice tower, floodlit orange: tapered legs, two decks, a mast. */
 vec3 latticeTower(vec2 q, vec3 col) {
-  vec2 t = q - TOWER_BASE - vec2(uPointer.x * 0.008, 0.0);
+  vec2 t = q - TOWER_BASE;
   /* The floodlights' glow in the haze around it. */
   float yn = t.y / TOWER_H;
   float aura = exp(-abs(t.x) / mix(0.05, 0.012, clamp(yn, 0.0, 1.0))) * step(0.0, t.y) * (1.0 - smoothstep(0.75, 1.1, yn));
