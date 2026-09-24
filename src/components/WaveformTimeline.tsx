@@ -10,7 +10,7 @@ import { normalizeEnvelope, shapeEnvelope } from '../utils/waveform';
 import { formatClock } from '../utils/formatters';
 import { createWaveInstrument, type WaveInstrument } from './waveInstrument';
 import { prefersReducedMotion } from './scenes/motion';
-import { IDLE_FRAME_MS } from './scenes/frameClock';
+import { IDLE_FRAME_MS, createFrameGate } from './scenes/frameClock';
 import type { AudioProcessingOptions } from '../utils/audioProcessor';
 import type { PlaybackClock } from '../utils/playbackClock';
 
@@ -359,11 +359,13 @@ export const WaveformTimeline = memo(function WaveformTimeline({
     if (reduceMotion) return;
     let raf = 0;
     let last = 0;
+    const liveGate = createFrameGate();
     const tick = (now: number) => {
       raf = requestAnimationFrame(tick);
       const f = frameRef.current;
       const idle = !f.isPlaying && !instrumentRef.current?.hasLiveOverlays();
       if (idle && now - last < IDLE_FRAME_MS) return;
+      if (!idle && !liveGate(now)) return;
       last = now;
       drawNow(now);
     };

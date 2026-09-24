@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { AUDIO_REACTIVITY } from '../constants';
 import type { LoudnessProfile } from '../utils/audioLoudness';
 import { prefersReducedMotion } from '../components/scenes/motion';
+import { createFrameGate } from '../components/scenes/frameClock';
 
 interface UseAudioReactivityOptions {
   /** Returns the live playback analyser, or null while stopped. */
@@ -87,8 +88,14 @@ export function useAudioReactivity({ getAnalyser, getLoudness, isPlaying, target
     let raf = 0;
     let freq: Uint8Array<ArrayBuffer> | null = null;
     let time: Uint8Array<ArrayBuffer> | null = null;
+    // The easing below is per-frame; the cap bounds how far a high-refresh display speeds it up.
+    const gate = createFrameGate();
 
-    const frame = () => {
+    const frame = (now: number) => {
+      if (!gate(now)) {
+        raf = requestAnimationFrame(frame);
+        return;
+      }
       const analyser = typeof getAnalyser === 'function' ? getAnalyser() : null;
 
       if (analyser && isPlaying) {

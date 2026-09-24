@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { IDLE_FRAME_MS } from './scenes/frameClock';
+import { IDLE_FRAME_MS, createFrameGate } from './scenes/frameClock';
 import { createMoodPaletteCache } from './scenes/paletteReader';
 import { prefersReducedMotion } from './scenes/motion';
 
@@ -61,6 +61,7 @@ export const SpectrumMeter = memo(function SpectrumMeter({ getAnalyser, isPlayin
 
     // Idle-throttle clock.
     let last = 0;
+    const liveGate = createFrameGate();
     // Cached palette + gradient; the mood-palette cache re-resolves only when the
     // mood changes or cross-fades, and the gradient object is reused otherwise.
     let accent = '';
@@ -78,6 +79,10 @@ export const SpectrumMeter = memo(function SpectrumMeter({ getAnalyser, isPlayin
       // The live spectrum and the reduced-motion settle path keep their cadence.
       const liveNow = isPlaying && !!getAnalyser();
       if (!liveNow && !reduceMotion && now - last < IDLE_FRAME_MS) {
+        raf = requestAnimationFrame(draw);
+        return;
+      }
+      if (liveNow && !liveGate(now)) {
         raf = requestAnimationFrame(draw);
         return;
       }

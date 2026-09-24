@@ -44,8 +44,12 @@ const float PETAL_DEPTH = 14.0;
 const float PETAL_CELL = 0.75;
 const float FOG = 0.045;
 /* The lane only draws ROWS pairs of trees, so the farthest ones melt into the
-   haze before the last row's depth (never under 28.5 m) instead of popping. */
-const vec2 LANE_FADE = vec2(14.0, 28.0);
+   haze before the last row's depth (never under 28.5 m) instead of popping.
+   They thicken into the haze colour first and stay solid; only once nearly
+   haze-coloured do they thin out, or the sky and the rows behind read
+   through them as ghost trees. */
+const vec2 LANE_HAZE = vec2(12.0, 25.0);
+const vec2 LANE_FADE = vec2(23.0, 28.0);
 /* The far wood closing the lane: its height above the horizon (base, plus
    noise), how far it parts where the sun comes through, and how much of the
    blossom's colour survives the haze. */
@@ -430,7 +434,7 @@ vec3 world(vec2 fragCoord) {
       if (z < 0.3 || z > groundZ) continue;
       vec2 q = vec2(ro.x + sp.x * z / FOCAL, EYE + ro.y + sp.y * z / FOCAL);
       float px = z / (FOCAL * uRes.y);
-      float fog = exp(-z * FOG);
+      float fog = exp(-z * FOG) * (1.0 - smoothstep(LANE_HAZE.x, LANE_HAZE.y, z));
       float fade = 1.0 - smoothstep(LANE_FADE.x, LANE_FADE.y, z);
       if (fade <= 0.0) continue;
       vec4 c;

@@ -1,5 +1,5 @@
 import { SCENE_WORLD } from '../../../constants';
-import { IDLE_FRAME_MS, frameDeltaSeconds } from '../frameClock';
+import { IDLE_FRAME_MS, createFrameGate, frameDeltaSeconds } from '../frameClock';
 import { createMoodPaletteCache } from '../paletteReader';
 import { createAudioFeed, type AudioFeed } from './audioFeed';
 import { buildNoise2D, buildNoise3D } from './noiseTextures';
@@ -402,6 +402,10 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
   let raf = 0;
   let lastNow = -1;
   let lastDraw = 0;
+  let lastStep = -1;
+  /** Seconds of rAF time the live cap skipped, not yet stepped through the feed/fades. */
+  let stepDt = 0;
+  const liveGate = createFrameGate();
   /** World-clock seconds not yet folded into time/travel (frames the idle throttle skipped). */
   let pendingDt = 0;
   let disposed = false;
@@ -543,12 +547,19 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
     if (!still) raf = requestAnimationFrame(frame);
     if (document.hidden) {
       lastNow = -1;
+      lastStep = -1;
       return;
     }
-    const dt = still ? 0 : frameDeltaSeconds(now, lastNow);
-    const deltaMs = lastNow < 0 ? 16.7 : now - lastNow;
+    const rafDt = still ? 0 : frameDeltaSeconds(now, lastNow);
     lastNow = now;
-    pendingDt += dt;
+    pendingDt += rafDt;
+    stepDt += rafDt;
+    // High-refresh displays: cap the live loop too; skipped rAFs fold into the next step.
+    if (!still && !liveGate(now)) return;
+    const dt = stepDt;
+    stepDt = 0;
+    const deltaMs = lastStep < 0 ? 16.7 : now - lastStep;
+    lastStep = now;
 
     if (!still) {
       feed.update(dt);

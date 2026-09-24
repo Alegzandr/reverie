@@ -4,6 +4,7 @@ import type { AudioProcessingOptions } from '../utils/audioProcessor';
 import { applyEffectOptions, applyEqGains, NEUTRAL_OPTIONS } from '../utils/effectGraph';
 import { buildPlaybackGraph, teardownPlaybackGraph, type PlaybackGraph } from '../utils/playbackGraph';
 import { readStoredNumber, writeStored } from '../utils/storage';
+import { createFrameGate } from '../components/scenes/frameClock';
 import { isRepeatMode, nextRepeatMode, type RepeatMode } from '../utils/playlistModel';
 import { EQ_FLAT_GAINS } from '../contexts/eqPresets';
 import { getBufferLoudness, type LoudnessProfile } from '../utils/audioLoudness';
@@ -193,9 +194,14 @@ export function useAudioPlayback({
 
     // Publishes into the clock store, NOT React state - a 60fps setState here
     // would re-render the whole App tree every frame.
-    const tick = () => {
+    const gate = createFrameGate();
+    const tick = (now: number) => {
       if (playbackSessionRef.current !== sessionId) return;
       if (!activeBufferRef.current || !graphRef.current) return;
+      if (!gate(now)) {
+        playbackRafRef.current = requestAnimationFrame(tick);
+        return;
+      }
       const elapsed = audioContext.currentTime - playStartTimeRef.current;
       const nextTime = Math.min(startOffsetRef.current + elapsed * rateRef.current, totalDuration);
       clock.set(nextTime);
