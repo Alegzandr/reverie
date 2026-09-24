@@ -1163,9 +1163,14 @@
      own perspective root - never the grid, which would become a backdrop root
      and flatten the centre's glass. Each holds a constant height, so the
      centre-pivot foreshortening never shifts an edge. */
+  /* The rake brings the outer edge ~6-8% nearer, so it projects that much
+     taller than the slot: the consoles sit inset from the grid row by about
+     that growth, or their near corners bite into the visor rails. */
   .console {
+    --console-inset: 24px;
     display: flex;
     min-height: 0;
+    padding-block: var(--console-inset);
     perspective: var(--hud-rake-depth);
   }
 
@@ -1197,7 +1202,7 @@
       );
   }
 
-  /* Singularity's disk and Echo Valley's dusk sky run bright behind the
+  /* Singularity's corona and Echo Valley's aurora run bright behind the
      consoles and the now-playing type: a denser floor keeps them legible. */
   [data-mood='nocturne'] .console > .pane,
   [data-mood='horizon'] .console > .pane {
@@ -1226,6 +1231,9 @@
       gap: 32px;
       grid-template-columns: minmax(300px, 330px) minmax(0, 1fr) minmax(320px, 350px);
     }
+    .console {
+      --console-inset: 28px;
+    }
   }
 
   @media (min-width: 1600px) {
@@ -1239,6 +1247,9 @@
     }
     .dock-wrap {
       padding: 12px 36px 18px;
+    }
+    .console {
+      --console-inset: 34px;
     }
   }
 

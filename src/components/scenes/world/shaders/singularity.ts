@@ -1,108 +1,94 @@
 /**
- * Singularity (nocturne mood): a black hole with its accretion disk, light
- * bent around it (photon paths integrated through a Schwarzschild-style pull, so
- * the far side of the disk arcs over the shadow and the photon ring appears on
- * its own). The disk is the spectrum: bass at the inner edge, treble at the
- * rim, rotating Kepler-fast inside and slow outside. Kicks send luminous ripples
- * out across the disk, the jets breathe with the low end.
+ * Singularity (nocturne mood): a total eclipse seen face-on - a perfect black
+ * disc ringed by its corona, fine streamers of light combed outward, a hairline
+ * of chromosphere at the limb and one diamond bead where the last of the light
+ * slips past the edge. One light, one silhouette, deep black around it.
+ *
+ * The corona is the spectrum: bass along the lower limb, treble along the upper,
+ * and the music travels outward through the streamers - the light near the disc
+ * is what plays now, the light further out is what played a moment ago. Each
+ * downbeat sends a faint shell of light rising off the limb; the bead breathes
+ * with the low end.
  */
 export const SINGULARITY = /* glsl */ `
-const float BH_IN = 2.6;
-const float BH_OUT = 12.0;
+const vec2 EC_C = vec2(0.0, 0.1);
+const float EC_R = 0.16;
+/* The bead sits on the upper-left limb. */
+const float BEAD_ANGLE = 2.35;
+/* Seconds of music held per screen unit above the limb. */
+const float CORONA_MEMORY = 11.0;
 
-vec3 bhSky(vec3 rd) {
-  vec3 band = normalize(vec3(0.25, 1.0, 0.35));
-  float milky = exp(-pow(dot(rd, band) * 2.6, 2.0));
-  float n = fbm3(rd * 3.2 + 4.0);
-  vec3 sky = uBg * 0.25 + mix(uColC, uColB, n) * milky * n * 0.09;
-  return sky + starfield(rd, 1.4) * (0.8 + uTreble * 0.8);
-}
-
-vec4 bhDisk(vec3 hit, vec3 rd) {
-  float r = length(hit.xz);
-  float x = clamp((r - BH_IN) / (BH_OUT - BH_IN), 0.0, 1.0);
-  /* Differential rotation: inner orbits lap the outer ones. */
-  float ang = atan(hit.z, hit.x) + uTravel * 2.6 * pow(r, -1.5);
-  vec3 sp = vec3(cos(ang) * 2.4, sin(ang) * 2.4, r * 1.9);
-  float n = fbm3(sp);
-  float arcs = 0.5 + 0.5 * sin(r * 6.0 + n * 5.0);
-  float dens = smoothstep(0.0, 0.05, x) * (1.0 - smoothstep(0.45, 1.0, x)) * (0.3 + n * 1.1) * (0.55 + 0.45 * arcs);
-
-  /* The disk is the spectrum, read in radius. */
-  float band = x;
-  float s = spec(band, 0.0);
-  dens *= mix(0.75, 0.35 + s * 1.5, uPlaying);
-
-  float ripple = 0.0;
+/* Streamers: noise sampled round a circle (seamless in angle) and barely
+   moving with height, so the structure reads as fine radial combing. */
+float streamers(vec2 dir, float x, float t) {
+  float s = 0.0;
+  float amp = 0.6;
+  float f = 3.2;
   for (int i = 0; i < 3; i++) {
-    float age = uKicks[i];
-    ripple += exp(-abs(r - (BH_IN + age * 6.5)) * 1.6) * exp(-age * 0.9);
+    float n = noise2(dir * f + vec2(x * 1.2 + t, x * 0.7 - t * 0.6) + float(i) * 7.3);
+    s += amp * pow(n, 2.6);
+    f *= 2.35;
+    amp *= 0.55;
   }
-
-  vec3 hot = vec3(1.0, 0.88, 0.72);
-  vec3 c = mix(hot, uColA, smoothstep(0.0, 0.28, x));
-  c = mix(c, uColB, smoothstep(0.28, 0.8, x));
-  /* Relativistic beaming: the side rushing toward us burns brighter. */
-  vec3 vel = normalize(vec3(-hit.z, 0.0, hit.x));
-  float dop = clamp(1.0 + 0.6 * dot(vel, -rd), 0.3, 1.7);
-  float bright = dens * dop * dop * dop * (0.3 + uBass * 0.5 + uLevel * 0.2) * (1.6 - x * 1.2) + ripple * 0.5;
-  return vec4(c * bright, clamp(dens * 0.9 + ripple * 0.2, 0.0, 0.92));
+  return s;
 }
 
 vec3 world(vec2 fragCoord) {
   vec2 uv = (fragCoord - 0.5 * uRes) / uRes.y;
-  float a = uTime * 0.012 + uPointer.x * 0.15 + 0.4;
-  float elev = 0.13 + uPointer.y * -0.05 + sin(uTime * 0.05) * 0.02;
-  float dist = 23.0;
-  vec3 ro = vec3(sin(a) * cos(elev), sin(elev), cos(a) * cos(elev)) * dist;
-  vec3 fw = normalize(-ro + vec3(0.0, -2.4, 0.0));
-  vec3 rt = normalize(cross(vec3(0.0, 1.0, 0.0), fw));
-  vec3 up = cross(fw, rt);
-  float roll = 0.12;
-  vec3 r2 = rt * cos(roll) + up * sin(roll);
-  vec3 u2 = up * cos(roll) - rt * sin(roll);
-  vec3 rd = normalize(uv.x * r2 + uv.y * u2 + 1.9 * fw);
+  vec2 d = uv - EC_C - uPointer * 0.006;
+  float r = length(d);
+  vec2 dir = d / max(r, 1e-4);
+  float x = max(r - EC_R, 0.0);
+  float aa = fwidth(r) * 1.2;
 
-  vec3 p = ro;
-  vec3 v = rd;
-  vec3 h = cross(p, v);
-  float h2 = dot(h, h);
-  vec3 col = vec3(0.0);
-  float T = 1.0;
-  float ring = 0.0;
-  float jet = 0.0;
-  bool swallowed = false;
-  for (int i = 0; i < 120; i++) {
-    float r = length(p);
-    float dt = clamp(r * 0.08, 0.03, 1.1);
-    vec3 prev = p;
-    v += -1.5 * h2 * p / pow(r, 5.0) * dt;
-    p += v * dt;
-    if (prev.y * p.y < 0.0) {
-      vec3 hit = mix(prev, p, prev.y / (prev.y - p.y));
-      float hr = length(hit.xz);
-      if (hr > BH_IN * 0.95 && hr < BH_OUT) {
-        vec4 d = bhDisk(hit, normalize(v));
-        col += T * d.rgb;
-        T *= 1.0 - d.a;
-      }
+  vec3 inner = mix(vec3(1.0, 0.97, 0.94), uColA, 0.25);
+  vec3 outer = mix(uColB, uColA, 0.35);
+
+  float combs = streamers(dir, x, uTime * 0.004);
+  float falloff = exp(-x / 0.06) * 0.85 + exp(-x / 0.2) * 0.26 + exp(-x / 0.45) * 0.025;
+
+  /* The music, read round the limb and outward in time. */
+  /* Blurred across neighbouring bands and across a second of history, so the
+     corona swells as light - never as rings or hard sectors. */
+  float band = dir.y * 0.5 + 0.5;
+  float age = x * CORONA_MEMORY;
+  float s = 0.0;
+  for (int i = -1; i <= 1; i++) {
+    for (int j = 0; j < 3; j++) {
+      s += spec(band + float(i) * 0.06, age + float(j) * 0.35);
     }
-    ring += exp(-abs(r - 1.55) * 9.0) * dt;
-    float axis = dot(p.xz, p.xz);
-    jet += exp(-axis * 5.0 / (0.25 + abs(p.y) * 0.1)) * smoothstep(1.2, 3.0, abs(p.y)) * exp(-abs(p.y) * 0.13) * dt;
-    if (r < 1.0) {
-      swallowed = true;
-      break;
-    }
-    if (r > 45.0 || T < 0.02) break;
   }
-  /* The photon ring lives on escaping light only - the shadow stays true black. */
-  if (!swallowed) {
-    vec3 glow = mix(uColC, vec3(1.0), 0.3);
-    col += T * glow * min(ring, 1.5) * (0.12 + uLevel * 0.25 + kickFlash(6.0) * 0.3);
-    col += T * bhSky(normalize(v));
+  s /= 9.0;
+  float music = mix(0.6, 0.45 + s * 0.8, uPlaying);
+
+  float shells = 0.0;
+  for (int i = 0; i < 3; i++) {
+    float age = uKicks[i];
+    shells += exp(-sq((x - age * 0.16) / 0.035)) * exp(-age * 1.6);
   }
-  col += T * mix(uColB, vec3(0.85, 0.9, 1.0), 0.4) * jet * (0.03 + uBass * 0.3 + kickFlash(4.0) * 0.25);
+
+  float corona = falloff * (0.35 + 1.25 * combs) * music + shells * 0.15 * uPlaying * (0.4 + combs);
+  vec3 col = mix(outer, inner, exp(-x / 0.09)) * corona * (1.0 + uLevel * 0.3 * uPlaying);
+
+  /* Deep space behind, dimmed where the corona already owns the light. */
+  vec3 rd = normalize(vec3(uv, 1.0));
+  col += (uBg * 0.16 + starfield(rd, 1.3) * 0.9) * (1.0 - clamp(corona * 1.5, 0.0, 1.0));
+
+  /* The disc: true black, anti-aliased edge. */
+  col *= smoothstep(EC_R - aa, EC_R + aa, r);
+
+  /* Chromosphere: a hairline of rose light hugging the limb. */
+  vec3 chromo = mix(uColA, vec3(1.0, 0.45, 0.62), 0.45);
+  col += chromo * exp(-abs(r - EC_R) / (0.0022 + aa)) * 0.9;
+
+  /* The diamond bead and its four-point glint. */
+  vec2 bead = EC_C + vec2(cos(BEAD_ANGLE), sin(BEAD_ANGLE)) * EC_R;
+  vec2 b = uv - uPointer * 0.006 - bead;
+  float bb = dot(b, b);
+  float breath = 1.0 + uBass * 0.4 * uPlaying;
+  vec3 beadLight = vec3(1.0, 0.98, 0.96) * (0.000045 / (bb + 0.000012)) * breath;
+  float spikes = (exp(-abs(b.x) * 900.0) * exp(-abs(b.y) * 26.0) + exp(-abs(b.y) * 900.0) * exp(-abs(b.x) * 26.0)) * 0.35;
+  col += beadLight + inner * spikes * breath;
   return col;
 }
 `;

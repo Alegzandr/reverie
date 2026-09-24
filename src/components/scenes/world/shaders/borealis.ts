@@ -75,7 +75,7 @@ float boreCrest(float x, float seed) {
     f *= 2.1;
     a *= 0.48;
   }
-  float massif = exp(-pow((x + 0.15) * 1.8, 2.0)) + 0.55 * exp(-pow((x - 0.55) * 2.4, 2.0));
+  float massif = exp(-sq((x + 0.15) * 1.8)) + 0.55 * exp(-sq((x - 0.55) * 2.4));
   return h * (0.3 + massif * 0.8);
 }
 

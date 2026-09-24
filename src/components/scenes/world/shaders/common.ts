@@ -134,6 +134,10 @@ float kickFlash(float decay) {
   return max(max(exp(-uKicks.x * decay), exp(-uKicks.y * decay) * 0.6), exp(-uKicks.z * decay) * 0.35);
 }
 
+/* x^2 for Gaussian falloffs: GLSL leaves pow() undefined for a negative base,
+   and some drivers return NaN for it - which the TAA then spreads as black. */
+float sq(float x) { return x * x; }
+
 mat2 rot(float a) {
   float c = cos(a);
   float s = sin(a);

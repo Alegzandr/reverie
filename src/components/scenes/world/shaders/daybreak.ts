@@ -29,10 +29,10 @@ vec3 daySky(vec3 rd) {
   vec3 horizon = mix(uColA, vec3(1.0, 0.7, 0.52), 0.55) * 0.62;
   vec3 c = mix(horizon, zenith, pow(y, 0.55));
   float s = max(dot(rd, sun), 0.0);
-  float pulse = 1.0 + uBass * 0.35 + kickFlash(3.0) * 0.2;
+  float pulse = 1.0 + uBass * 0.45 + kickFlash(2.2) * 0.3;
   c += vec3(1.0, 0.86, 0.7) * pow(s, 14.0) * 0.35 * pulse;
   c += vec3(1.0, 0.96, 0.9) * smoothstep(0.99905, 0.9994, s) * 2.0;
-  c += vec3(1.0) * uTreble * 0.04 * pow(max(noise2(rd.xy * 60.0 + uTime * 0.3), 0.0), 8.0);
+  c += vec3(1.0) * uTreble * 0.08 * pow(max(noise2(rd.xy * 60.0 + uTime * 0.3), 0.0), 8.0);
   return c;
 }
 
@@ -58,7 +58,9 @@ vec3 world(vec2 fragCoord) {
   vec3 shade = mix(uColB, vec3(0.42, 0.38, 0.7), 0.6) * 0.28;
   vec3 lit = vec3(1.0, 0.93, 0.86) * 0.78;
   vec3 rim = mix(uColA, vec3(1.0, 0.75, 0.6), 0.5);
-  float glow = 0.9 + uLevel * 0.3;
+  /* The music warms the cloud tops, and the sun-side rims catch the low end. */
+  float glow = 0.9 + uLevel * 0.45;
+  float rimLift = 0.6 + uBass * 0.5 + kickFlash(2.2) * 0.35;
   for (int i = 0; i < STEPS; i++) {
     vec3 p = ro + rd * t;
     float d = dayDensity(p);
@@ -66,7 +68,7 @@ vec3 world(vec2 fragCoord) {
       float toward = dayDensity(p + sun * 0.35);
       float light = clamp(0.35 + (d - toward) * 2.2, 0.0, 1.0);
       float forward = pow(max(dot(rd, sun), 0.0), 6.0);
-      vec3 c = mix(shade, lit * glow, light) + rim * forward * light * 0.6;
+      vec3 c = mix(shade, lit * glow, light) + rim * forward * light * rimLift;
       float a = 1.0 - exp(-d * dt * 2.2);
       col += T * a * c;
       T *= 1.0 - a;

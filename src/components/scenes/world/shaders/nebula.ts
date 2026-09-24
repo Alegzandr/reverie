@@ -6,9 +6,9 @@
  * thing - a cool ionised blue and a warm rose, laid side by side - bent to the
  * mood's palette. Three depths of lace parallax gently against each other.
  *
- * The music touches it lightly: the filaments glow a little brighter with the
- * track, and the spectrum ripples outward through the lace as a faint shimmer,
- * each strand lit by the music of a moment ago. Contemplative, never a pulse.
+ * The music lives in the light, never in the shape: the filaments glow with the
+ * track, the spectrum shimmers outward through the lace, and each downbeat sends
+ * a slow wave of light gliding along the shell. Contemplative, never a pulse.
  */
 export const NEBULA = /* glsl */ `
 /* The shell's centre sits far below the frame, so its rim spans the sky as a
@@ -47,7 +47,7 @@ float lace(vec2 p, float seed, out float across, out float along) {
     amp *= 0.5;
   }
   /* The lace gathers along the rim and frays out on either side. */
-  float band = exp(-pow(across / SHELL_W, 2.0));
+  float band = exp(-sq(across / SHELL_W));
   /* Strands thin out and brighten in knots along their length. */
   float knots = 0.35 + 0.95 * smoothstep(0.4, 0.8, noise2(vec2(tt * 2.2, seed * 7.0)));
   /* Bundles with dark water between them: the lace is mostly air. */
@@ -63,7 +63,7 @@ vec3 world(vec2 fragCoord) {
 
   /* Faint music in the lace: brightness follows the level softly; the spectrum
      ripples outward from the rim, a few seconds per sweep. */
-  float lift = 1.0 + uLevel * 0.22 * uPlaying;
+  float lift = 1.0 + (uLevel * 0.45 + uBass * 0.25) * uPlaying;
 
   vec3 col = vec3(0.0);
   for (int k = 0; k < 3; k++) {
@@ -78,15 +78,19 @@ vec3 world(vec2 fragCoord) {
     float along2;
     float h2 = lace(p + normalize(p - SHELL_C) * 0.035, fk * 1.93, across2, along2);
     float band = clamp((along - 1.1) / 1.0, 0.0, 1.0);
-    float shimmer = spec(band, clamp(abs(across) * 7.0, 0.0, 6.0)) * uPlaying * 0.35;
-    float light = depth * lift;
+    float shimmer = spec(band, clamp(abs(across) * 7.0, 0.0, 6.0)) * uPlaying * 0.8;
+    /* Downbeats: the lace draws a soft breath of light, and the latest one
+       sends a band of light gliding along the shell, left to right. */
+    float glideAge = uKicks.x;
+    float glide = exp(-sq((along - (2.3 - glideAge * 0.9)) / 0.12)) * exp(-glideAge * 1.2);
+    float light = depth * (lift + (kickFlash(2.5) * 0.5 + glide) * uPlaying);
     col += blue * h * (2.1 + shimmer) * light;
     col += rose * h2 * (2.3 + shimmer) * light;
   }
 
   /* A whisper of the gas the lace is made of - never a fog bank. */
   float r = length(uv - SHELL_C);
-  float haze = exp(-pow((r - SHELL_R) / 0.35, 2.0)) * fbm2(uv * 2.2 + 3.0);
+  float haze = exp(-sq((r - SHELL_R) / 0.35)) * fbm2(uv * 2.2 + 3.0);
   col += mix(blue, rose, 0.4) * haze * 0.06;
 
   vec3 rd = normalize(vec3(uv + uPointer * 0.004, 1.0));

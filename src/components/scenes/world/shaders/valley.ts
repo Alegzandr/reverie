@@ -1,116 +1,127 @@
 /**
- * Echo Valley (horizon mood): dusk over a still lake, ranges of mountains
- * layered in mist, the sun settling into the notch between them. The music is
- * written on the ridgelines as fine threads of light: the nearest range sings
- * what plays now, and each range behind it carries what played a moment
- * earlier - the song echoing away into the distance. Drawn as layered
- * silhouettes (analytic, anti-aliased edges) mirrored in the water, so it stays
- * crisp at full resolution and costs next to nothing.
+ * Echo Valley (horizon mood): a fjord at dusk. Sheer cliffs plunge into a
+ * mirror of still water, wall behind wall receding toward the open sea, mist
+ * pooled at their feet - and above them a soft aurora of warm light unrolls
+ * its veils. The rock never moves: the music lives in the sky. The veils
+ * brighten with the track, their fine rays carry the spectrum upward (what
+ * plays now at the hem, what played a moment ago higher up), and each downbeat
+ * lets a gentle wash of light through the folds. The water holds all of it,
+ * darker and cooler. Analytic silhouettes, anti-aliased, crisp at any size.
  */
 export const VALLEY = /* glsl */ `
-const float LAKE = 0.47;
-const int RANGES = 5;
+const float WATER = 0.4;
+const int WALLS = 4;
+/* Seconds of music held per screen unit up an aurora ray. */
+const float RAY_MEMORY = 7.0;
 
-float valleyProfile(float x, float seed) {
+/* Ridged fbm: sharp crests and notches - peaks, not plateaus. */
+float ridgeNoise(float x, float seed) {
   float h = 0.0;
-  float a = 0.5;
+  float a = 0.55;
   float f = 1.0;
   for (int i = 0; i < 5; i++) {
-    float n = noise2(vec2(x * f, seed + float(i) * 13.1));
-    h += a * (1.0 - abs(n * 2.0 - 1.0));
-    f *= 2.1;
+    float n = 1.0 - abs(noise2(vec2(x * f, seed + float(i) * 13.1)) * 2.0 - 1.0);
+    h += a * n * n;
+    f *= 2.15;
     a *= 0.48;
   }
   return h;
 }
 
-vec3 valleySky(vec2 q, float aspect) {
-  float y = (q.y - LAKE) / (1.0 - LAKE);
-  vec3 low = mix(uColA, vec3(1.0, 0.62, 0.38), 0.45) * 0.55;
-  vec3 mid = mix(uColB, uColA, 0.35) * 0.16;
-  vec3 high = uBg * 0.7 + uColC * 0.02;
-  vec3 c = mix(low, mid, smoothstep(0.0, 0.35, y));
-  c = mix(c, high, smoothstep(0.25, 0.95, y));
-  /* Long, flat clouds lit from beneath by the sun. */
-  float streak = fbm2(vec2(q.x * 1.6 + uTime * 0.006, q.y * 14.0));
-  float band = smoothstep(0.5, 0.78, streak) * smoothstep(0.05, 0.25, y) * (1.0 - smoothstep(0.45, 0.8, y));
-  c += mix(uColA, vec3(1.0, 0.7, 0.5), 0.5) * band * 0.08;
-  /* The sun, low in the notch, and its wide warm bloom. */
-  vec2 sun = vec2(0.0, LAKE + 0.075);
-  float d = length((q - sun) * vec2(1.0, 1.0));
-  float pulse = 1.0 + uBass * 0.25 + kickFlash(3.0) * 0.2;
-  float aa = fwidth(d) * 1.5;
-  c = mix(c, mix(vec3(1.0, 0.86, 0.66), uColA, 0.2) * 1.6, 1.0 - smoothstep(0.052 - aa, 0.052 + aa, d));
-  c += mix(uColA, vec3(1.0, 0.72, 0.5), 0.5) * exp(-d * 9.0) * 0.35 * pulse;
-  c += uColB * exp(-d * 2.5) * 0.05 * pulse;
+/* The aurora: two soft ribbons of light undulating across the upper sky, faintly
+   combed. The spectrum rides each ribbon from left to right, and rises through
+   its combing - what plays now at the lower edge, older music above. */
+vec3 fjordAurora(vec2 q, float aspect) {
+  vec3 col = vec3(0.0);
+  float band = clamp(q.x / aspect + 0.5, 0.0, 1.0);
+  for (int k = 0; k < 2; k++) {
+    float fk = float(k);
+    float x = q.x * (1.0 - fk * 0.25) + fk * 3.1;
+    float centre = 0.76 + fk * 0.08 + 0.06 * sin(x * 1.7 + uTime * 0.025 + fk * 2.4) + 0.04 * (fbm2(vec2(x * 0.9 + fk * 5.0, uTime * 0.008)) - 0.5);
+    float off = q.y - centre;
+    float width = 0.035 + 0.02 * fk + 0.012 * sin(x * 2.3 + fk);
+    /* Sharper below, trailing off above: light falling from a hem. */
+    float ribbon = exp(-sq(off / (off < 0.0 ? width * 0.22 : width * 1.5)));
+    float comb = 0.5 + 0.5 * pow(noise2(vec2(x * 30.0 + fk * 11.0, uTime * 0.03 + fk)), 1.5);
+    float s = spec(band, clamp(off + width, 0.0, 1.0) * RAY_MEMORY);
+    float music = mix(0.7, 0.4 + s * 1.2, uPlaying);
+    vec3 hemColor = mix(uColB, vec3(1.0, 0.55, 0.62), 0.3);
+    vec3 topColor = mix(uColA, vec3(0.62, 0.52, 1.0), 0.45);
+    col += mix(hemColor, topColor, smoothstep(-0.01, 0.07, off)) * ribbon * comb * music * (0.36 - fk * 0.2);
+  }
+  return col * (1.0 + uLevel * 0.35 * uPlaying + kickFlash(1.8) * 0.3 * uPlaying);
+}
+
+vec3 fjordSky(vec2 q, float aspect) {
+  float y = clamp((q.y - WATER) / (1.0 - WATER), 0.0, 1.0);
+  /* Deep dusk indigo overhead, the last warm light low over the open sea. */
+  vec3 high = mix(uBg, vec3(0.03, 0.03, 0.09), 0.5) * 0.7;
+  vec3 mid = mix(uBg, vec3(0.2, 0.12, 0.3), 0.5) * 0.5;
+  vec3 low = mix(uColA, vec3(1.0, 0.55, 0.4), 0.35) * 0.3;
+  vec3 c = mix(low, mid, smoothstep(0.0, 0.22, y));
+  c = mix(c, high, smoothstep(0.2, 0.85, y));
   vec3 rd = normalize(vec3(q.x, y * 0.9 + 0.1, 1.0));
-  c += starfield(rd, 0.7) * smoothstep(0.5, 0.9, y) * (0.5 + uTreble * 0.5);
-  return c;
+  c += starfield(rd, 0.9) * smoothstep(0.3, 0.8, y);
+  return c + fjordAurora(q, aspect);
 }
 
 vec3 world(vec2 fragCoord) {
   float aspect = uRes.x / uRes.y;
   vec2 p = vec2((fragCoord.x / uRes.x - 0.5) * aspect, fragCoord.y / uRes.y);
 
-  /* The lake mirrors everything above the shoreline, rippled a little -
-     more near you, a touch more on the low end. */
-  float under = step(p.y, LAKE);
-  float depth = clamp((LAKE - p.y) / LAKE, 0.0, 1.0);
+  /* The water mirrors the whole scene, barely stirred - and never by the music. */
+  float under = step(p.y, WATER);
+  float depth = clamp((WATER - p.y) / WATER, 0.0, 1.0);
   vec2 q = p;
-  q.y = mix(p.y, 2.0 * LAKE - p.y, under);
-  float ripple = sin(p.y * 260.0 / (0.25 + depth) - uTime * 1.3) + 0.5 * sin(p.y * 510.0 / (0.3 + depth) + uTime * 0.9);
-  q.x += ripple * 0.0012 * depth * (1.0 + uBass * 1.5) * under;
+  q.y = mix(p.y, 2.0 * WATER - p.y, under);
+  float ripple = sin(p.y * 240.0 / (0.25 + depth) - uTime * 0.8) + 0.5 * sin(p.y * 470.0 / (0.3 + depth) + uTime * 0.6);
+  q.x += ripple * 0.0009 * depth * under;
 
-  vec3 col = valleySky(q, aspect);
+  vec3 col = fjordSky(q, aspect);
 
-  vec3 haze = mix(uColA, vec3(1.0, 0.66, 0.48), 0.45) * 0.36;
-  vec3 ink = uBg * 0.55;
-  for (int i = 0; i < RANGES; i++) {
+  /* Dusk air between the walls, and the ink of the nearest rock. */
+  vec3 haze = mix(mix(uColA, vec3(1.0, 0.6, 0.45), 0.4) * 0.16, vec3(0.1, 0.08, 0.2), 0.6);
+  vec3 ink = vec3(0.012, 0.012, 0.03) + uBg * 0.15;
+  for (int i = 0; i < WALLS; i++) {
     float fi = float(i);
-    float near = fi / float(RANGES - 1);           /* 0 far .. 1 near */
-    float drift = uTravel * (0.004 + near * 0.018) + uPointer.x * 0.02 * near;
-    float x = q.x * (1.0 + near * 0.9) + drift + fi * 17.3;
-    /* A V opening onto the sun: flanks rise away from the centre. Each range's
-       V is offset and pitched differently, so the farther ones show through
-       the saddles of the nearer ones - the layered, aerial-perspective look. */
-    float cx = q.x - sin(fi * 2.3 + 0.7) * 0.18 * near;
-    float flank = smoothstep(0.03, 1.1, abs(cx)) * (0.04 + near * 0.12) * (0.7 + 0.6 * hash12(vec2(fi, 4.0)));
-    float base = LAKE + 0.004 + (1.0 - near) * 0.028;
-    float h = base + flank + valleyProfile(x * 0.8, fi * 5.0) * (0.035 + near * 0.1) - near * 0.025;
-    /* The music on the ridge: bass on the flanks, air near the notch; farther
-       ranges hold older music - the echo. */
-    float band = 1.0 - clamp(abs(q.x) / (aspect * 0.5), 0.0, 1.0);
-    float age = (1.0 - near) * 2.2;
-    float s = spec(band * 0.85, age);
-    h += s * (0.018 + near * 0.05) * smoothstep(0.0, 0.25, abs(q.x)) * uPlaying;
-
+    float near = fi / float(WALLS - 1);               /* 0 far .. 1 near */
+    float px = q.x + uPointer.x * 0.02 * near;
+    float side = px < 0.0 ? -1.0 : 1.0;
+    float ax = abs(px);
+    /* Each wall pair leaves a gap that narrows with distance - the fjord's
+       vanishing channel - and each side is pitched a little differently. */
+    float gap = mix(0.05, 0.46, pow(near, 1.25)) * (1.0 + 0.22 * side * (hash12(vec2(fi, 2.0)) - 0.5));
+    float face = mix(0.012, 0.045, near);
+    float rise = smoothstep(gap, gap + face, ax);
+    /* Crests: jagged ridgelines, climbing away from the channel. */
+    float crest = ridgeNoise(ax * mix(3.2, 1.6, near) + fi * 9.0 + side * 3.7, fi * 4.0 + side);
+    float tall = mix(0.08, 0.42, pow(near, 1.1));
+    float h = WATER + rise * (tall * (0.45 + 0.75 * crest) + (ax - gap) * mix(0.05, 0.2, near));
     float dist = q.y - h;
-    float aa = fwidth(dist) * 1.2 + 0.0004;
-    float body = 1.0 - smoothstep(-aa, aa, dist);
-    vec3 layer = mix(haze, ink, 0.12 + pow(near, 1.4) * 0.88);
-    /* Mist pooling at each range's foot. */
-    layer = mix(layer, haze, (1.0 - smoothstep(base, base + 0.05, q.y)) * (0.45 - near * 0.3));
-    col = mix(col, layer, body);
-    /* The thread of light along the ridge - brighter where the music peaks. */
-    float thread = exp(-abs(dist) / (aa * 0.8 + 0.0003)) * (0.12 + s * 1.4) * (0.2 + near * 0.8);
-    col += mix(uColA, vec3(1.0, 0.86, 0.72), 0.4 + s * 0.4) * thread * 0.3;
+    float edge = fwidth(dist) * 1.2 + 0.0004;
+    float body = (1.0 - smoothstep(-edge, edge, dist)) * step(0.001, rise);
+    /* Aerial perspective: far walls stay in the dusk air, near ones go to ink,
+       each darkening toward its foot. */
+    float vertical = smoothstep(WATER, max(h, WATER + 0.001), q.y);
+    vec3 rock = mix(haze * 0.8, ink, 0.45 + pow(near, 0.8) * 0.55);
+    rock = mix(rock * 0.7, rock, vertical);
+    /* Strata: faint vertical grain in the rock, and the inner faces - turned
+       to the open sea - catching the last warm light. */
+    rock *= 0.9 + 0.2 * noise2(vec2(ax * mix(90.0, 45.0, near) + fi * 7.0, q.y * 3.0));
+    float innerFace = 1.0 - smoothstep(gap, gap + face * 2.5, ax);
+    rock += mix(uColA, vec3(1.0, 0.6, 0.45), 0.4) * innerFace * (0.05 + (1.0 - near) * 0.05) * (1.0 - vertical * 0.6);
+    /* The aurora's glow grazing each crest. */
+    /* (Bounded: far above a crest the unbounded exp overflows, and inf * 0 in
+       the mix below would be NaN - a black hole in the sky.) */
+    rock += mix(uColB, vec3(0.9, 0.6, 0.8), 0.5) * exp(min(dist, 0.0) / 0.0022) * (0.1 + (1.0 - near) * 0.06);
+    /* Mist pooled at the waterline between the walls. */
+    rock = mix(rock, haze * 1.25, (1.0 - smoothstep(WATER, WATER + 0.02 + (1.0 - near) * 0.03, q.y)) * (0.45 - near * 0.35));
+    col = mix(col, rock, body);
   }
 
-  /* Motes drifting up over the water, catching the treble. */
-  for (int i = 0; i < 9; i++) {
-    float fi = float(i);
-    vec2 m = vec2(
-      (hash12(vec2(fi, 1.3)) - 0.5) * aspect * 0.9 + sin(uTime * 0.07 + fi) * 0.04,
-      LAKE + 0.02 + fract(hash12(vec2(fi, 7.1)) + uTime * (0.004 + 0.003 * hash12(vec2(fi, 3.3)))) * 0.3
-    );
-    float d = length(q - m);
-    col += mix(uColA, vec3(1.0, 0.9, 0.7), 0.5) * 0.00002 / (d * d + 0.00002) * (0.15 + uTreble * 0.5);
-  }
-
-  /* Water: darker, cooler, faintly glinting under the sun path. */
-  vec3 water = col * mix(0.72, 0.5, depth) + uColB * 0.004;
-  float path = exp(-abs(p.x) * 7.0) * (0.5 + 0.5 * ripple) * 0.06 * (1.0 - depth);
-  water += mix(uColA, vec3(1.0, 0.8, 0.6), 0.5) * path;
+  /* Water: darker and cooler than what it holds, a faint sheen far off. */
+  vec3 water = col * mix(0.7, 0.45, depth) + uColC * 0.004;
+  water += mix(uColB, vec3(1.0, 0.7, 0.6), 0.4) * exp(-depth * 40.0) * 0.03;
   col = mix(col, water, under);
   return col;
 }

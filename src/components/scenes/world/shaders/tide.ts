@@ -3,15 +3,18 @@
  * stylised, not simulated. The water reflects the whole sky; long, slow swell
  * lines (compressed by perspective toward the horizon) break the reflection
  * into slivers, which is what turns the moon's reflection into a shimmering
- * column of light. The music lands on the water as thin rings of light spreading
- * out around the glade, each ring the spectrum a moment ago. Everything is
- * analytic and edge-filtered, so it stays crisp at any resolution.
+ * column of light. The music lives in that light, never in the water's shape:
+ * the glade brightens with the track, each downbeat sends a soft swell of
+ * moonlight rolling down the column toward you, and the treble sets a few
+ * slivers glinting. Everything is analytic and edge-filtered, so it stays
+ * crisp at any resolution.
  */
 export const TIDE = /* glsl */ `
 const float HORIZON = 0.46;
 const vec2 MOON_POS = vec2(0.0, 0.76);
 const float MOON_R = 0.055;
-const float RING_SPEED = 5.0;
+/* How fast a downbeat's swell of light rolls down the glade (screen units / s). */
+const float GLADE_WAVE_SPEED = 0.16;
 
 vec3 tideSky(vec2 q, float moon) {
   float y = clamp((q.y - HORIZON) / (1.0 - HORIZON), 0.0, 1.0);
@@ -19,7 +22,7 @@ vec3 tideSky(vec2 q, float moon) {
   vec3 high = uBg * 0.35;
   vec3 c = mix(low, high, pow(y, 0.6));
   float d = length(q - MOON_POS);
-  float pulse = 1.0 + uBass * 0.35 + kickFlash(3.5) * 0.25;
+  float pulse = 1.0 + uBass * 0.2;
   /* Halo in two soft rings, then the disc. */
   c += mix(uColB, vec3(1.0), 0.35) * exp(-d * 5.5) * 0.14 * pulse;
   c += mix(uColA, vec3(1.0), 0.6) * exp(-d * 18.0) * 0.28 * pulse;
@@ -52,7 +55,7 @@ vec3 world(vec2 fragCoord) {
   float settle = 1.0 - smoothstep(0.15, 0.5, fwp);
   float swell = sin(phase * TAU) * settle;
   float swell2 = sin(phase * TAU * 2.3 + p.x * 9.0) * settle;
-  float slide = (swell * 0.6 + swell2 * 0.4) * (0.002 + below * 0.05) * (1.0 + uBass * 0.6);
+  float slide = (swell * 0.6 + swell2 * 0.4) * (0.002 + below * 0.05);
 
   /* A mirror of the sky (the moon's own disc left out - the glade stands for it). */
   vec2 m = vec2(p.x + slide, 2.0 * HORIZON - p.y);
@@ -66,23 +69,21 @@ vec3 world(vec2 fragCoord) {
   float width = (0.015 + below * 0.32) * (0.55 + fray * 0.9);
   float column = 1.0 - smoothstep(width * 0.25, width, gx);
   float sliver = mix(0.35, smoothstep(0.1, 0.8, swell * 0.6 + swell2 * 0.4), settle);
-  float pulse = 1.0 + uBass * 0.3 + kickFlash(3.5) * 0.2;
-  vec3 glade = mix(vec3(0.9, 0.96, 1.0), uColA, 0.15) * column * sliver * (0.9 - below * 0.9) * 0.9 * pulse;
-
-  /* Sound rings spreading around the glade, one per moment of music. */
-  vec2 c0 = vec2(0.0, 0.9 + uTravel * 0.25);
-  float r = length((w - c0) * vec2(0.55, 1.0));
-  float ringPhase = (r - uTime * RING_SPEED * 0.2) * 2.2;
-  float line = abs(fract(ringPhase) - 0.5) * 2.0;
-  float fw = fwidth(ringPhase) * 2.0 + 0.02;
-  float ring = smoothstep(1.0 - fw * 1.5, 1.0, line);
-  float energy = spec(0.06, r / RING_SPEED) * 0.8 + spec(0.35, r / RING_SPEED) * 0.35;
-  float near = smoothstep(0.02, 0.12, below) * (1.0 - smoothstep(0.25, 0.6, fw));
-  vec3 rings = mix(uColA, uColB, 0.3) * ring * energy * exp(-r * 0.12) * 0.55 * uPlaying * near;
+  /* Downbeat swells: a band of moonlight rolling from the horizon toward you. */
+  float swellLight = 0.0;
+  for (int i = 0; i < 3; i++) {
+    float age = uKicks[i];
+    float front = age * GLADE_WAVE_SPEED;
+    swellLight += exp(-sq((below - front) / 0.035)) * exp(-age * 1.1);
+  }
+  float lift = 1.0 + uLevel * 0.35 * uPlaying + swellLight * 0.9 * uPlaying;
+  /* Treble glints: a few slivers catch the light, never the whole column. */
+  float glint = step(0.9, hash12(vec2(floor(phase), floor((p.x + slide * 3.0) * 60.0)))) * uTreble * uPlaying * 1.6;
+  vec3 glade = mix(vec3(0.9, 0.96, 1.0), uColA, 0.15) * column * sliver * (0.9 - below * 0.9) * 0.9 * (lift + glint);
 
   /* Mirror tint: the sea is darker than the sky it holds, most at your feet. */
   vec3 sea = refl * mix(0.9, 0.55, smoothstep(0.0, HORIZON, below)) + uBg * 0.05;
-  vec3 col = sea + glade + rings;
+  vec3 col = sea + glade;
   /* A hairline of light where sea meets sky. */
   col += mix(uColB, vec3(1.0), 0.5) * exp(-below * 260.0) * 0.08;
   return col;
