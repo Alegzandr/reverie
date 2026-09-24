@@ -901,6 +901,12 @@
   /* Daylight through the visor: the rim stays true black (on OLED the helmet
      simply disappears into the screen's edge, in every mood), only its inner
      shade is lighter so the bright sky doesn't read as vignetted. */
+  /* The rulers are cockpit furniture: on the phone gate they only collide with
+     the centred copy, so the visor keeps its rim and drops them. */
+  :root:has(.desktop-gate) .helmet-ticks {
+    display: none;
+  }
+
   :root:not(.dark) .helmet::before {
     box-shadow:
       0 0 0 60px rgba(var(--visor-rim), var(--visor-rim-alpha)),
