@@ -209,17 +209,27 @@ export function getExportStrategy(extension: string): ExportStrategy {
 }
 
 /**
- * Estimate bitrate from file size and duration
+ * Estimate the source bitrate, to encode the export at a matching quality.
  *
  * @param file - Original audio file
- * @param durationSeconds - Duration in seconds
+ * @param durationSeconds - Duration of the ORIGINAL track in seconds. Not the
+ *   rendered one: a speed change shortens or stretches the render, which would
+ *   skew the size/duration ratio away from the source's real bitrate.
+ * @param knownKbps - Bitrate already measured for the source (load metadata);
+ *   preferred over re-deriving it when present
  * @returns Estimated bitrate in kbps, clamped to common MP3 range
  */
-export function estimateBitrate(file: File | null, durationSeconds: number): number {
+export function estimateBitrate(file: File | null, durationSeconds: number, knownKbps?: number | null): number {
+  if (knownKbps && knownKbps > 0) {
+    return clampKbps(knownKbps);
+  }
   if (!file || durationSeconds <= 0) {
     return BITRATE.DEFAULT_MP3_KBPS;
   }
 
-  const kbps = Math.round(((file.size * 8) / durationSeconds) / 1000);
+  return clampKbps(Math.round(((file.size * 8) / durationSeconds) / 1000));
+}
+
+function clampKbps(kbps: number): number {
   return Math.min(BITRATE.MAX_MP3_KBPS, Math.max(BITRATE.MIN_MP3_KBPS, kbps));
 }

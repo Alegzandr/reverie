@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { usePlaylist } from './usePlaylist';
 import { usePlaylistPlayer, type PlayerAudio } from './usePlaylistPlayer';
 import { createPlaybackClock } from '../utils/playbackClock';
+import { PLAYLIST } from '../constants';
 
 vi.mock('../utils/audioProbe', () => ({ probeDuration: vi.fn(async () => null) }));
 
@@ -105,5 +106,64 @@ describe('usePlaylistPlayer', () => {
       await hook.result.current.player.playTrack(id, { autoplay: true });
     });
     expect(hook.result.current.playlist.tracks[0].broken).toBe(true);
+  });
+
+  it('drops a load still in flight when the session is cancelled (reset)', async () => {
+    let finish: (b: AudioBuffer) => void = () => {};
+    const { hook, audio } = setup({ loadAudioFile: vi.fn(() => new Promise<AudioBuffer>((r) => (finish = r))) });
+    await act(async () => {
+      await hook.result.current.playlist.addFiles([file('a')]);
+    });
+    const id = hook.result.current.playlist.tracks[0].id;
+    let played: Promise<boolean> = Promise.resolve(true);
+    act(() => {
+      played = hook.result.current.player.playTrack(id, { autoplay: true });
+    });
+    act(() => hook.result.current.player.cancelPending());
+    await act(async () => finish(buffer()));
+    expect(await played).toBe(false);
+    expect(audio.playAudio).not.toHaveBeenCalled();
+  });
+
+  it('never files the previous track\'s playhead under a track still loading', async () => {
+    let finish: (b: AudioBuffer) => void = () => {};
+    const loadAudioFile = vi.fn(async () => buffer());
+    const { hook, clock } = setup({ hasSession: true, loadAudioFile });
+    await act(async () => {
+      await hook.result.current.playlist.addFiles([file('a'), file('b')]);
+    });
+    const [a, b] = hook.result.current.playlist.tracks.map((t) => t.id);
+    await act(async () => {
+      await hook.result.current.player.playTrack(a, { autoplay: true });
+    });
+    clock.set(20);
+
+    loadAudioFile.mockImplementationOnce(() => new Promise<AudioBuffer>((r) => (finish = r)));
+    act(() => {
+      void hook.result.current.player.playTrack(b, { autoplay: true });
+    });
+    window.dispatchEvent(new Event('pagehide'));
+    expect(JSON.parse(localStorage.getItem(PLAYLIST.SESSION_STORAGE_KEY) ?? 'null')).toEqual({ activeId: b, position: 0 });
+
+    clock.set(0);
+    await act(async () => finish(buffer()));
+    clock.set(3);
+    window.dispatchEvent(new Event('pagehide'));
+    expect(JSON.parse(localStorage.getItem(PLAYLIST.SESSION_STORAGE_KEY) ?? 'null')).toEqual({ activeId: b, position: 3 });
+  });
+
+  it('under shuffle, the first file loaded into an empty session leads the lap', async () => {
+    localStorage.setItem(PLAYLIST.SHUFFLE_STORAGE_KEY, 'true');
+    // A dealer that would bury the first file without the lead.
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const { hook, audio } = setup();
+    const first = file('a');
+    act(() => hook.result.current.player.addFiles([first, file('b'), file('c')]));
+    await waitFor(() => expect(audio.loadAudioFile).toHaveBeenCalledWith(first));
+    vi.mocked(Math.random).mockRestore();
+    await waitFor(() => expect(hook.result.current.playlist.activeId).not.toBeNull());
+    expect(hook.result.current.playlist.tracks.find((t) => t.id === hook.result.current.playlist.activeId)?.file).toBe(first);
+    expect(hook.result.current.playlist.previousId).toBeNull();
+    expect(hook.result.current.playlist.upcomingId).not.toBeNull();
   });
 });

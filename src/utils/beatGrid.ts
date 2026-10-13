@@ -1,4 +1,5 @@
 import { BEAT_GRID } from '../constants';
+import { drumBandWeight } from './drumBands';
 
 /**
  * A track's beat grid, for the living worlds to nod along with.
@@ -111,13 +112,12 @@ export function onsetEnvelope(mono: Float32Array, sampleRate: number): OnsetEnve
   const hzPerBin = rate / n;
   const lo = new Int32Array(B);
   const hi = new Int32Array(B);
-  // Kick body, snare body and snare crack drive a head nod; pads and hats don't.
   const weight = new Float32Array(B);
   for (let b = 0; b < B; b += 1) {
     lo[b] = Math.max(1, Math.floor(edges[b] / hzPerBin));
     hi[b] = Math.max(lo[b] + 1, Math.ceil(edges[b + 1] / hzPerBin));
     const centre = Math.sqrt(edges[b] * edges[b + 1]);
-    weight[b] = centre < 140 ? 1 : centre < 320 ? 0.5 : centre > 1800 && centre < 7000 ? 0.3 : 0;
+    weight[b] = drumBandWeight(centre);
   }
   const weightSum = weight.reduce((a, w) => a + w, 0);
 
@@ -290,7 +290,7 @@ export function analyzeBeatGrid(mono: Float32Array, sampleRate: number): BeatGri
   // Peak onset near each beat (the hit may land a frame or two off the grid).
   const hitAt = (frame: number) => {
     let m = 0;
-    for (let i = Math.max(0, frame - 3); i <= Math.min(env.length - 1, frame + 3); i += 1) m = Math.max(m, env[i]);
+    for (let i = Math.max(0, frame - G.HIT_SEARCH_FRAMES); i <= Math.min(env.length - 1, frame + G.HIT_SEARCH_FRAMES); i += 1) m = Math.max(m, env[i]);
     return m;
   };
 
@@ -335,7 +335,7 @@ export function analyzeBeatGrid(mono: Float32Array, sampleRate: number): BeatGri
   const typicalDrums = drumSum / Math.max(1, drumFrames) || 1e-12;
   const hits = beats.map(hitAt);
   const sortedHits = [...hits].sort((a, b) => a - b);
-  const typicalHit = sortedHits[Math.floor(sortedHits.length * 0.75)] || 1;
+  const typicalHit = sortedHits[Math.floor(sortedHits.length * G.TYPICAL_HIT_QUANTILE)] || 1;
   const half = Math.round(G.DRUM_WINDOW_SECONDS * G.ENV_RATE);
   const raw = new Float32Array(beats.length);
   for (let i = 0; i < beats.length; i += 1) {
@@ -353,7 +353,7 @@ export function analyzeBeatGrid(mono: Float32Array, sampleRate: number): BeatGri
     const present = Math.max(hits[i - 1] ?? 0, hits[i], hits[i + 1] ?? 0) / typicalHit;
     const audible = loud[beats[i]] > loudMax - G.SILENCE_DB ? 1 : 0;
     // The amount: a light verse nods softer than the drop (drum level on a log scale).
-    const weight = Math.log10(Math.max(drums, 1e-6));
+    const weight = Math.log10(Math.max(drums, G.DRUM_LEVEL_LOG_FLOOR));
     const accent = G.ACCENT_FLOOR + (1 - G.ACCENT_FLOOR) * smoothstep(Math.log10(G.ACCENT_LEVEL_LOW), Math.log10(G.ACCENT_LEVEL_HIGH), weight);
     raw[i] =
       smoothstep(G.DRUMS_LOW, G.DRUMS_HIGH, share) *

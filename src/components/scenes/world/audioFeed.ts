@@ -26,6 +26,24 @@ export interface AudioFrame {
 
 const NO_KICK = 1e3;
 
+/** The energies ease per 60 Hz frame; other refresh rates scale by dt against it. */
+const EASE_REFERENCE_FPS = 60;
+/** Silent analyser: bands fall by this per frame instead of freezing. */
+const SILENT_BAND_DECAY = 0.9;
+/** Band ranges (indices into the log bands) for the bass / mid / treble energies: ~32-85 Hz, 85 Hz-1.3 kHz, above. */
+const BASS_BAND_END = 10;
+const MID_BAND_END = 38;
+/** Attack / release per reference frame: energies rise fast and fall slowly. */
+const PLAYING_EASE = { attack: 0.05, release: 0.03 } as const;
+const LEVEL_EASE = { attack: 0.5, release: 0.12 } as const;
+const BASS_EASE = { attack: 0.55, release: 0.16 } as const;
+const MID_EASE = { attack: 0.45, release: 0.16 } as const;
+const TREBLE_EASE = { attack: 0.5, release: 0.2 } as const;
+/** How fast the kick detector's bass baseline follows the bass (per reference frame). */
+const BASS_BASELINE_EASE = 0.06;
+/** Kicks remembered for the shaders (the uKicks vec4). */
+const KICK_SLOTS = 4;
+
 export interface AudioFeed {
   /** Advance by dt seconds; returns true when the history texture has new rows. */
   update(dt: number): boolean;
@@ -152,20 +170,20 @@ export function createAudioFeed(getAnalyser: () => AnalyserNode | null): AudioFe
     update(dt: number) {
       attach(getAnalyser());
       const live = readBands();
-      if (!live) for (let b = 0; b < BANDS; b += 1) bands[b] *= 0.9;
+      if (!live) for (let b = 0; b < BANDS; b += 1) bands[b] *= SILENT_BAND_DECAY;
 
-      const k = Math.min(1, dt * 60);
-      frame.playing = ease(frame.playing, live ? 1 : 0, 0.05 * k, 0.03 * k);
-      frame.level = ease(frame.level, avg(0, BANDS), 0.5 * k, 0.12 * k);
-      const bassNow = avg(0, 10);
-      frame.bass = ease(frame.bass, bassNow, 0.55 * k, 0.16 * k);
-      frame.mid = ease(frame.mid, avg(10, 38), 0.45 * k, 0.16 * k);
-      frame.treble = ease(frame.treble, avg(38, BANDS), 0.5 * k, 0.2 * k);
+      const k = Math.min(1, dt * EASE_REFERENCE_FPS);
+      frame.playing = ease(frame.playing, live ? 1 : 0, PLAYING_EASE.attack * k, PLAYING_EASE.release * k);
+      frame.level = ease(frame.level, avg(0, BANDS), LEVEL_EASE.attack * k, LEVEL_EASE.release * k);
+      const bassNow = avg(0, BASS_BAND_END);
+      frame.bass = ease(frame.bass, bassNow, BASS_EASE.attack * k, BASS_EASE.release * k);
+      frame.mid = ease(frame.mid, avg(BASS_BAND_END, MID_BAND_END), MID_EASE.attack * k, MID_EASE.release * k);
+      frame.treble = ease(frame.treble, avg(MID_BAND_END, BANDS), TREBLE_EASE.attack * k, TREBLE_EASE.release * k);
 
       // Kicks: bass jumping above its own slow baseline.
-      bassBaseline += (bassNow - bassBaseline) * 0.06 * k;
+      bassBaseline += (bassNow - bassBaseline) * BASS_BASELINE_EASE * k;
       sinceKick += dt;
-      for (let i = 0; i < 4; i += 1) frame.kicks[i] = Math.min(NO_KICK, frame.kicks[i] + dt);
+      for (let i = 0; i < KICK_SLOTS; i += 1) frame.kicks[i] = Math.min(NO_KICK, frame.kicks[i] + dt);
       if (live && sinceKick > SCENE_WORLD.KICK_MIN_GAP_SECONDS && bassNow > bassBaseline * SCENE_WORLD.KICK_RATIO + SCENE_WORLD.KICK_OFFSET) {
         sinceKick = 0;
         frame.kicks.pop();

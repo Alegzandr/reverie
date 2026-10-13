@@ -39,6 +39,25 @@ describe('readAudioTags', () => {
     expect(tags.cover?.type).toBe('image/png');
   });
 
+  it('drops a cover whose declared type is SVG (script on the app origin)', async () => {
+    const svg = [...enc.encode('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>')];
+    const apic = id3v23Frame('APIC', [0, ...enc.encode('image/svg+xml'), 0, 3, 0, ...svg]);
+    const tags = await readAudioTags(new Blob([id3Tag(apic), new Uint8Array(64)]));
+    expect(tags.cover).toBeNull();
+  });
+
+  it('drops a cover with an unknown declared type and no recognizable magic bytes', async () => {
+    const apic = id3v23Frame('APIC', [0, ...enc.encode('text/html'), 0, 3, 0, ...new Array(32).fill(0x41)]);
+    const tags = await readAudioTags(new Blob([id3Tag(apic), new Uint8Array(64)]));
+    expect(tags.cover).toBeNull();
+  });
+
+  it('accepts a sloppy-but-allowlisted declared type when the bytes are unrecognized', async () => {
+    const apic = id3v23Frame('APIC', [0, ...enc.encode('JPG'), 0, 3, 0, ...new Array(32).fill(0x41)]);
+    const tags = await readAudioTags(new Blob([id3Tag(apic), new Uint8Array(64)]));
+    expect(tags.cover?.type).toBe('image/jpeg');
+  });
+
   it('reads FLAC Vorbis comments', async () => {
     const vendor = enc.encode('ref');
     const comments = ['TITLE=Holocene', 'ARTIST=Bon Iver'].map((c) => enc.encode(c));

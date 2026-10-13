@@ -49,6 +49,10 @@ export function usePlaylistPlayer(playlist: PlaylistApi, audio: PlayerAudio) {
     resumeSession,
   } = playlist;
   const seqRef = useRef(0);
+  // True from a track's activation until its decode settles: the playback clock
+  // still reads the PREVIOUS track's position then, and a checkpoint would file
+  // it under the new id (setActive already recorded 0 for it).
+  const loadPendingRef = useRef(false);
   const audioRef = useRef(audio);
   useEffect(() => {
     audioRef.current = audio;
@@ -59,8 +63,15 @@ export function usePlaylistPlayer(playlist: PlaylistApi, audio: PlayerAudio) {
       const track = getTrack(id);
       if (!track) return false;
       const seq = ++seqRef.current;
+      loadPendingRef.current = true;
       setActive(id);
-      const buffer = await audioRef.current.loadAudioFile(track.file);
+      let buffer: AudioBuffer | undefined;
+      try {
+        buffer = await audioRef.current.loadAudioFile(track.file);
+      } finally {
+        // A superseded load leaves the flag to the newer one still in flight.
+        if (seq === seqRef.current) loadPendingRef.current = false;
+      }
       if (seq !== seqRef.current) return false;
       if (!buffer) {
         markBroken(id, true);
@@ -145,21 +156,34 @@ export function usePlaylistPlayer(playlist: PlaylistApi, audio: PlayerAudio) {
     );
   }, [restored, resumeSession, playTrack]);
 
+  /**
+   * Drop whatever load is in flight (reset to the welcome stage): its decode
+   * resolving later must not pull the session back in.
+   */
+  const cancelPending = useCallback(() => {
+    seqRef.current += 1;
+    loadPendingRef.current = false;
+  }, []);
+
   // ── Checkpoint the playhead while listening, on pause, and on the way out ──
-  useEffect(() => {
-    if (!audio.isPlaying) {
-      checkpoint(audio.playbackClock.get());
-      return;
-    }
-    const id = window.setInterval(() => checkpoint(audioRef.current.playbackClock.get()), PLAYLIST.POSITION_SAVE_INTERVAL_MS);
-    return () => window.clearInterval(id);
-  }, [audio.isPlaying, audio.playbackClock, checkpoint]);
+  const savePosition = useCallback(() => {
+    if (loadPendingRef.current) return;
+    checkpoint(audioRef.current.playbackClock.get());
+  }, [checkpoint]);
 
   useEffect(() => {
-    const save = () => checkpoint(audioRef.current.playbackClock.get());
-    window.addEventListener('pagehide', save);
-    return () => window.removeEventListener('pagehide', save);
-  }, [checkpoint]);
+    if (!audio.isPlaying) {
+      savePosition();
+      return;
+    }
+    const id = window.setInterval(savePosition, PLAYLIST.POSITION_SAVE_INTERVAL_MS);
+    return () => window.clearInterval(id);
+  }, [audio.isPlaying, savePosition]);
+
+  useEffect(() => {
+    window.addEventListener('pagehide', savePosition);
+    return () => window.removeEventListener('pagehide', savePosition);
+  }, [savePosition]);
 
   return {
     playTrack,
@@ -167,6 +191,7 @@ export function usePlaylistPlayer(playlist: PlaylistApi, audio: PlayerAudio) {
     previous,
     handleTrackEnd,
     addFiles,
+    cancelPending,
     /** True until the stored playlist is read and the last track (if any) is loaded. */
     booting: !restored || (resumeSession !== null && !bootSettled && !audio.hasSession),
   };

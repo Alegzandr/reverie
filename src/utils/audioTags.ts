@@ -63,21 +63,37 @@ const clean = (s: string | null | undefined): string | null => {
   return v.length ? v : null;
 };
 
-const MIME_BY_ALIAS: Record<string, string> = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp' };
+/**
+ * The only cover types we ever hand to a Blob. A file's declared type is
+ * attacker-controlled: an "image/svg+xml" cover would carry script that runs on
+ * the app's origin once its blob URL is opened in a tab, so anything outside
+ * these inert raster formats is dropped.
+ */
+// A Map, not an object literal: a declared "constructor" must not resolve to a prototype member.
+const MIME_BY_ALIAS: ReadonlyMap<string, string> = new Map([
+  ['jpg', 'image/jpeg'],
+  ['jpeg', 'image/jpeg'],
+  ['image/jpeg', 'image/jpeg'],
+  ['image/jpg', 'image/jpeg'],
+  ['image/pjpeg', 'image/jpeg'],
+  ['png', 'image/png'],
+  ['image/png', 'image/png'],
+  ['gif', 'image/gif'],
+  ['image/gif', 'image/gif'],
+  ['webp', 'image/webp'],
+  ['image/webp', 'image/webp'],
+]);
 
 /** Trust the bytes over the declared type: taggers write "image/jpg", "JPG", "" ... */
 function imageBlob(bytes: Uint8Array, declared: string): Blob | null {
   if (bytes.length < 16) return null;
-  let type = '';
+  let type: string | undefined;
   if (bytes[0] === 0xff && bytes[1] === 0xd8) type = 'image/jpeg';
   else if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) type = 'image/png';
   else if (ascii(bytes, 0, 4) === 'GIF8') type = 'image/gif';
   else if (ascii(bytes, 0, 4) === 'RIFF' && ascii(bytes, 8, 4) === 'WEBP') type = 'image/webp';
-  else {
-    const d = declared.toLowerCase().trim();
-    type = d.includes('/') ? d : MIME_BY_ALIAS[d] ?? '';
-  }
-  if (!type.startsWith('image/')) return null;
+  else type = MIME_BY_ALIAS.get(declared.toLowerCase().trim());
+  if (!type) return null;
   // Copy out of the (possibly large) read buffer so it can be released.
   return new Blob([bytes.slice()], { type });
 }

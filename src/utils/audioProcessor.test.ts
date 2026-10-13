@@ -1,133 +1,91 @@
-import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
-import { AudioProcessor } from './audioProcessor';
-import { createDecayingNoiseImpulse } from './impulse';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { AudioProcessor, renderChannelCount, type AudioProcessingOptions } from './audioProcessor';
+import { createEffectChain, applyEffectOptions } from './effectGraph';
+import { getReverbImpulse } from './impulse';
+import { AUDIO_EFFECTS } from '../constants';
 
-const OriginalAudioContext = globalThis.AudioContext;
-const OriginalOfflineAudioContext = globalThis.OfflineAudioContext;
+const BaseOffline = globalThis.OfflineAudioContext as unknown as new (
+  channels: number,
+  length: number,
+  sampleRate: number,
+) => any;
+const BaseRealtime = globalThis.AudioContext as unknown as new () => any;
 
-class InspectableBufferSource {
-  buffer: any = null;
-  playbackRate = { value: 1 };
-  connect = vi.fn();
-  start = vi.fn();
+interface Recorded {
+  biquads: any[];
+  gains: any[];
+  convolvers: any[];
+  oscillators: any[];
+  panners: any[];
+  sources: any[];
 }
 
-class InspectableGain {
-  gain = { value: 1 };
-  connect = vi.fn();
-}
-
-class InspectableConvolver {
-  buffer: any = null;
-  connect = vi.fn();
-}
-
-class InspectableScriptProcessor {
-  onaudioprocess: any = null;
-  connect = vi.fn();
-  processedEvent: any = null;
-}
-
-class InspectableStereoPanner {
-  pan = { value: 0, setValueAtTime: vi.fn() };
-  connect = vi.fn();
-}
-
-class InspectableOfflineAudioContext {
-  static lastInstance: InspectableOfflineAudioContext | null = null;
-  destination = {};
-  numberOfChannels: number;
-  length: number;
-  sampleRate: number;
-  source = new InspectableBufferSource();
-  convolver = new InspectableConvolver();
-  dry = new InspectableGain();
-  wet = new InspectableGain();
-  merger = new InspectableGain();
-  scriptProcessor: InspectableScriptProcessor | null = null;
-  panner: InspectableStereoPanner | null = null;
-
-  constructor(numberOfChannels: number, length: number, sampleRate: number) {
-    this.numberOfChannels = numberOfChannels;
-    this.length = length;
-    this.sampleRate = sampleRate;
-    InspectableOfflineAudioContext.lastInstance = this;
-  }
-
-  createBufferSource() {
-    return this.source;
-  }
-
-  createBuffer(numberOfChannels: number, length: number, sampleRate: number) {
-    return new AudioBuffer({ numberOfChannels, length, sampleRate });
-  }
-
-  createConvolver() {
-    return this.convolver;
-  }
-
-  createGain() {
-    // alternate between dry/wet/merger gains
-    const gains = [this.dry, this.wet, this.merger];
-    const next = gains.find((g) => g.connect.mock.calls.length === 0) || new InspectableGain();
-    return next;
-  }
-
-  createScriptProcessor() {
-    this.scriptProcessor = new InspectableScriptProcessor();
-    return this.scriptProcessor;
-  }
-
-  createStereoPanner() {
-    this.panner = new InspectableStereoPanner();
-    return this.panner;
-  }
-
-  startRendering() {
-    const rendered = new AudioBuffer({ numberOfChannels: this.numberOfChannels, length: this.length, sampleRate: this.sampleRate });
-    if (this.scriptProcessor?.onaudioprocess) {
-      const inputBuffer = new AudioBuffer({ numberOfChannels: 2, length: 4, sampleRate: this.sampleRate });
-      inputBuffer.getChannelData(0).set([0.5, -0.5, 0.25, -0.25]);
-      inputBuffer.getChannelData(1).set([0.1, -0.1, 0.05, -0.05]);
-      const outputBuffer = new AudioBuffer({ numberOfChannels: 2, length: 4, sampleRate: this.sampleRate });
-      const event: any = { inputBuffer, outputBuffer };
-      this.scriptProcessor.processedEvent = event;
-      this.scriptProcessor.onaudioprocess(event as any);
+// Records every node a context hands out, in creation order, so the offline
+// render's graph can be compared node-for-node against the live chain.
+function recording<T extends new (...args: any[]) => any>(Base: T) {
+  return class extends Base {
+    nodes: Recorded = { biquads: [], gains: [], convolvers: [], oscillators: [], panners: [], sources: [] };
+    track<N>(bucket: keyof Recorded, node: N): N {
+      this.nodes[bucket].push(node);
+      return node;
     }
-    return Promise.resolve(rendered as any);
-  }
+    createBiquadFilter() {
+      return this.track('biquads', super.createBiquadFilter());
+    }
+    createGain() {
+      return this.track('gains', super.createGain());
+    }
+    createConvolver() {
+      return this.track('convolvers', super.createConvolver());
+    }
+    createOscillator() {
+      return this.track('oscillators', super.createOscillator());
+    }
+    createStereoPanner() {
+      return this.track('panners', super.createStereoPanner());
+    }
+    createBufferSource() {
+      return this.track('sources', super.createBufferSource());
+    }
+  };
 }
 
-class InspectableAudioContext {
-  destination = {};
-  sampleRate = 44100;
-  decodedBuffers: any[] = [];
-
-  createGain() {
-    return new InspectableGain();
-  }
-
-  createBufferSource() {
-    return new InspectableBufferSource();
-  }
-
-  decodeAudioData(data: ArrayBuffer) {
-    const size = data.byteLength / 4 || 1;
-    const buffer = new AudioBuffer({ numberOfChannels: 2, length: size, sampleRate: this.sampleRate }) as any;
-    this.decodedBuffers.push(buffer);
-    return buffer;
-  }
+const RecordingOffline = recording(BaseOffline);
+let lastOffline: InstanceType<typeof RecordingOffline> | null = null;
+// A constructor that returns an object hands that object to `new`, so the
+// processor gets a recording context and the test keeps a handle on it.
+function SpyOffline(channels: number, length: number, sampleRate: number) {
+  lastOffline = new RecordingOffline(channels, length, sampleRate);
+  return lastOffline;
 }
+const RecordingRealtime = recording(BaseRealtime);
 
-describe('audioProcessor utils', () => {
+const SAMPLE_RATE = 44100;
+const makeBuffer = (channels: number, length = 8) =>
+  new AudioBuffer({ numberOfChannels: channels, length, sampleRate: SAMPLE_RATE });
+
+const snapshot = (nodes: Recorded, biquadCount: number) => ({
+  biquads: nodes.biquads.slice(0, biquadCount).map((f) => ({
+    type: f.type,
+    frequency: f.frequency.value,
+    Q: f.Q.value,
+    gain: f.gain.value,
+  })),
+  gains: nodes.gains.map((g) => g.gain.value),
+  convolvers: nodes.convolvers.map((c) => c.buffer),
+  oscillators: nodes.oscillators.map((o) => o.frequency.value),
+});
+
+/** The bass/underwater stage: highpass, lowshelf, peaking, underwater lowpass. */
+const EFFECT_BIQUADS = 4;
+
+describe('AudioProcessor', () => {
   beforeAll(() => {
-    globalThis.AudioContext = InspectableAudioContext as any;
-    globalThis.OfflineAudioContext = InspectableOfflineAudioContext as any;
+    globalThis.OfflineAudioContext = SpyOffline as any;
   });
 
   afterAll(() => {
-    globalThis.AudioContext = OriginalAudioContext;
-    globalThis.OfflineAudioContext = OriginalOfflineAudioContext;
+    globalThis.OfflineAudioContext = BaseOffline as any;
   });
 
   it('loads and retrieves audio buffer', async () => {
@@ -139,7 +97,20 @@ describe('audioProcessor utils', () => {
 
     expect(buffer).toBeDefined();
     expect(processor.getAudioBuffer()).toBe(buffer);
-    expect(processor.getAudioContext()).toBeInstanceOf(InspectableAudioContext);
+  });
+
+  it('clear() drops the buffer and invalidates a decode still in flight', async () => {
+    const processor = new AudioProcessor();
+    let release!: (value: ArrayBuffer) => void;
+    const file: any = new File(['x'], 'slow.wav');
+    file.arrayBuffer = () => new Promise<ArrayBuffer>((resolve) => { release = resolve; });
+
+    const pending = processor.loadAudioFile(file);
+    processor.clear();
+    release(new ArrayBuffer(16));
+    await pending;
+
+    expect(processor.getAudioBuffer()).toBeNull();
   });
 
   it('throws when processing without buffer', async () => {
@@ -147,81 +118,81 @@ describe('audioProcessor utils', () => {
     await expect(processor.processAudio({ speedMultiplier: 1, reverbAmount: 0 })).rejects.toThrow('No audio file loaded');
   });
 
-  it('applies effects and 8D audio through offline context', async () => {
+  it('renders the explicitly passed source, not its own latest decode', async () => {
     const processor: any = new AudioProcessor();
-    processor.audioBuffer = new AudioBuffer({ numberOfChannels: 2, length: 8, sampleRate: 44100 });
+    processor.audioBuffer = makeBuffer(2, 100);
+    const committed = makeBuffer(2, 40);
 
-    const rendered = await processor.processAudio({
-      speedMultiplier: 1.5,
-      reverbAmount: 0.4,
-      audio8D: true,
-      rotationSpeed: 1.0,
-    });
+    await processor.processAudio({ speedMultiplier: 1, reverbAmount: 0 }, committed);
 
-    const offline = InspectableOfflineAudioContext.lastInstance!;
-    expect(offline.length).toBe(Math.floor(8 / 1.5));
-    expect(offline.source.playbackRate.value).toBeCloseTo(1.5);
-    expect(offline.convolver.buffer).toBeDefined();
-    expect(offline.panner).not.toBeNull();
-    expect(offline.panner?.pan.setValueAtTime).toHaveBeenCalled();
-    expect(rendered).toBeDefined();
+    expect(lastOffline!.nodes.sources[0].buffer).toBe(committed);
+    expect(lastOffline!.length).toBe(40);
   });
 
-  it('connects directly when no effects enabled', async () => {
+  it('applies speed through the render length and playback rate', async () => {
     const processor: any = new AudioProcessor();
-    processor.audioBuffer = new AudioBuffer({ numberOfChannels: 2, length: 8, sampleRate: 44100 });
+    processor.audioBuffer = makeBuffer(2);
 
-    const rendered = await processor.processAudio({
-      speedMultiplier: 1,
-      reverbAmount: 0,
-    });
+    await processor.processAudio({ speedMultiplier: 1.5, reverbAmount: 0.4, audio8D: true, rotationSpeed: 1 });
 
-    const offline = InspectableOfflineAudioContext.lastInstance!;
-    expect(offline.panner).toBeNull();
-    expect(offline.source.connect).toHaveBeenCalledWith(offline.destination);
-    expect(rendered).toBeDefined();
+    expect(lastOffline!.length).toBe(Math.floor(8 / 1.5));
+    expect(lastOffline!.nodes.sources[0].playbackRate.value).toBeCloseTo(1.5);
   });
 
-  it('applies 8D audio effect with rotation speed', async () => {
+  it('renders mono sources in stereo when an effect creates stereo content', async () => {
     const processor: any = new AudioProcessor();
-    processor.audioBuffer = new AudioBuffer({ numberOfChannels: 2, length: 8, sampleRate: 44100 });
+    processor.audioBuffer = makeBuffer(1);
 
-    await processor.processAudio({
-      speedMultiplier: 1,
-      reverbAmount: 0,
-      audio8D: true,
-      rotationSpeed: 0.5,
-    });
+    await processor.processAudio({ speedMultiplier: 1, reverbAmount: 0, audio8D: true });
+    expect(lastOffline!.numberOfChannels).toBe(2);
 
-    const offline = InspectableOfflineAudioContext.lastInstance!;
-    expect(offline.panner).not.toBeNull();
-    expect(offline.panner?.pan.setValueAtTime).toHaveBeenCalled();
+    await processor.processAudio({ speedMultiplier: 1, reverbAmount: 0.3 });
+    expect(lastOffline!.numberOfChannels).toBe(2);
+
+    await processor.processAudio({ speedMultiplier: 1, reverbAmount: 0, bassBoost: true, bassBoostIntensity: 1 });
+    expect(lastOffline!.numberOfChannels).toBe(1);
   });
 
-  it('applies 8D audio without rotation speed parameter', async () => {
-    const processor: any = new AudioProcessor();
-    processor.audioBuffer = new AudioBuffer({ numberOfChannels: 2, length: 8, sampleRate: 44100 });
-
-    await processor.processAudio({
-      speedMultiplier: 1,
-      reverbAmount: 0,
-      audio8D: true,
-    });
-
-    const offline = InspectableOfflineAudioContext.lastInstance!;
-    expect(offline.panner).not.toBeNull();
-    expect(offline.panner?.pan.setValueAtTime).toHaveBeenCalled();
+  it('never narrows a multichannel source', () => {
+    expect(renderChannelCount(makeBuffer(6), { speedMultiplier: 1, reverbAmount: 0, audio8D: true })).toBe(6);
   });
 
-  it('creates reverb impulse with decay', () => {
-    // Same tail/decay parameters the offline renderer passes for amount 0.5.
-    const ctx = new InspectableOfflineAudioContext(2, 10, 48000);
-    const impulse = createDecayingNoiseImpulse(ctx as any, 1 + 0.5 * 2, 0.5);
+  it('uses the live reverb impulse whatever the amount', async () => {
+    const processor: any = new AudioProcessor();
+    processor.audioBuffer = makeBuffer(2);
 
-    expect(impulse.length).toBe(48000 * (1 + 0.5 * 2));
-    const data = impulse.getChannelData(0);
-    expect(data[0]).not.toBe(0);
-    expect(data.some((value: number) => value !== 0)).toBe(true);
+    for (const reverbAmount of [0.2, 0.7, 1]) {
+      await processor.processAudio({ speedMultiplier: 1, reverbAmount });
+      const impulse = lastOffline!.nodes.convolvers[0].buffer;
+      expect(impulse).toBe(getReverbImpulse(lastOffline as any));
+      expect(impulse.length).toBe(Math.floor(SAMPLE_RATE * AUDIO_EFFECTS.REVERB.TAIL_SECONDS));
+    }
+  });
+
+  // The export must sound exactly like what was auditioned: for each state, the
+  // offline graph's every effect parameter must equal the live chain's.
+  const parityCases: [string, AudioProcessingOptions][] = [
+    ['neutral', { speedMultiplier: 1, reverbAmount: 0 }],
+    ['slow + reverb', { speedMultiplier: 0.85, reverbAmount: 0.6 }],
+    ['8D', { speedMultiplier: 1, reverbAmount: 0, audio8D: true, rotationSpeed: 0.7 }],
+    ['bass boost', { speedMultiplier: 1, reverbAmount: 0, bassBoost: true, bassBoostIntensity: 0.8 }],
+    ['bass boost underwater', { speedMultiplier: 1, reverbAmount: 0, bassBoost: true, bassBoostIntensity: 0.5, bassUnderwater: 0.6 }],
+    ['everything', { speedMultiplier: 1.2, reverbAmount: 0.3, audio8D: true, bassBoost: true, bassBoostIntensity: 1, bassUnderwater: 1 }],
+  ];
+
+  it.each(parityCases)('matches the live chain parameters: %s', async (_name, options) => {
+    const processor: any = new AudioProcessor();
+    processor.audioBuffer = makeBuffer(2);
+    await processor.processAudio(options);
+
+    const live = new RecordingRealtime();
+    const chain = createEffectChain(live as any);
+    applyEffectOptions(chain, options, live as any, false);
+
+    expect(snapshot(lastOffline!.nodes, EFFECT_BIQUADS)).toEqual(snapshot(live.nodes, EFFECT_BIQUADS));
+    // The listening EQ is playback-only: the offline graph has no other filters.
+    expect(lastOffline!.nodes.biquads).toHaveLength(EFFECT_BIQUADS);
+    expect(live.nodes.biquads.length).toBeGreaterThan(EFFECT_BIQUADS);
   });
 
   it('converts audio buffer to WAV blob', async () => {

@@ -9,7 +9,7 @@ import { useMood } from '../contexts/MoodContext';
 import { normalizeEnvelope, shapeEnvelope } from '../utils/waveform';
 import { formatClock } from '../utils/formatters';
 import { createWaveInstrument, type WaveInstrument } from './waveInstrument';
-import { prefersReducedMotion } from './scenes/motion';
+import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
 import { IDLE_FRAME_MS, createFrameGate } from './scenes/frameClock';
 import type { AudioProcessingOptions } from '../utils/audioProcessor';
 import type { PlaybackClock } from '../utils/playbackClock';
@@ -72,7 +72,7 @@ export const WaveformTimeline = memo(function WaveformTimeline({
   const panningRef = useRef(false);
   const panStartRef = useRef({ x: 0, scrollLeft: 0 });
 
-  const reduceMotion = useMemo(prefersReducedMotion, []);
+  const reduceMotion = usePrefersReducedMotion();
 
   // DAW-style zoom: a constant pixels-per-second, so the content width and the bar count
   // both scale by the stretch factor (1 / rate) and density stays the same. Slowing down
@@ -176,6 +176,16 @@ export const WaveformTimeline = memo(function WaveformTimeline({
     edgeRafRef.current = 0;
     edgeVelRef.current = 0;
   };
+
+  // Unmounting mid-drag (track switch, view change) would leave the edge-scroll
+  // tick re-arming itself forever against a detached viewport.
+  useEffect(() => {
+    const edgeRaf = edgeRafRef;
+    return () => {
+      if (edgeRaf.current) cancelAnimationFrame(edgeRaf.current);
+      edgeRaf.current = 0;
+    };
+  }, []);
 
   // The edge-scroll tick: pan the viewport by the current velocity, then re-derive
   // the scrub ratio from the last pointer X (the content moved under the cursor).

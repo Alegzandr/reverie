@@ -160,9 +160,15 @@ function App() {
     provideWorldAnalyser(getAnalyser);
     return () => provideWorldAnalyser(null);
   }, [getAnalyser]);
-  // ...and nods on the track's beat grid, read against the playhead.
+  // ...and nods on the track's beat grid, read against the playhead. The rate
+  // is read through a ref so a speed change doesn't re-provide the source.
+  const playbackRateRef = useRef(1);
   useEffect(() => {
-    provideWorldBeat({ getGrid: getBeatGrid, getPosition: playbackClock.get });
+    provideWorldBeat({
+      getGrid: getBeatGrid,
+      getPosition: playbackClock.get,
+      getRate: () => playbackRateRef.current,
+    });
     return () => provideWorldBeat(null);
   }, [getBeatGrid, playbackClock]);
 
@@ -210,11 +216,14 @@ function App() {
   );
 
   const { setActive } = playlist;
+  const { cancelPending } = player;
   const handleReset = useCallback(() => {
+    // First, so a track decode still in flight can't re-enter the session it ends.
+    cancelPending();
     reset();
     setActive(null);
     setUploadRevision((n) => n + 1);
-  }, [reset, setActive]);
+  }, [cancelPending, reset, setActive]);
 
   const handleEffectChange = useCallback(
     (settings: EffectSettings) => {
@@ -305,6 +314,9 @@ function App() {
   // speaks in effective time, while the engine tracks source-buffer time. The
   // position flows through a derived clock, so the 60fps tick never re-renders App.
   const playbackRate = effectSettings.speedMultiplier || 1;
+  useEffect(() => {
+    playbackRateRef.current = playbackRate;
+  }, [playbackRate]);
   const effectiveDuration = playbackRate > 0 ? duration / playbackRate : duration;
   const effectiveClock = useMemo(
     () => ({
@@ -442,7 +454,7 @@ function App() {
     </div>
   ) : null;
 
-  const resumeId = playlist.resumeSession?.activeId ?? playlist.tracks[0]?.id ?? null;
+  const { resumeId } = playlist;
   const handleResume = useCallback(() => {
     if (resumeId) void playTrack(resumeId, { autoplay: false });
   }, [playTrack, resumeId]);

@@ -32,6 +32,20 @@ function downmix(buffer: AudioBuffer): { mono: Float32Array; sampleRate: number 
   return { mono, sampleRate: buffer.sampleRate / factor };
 }
 
+/** The one analysis in flight: a new track's request cancels the previous track's. */
+let inFlight: { buffer: AudioBuffer; worker: Worker; settle: (grid: BeatGrid | null) => void } | null = null;
+
+/** Stops the in-flight analysis (if any): its promise settles null and its buffer may be asked again. */
+function cancelInFlight(): void {
+  if (!inFlight) return;
+  const { buffer, worker, settle } = inFlight;
+  inFlight = null;
+  worker.terminate();
+  // Not analysed after all: coming back to this track must start it afresh.
+  started.delete(buffer);
+  settle(null);
+}
+
 function analyseInWorker(buffer: AudioBuffer): Promise<BeatGrid | null> {
   if (typeof Worker === 'undefined') return Promise.resolve(null);
   let worker: Worker;
@@ -41,15 +55,20 @@ function analyseInWorker(buffer: AudioBuffer): Promise<BeatGrid | null> {
     return Promise.resolve(null);
   }
   return new Promise((resolve) => {
-    worker.onmessage = (e: MessageEvent<BeatGridWorkerResponse>) => {
+    let settled = false;
+    const settle = (grid: BeatGrid | null) => {
+      if (settled) return;
+      settled = true;
+      if (inFlight?.worker === worker) inFlight = null;
       worker.terminate();
-      resolve(e.data.ok ? e.data.grid : null);
+      resolve(grid);
     };
+    inFlight = { buffer, worker, settle };
+    worker.onmessage = (e: MessageEvent<BeatGridWorkerResponse>) => settle(e.data.ok ? e.data.grid : null);
     // No grid is no harm: the worlds fall back to their live beat clock.
     worker.onerror = (e) => {
       e.preventDefault();
-      worker.terminate();
-      resolve(null);
+      settle(null);
     };
     const request: BeatGridWorkerRequest = downmix(buffer);
     worker.postMessage(request, [request.mono.buffer]);
@@ -58,12 +77,16 @@ function analyseInWorker(buffer: AudioBuffer): Promise<BeatGrid | null> {
 
 /**
  * The track's beat grid if it's ready; otherwise starts the analysis (once per
- * buffer) and returns null until it lands.
+ * buffer) and returns null until it lands. Asking for a different track
+ * cancels the one still being analysed: only the playing track's grid
+ * matters, and a long track's analysis would otherwise hold a core for
+ * nothing.
  */
 export function peekBeatGrid(buffer: AudioBuffer): BeatGrid | null {
   const grid = grids.get(buffer);
   if (grid) return grid;
   if (!started.has(buffer)) {
+    if (inFlight && inFlight.buffer !== buffer) cancelInFlight();
     started.add(buffer);
     void analyseInWorker(buffer).then((result) => {
       if (result) grids.set(buffer, result);

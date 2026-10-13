@@ -45,9 +45,9 @@ uniform sampler2D uNoise2;
 out vec4 outColor;
 
 /* How near what this pixel shows is: 0 on the horizon and in the sky, 1 at
-   your feet. The world sets it; it rides out in alpha so the present pass can
-   move near things more than far ones on a nod (parallax, after the temporal
-   accumulation - no smear). */
+   your feet. The world sets it; it rides out in alpha so the present pass's
+   nod (a zoom from the frame centre, after the temporal accumulation - no
+   smear) can swell near things more than far ones. */
 float gNear = 0.0;
 
 #define PI 3.14159265
@@ -272,6 +272,7 @@ void main() {
   // At rest (uNod 0) this lands on texel centres: the taps read exactly what
   // texelFetch did, so the nod costs nothing when it's still.
   vec2 uv = gl_FragCoord.xy / size;
+  vec2 restUv = uv;
   // A bump pushed out from the centre of the frame, with depth: the whole
   // frame swells a touch and near things swell more, so the scenery opens up
   // around the viewer instead of sliding one way. A backward warp: read
@@ -291,7 +292,10 @@ void main() {
     + texture(uImage, uv - vec2(px.x, 0.0)).rgb;
   c = max(c + (c - n * 0.25) * uSharpen, 0.0);
   if (uMix < 1.0) {
-    vec3 before = sharpSample(uSnapshot, uv, vec2(textureSize(uSnapshot, 0)));
+    // The frozen frame of the world being left, read where it sat: the warp
+    // above follows the new world's nearness, which would bend the old one
+    // along shapes it doesn't have.
+    vec3 before = texture(uSnapshot, restUv).rgb;
     c = mix(before, c, smoothstep(0.0, 1.0, uMix));
   }
   c += (hash(gl_FragCoord.xy + uSeed * 7.13) - 0.5) / 255.0;

@@ -37,6 +37,14 @@ interface PlaylistState {
   activeId: string | null;
   /** Play-order slot the active track vacated when it was removed mid-listen. */
   orphanIndex: number | null;
+  /**
+   * The same vacated slot in list order. Kept apart from `orphanIndex` because a
+   * shuffle toggle switches play order, and the list slot is the only record of
+   * where the removed track sat once its shuffle lap is gone.
+   */
+  orphanListIndex: number | null;
+  /** The most recently activated track, kept through a reset: what "Resume" reopens. */
+  lastActiveId: string | null;
   shuffle: boolean;
   shuffleOrder: string[];
   restored: boolean;
@@ -54,6 +62,19 @@ type Action =
   | { type: 'setShuffleOrder'; order: string[] };
 
 const playOrderOf = (s: PlaylistState) => (s.shuffle ? s.shuffleOrder : s.tracks.map((t) => t.id));
+
+/**
+ * Where a vacated slot lands after one list entry moves `from` → `to`. The slot
+ * sits before the entry that followed the removed track; an entry dropped onto
+ * that boundary goes after it (it becomes what plays next).
+ */
+function slotAfterMove(slot: number, from: number, to: number, length: number): number {
+  if (from < 0 || from >= length) return slot;
+  let next = from < slot ? slot - 1 : slot;
+  const clampedTo = Math.max(0, Math.min(length - 1, to));
+  if (clampedTo < next) next += 1;
+  return next;
+}
 
 export function playlistReducer(state: PlaylistState, action: Action): PlaylistState {
   switch (action.type) {
@@ -86,29 +107,68 @@ export function playlistReducer(state: PlaylistState, action: Action): PlaylistS
       const order = playOrderOf(state);
       const removedAt = order.indexOf(action.id);
       if (removedAt < 0) return state;
-      let orphanIndex = state.orphanIndex;
-      if (action.id === state.activeId) orphanIndex = removedAt;
-      else if (orphanIndex !== null && removedAt < orphanIndex) orphanIndex -= 1;
+      const removedListAt = state.tracks.findIndex((t) => t.id === action.id);
+      let { orphanIndex, orphanListIndex } = state;
+      if (action.id === state.activeId) {
+        orphanIndex = removedAt;
+        orphanListIndex = removedListAt;
+      } else {
+        if (orphanIndex !== null && removedAt < orphanIndex) orphanIndex -= 1;
+        if (orphanListIndex !== null && removedListAt < orphanListIndex) orphanListIndex -= 1;
+      }
       return {
         ...state,
         tracks: state.tracks.filter((t) => t.id !== action.id),
         shuffleOrder: state.shuffleOrder.filter((id) => id !== action.id),
         orphanIndex,
+        orphanListIndex,
       };
     }
     case 'clear':
-      return { ...state, tracks: [], shuffleOrder: [], orphanIndex: null };
-    case 'move':
-      return { ...state, tracks: moveItem(state.tracks, action.from, action.to) };
-    case 'setActive':
-      return { ...state, activeId: action.id, orphanIndex: null };
+      return { ...state, tracks: [], shuffleOrder: [], orphanIndex: null, orphanListIndex: null };
+    case 'move': {
+      const orphanListIndex =
+        state.orphanListIndex === null
+          ? null
+          : slotAfterMove(state.orphanListIndex, action.from, action.to, state.tracks.length);
+      return {
+        ...state,
+        tracks: moveItem(state.tracks, action.from, action.to),
+        orphanListIndex,
+        // A shuffle lap ignores list order; without shuffle the list IS the play order.
+        orphanIndex: state.shuffle ? state.orphanIndex : orphanListIndex,
+      };
+    }
+    case 'setActive': {
+      // Starting from nowhere under shuffle (fresh list, after a reset, at boot):
+      // the chosen track leads the lap, or every track dealt before it would be
+      // skipped - "next" walks forward from its position.
+      const { id } = action;
+      const fromNowhere = state.activeId === null && state.orphanIndex === null;
+      const leads = id !== null && state.shuffle && fromNowhere && state.shuffleOrder.includes(id);
+      return {
+        ...state,
+        activeId: id,
+        orphanIndex: null,
+        orphanListIndex: null,
+        lastActiveId: id ?? state.lastActiveId,
+        shuffleOrder: leads ? [id, ...state.shuffleOrder.filter((x) => x !== id)] : state.shuffleOrder,
+      };
+    }
     case 'patch':
       return {
         ...state,
         tracks: state.tracks.map((t) => (t.id === action.id ? { ...t, ...action.patch } : t)),
       };
     case 'setShuffle':
-      return { ...state, shuffle: action.on, shuffleOrder: action.on ? action.order : [] };
+      return {
+        ...state,
+        shuffle: action.on,
+        shuffleOrder: action.on ? action.order : [],
+        // The vacated slot must be re-measured in the new play order: a fresh lap
+        // lies wholly ahead (its start), the list keeps the slot it was removed from.
+        orphanIndex: state.orphanListIndex === null ? null : action.on ? 0 : state.orphanListIndex,
+      };
     case 'setShuffleOrder':
       return { ...state, shuffleOrder: action.order };
     default:
@@ -208,6 +268,8 @@ export function usePlaylist() {
     tracks: [],
     activeId: null,
     orphanIndex: null,
+    orphanListIndex: null,
+    lastActiveId: null,
     shuffle: readStoredBool(PLAYLIST.SHUFFLE_STORAGE_KEY),
     shuffleOrder: [],
     // Nothing to read without storage: the (session-only) list is ready at once.
@@ -256,21 +318,28 @@ export function usePlaylist() {
         const track = stateRef.current.tracks.find((t) => t.id === id) ?? pendingRef.current.get(id);
         if (!track) continue;
         const tags = await readAudioTags(track.file);
-        const duration = track.duration ?? (await probeDuration(track.file));
+        const probed = track.duration ?? (await probeDuration(track.file));
+        // The awaits above yield: the track may have been removed, or decoded
+        // (setDuration's exact length), meanwhile - patch the CURRENT state.
+        const current = stateRef.current.tracks.find((t) => t.id === id) ?? pendingRef.current.get(id);
+        if (!current) continue;
         const patch: Partial<PlaylistTrack> = {
-          title: tags.title ?? track.title,
-          artist: tags.artist ?? track.artist,
-          cover: tags.cover ?? track.cover,
-          duration: track.duration ?? duration,
+          title: tags.title ?? current.title,
+          artist: tags.artist ?? current.artist,
+          cover: tags.cover ?? current.cover,
         };
-        scannedRef.current.add(id);
+        // A header probe only ever fills a gap; it never overwrites a decoded length.
+        if (current.duration === null && probed !== null) patch.duration = probed;
+        // Only an insert still to be written needs the flag - a stored record
+        // takes the patch below (queued behind its insert).
+        if (!persistedRef.current.ids.has(id)) scannedRef.current.add(id);
         dispatch({ type: 'patch', id, patch });
         enqueueWrite(() =>
           patchTrack(id, {
             title: patch.title,
             artist: patch.artist ?? null,
             cover: patch.cover ?? null,
-            duration: patch.duration ?? null,
+            ...(patch.duration !== undefined ? { duration: patch.duration } : {}),
             scanned: true,
           }),
         );
@@ -301,10 +370,11 @@ export function usePlaylist() {
         const all = [...ordered, ...stragglers];
         const tracks = all.map(fromRecord);
         persistedRef.current = { ids: new Set(tracks.map((t) => t.id)), order: tracks.map((t) => t.id).join('|') };
-        dispatch({ type: 'restore', tracks, shuffleOrder: buildShuffleOrder(tracks.map((t) => t.id), null) });
-
         const session = readSession();
         const resumeId = tracks.some((t) => t.id === session.activeId) ? session.activeId : tracks[0]?.id ?? null;
+        // The resumed track leads the lap: boot lands on it, and "next" walks
+        // forward from it, so nothing dealt ahead of it may be skipped.
+        dispatch({ type: 'restore', tracks, shuffleOrder: buildShuffleOrder(tracks.map((t) => t.id), resumeId) });
         setResumeSession(
           resumeId ? { activeId: resumeId, position: resumeId === session.activeId ? session.position : 0 } : null,
         );
@@ -424,12 +494,14 @@ export function usePlaylist() {
     const track = stateRef.current.tracks.find((t) => t.id === id);
     if (track?.cover) releaseCoverUrl(track.cover);
     scanQueueRef.current = scanQueueRef.current.filter((q) => q !== id);
+    scannedRef.current.delete(id);
     dispatch({ type: 'remove', id });
   }, []);
 
   const clear = useCallback(() => {
     for (const t of stateRef.current.tracks) if (t.cover) releaseCoverUrl(t.cover);
     scanQueueRef.current = [];
+    scannedRef.current.clear();
     dispatch({ type: 'clear' });
   }, []);
 
@@ -530,6 +602,15 @@ export function usePlaylist() {
     [state.tracks, state.activeId],
   );
 
+  // What "Resume" reopens: the track last activated (boot's restored one until
+  // something else plays), falling back to the top of the list once it's gone.
+  const resumeId = useMemo(() => {
+    const has = (id: string | null | undefined): id is string => !!id && state.tracks.some((t) => t.id === id);
+    if (has(state.lastActiveId)) return state.lastActiveId;
+    if (has(resumeSession?.activeId)) return resumeSession.activeId;
+    return state.tracks[0]?.id ?? null;
+  }, [state.tracks, state.lastActiveId, resumeSession]);
+
   // Render-safe look-ahead (no shuffle-lap side effects): drives the transport's
   // enabled states and the "up next" line.
   const { upcomingId, previousId } = useMemo(() => {
@@ -551,6 +632,7 @@ export function usePlaylist() {
     restored: state.restored,
     storageError,
     resumeSession,
+    resumeId,
     addFiles,
     removeTrack,
     clear,

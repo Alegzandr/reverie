@@ -9,6 +9,8 @@ interface SceneWorldProps {
   still: boolean;
   onReady: () => void;
   onFail: () => void;
+  /** The GL context was lost; onReady fires again once a restore paints. */
+  onLost: () => void;
 }
 
 /**
@@ -16,15 +18,15 @@ interface SceneWorldProps {
  * changes. The engine is created once per mount (switching worlds cross-fades
  * inside it - no remount, no recompile of a world already seen).
  */
-export const SceneWorld = memo(function SceneWorld({ world, still, onReady, onFail }: SceneWorldProps) {
+export const SceneWorld = memo(function SceneWorld({ world, still, onReady, onFail, onLost }: SceneWorldProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const engineRef = useRef<WorldEngine | null>(null);
   // The engine is built with whatever world is current at mount; later changes
   // go through setWorld, so the creating effect must not depend on `world`.
   const worldRef = useRef(world);
-  const callbacks = useRef({ onReady, onFail });
+  const callbacks = useRef({ onReady, onFail, onLost });
   useEffect(() => {
-    callbacks.current = { onReady, onFail };
+    callbacks.current = { onReady, onFail, onLost };
     worldRef.current = world;
   });
 
@@ -37,6 +39,7 @@ export const SceneWorld = memo(function SceneWorld({ world, still, onReady, onFa
       still,
       onReady: () => callbacks.current.onReady(),
       onFail: () => callbacks.current.onFail(),
+      onLost: () => callbacks.current.onLost(),
     });
     if (!engine) {
       callbacks.current.onFail();

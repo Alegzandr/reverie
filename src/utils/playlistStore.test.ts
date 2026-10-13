@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto';
 import { IDBFactory } from 'fake-indexeddb';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   clearStoredPlaylist,
   loadStoredPlaylist,
@@ -54,5 +54,33 @@ describe('playlistStore', () => {
     await clearStoredPlaylist();
     stored = await loadStoredPlaylist();
     expect(stored).toEqual({ records: [], order: [] });
+  });
+
+  it('reopens after the browser drops the cached connection', async () => {
+    const openSpy = vi.spyOn(globalThis.indexedDB, 'open');
+    await saveOrder(['a']);
+    expect(openSpy).toHaveBeenCalledTimes(1);
+    const db = openSpy.mock.results[0].value.result as IDBDatabase;
+    db.close();
+    db.onclose?.call(db, new Event('close'));
+
+    await saveOrder(['b']);
+    expect(openSpy).toHaveBeenCalledTimes(2);
+    expect((await loadStoredPlaylist())?.order).toEqual(['b']);
+  });
+
+  it('retries once on a fresh connection when the cached one is closed', async () => {
+    await saveTracks([record('a')], ['a']);
+    const openSpy = vi.spyOn(globalThis.indexedDB, 'open');
+    const txSpy = vi
+      .spyOn(IDBDatabase.prototype, 'transaction')
+      .mockImplementationOnce(() => {
+        throw new DOMException('The database connection is closing.', 'InvalidStateError');
+      });
+
+    await saveOrder(['a', 'z']);
+    expect(openSpy).toHaveBeenCalledTimes(1);
+    txSpy.mockRestore();
+    expect((await loadStoredPlaylist())?.order).toEqual(['a', 'z']);
   });
 });

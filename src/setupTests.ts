@@ -127,6 +127,24 @@ class MockOfflineAudioContext {
     return new MockScriptProcessor();
   }
 
+  // The export renders through the live effect chain, so the offline stub needs
+  // the same node factories as the realtime one.
+  createBiquadFilter() {
+    return new MockBiquadFilter();
+  }
+
+  createStereoPanner() {
+    return new MockStereoPanner();
+  }
+
+  createOscillator() {
+    return new MockOscillator();
+  }
+
+  createBuffer(channels: number, length: number, sampleRate: number) {
+    return new MockAudioBuffer(channels, length, sampleRate);
+  }
+
   startRendering(): Promise<MockAudioBuffer> {
     return Promise.resolve(new MockAudioBuffer(this.numberOfChannels, this.length, this.sampleRate));
   }

@@ -28,7 +28,7 @@ let flacReady: Promise<Flac> | null = null;
  */
 async function getFlac(): Promise<Flac> {
   if (!flacReady) {
-    flacReady = (async () => {
+    const pending = (async () => {
       // Resolve the .wasm asset through Vite so it gets a hashed, served URL,
       // then tell libflacjs where to find it before the module instantiates.
       const { default: wasmUrl } = await import('libflacjs/dist/libflac.wasm.wasm?url');
@@ -46,6 +46,12 @@ async function getFlac(): Promise<Flac> {
       }
       return flac;
     })();
+    flacReady = pending;
+    // A failed load (offline, chunk fetch hiccup) must not be cached for the whole
+    // session, or every later FLAC export would silently degrade to WAV.
+    pending.catch(() => {
+      if (flacReady === pending) flacReady = null;
+    });
   }
   return flacReady;
 }

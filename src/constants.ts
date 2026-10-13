@@ -35,6 +35,16 @@ export const AUDIO_PROCESSING = {
 
     /** Delay after buffer ends before stopping MediaRecorder (ms) */
     MEDIA_RECORDER_STOP_DELAY_MS: 100,
+
+    /**
+     * How long the MediaRecorder encoder waits for its AudioContext to resume. A
+     * context created after the export's awaits has no user gesture behind it, and
+     * Safari can leave resume() pending forever - then the MP3 fallback takes over.
+     */
+    MEDIA_RECORDER_RESUME_TIMEOUT_MS: 2000,
+
+    /** Slack beyond the buffer's real-time duration before a stalled recording is abandoned. */
+    MEDIA_RECORDER_WATCHDOG_MARGIN_MS: 5000,
 } as const;
 
 // ============================================================================
@@ -120,6 +130,38 @@ export const AUDIO_REACTIVITY = {
      * guard - values still saturate at 1, so it stays tasteful, never blown out.
      */
     INTENSITY: 1.25,
+    /** RMS rarely exceeds ~0.45 on real music: this lifts it into a usable 0..1. */
+    LEVEL_RMS_LIFT: 2.2,
+    /**
+     * Band split as fractions of the analyser's bins, so different surfaces react
+     * to different parts of the music (not everything strobing on the kick):
+     * bass = low ~12%, mid = ~12-55%, treble = top ~40%.
+     */
+    BASS_END_SHARE: 0.12,
+    MID_END_SHARE: 0.55,
+    TREBLE_START_SHARE: 0.6,
+    /** Per-frame easing: fast attack, slower release - reads musical, not jittery. */
+    LEVEL_ATTACK: 0.5,
+    LEVEL_RELEASE: 0.12,
+    BASS_ATTACK: 0.5,
+    BASS_RELEASE: 0.15,
+    MID_ATTACK: 0.45,
+    MID_RELEASE: 0.18,
+    TREBLE_EASE: 0.3,
+    /** Onset flash: bass beating its slow baseline (per-frame gain) by RATIO + OFFSET. */
+    PULSE_BASELINE_GAIN: 0.08,
+    PULSE_RATIO: 1.35,
+    PULSE_OFFSET: 0.06,
+    /** How hard the onset's margin over the baseline drives the flash. */
+    PULSE_GAIN: 3,
+    /** Per-frame decay of the flash, and the value under which it snaps to 0. */
+    PULSE_DECAY: 0.86,
+    PULSE_FLOOR: 0.005,
+    /** Stopped: per-frame decay of the energies / the flash while easing to rest. */
+    REST_DECAY: 0.85,
+    REST_PULSE_DECAY: 0.8,
+    /** Summed energy under which the rest is complete and the vars are cleared. */
+    REST_EPSILON: 0.01,
 } as const;
 
 // ============================================================================
@@ -221,6 +263,10 @@ export const SCENE_WORLD = {
         TEMPO_SWITCH_ESTIMATES: 4,
         /** How far the clock's phase trails the music (the analyser's smoothing), measured. */
         ANALYSER_LAG_SECONDS: 0.015,
+        /** The period the clock idles at before its first lock, as a multiple of NOD_MIN_PERIOD. */
+        UNLOCKED_PERIOD_FACTOR: 1.5,
+        /** The winning lag is refined on a grid this many times finer than LAG_STEP. */
+        LAG_REFINE_DIVISIONS: 5,
     },
     /** The head nod (beatCrop.ts), applied in the present pass after the temporal accumulation. */
     BEAT_CROP: {
@@ -241,7 +287,24 @@ export const SCENE_WORLD = {
         PLAYHEAD_SNAP_SECONDS: 0.25,
         /** How long the head takes to come to rest when the music stops (s). */
         REST_SECONDS: 0.4,
+        /**
+         * A reported position that hasn't moved for this long (s) is paused: the
+         * filter stops learning (it would learn speed 0 and lag on resume). Longer
+         * than the coarsest audio-clock tick.
+         */
+        PLAYHEAD_STILL_SECONDS: 0.15,
+        /**
+         * A playhead error this large (s) but short of a seek is a speed change,
+         * not tick jitter: the filter follows the raw position for RATE_WINDOW and
+         * adopts the speed measured over it instead of creeping towards it.
+         */
+        PLAYHEAD_DRIFT_SECONDS: 0.04,
+        PLAYHEAD_RATE_WINDOW_SECONDS: 0.2,
+        /** Cross-fade (s) of the nod when its timing source switches (live clock <-> beat grid). */
+        SOURCE_HANDOFF_SECONDS: 0.15,
     },
+    /** Without a restore this long after a lost GL context (ms), give the world up to the posters. */
+    CONTEXT_RESTORE_TIMEOUT_MS: 4000,
 } as const;
 
 // ============================================================================
@@ -301,6 +364,27 @@ export const BEAT_GRID = {
     PRESENCE_HIGH: 0.45,
     /** Frames this far (dB) under the loudest are silence: no nods. */
     SILENCE_DB: 45,
+    /** Frames each side of a beat searched for its onset peak (the hit may land a frame or two off). */
+    HIT_SEARCH_FRAMES: 3,
+    /** Quantile of the beats' hits that stands for the track's typical hit. */
+    TYPICAL_HIT_QUANTILE: 0.75,
+    /** Floor on the relative drum level before its log (keeps silence finite). */
+    DRUM_LEVEL_LOG_FLOOR: 1e-6,
+} as const;
+
+/**
+ * Which frequencies drive a head nod, shared by the live beat clock and the
+ * track's beat grid: kick body and snare body/crack do; pads and hats don't.
+ * A band weighs by where its frequency falls.
+ */
+export const DRUM_BAND_WEIGHTS = {
+    KICK_MAX_HZ: 140,
+    KICK: 1,
+    SNARE_BODY_MAX_HZ: 320,
+    SNARE_BODY: 0.5,
+    SNARE_CRACK_MIN_HZ: 1800,
+    SNARE_CRACK_MAX_HZ: 7000,
+    SNARE_CRACK: 0.3,
 } as const;
 
 // ============================================================================
@@ -524,6 +608,8 @@ export const ERROR_MESSAGES = {
     MIME_TYPE_NOT_SUPPORTED: (mimeType: string) =>
         `MIME type ${mimeType} is not supported by this browser`,
     MEDIA_RECORDER_ERROR: (event: unknown) => `MediaRecorder error: ${event}`,
+    MEDIA_RECORDER_SUSPENDED: "MediaRecorder export needs a running AudioContext",
+    MEDIA_RECORDER_TIMEOUT: "MediaRecorder export timed out",
 
     /** Metadata extraction warnings */
     METADATA_EXTRACTION_FAILED: (format: string) =>
@@ -543,22 +629,40 @@ export const AUDIO_EFFECTS = {
         /**
          * Underwater muffle: a lowpass whose cutoff sweeps from transparent down to a
          * deep muffle as the amount grows, with a slow LFO wobble on the cutoff for the
-         * "submerged" feel. Amount 0 leaves the cutoff at MAX (effectively bypassed).
+         * "submerged" feel. Amount 0 opens the filter fully (Nyquist - an exact bypass).
          */
         UNDERWATER_CUTOFF_MAX_HZ: 18000,
         UNDERWATER_CUTOFF_MIN_HZ: 500,
         UNDERWATER_LFO_FREQUENCY_HZ: 0.25, // ~4 s period - a gentle swell, not a tremolo
         UNDERWATER_LFO_DEPTH_RATIO: 0.15, // wobble peaks at ±15% of the cutoff
+        HIGHPASS_Q: 0.7,
+        UNDERWATER_Q: 0.7,
+        PEAKING_Q: 1,
+        /** Low-shelf boost at full intensity (dB). */
+        LOWSHELF_MAX_GAIN_DB: 18,
+        /** Low-mid de-mud cut at full intensity (dB, applied as a negative gain). */
+        PEAKING_MAX_CUT_DB: 3,
     },
 
-    /** Reverb settings */
+    /**
+     * Reverb settings. One fixed impulse for both engines: listeners tune the
+     * amount by ear on the live graph, so the export must ring with the same tail.
+     * The wet amount is set by the dry/wet gains alone. reverbMakeupGain's measured
+     * k assumes this tail length (the normalized convolver's power scales with it).
+     */
     REVERB: {
-        DECAY_RATE: 2, // Exponential decay factor
+        TAIL_SECONDS: 3,
+        DECAY_SECONDS: 0.9,
+        /** Wet share at full amount: dry = 1 - ratio·a, wet = ratio·a. */
+        WET_RATIO: 0.5,
     },
 
     /** 8D audio settings */
     EIGHT_D: {
-        AUTOMATION_POINTS_PER_SECOND: 60,
+        /** Seconds per full orbit at rotation speed 1 (period = this / speed). */
+        SECONDS_PER_ROTATION: 4,
+        /** Floor for the orbit LFO: a 0 Hz oscillator would freeze the pan mid-sweep. */
+        MIN_ROTATION_HZ: 0.01,
     },
 
     /**

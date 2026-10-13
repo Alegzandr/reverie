@@ -1,4 +1,4 @@
-import { AUDIO_SIGNAL } from '../constants';
+import { AUDIO_EFFECTS, AUDIO_SIGNAL } from '../constants';
 
 /**
  * Every reverb and ambience convolver in the app is fed the same shape of impulse
@@ -58,6 +58,14 @@ export function getDecayingNoiseImpulse(
     impulseCache.set(key, buffer);
   }
   return buffer;
+}
+
+/**
+ * The reverb impulse. Fixed for every amount (wetness lives in the dry/wet gains)
+ * so the live graph and the export ring with the exact same tail.
+ */
+export function getReverbImpulse(ctx: BaseAudioContext): AudioBuffer {
+  return getDecayingNoiseImpulse(ctx, AUDIO_EFFECTS.REVERB.TAIL_SECONDS, AUDIO_EFFECTS.REVERB.DECAY_SECONDS);
 }
 
 /** Short tail for the constant 8D ambience bed - tight enough to sit under the music. */

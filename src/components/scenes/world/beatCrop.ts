@@ -19,6 +19,12 @@ export interface BeatCrop {
   update(dt: number, timing: NodTiming | null, playing: number): number;
   /** 0..1 nod envelope. */
   readonly nod: number;
+  /**
+   * The timing source is about to change (live clock <-> beat grid): their
+   * phases differ, so ease from the current nod into the new one instead of
+   * jumping.
+   */
+  handoff(): void;
 }
 
 const ease = (x: number) => 0.5 - 0.5 * Math.cos(Math.PI * x);
@@ -37,21 +43,31 @@ export function nodShape(timing: NodTiming): number {
 }
 
 export function createBeatCrop(): BeatCrop {
+  const C = SCENE_WORLD.BEAT_CROP;
   let nod = 0;
   let live = 0;
+  /** The nod a handoff eases from, and the seconds of that ease still to run. */
+  let handoffFrom = 0;
+  let handoffLeft = 0;
 
   return {
     get nod() {
       return nod;
     },
+    handoff() {
+      handoffFrom = nod;
+      handoffLeft = C.SOURCE_HANDOFF_SECONDS;
+    },
     update(dt, timing, playing) {
       // Music stopping (pause, end) lets the head come to rest instead of freezing mid-nod.
-      live += (Math.min(1, Math.max(0, playing)) - live) * Math.min(1, dt / SCENE_WORLD.BEAT_CROP.REST_SECONDS);
-      if (!timing || !(timing.period > 0)) {
-        nod = 0;
+      live += (Math.min(1, Math.max(0, playing)) - live) * Math.min(1, dt / C.REST_SECONDS);
+      const target = timing && timing.period > 0 ? nodShape(timing) * live : 0;
+      if (handoffLeft > 0) {
+        handoffLeft = Math.max(0, handoffLeft - dt);
+        nod = handoffFrom + (target - handoffFrom) * ease(1 - handoffLeft / C.SOURCE_HANDOFF_SECONDS);
         return nod;
       }
-      nod = nodShape(timing) * live;
+      nod = target;
       return nod;
     },
   };
