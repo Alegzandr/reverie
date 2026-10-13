@@ -22,6 +22,11 @@ export function currentWorldAnalyser(): AnalyserNode | null {
 export interface WorldBeatSource {
   getGrid: () => BeatGrid | null;
   getPosition: () => number;
+  /**
+   * Current playback speed (source seconds per wall second). Optional: without
+   * it the engine uses the speed its playhead filter has learnt.
+   */
+  getRate?: () => number;
 }
 
 let beatSource: WorldBeatSource | null = null;

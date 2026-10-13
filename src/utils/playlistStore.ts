@@ -57,7 +57,7 @@ export function isPlaylistStorageAvailable(): boolean {
 function openDb(): Promise<IDBDatabase | null> {
   if (!isPlaylistStorageAvailable()) return Promise.resolve(null);
   if (!dbPromise) {
-    dbPromise = new Promise<IDBDatabase | null>((resolve) => {
+    const pending = new Promise<IDBDatabase | null>((resolve) => {
       let request: IDBOpenDBRequest;
       try {
         request = indexedDB.open(PLAYLIST.DB_NAME, PLAYLIST.DB_VERSION);
@@ -76,11 +76,18 @@ function openDb(): Promise<IDBDatabase | null> {
       };
       request.onsuccess = () => {
         const db = request.result;
+        // A dead connection must not stay cached: the next call reopens. Only
+        // forget it if it is still the cached one - a newer open may have won.
+        const forget = () => {
+          if (dbPromise === pending) dbPromise = null;
+        };
         // Another tab upgrading the schema must not be blocked by us holding it open.
         db.onversionchange = () => {
           db.close();
-          dbPromise = null;
+          forget();
         };
+        // The browser dropped the connection (storage cleared, disk error).
+        db.onclose = forget;
         resolve(db);
       };
       // A failed open (storage disabled, corrupt profile) is not an app error -
@@ -88,8 +95,31 @@ function openDb(): Promise<IDBDatabase | null> {
       request.onerror = () => resolve(null);
       request.onblocked = () => resolve(null);
     });
+    dbPromise = pending;
   }
   return dbPromise;
+}
+
+const isClosedConnectionError = (error: unknown) => error instanceof DOMException && error.name === 'InvalidStateError';
+
+/**
+ * Run one storage operation on the cached connection. A connection can close
+ * between being cached and being used (with no close event when we closed it
+ * ourselves on versionchange), which surfaces as InvalidStateError: drop it and
+ * retry once on a fresh one.
+ */
+async function withDb<T>(op: (db: IDBDatabase) => Promise<T>): Promise<T | null> {
+  const db = await openDb();
+  if (!db) return null;
+  try {
+    return await op(db);
+  } catch (error) {
+    if (!isClosedConnectionError(error)) throw error;
+    dbPromise = null;
+    const fresh = await openDb();
+    if (!fresh) return null;
+    return op(fresh);
+  }
 }
 
 /** Test hook: forget the cached connection (e.g. after swapping the IDB shim). */
@@ -97,72 +127,72 @@ export function resetPlaylistStoreForTests(): void {
   dbPromise = null;
 }
 
-export async function loadStoredPlaylist(): Promise<StoredPlaylist | null> {
-  const db = await openDb();
-  if (!db) return null;
-  const tx = db.transaction([PLAYLIST.TRACKS_STORE, PLAYLIST.META_STORE], 'readonly');
-  const [records, order] = await Promise.all([
-    requestToPromise(tx.objectStore(PLAYLIST.TRACKS_STORE).getAll() as IDBRequest<StoredTrackRecord[]>),
-    requestToPromise(tx.objectStore(PLAYLIST.META_STORE).get(PLAYLIST.ORDER_KEY) as IDBRequest<unknown>),
-  ]);
-  return {
-    records: records ?? [],
-    order: Array.isArray(order) ? order.filter((id): id is string => typeof id === 'string') : [],
-  };
+export function loadStoredPlaylist(): Promise<StoredPlaylist | null> {
+  return withDb(async (db) => {
+    const tx = db.transaction([PLAYLIST.TRACKS_STORE, PLAYLIST.META_STORE], 'readonly');
+    const [records, order] = await Promise.all([
+      requestToPromise(tx.objectStore(PLAYLIST.TRACKS_STORE).getAll() as IDBRequest<StoredTrackRecord[]>),
+      requestToPromise(tx.objectStore(PLAYLIST.META_STORE).get(PLAYLIST.ORDER_KEY) as IDBRequest<unknown>),
+    ]);
+    return {
+      records: records ?? [],
+      order: Array.isArray(order) ? order.filter((id): id is string => typeof id === 'string') : [],
+    };
+  });
 }
 
 /** Add (or overwrite) records and write the order in one atomic transaction. */
 export async function saveTracks(records: StoredTrackRecord[], order: string[]): Promise<void> {
-  const db = await openDb();
-  if (!db) return;
-  const tx = db.transaction([PLAYLIST.TRACKS_STORE, PLAYLIST.META_STORE], 'readwrite');
-  const tracks = tx.objectStore(PLAYLIST.TRACKS_STORE);
-  for (const record of records) tracks.put(record);
-  tx.objectStore(PLAYLIST.META_STORE).put(order, PLAYLIST.ORDER_KEY);
-  await transactionDone(tx);
+  await withDb(async (db) => {
+    const tx = db.transaction([PLAYLIST.TRACKS_STORE, PLAYLIST.META_STORE], 'readwrite');
+    const tracks = tx.objectStore(PLAYLIST.TRACKS_STORE);
+    for (const record of records) tracks.put(record);
+    tx.objectStore(PLAYLIST.META_STORE).put(order, PLAYLIST.ORDER_KEY);
+    await transactionDone(tx);
+  });
 }
 
 export async function removeTracks(ids: string[], order: string[]): Promise<void> {
-  const db = await openDb();
-  if (!db) return;
-  const tx = db.transaction([PLAYLIST.TRACKS_STORE, PLAYLIST.META_STORE], 'readwrite');
-  const tracks = tx.objectStore(PLAYLIST.TRACKS_STORE);
-  for (const id of ids) tracks.delete(id);
-  tx.objectStore(PLAYLIST.META_STORE).put(order, PLAYLIST.ORDER_KEY);
-  await transactionDone(tx);
+  await withDb(async (db) => {
+    const tx = db.transaction([PLAYLIST.TRACKS_STORE, PLAYLIST.META_STORE], 'readwrite');
+    const tracks = tx.objectStore(PLAYLIST.TRACKS_STORE);
+    for (const id of ids) tracks.delete(id);
+    tx.objectStore(PLAYLIST.META_STORE).put(order, PLAYLIST.ORDER_KEY);
+    await transactionDone(tx);
+  });
 }
 
 export async function saveOrder(order: string[]): Promise<void> {
-  const db = await openDb();
-  if (!db) return;
-  const tx = db.transaction(PLAYLIST.META_STORE, 'readwrite');
-  tx.objectStore(PLAYLIST.META_STORE).put(order, PLAYLIST.ORDER_KEY);
-  await transactionDone(tx);
+  await withDb(async (db) => {
+    const tx = db.transaction(PLAYLIST.META_STORE, 'readwrite');
+    tx.objectStore(PLAYLIST.META_STORE).put(order, PLAYLIST.ORDER_KEY);
+    await transactionDone(tx);
+  });
 }
 
 /** Merge late-arriving facts (probed duration, parsed tags) into a stored record. */
 export async function patchTrack(id: string, patch: Partial<Omit<StoredTrackRecord, 'id' | 'blob'>>): Promise<void> {
-  const db = await openDb();
-  if (!db) return;
-  const tx = db.transaction(PLAYLIST.TRACKS_STORE, 'readwrite');
-  const store = tx.objectStore(PLAYLIST.TRACKS_STORE);
-  // Chained in the success callback (not an await) so the put is queued while the
-  // transaction is guaranteed active, whatever the engine's microtask semantics.
-  const read = store.get(id);
-  read.onsuccess = () => {
-    const current = read.result as StoredTrackRecord | undefined;
-    if (current) store.put({ ...current, ...patch });
-  };
-  await transactionDone(tx);
+  await withDb(async (db) => {
+    const tx = db.transaction(PLAYLIST.TRACKS_STORE, 'readwrite');
+    const store = tx.objectStore(PLAYLIST.TRACKS_STORE);
+    // Chained in the success callback (not an await) so the put is queued while the
+    // transaction is guaranteed active, whatever the engine's microtask semantics.
+    const read = store.get(id);
+    read.onsuccess = () => {
+      const current = read.result as StoredTrackRecord | undefined;
+      if (current) store.put({ ...current, ...patch });
+    };
+    await transactionDone(tx);
+  });
 }
 
 export async function clearStoredPlaylist(): Promise<void> {
-  const db = await openDb();
-  if (!db) return;
-  const tx = db.transaction([PLAYLIST.TRACKS_STORE, PLAYLIST.META_STORE], 'readwrite');
-  tx.objectStore(PLAYLIST.TRACKS_STORE).clear();
-  tx.objectStore(PLAYLIST.META_STORE).delete(PLAYLIST.ORDER_KEY);
-  await transactionDone(tx);
+  await withDb(async (db) => {
+    const tx = db.transaction([PLAYLIST.TRACKS_STORE, PLAYLIST.META_STORE], 'readwrite');
+    tx.objectStore(PLAYLIST.TRACKS_STORE).clear();
+    tx.objectStore(PLAYLIST.META_STORE).delete(PLAYLIST.ORDER_KEY);
+    await transactionDone(tx);
+  });
 }
 
 /**

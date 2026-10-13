@@ -69,6 +69,12 @@ describe('exportStrategies', () => {
     vi.mocked(console.warn).mockClear();
   });
   describe('estimateBitrate', () => {
+    it('prefers the measured source bitrate, clamped', () => {
+      const mockFile = new File([new ArrayBuffer(1024)], 'test.mp3');
+      expect(estimateBitrate(mockFile, 60, 256)).toBe(256);
+      expect(estimateBitrate(mockFile, 60, 1411)).toBe(BITRATE.MAX_MP3_KBPS);
+    });
+
     it('returns default bitrate when file is null', () => {
       const result = estimateBitrate(null, 180);
       expect(result).toBe(BITRATE.DEFAULT_MP3_KBPS);

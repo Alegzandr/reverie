@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { audioProcessor } from '../utils/audioProcessor';
 import type { AudioProcessingOptions } from '../utils/audioProcessor';
-import { NEUTRAL_OPTIONS } from '../utils/effectGraph';
+import { NEUTRAL_OPTIONS, isNeutralOptions } from '../utils/effectGraph';
+import { ERROR_MESSAGES } from '../constants';
 import { detectTempo, type TempoEstimate } from '../utils/tempo';
 import { loadBeatSamples } from '../utils/beatSamples';
 import { useAudioFile } from './useAudioFile';
@@ -36,6 +37,15 @@ export function useAudioProcessor({ onTrackEnd }: UseAudioProcessorOptions = {})
   const loadSeqRef = useRef(0);
   const optionsRef = useRef<AudioProcessingOptions>(NEUTRAL_OPTIONS);
   const renderedRef = useRef<AudioBuffer | null>(null);
+  // The track the UI has committed (what's shown, played and named). Export renders
+  // this explicitly instead of the processor's latest decode, which can briefly
+  // belong to a track still loading.
+  const committedSourceRef = useRef<AudioBuffer | null>(null);
+  // One export at a time: a second click while the render runs joins the first.
+  const exportInFlightRef = useRef<Promise<string> | null>(null);
+  // Covers the offline render, which runs before useAudioExport flags isExporting,
+  // so the export button is disabled from the very first click.
+  const [isRendering, setIsRendering] = useState(false);
   // Detected tempo for the Nightcore beat grid. There is no BPM in the source files,
   // so it's measured once per track on load (see detectTempo) and injected into every
   // effect update, so both live playback and the export share one grid. Kept in a ref
@@ -92,15 +102,23 @@ export function useAudioProcessor({ onTrackEnd }: UseAudioProcessorOptions = {})
     onTrackEnd,
   });
 
+  // Stable per processed buffer: an inline arrow would re-create runExport, and
+  // with it exportProcessedAudio and App's handleExport, on every render.
+  const getExportBuffer = useCallback(
+    () => renderedRef.current ?? processedBuffer,
+    [processedBuffer],
+  );
+
   const {
     state: exportState,
     exportProcessedAudio: runExport,
     resetExport,
   } = useAudioExport({
-    getBuffer: () => renderedRef.current || processedBuffer || audioProcessor.getAudioBuffer(),
+    getBuffer: getExportBuffer,
     originalFile,
     metadata,
     getBufferDuration,
+    sourceDurationSeconds: originalBuffer ? getBufferDuration(originalBuffer) : undefined,
     onError: setError,
   });
 
@@ -116,6 +134,9 @@ export function useAudioProcessor({ onTrackEnd }: UseAudioProcessorOptions = {})
     renderedRef.current = null;
     const buffer = await loadFile(file);
     if (seq !== loadSeqRef.current) return undefined;
+    // A failed load keeps the previous track committed (useAudioFile keeps its
+    // file and metadata too), so export stays consistent with what's shown.
+    if (buffer) committedSourceRef.current = buffer;
     const nextBuffer = buffer || audioProcessor.getAudioBuffer();
     attachBuffer(nextBuffer, { resetPosition: true });
     // Warm the Nightcore sample cache now (fire-and-forget) so enabling the beats - or
@@ -173,26 +194,50 @@ export function useAudioProcessor({ onTrackEnd }: UseAudioProcessorOptions = {})
   }, [attachBuffer, processFile, stopAudio]);
 
   // Render the current effect settings offline, then export the result.
-  const exportProcessedAudio = useCallback(async (arg?: string | { filename?: string; effectLabel?: string }) => {
-    const source = audioProcessor.getAudioBuffer();
-    if (source) {
-      try {
-        renderedRef.current = await audioProcessor.processAudio(optionsRef.current);
-      } catch {
-        renderedRef.current = source;
+  const exportProcessedAudio = useCallback((arg?: string | { filename?: string; effectLabel?: string }) => {
+    if (exportInFlightRef.current) return exportInFlightRef.current;
+
+    const run = async (): Promise<string> => {
+      const source = committedSourceRef.current;
+      if (source) {
+        const options = optionsRef.current;
+        try {
+          renderedRef.current = await audioProcessor.processAudio(options, source);
+        } catch (renderError) {
+          // Shipping the dry source is only honest when no effect was asked for;
+          // otherwise the listener would get a file that silently lacks them.
+          if (!isNeutralOptions(options)) {
+            setError(ERROR_MESSAGES.PROCESS_FAILED);
+            throw renderError instanceof Error ? renderError : new Error(ERROR_MESSAGES.PROCESS_FAILED);
+          }
+          renderedRef.current = source;
+        }
       }
-    }
-    // Free the full rendered buffer (can be tens of MB) once the encode settles;
-    // `return await` keeps it captured for the whole encode, the next export
-    // re-renders anyway. The error still propagates after the finally.
-    try {
-      return await runExport(arg);
-    } finally {
-      renderedRef.current = null;
-    }
+      // Free the full rendered buffer (can be tens of MB) once the encode settles;
+      // `return await` keeps it captured for the whole encode, the next export
+      // re-renders anyway. The error still propagates after the finally.
+      try {
+        return await runExport(arg);
+      } finally {
+        renderedRef.current = null;
+      }
+    };
+
+    setIsRendering(true);
+    const pending = run().finally(() => {
+      exportInFlightRef.current = null;
+      setIsRendering(false);
+    });
+    exportInFlightRef.current = pending;
+    return pending;
   }, [runExport]);
 
   const reset = useCallback(() => {
+    // Invalidate in-flight loads at every layer, or a decode landing after the
+    // reset would re-attach a track to the session the listener just closed.
+    loadSeqRef.current++;
+    audioProcessor.clear();
+    committedSourceRef.current = null;
     stopAudio();
     resetFile();
     resetPlayback();
@@ -209,7 +254,7 @@ export function useAudioProcessor({ onTrackEnd }: UseAudioProcessorOptions = {})
     state: {
       isLoading: fileState.isLoading,
       isProcessing: fileState.isProcessing,
-      isExporting: exportState.isExporting,
+      isExporting: exportState.isExporting || isRendering,
       isPlaying: playbackState.isPlaying,
       progress: fileState.progress,
       error: combinedError,

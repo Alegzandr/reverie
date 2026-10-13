@@ -66,4 +66,48 @@ describe('createPlayhead', () => {
     for (let i = 0; i < 60; i += 1) playhead.update(DT, i * DT);
     expect(playhead.update(DT, 42)).toBe(42);
   });
+
+  it('picks the music straight back up after a pause', () => {
+    const playhead = createPlayhead();
+    let t = 0;
+    for (let i = 0; i < 300; i += 1) {
+      t += DT;
+      playhead.update(DT, t);
+    }
+    // A second paused: the reported position holds still.
+    let held = 0;
+    for (let i = 0; i < 60; i += 1) held = playhead.update(DT, t);
+    expect(held).toBe(t);
+    expect(playhead.speed).toBeCloseTo(1, 1);
+    let worst = 0;
+    for (let i = 0; i < 60; i += 1) {
+      t += DT;
+      worst = Math.max(worst, Math.abs(playhead.update(DT, t) - t));
+    }
+    expect(worst).toBeLessThan(0.01);
+  });
+
+  it('adopts a speed change instead of trailing behind it', () => {
+    const playhead = createPlayhead();
+    let t = 0;
+    for (let i = 0; i < 300; i += 1) {
+      t += DT;
+      playhead.update(DT, t);
+    }
+    let worstLate = 0;
+    for (let i = 0; i < 120; i += 1) {
+      t += DT * 1.5;
+      const err = Math.abs(playhead.update(DT, t) - t);
+      if (i > 30) worstLate = Math.max(worstLate, err);
+    }
+    expect(playhead.speed).toBeCloseTo(1.5, 1);
+    expect(worstLate).toBeLessThan(0.01);
+  });
+
+  it('forgets everything on reset', () => {
+    const playhead = createPlayhead();
+    for (let i = 0; i < 60; i += 1) playhead.update(DT, i * DT);
+    playhead.reset();
+    expect(playhead.update(DT, 0.1)).toBe(0.1);
+  });
 });

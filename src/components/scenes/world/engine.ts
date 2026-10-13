@@ -31,8 +31,18 @@ export interface WorldEngineOptions {
   still: boolean;
   /** First frame is on screen - the fallback photo may retire. */
   onReady?: () => void;
-  /** The world can't run here (no WebGL2, compile failure, lost context). */
+  /**
+   * The world can't run here: a compile failure, a context that can't be set
+   * up again after a restore, or one lost and never restored within
+   * CONTEXT_RESTORE_TIMEOUT_MS. (No WebGL2 at all returns null instead.)
+   */
   onFail?: () => void;
+  /**
+   * The GL context was lost: the canvas is hidden until a restore, which
+   * raises onReady again once its first frame is up. The fallback photo
+   * should return meanwhile.
+   */
+  onLost?: () => void;
   /** Pin the render scale (diagnostics / captures); adaptive when omitted. */
   fixedScale?: number;
 }
@@ -68,6 +78,27 @@ const UNIT = { spec: 0, noise3: 1, noise2: 2, current: 3, history: 4, snapshot: 
 
 /** Fixed time the still (reduced-motion) frame is painted at - a composed moment, not t=0. */
 const STILL_TIME = 24;
+/** Travel the still frame sits at, as a share of STILL_TIME. */
+const STILL_TRAVEL_SHARE = 0.6;
+
+/** A 60 Hz frame (ms): the frame-time EMA's starting point and the first step's delta. */
+const NOMINAL_FRAME_MS = 16.7;
+/** Per-frame gain of the frame-time EMA the render scale adapts on. */
+const FRAME_EMA_GAIN = 0.08;
+/** Pointer parallax easing rate (per second). */
+const POINTER_EASE_PER_SECOND = 1.5;
+/** Under this `playing` (0..1) the music counts as stopped and the loop idles. */
+const IDLE_PLAYING_THRESHOLD = 0.02;
+/**
+ * Travel speed: a base drift plus what the level and bass add, scaled by how
+ * much music is flowing (never below PLAYING_FLOOR, so silence still drifts).
+ */
+const TRAVEL_BASE = 0.6;
+const TRAVEL_LEVEL = 0.5;
+const TRAVEL_BASS = 0.3;
+const TRAVEL_IDLE_SHARE = 0.6;
+const TRAVEL_PLAYING_SHARE = 0.4;
+const TRAVEL_PLAYING_FLOOR = 0.3;
 
 /** Halton(2,3) - well-spread sub-pixel offsets for the jitter sequence. */
 /** The worlds' display gamma: mood tokens are authored sRGB, shaded as light. */
@@ -113,6 +144,8 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
     powerPreference: 'high-performance',
   });
   if (!gl) return null;
+  // Narrowed here so the hoisted schedule() below can ask too.
+  const contextLost = () => gl.isContextLost();
 
   const { still, getAnalyser } = options;
   const parallel = gl.getExtension('KHR_parallel_shader_compile');
@@ -420,7 +453,7 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
   let target: WorldId = options.world;
   let fade = 0;
   let time = still ? STILL_TIME : 0;
-  let travel = still ? STILL_TIME * 0.6 : 0;
+  let travel = still ? STILL_TIME * STILL_TRAVEL_SHARE : 0;
   let raf = 0;
   let lastNow = -1;
   let lastDraw = 0;
@@ -433,7 +466,7 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
   let disposed = false;
   let readyFired = false;
   let scale: number = options.fixedScale ?? SCENE_WORLD.RENDER_SCALE_START;
-  let frameEma = 16.7;
+  let frameEma = NOMINAL_FRAME_MS;
   let lastAdapt = 0;
   let viewW = canvas.clientWidth;
   let viewH = canvas.clientHeight;
@@ -451,11 +484,16 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
   const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
   ro?.observe(canvas);
 
-  /** How long a sample takes from the playhead to the speakers: the nod peaks when the hit is heard. */
+  /**
+   * How long a sample takes from the playhead to the speakers (wall-clock
+   * seconds): the nod peaks when the hit is heard.
+   */
   const outputLatency = () => {
     const ctx = getAnalyser()?.context as AudioContext | undefined;
     return ctx ? ctx.outputLatency || ctx.baseLatency || 0 : 0;
   };
+  /** Which timing the nod read last frame, to ease across a switch between them. */
+  let timingSource: 'grid' | 'clock' | null = null;
 
   const uploadHistory = () => {
     const rows = feed.consumeDirty();
@@ -560,7 +598,7 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
 
   const adaptScale = (now: number, deltaMs: number) => {
     if (options.fixedScale) return;
-    frameEma += (deltaMs - frameEma) * 0.08;
+    frameEma += (deltaMs - frameEma) * FRAME_EMA_GAIN;
     if (now - lastAdapt < SCENE_WORLD.SCALE_ADAPT_INTERVAL_MS) return;
     lastAdapt = now;
     if (frameEma > SCENE_WORLD.SLOW_FRAME_MS && scale > SCENE_WORLD.RENDER_SCALE_MIN) {
@@ -587,7 +625,7 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
     if (!still && !liveGate(now)) return;
     const dt = stepDt;
     stepDt = 0;
-    const deltaMs = lastStep < 0 ? 16.7 : now - lastStep;
+    const deltaMs = lastStep < 0 ? NOMINAL_FRAME_MS : now - lastStep;
     lastStep = now;
 
     if (!still) {
@@ -596,13 +634,29 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
       beat.update(dt, feed.bands, feed.frame.level);
       const source = currentWorldBeat();
       const grid = source?.getGrid();
-      const timing =
-        source && grid?.times.length
-          ? gridTiming(grid, playhead.update(dt, source.getPosition()) - outputLatency(), nodTiming)
-          : beat.timing(nodTiming);
+      const latency = outputLatency();
+      const useGrid = !!(source && grid?.times.length);
+      const nextSource = useGrid ? 'grid' : 'clock';
+      if (nextSource !== timingSource) {
+        if (timingSource) crop.handoff();
+        // The playhead wasn't fed while the clock led: start it from the report.
+        if (useGrid) playhead.reset();
+        timingSource = nextSource;
+      }
+      let timing: NodTiming | null;
+      if (source && useGrid && grid) {
+        const position = playhead.update(dt, source.getPosition());
+        // The grid is in source seconds, the latency in wall seconds: at 1.5x
+        // speed the speakers trail the playhead by 1.5x as much source audio.
+        const rate = source.getRate?.() ?? playhead.speed;
+        timing = gridTiming(grid, position - latency * rate, nodTiming);
+      } else {
+        // The live clock runs in wall seconds already (it hears the sped-up audio).
+        timing = beat.timing(nodTiming, latency);
+      }
       crop.update(dt, timing, feed.frame.playing);
-      pointer[0] += (pointerTarget[0] - pointer[0]) * Math.min(1, dt * 1.5);
-      pointer[1] += (pointerTarget[1] - pointer[1]) * Math.min(1, dt * 1.5);
+      pointer[0] += (pointerTarget[0] - pointer[0]) * Math.min(1, dt * POINTER_EASE_PER_SECOND);
+      pointer[1] += (pointerTarget[1] - pointer[1]) * Math.min(1, dt * POINTER_EASE_PER_SECOND);
     }
 
     // Mood switch: once the new world has compiled, freeze the frame on screen
@@ -623,7 +677,7 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
     if (crossfade < 1) crossfade = Math.min(1, crossfade + (dt * 1000) / SCENE_WORLD.WORLD_FADE_IN_MS);
 
     // Idle: without music the worlds drift - ~30fps is plenty.
-    const idle = feed.frame.playing < 0.02 && fade >= 1 && crossfade >= 1 && !swapping;
+    const idle = feed.frame.playing < IDLE_PLAYING_THRESHOLD && fade >= 1 && crossfade >= 1 && !swapping;
     if (!still && idle && now - lastDraw < IDLE_FRAME_MS) return;
     lastDraw = now;
 
@@ -648,7 +702,11 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
       const span = pendingDt;
       const f = feed.frame;
       time += span;
-      travel += span * WORLD_SPEED[current] * (0.6 + f.level * 0.5 + f.bass * 0.3) * (0.6 + 0.4 * Math.max(f.playing, 0.3));
+      travel +=
+        span *
+        WORLD_SPEED[current] *
+        (TRAVEL_BASE + f.level * TRAVEL_LEVEL + f.bass * TRAVEL_BASS) *
+        (TRAVEL_IDLE_SHARE + TRAVEL_PLAYING_SHARE * Math.max(f.playing, TRAVEL_PLAYING_FLOOR));
       adaptScale(now, deltaMs);
     }
     pendingDt = 0;
@@ -664,7 +722,8 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
   };
 
   function schedule() {
-    if (!raf && !disposed) raf = requestAnimationFrame(frame);
+    // A lost context has nothing to draw with; the restore reschedules.
+    if (!raf && !disposed && !contextLost()) raf = requestAnimationFrame(frame);
   }
   function stop() {
     if (raf) cancelAnimationFrame(raf);
@@ -679,14 +738,29 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
   };
   document.addEventListener('visibilitychange', onVisibility);
 
+  let restoreTimer = 0;
+  const clearRestoreTimer = () => {
+    if (restoreTimer) window.clearTimeout(restoreTimer);
+    restoreTimer = 0;
+  };
+
   const onLost = (e: Event) => {
     e.preventDefault();
     stop();
     forgetHandles();
     crossfade = 1;
     canvas.style.display = 'none';
+    options.onLost?.();
+    // Some drivers never hand the context back: don't leave a dead canvas
+    // standing in for the world forever.
+    clearRestoreTimer();
+    restoreTimer = window.setTimeout(() => {
+      restoreTimer = 0;
+      if (!disposed && gl.isContextLost()) fail();
+    }, SCENE_WORLD.CONTEXT_RESTORE_TIMEOUT_MS);
   };
   const onRestored = () => {
+    clearRestoreTimer();
     readyFired = false;
     resetHistory = true;
     if (setupShared()) schedule();
@@ -695,10 +769,24 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
   canvas.addEventListener('webglcontextlost', onLost);
   canvas.addEventListener('webglcontextrestored', onRestored);
 
+  /** Unhooks everything the engine attached; shared by dispose() and a failed setup. */
+  const teardown = () => {
+    disposed = true;
+    stop();
+    clearRestoreTimer();
+    ro?.disconnect();
+    window.removeEventListener('pointermove', onPointer);
+    document.removeEventListener('visibilitychange', onVisibility);
+    canvas.removeEventListener('webglcontextlost', onLost);
+    canvas.removeEventListener('webglcontextrestored', onRestored);
+    feed.dispose();
+  };
+
   canvas.style.display = 'none';
   if (gl.isContextLost()) {
     gl.getExtension('WEBGL_lose_context')?.restoreContext();
   } else if (!setupShared()) {
+    teardown();
     releaseAll();
     return null;
   } else {
@@ -716,14 +804,7 @@ export function createWorldEngine(canvas: HTMLCanvasElement, options: WorldEngin
       if (still) schedule();
     },
     dispose() {
-      disposed = true;
-      stop();
-      ro?.disconnect();
-      window.removeEventListener('pointermove', onPointer);
-      document.removeEventListener('visibilitychange', onVisibility);
-      canvas.removeEventListener('webglcontextlost', onLost);
-      canvas.removeEventListener('webglcontextrestored', onRestored);
-      feed.dispose();
+      teardown();
       if (!gl.isContextLost()) releaseAll();
       // Deliberately no loseContext(): under StrictMode the effect re-runs on the
       // same canvas, and a killed context composites as a white sheet.

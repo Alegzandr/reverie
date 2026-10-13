@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useState } from 'react';
 import { useMood } from '../contexts/MoodContext';
 import { MOODS, MOOD_ORDER, worldPoster } from '../contexts/moods';
-import { prefersReducedMotion } from './scenes/motion';
+import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
 import { detectGpuTier } from './scenes/webgl/gpu';
 import { SceneWorld } from './scenes/SceneWorld';
 
@@ -34,9 +34,17 @@ function canRenderLive(): boolean {
 export const AmbientScene = memo(function AmbientScene() {
   const { def } = useMood();
   const [capable] = useState(canRenderLive);
-  const [still] = useState(prefersReducedMotion);
+  // Live: flipping the OS setting rebuilds the engine as a still (or moving) world.
+  const still = usePrefersReducedMotion();
   const [failed, setFailed] = useState(false);
   const [live, setLive] = useState(false);
+  // A motion-preference flip rebuilds the engine, whose canvas hides until its
+  // first frame: show the posters through that gap, not an empty backdrop.
+  const [liveStill, setLiveStill] = useState(still);
+  if (liveStill !== still) {
+    setLiveStill(still);
+    setLive(false);
+  }
 
   const runWorld = capable && !failed;
 
@@ -55,6 +63,9 @@ export const AmbientScene = memo(function AmbientScene() {
   }, [live, runWorld]);
 
   const onReady = useCallback(() => setLive(true), []);
+  // A lost GL context hides the canvas: bring the posters back until a restore
+  // raises onReady again.
+  const onLost = useCallback(() => setLive(false), []);
   const onFail = useCallback(() => {
     setFailed(true);
     setLive(false);
@@ -77,7 +88,7 @@ export const AmbientScene = memo(function AmbientScene() {
             );
           })}
         </div>
-        {runWorld && <SceneWorld world={def.world} still={still} onReady={onReady} onFail={onFail} />}
+        {runWorld && <SceneWorld world={def.world} still={still} onReady={onReady} onFail={onFail} onLost={onLost} />}
         <div className="scene-veil" />
         <div className="scene-vignette" />
       </div>

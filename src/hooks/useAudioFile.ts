@@ -149,7 +149,9 @@ export function useAudioFile(): UseAudioFileReturn {
     }, AUDIO_PROCESSING.PROGRESS_UPDATE_INTERVAL_MS);
 
     try {
-      const buffer = await audioProcessor.processAudio(options);
+      // Render the committed track explicitly: the processor's own buffer follows
+      // the latest decode, which may not be the one this hook has committed.
+      const buffer = await audioProcessor.processAudio(options, originalBuffer ?? undefined);
       setProcessedBuffer(buffer);
       setState((prev) => ({ ...prev, isProcessing: false, progress: 100 }));
       return buffer;
@@ -163,9 +165,12 @@ export function useAudioFile(): UseAudioFileReturn {
     } finally {
       clearInterval(progressInterval);
     }
-  }, []);
+  }, [originalBuffer]);
 
   const reset = useCallback(() => {
+    // Invalidate any decode still in flight, or it would re-enter the session
+    // the listener just closed.
+    loadSeqRef.current++;
     setOriginalFile(null);
     setOriginalBuffer(null);
     setProcessedBuffer(null);

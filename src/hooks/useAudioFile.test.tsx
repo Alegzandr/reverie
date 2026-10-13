@@ -216,5 +216,51 @@ describe('useAudioFile', () => {
       expect(result.current.state.isProcessing).toBe(false);
       expect(result.current.state.error).toBeNull();
     });
+
+    it('cancels a load that is still decoding', async () => {
+      const { audioProcessor } = await import('../utils/audioProcessor');
+      let finishDecode!: (buffer: AudioBuffer) => void;
+      vi.mocked(audioProcessor.loadAudioFile).mockImplementationOnce(
+        () => new Promise<AudioBuffer>((resolve) => { finishDecode = resolve; }),
+      );
+
+      const { result } = renderHook(() => useAudioFile());
+      let pending!: Promise<AudioBuffer | undefined>;
+      await act(async () => {
+        pending = result.current.loadAudioFile(new File(['audio'], 'late.mp3', { type: 'audio/mpeg' }));
+        await Promise.resolve();
+      });
+
+      act(() => {
+        result.current.reset();
+      });
+
+      await act(async () => {
+        await waitFor(() => expect(audioProcessor.loadAudioFile).toHaveBeenCalled());
+        finishDecode({ duration: 60 } as AudioBuffer);
+        expect(await pending).toBeUndefined();
+      });
+
+      expect(result.current.originalFile).toBeNull();
+      expect(result.current.originalBuffer).toBeNull();
+    });
+  });
+
+  it('renders the committed buffer explicitly when processing', async () => {
+    const { audioProcessor } = await import('../utils/audioProcessor');
+    const committed = { duration: 30 } as AudioBuffer;
+    vi.mocked(audioProcessor.loadAudioFile).mockResolvedValue(committed);
+    vi.mocked(audioProcessor.processAudio).mockResolvedValue(committed);
+
+    const { result } = renderHook(() => useAudioFile());
+    await act(async () => {
+      await result.current.loadAudioFile(new File(['audio'], 'a.mp3', { type: 'audio/mpeg' }));
+    });
+    const options: AudioProcessingOptions = { speedMultiplier: 1, reverbAmount: 0.5 };
+    await act(async () => {
+      await result.current.processAudio(options);
+    });
+
+    expect(audioProcessor.processAudio).toHaveBeenCalledWith(options, committed);
   });
 });

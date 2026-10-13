@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useId } from "react";
 import { cn } from "@/lib/utils";
 
 interface BeatToggleProps {
@@ -28,12 +28,19 @@ export const BeatToggle = memo(function BeatToggle({
     onToggle,
     disabled,
 }: BeatToggleProps) {
+    // The label names the switch; the badge and supporting line describe it, so
+    // a screen reader announces them too (an aria-label alone would hide them).
+    const id = useId();
+    const badgeId = `${id}-badge`;
+    const descriptionId = `${id}-description`;
+    const describedBy = [badge && badgeId, description && descriptionId].filter(Boolean).join(" ") || undefined;
     return (
         <button
             type="button"
             role="switch"
             aria-checked={pressed}
             aria-label={label}
+            aria-describedby={describedBy}
             onClick={onToggle}
             disabled={disabled}
             className={cn(
@@ -49,13 +56,16 @@ export const BeatToggle = memo(function BeatToggle({
                         {label}
                     </span>
                     {badge && (
-                        <span className="shrink-0 rounded-full border border-[rgba(var(--color-accent),0.4)] bg-[rgba(var(--color-accent),0.1)] px-1.5 py-px text-[10px] font-semibold uppercase tracking-wide text-[rgb(var(--color-accent-text))]">
+                        <span
+                            id={badgeId}
+                            className="shrink-0 rounded-full border border-[rgba(var(--color-accent),0.4)] bg-[rgba(var(--color-accent),0.1)] px-1.5 py-px text-[10px] font-semibold uppercase tracking-wide text-[rgb(var(--color-accent-text))]">
                             {badge}
                         </span>
                     )}
                 </span>
                 {description && (
                     <span
+                        id={descriptionId}
                         className={cn(
                             "block truncate text-xs text-[rgb(var(--color-text-secondary))]",
                             descriptionClassName

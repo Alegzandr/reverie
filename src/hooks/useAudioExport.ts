@@ -13,6 +13,12 @@ interface UseAudioExportParams {
   originalFile: File | null;
   metadata: AudioMetadata | null;
   getBufferDuration: (buffer: AudioBuffer | null) => number;
+  /**
+   * Duration of the untouched source track. The bitrate estimate must use it, not
+   * the render's: a speed change alters the rendered length but not the source's
+   * bitrate.
+   */
+  sourceDurationSeconds?: number;
   onError?: (message: string | null) => void;
 }
 
@@ -36,6 +42,7 @@ export function useAudioExport({
   originalFile,
   metadata,
   getBufferDuration,
+  sourceDurationSeconds,
   onError,
 }: UseAudioExportParams) {
   const [state, setState] = useState<ExportState>({
@@ -71,10 +78,10 @@ export function useAudioExport({
       // critical path. A chunk-load failure falls through to the catch below.
       const { getExportStrategy, estimateBitrate } = await import('../utils/exportStrategies');
 
-      const durationSeconds = getBufferDuration(buffer);
+      const durationSeconds = sourceDurationSeconds ?? getBufferDuration(buffer);
       const extension = metadata?.originalFormat || originalFile?.name.split('.').pop()?.toLowerCase() || '';
       const strategy = getExportStrategy(extension);
-      const estimatedBitrate = estimateBitrate(originalFile, durationSeconds);
+      const estimatedBitrate = estimateBitrate(originalFile, durationSeconds, metadata?.bitrate);
 
       const { blob, extension: targetExtension } = await strategy.export({
         buffer,
@@ -100,7 +107,7 @@ export function useAudioExport({
       }
       throw error instanceof Error ? error : new Error(message);
     }
-  }, [getBuffer, getBufferDuration, metadata, onError, originalFile, setError]);
+  }, [getBuffer, getBufferDuration, metadata, onError, originalFile, setError, sourceDurationSeconds]);
 
   const resetExport = useCallback(() => {
     setState({ isExporting: false, error: null });

@@ -1,6 +1,7 @@
-import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { memo, useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 // Calm, constant scroll speed (px/s) so long and short titles travel at the same
 // pace, and the gap between the two looping copies.
@@ -26,7 +27,7 @@ export const MarqueeText = memo(function MarqueeText({ text, className }: Marque
   const measureRef = useRef<HTMLSpanElement>(null);
   const [textWidth, setTextWidth] = useState(0);
   const [overflow, setOverflow] = useState(false);
-  const [reduce, setReduce] = useState(false);
+  const reduce = usePrefersReducedMotion();
 
   const measure = useCallback(() => {
     const container = containerRef.current;
@@ -51,15 +52,6 @@ export const MarqueeText = memo(function MarqueeText({ text, className }: Marque
     }
     return () => ro.disconnect();
   }, [measure, text]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return;
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const sync = () => setReduce(mq.matches);
-    sync();
-    mq.addEventListener('change', sync);
-    return () => mq.removeEventListener('change', sync);
-  }, []);
 
   const animate = overflow && !reduce;
   const duration = (textWidth + GAP_PX) / SPEED_PX_PER_S;

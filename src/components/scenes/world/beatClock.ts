@@ -1,4 +1,5 @@
 import { SCENE_WORLD } from '../../../constants';
+import { drumBandWeight } from '../../../utils/drumBands';
 import type { NodTiming } from './gridFollower';
 
 /**
@@ -22,8 +23,12 @@ export interface BeatClockFrame {
 export interface BeatClock {
   /** Advance by dt seconds with the feed's current bands and overall level. */
   update(dt: number, bands: Float32Array, level: number): BeatClockFrame;
-  /** Where the music sits between two beats right now; null until the clock has locked. */
-  timing(out: NodTiming): NodTiming | null;
+  /**
+   * Where the music sits between two beats right now; null until the clock has
+   * locked. `latencySeconds` is how long the analysed audio takes to reach the
+   * speakers: the nod follows what is heard, like the beat grid path.
+   */
+  timing(out: NodTiming, latencySeconds?: number): NodTiming | null;
   frame: BeatClockFrame;
 }
 
@@ -32,16 +37,11 @@ const smoothstep = (lo: number, hi: number, x: number) => {
   return t * t * (3 - 2 * t);
 };
 
-/** Onset weight per band: kick body and snare body/crack drive a head nod; pads and hats don't. */
+/** Onset weight per band, by its centre frequency (log-spaced like the feed's bands). */
 function onsetWeights(bands: number): Float32Array {
   const { MIN_FREQUENCY_HZ: lo, MAX_FREQUENCY_HZ: hi } = SCENE_WORLD;
   const w = new Float32Array(bands);
-  for (let b = 0; b < bands; b += 1) {
-    const hz = lo * Math.pow(hi / lo, (b + 0.5) / bands);
-    if (hz < 140) w[b] = 1;
-    else if (hz < 320) w[b] = 0.5;
-    else if (hz > 1800 && hz < 7000) w[b] = 0.3;
-  }
+  for (let b = 0; b < bands; b += 1) w[b] = drumBandWeight(lo * Math.pow(hi / lo, (b + 0.5) / bands));
   return w;
 }
 
@@ -64,7 +64,7 @@ export function createBeatClock(): BeatClock {
   let sinceEstimate = 0;
   let rawConfidence = 0;
 
-  let period: number = C.NOD_MIN_PERIOD * 1.5;
+  let period: number = C.NOD_MIN_PERIOD * C.UNLOCKED_PERIOD_FACTOR;
   let phase = 0;
   let locked = false;
   let pendingPeriod = 0;
@@ -176,7 +176,7 @@ export function createBeatClock(): BeatClock {
     // Refine the winner on a finer lag grid.
     let lag = bestLag;
     let fine = bestPhase(lag);
-    for (let l = bestLag - C.LAG_STEP; l <= bestLag + C.LAG_STEP; l += C.LAG_STEP / 5) {
+    for (let l = bestLag - C.LAG_STEP; l <= bestLag + C.LAG_STEP; l += C.LAG_STEP / C.LAG_REFINE_DIVISIONS) {
       const r = bestPhase(l);
       if (r.score > fine.score) {
         fine = r;
@@ -222,11 +222,13 @@ export function createBeatClock(): BeatClock {
 
   return {
     frame,
-    timing(out) {
+    timing(out, latencySeconds = 0) {
       if (!locked) return null;
       // The phase is read off onsets the analyser has already smoothed: the
-      // music is a touch ahead of it.
-      const since = (phase * period + C.ANALYSER_LAG_SECONDS) % period;
+      // music is a touch ahead of it. The analyser itself hears the audio before
+      // the speakers do, so the heard beat trails by the output latency.
+      const raw = (phase * period + C.ANALYSER_LAG_SECONDS - latencySeconds) % period;
+      const since = raw < 0 ? raw + period : raw;
       out.sincePrev = since;
       out.untilNext = period - since;
       out.prevStrength = frame.confidence;

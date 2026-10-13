@@ -1,6 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { useAudioProcessor } from './useAudioProcessor';
+import { ERROR_MESSAGES } from '../constants';
 
 const { mockAudioBuffer, mockDownload, mockAudioContext, mockAudioProcessor, mockExportStrategy, mockGetExportStrategy, mockEstimateBitrate } = vi.hoisted(() => {
   const buffer = new AudioBuffer({ length: 44100, numberOfChannels: 1, sampleRate: 44100 });
@@ -40,6 +41,7 @@ const { mockAudioBuffer, mockDownload, mockAudioContext, mockAudioProcessor, moc
     getAudioContext: vi.fn(() => audioContext as any),
     getAudioBuffer: vi.fn(() => storedBuffer as any),
     audioBufferToWav: vi.fn(),
+    clear: vi.fn(),
   };
 
   (processor as any).__setBuffer = (next: AudioBuffer | null) => {
@@ -312,13 +314,90 @@ describe('useAudioProcessor', () => {
     });
 
     expect(mockGetExportStrategy).toHaveBeenCalledWith('mp3');
-    expect(mockEstimateBitrate).toHaveBeenCalledWith(file, expect.any(Number));
+    expect(mockEstimateBitrate).toHaveBeenCalledWith(file, expect.any(Number), expect.any(Number));
     expect(mockExportStrategy.export).toHaveBeenCalledWith({
       buffer: mockAudioBuffer,
       originalFile: file,
       estimatedBitrate: 192,
     });
     expect(mockDownload).toHaveBeenCalledWith(expect.any(Blob), 'demo_processed ver. by Reverie.mp3');
+    expect(result.current.state.isExporting).toBe(false);
+  });
+
+  it('renders the committed track, not the processor\'s latest decode', async () => {
+    const { result } = renderHook(() => useAudioProcessor());
+    await act(async () => {
+      await result.current.loadAudioFile(new File(['data'], 'a.mp3', { type: 'audio/mp3' }));
+    });
+    // A newer decode has landed in the processor but the UI hasn't committed it.
+    (mockAudioProcessor as any).__setBuffer(new AudioBuffer({ length: 10, numberOfChannels: 2, sampleRate: 44100 }));
+
+    await act(async () => {
+      await result.current.exportProcessedAudio();
+    });
+
+    expect(mockAudioProcessor.processAudio).toHaveBeenCalledWith(expect.any(Object), mockAudioBuffer);
+  });
+
+  it('surfaces a failed render instead of exporting the dry track', async () => {
+    const { result } = renderHook(() => useAudioProcessor());
+    await act(async () => {
+      await result.current.loadAudioFile(new File(['data'], 'a.mp3', { type: 'audio/mp3' }));
+    });
+    act(() => {
+      result.current.setEffects({ speedMultiplier: 0.85, reverbAmount: 0.5 });
+    });
+    mockAudioProcessor.processAudio.mockRejectedValueOnce(new Error('render boom'));
+
+    await act(async () => {
+      await expect(result.current.exportProcessedAudio()).rejects.toThrow('render boom');
+    });
+
+    expect(mockExportStrategy.export).not.toHaveBeenCalled();
+    expect(result.current.state.error).toBe(ERROR_MESSAGES.PROCESS_FAILED);
+    expect(result.current.state.isExporting).toBe(false);
+  });
+
+  it('falls back to the source when a render with neutral settings fails', async () => {
+    const { result } = renderHook(() => useAudioProcessor());
+    await act(async () => {
+      await result.current.loadAudioFile(new File(['data'], 'a.mp3', { type: 'audio/mp3' }));
+    });
+    mockAudioProcessor.processAudio.mockRejectedValueOnce(new Error('render boom'));
+
+    await act(async () => {
+      await result.current.exportProcessedAudio();
+    });
+
+    expect(mockExportStrategy.export).toHaveBeenCalledWith(expect.objectContaining({ buffer: mockAudioBuffer }));
+  });
+
+  it('flags exporting during the render and ignores a second click', async () => {
+    const { result } = renderHook(() => useAudioProcessor());
+    await act(async () => {
+      await result.current.loadAudioFile(new File(['data'], 'a.mp3', { type: 'audio/mp3' }));
+    });
+    let finishRender!: (buffer: AudioBuffer) => void;
+    mockAudioProcessor.processAudio.mockImplementationOnce(
+      () => new Promise<AudioBuffer>((resolve) => { finishRender = resolve; }),
+    );
+
+    let first!: Promise<string>;
+    let second!: Promise<string>;
+    act(() => {
+      first = result.current.exportProcessedAudio();
+      second = result.current.exportProcessedAudio();
+    });
+    expect(second).toBe(first);
+    expect(result.current.state.isExporting).toBe(true);
+
+    await act(async () => {
+      finishRender(mockAudioBuffer);
+      await first;
+    });
+
+    expect(mockAudioProcessor.processAudio).toHaveBeenCalledTimes(1);
+    expect(mockExportStrategy.export).toHaveBeenCalledTimes(1);
     expect(result.current.state.isExporting).toBe(false);
   });
 
@@ -464,6 +543,7 @@ describe('useAudioProcessor', () => {
       stopAudio: result.current.stopAudio,
       seekTo: result.current.seekTo,
       updateVolume: result.current.updateVolume,
+      exportProcessedAudio: result.current.exportProcessedAudio,
     };
 
     rerender();
@@ -474,6 +554,7 @@ describe('useAudioProcessor', () => {
     expect(result.current.stopAudio).toBe(first.stopAudio);
     expect(result.current.seekTo).toBe(first.seekTo);
     expect(result.current.updateVolume).toBe(first.updateVolume);
+    expect(result.current.exportProcessedAudio).toBe(first.exportProcessedAudio);
   });
 
   it('resets processing state and buffer', async () => {
@@ -494,5 +575,31 @@ describe('useAudioProcessor', () => {
     expect(result.current.state.progress).toBe(0);
     expect(result.current.duration).toBe(0);
     expect(result.current.playbackClock.get()).toBe(0);
+    expect(mockAudioProcessor.clear).toHaveBeenCalled();
+  });
+
+  it('does not re-enter the session when a load lands after reset', async () => {
+    const { result } = renderHook(() => useAudioProcessor());
+    let finishDecode!: (buffer: AudioBuffer) => void;
+    mockAudioProcessor.loadAudioFile.mockImplementationOnce(
+      () => new Promise<AudioBuffer>((resolve) => { finishDecode = resolve; }),
+    );
+
+    let pending!: Promise<AudioBuffer | undefined>;
+    await act(async () => {
+      pending = result.current.loadAudioFile(new File(['data'], 'late.mp3', { type: 'audio/mp3' }));
+      await Promise.resolve();
+    });
+    act(() => {
+      result.current.reset();
+    });
+    await act(async () => {
+      await vi.waitFor(() => expect(mockAudioProcessor.loadAudioFile).toHaveBeenCalled());
+      finishDecode(mockAudioBuffer);
+      expect(await pending).toBeUndefined();
+    });
+
+    expect(result.current.originalFile).toBeNull();
+    expect(result.current.duration).toBe(0);
   });
 });

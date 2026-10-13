@@ -1,6 +1,5 @@
-import { AUDIO_EFFECTS, AUDIO_SIGNAL, EFFECT_DEFAULTS, NIGHTCORE } from '../constants';
-import { underwaterCutoffHz, reverbMakeupGain, bassBoostTrimGain } from './dsp';
-import { getDecayingNoiseImpulse, getEightDBedImpulse } from './impulse';
+import { AUDIO_SIGNAL, EFFECT_DEFAULTS, NIGHTCORE } from '../constants';
+import { createEffectChain, applyEffectOptions } from './effectGraph';
 import { BinaryWriter } from './binary';
 import { interleaveToInt16 } from './pcm';
 import { loadBeatSamples, type BeatRole } from './beatSamples';
@@ -22,6 +21,20 @@ export interface AudioProcessingOptions {
   bpm?: number; // Detected tempo for the beat grid
   beatOffsetSec?: number; // Seconds to the first downbeat of the grid
   beatsPerBar?: 3 | 4; // Detected meter (waltz vs common time) for the beat pattern
+}
+
+/** Live playback is always stereo out of the panner. */
+const STEREO_CHANNELS = 2;
+
+/**
+ * Channel count for the offline render. Reverb (stereo impulse) and 8D (orbit and
+ * widened bed) create stereo content even from a mono source - live playback hears
+ * it in stereo, so the render must not fold it back down. Without them a mono track
+ * stays mono: both channels would be identical anyway.
+ */
+export function renderChannelCount(source: AudioBuffer, options: AudioProcessingOptions): number {
+  const stereoEffects = !!options.audio8D || (options.reverbAmount || 0) > 0;
+  return stereoEffects ? Math.max(STEREO_CHANNELS, source.numberOfChannels) : source.numberOfChannels;
 }
 
 /**
@@ -63,95 +76,60 @@ export class AudioProcessor {
   }
 
   /**
-   * Process audio with various effects (speed, reverb, 8D spatial, bass boost)
+   * Render the effects offline (speed, reverb, 8D spatial, bass boost, beats).
+   *
+   * The graph is the live engine's own effect chain (createEffectChain +
+   * applyEffectOptions, minus the listening EQ), so the export matches what was
+   * auditioned by construction rather than by keeping two builders in sync.
    *
    * @param options - Processing options including speed, reverb, and effects
+   * @param source - The buffer to render. Callers pass the track they have
+   *   committed: the processor's own buffer follows the latest decode, which can
+   *   briefly belong to a track the UI hasn't switched to yet.
    * @returns Promise that resolves to the processed AudioBuffer
    * @throws Error if no audio file is loaded or processing fails
    */
-  async processAudio(options: AudioProcessingOptions): Promise<AudioBuffer> {
-    if (!this.audioBuffer) {
+  async processAudio(options: AudioProcessingOptions, source: AudioBuffer | null = this.audioBuffer): Promise<AudioBuffer> {
+    if (!source) {
       throw new Error('No audio file loaded');
     }
 
     try {
-
-    const { speedMultiplier, reverbAmount, audio8D, rotationSpeed, bassBoost, bassBoostIntensity, bassUnderwater } = options;
-
-    // Create offline context for processing
-    const offlineContext = new OfflineAudioContext(
-      this.audioBuffer.numberOfChannels,
-      Math.floor(this.audioBuffer.length / speedMultiplier),
-      this.audioBuffer.sampleRate
-    );
-
-    // Create source node
-    const source = offlineContext.createBufferSource();
-    source.buffer = this.audioBuffer;
-    source.playbackRate.value = speedMultiplier;
-
-    let lastNode: AudioNode = source;
-
-    // Add reverb if needed
-    if (reverbAmount > 0) {
-      const convolver = offlineContext.createConvolver();
-      // Tail length and decay both scale with the amount, so more reverb also
-      // means a longer, slower tail.
-      convolver.buffer = getDecayingNoiseImpulse(
-        offlineContext,
-        1 + reverbAmount * AUDIO_EFFECTS.REVERB.DECAY_RATE,
-        reverbAmount,
+      const speed = options.speedMultiplier || 1;
+      const offlineContext = new OfflineAudioContext(
+        renderChannelCount(source, options),
+        Math.floor(source.length / speed),
+        source.sampleRate,
       );
 
-      const dry = offlineContext.createGain();
-      const wet = offlineContext.createGain();
+      const sourceNode = offlineContext.createBufferSource();
+      sourceNode.buffer = source;
+      sourceNode.playbackRate.value = speed;
 
-      // Makeup gain restores the loudness the dry/wet crossfade removes (see
-      // reverbMakeupGain); without it the mix drops up to ~5 dB at full reverb.
-      const makeup = reverbMakeupGain(reverbAmount);
-      dry.gain.value = (1 - reverbAmount * 0.5) * makeup;
-      wet.gain.value = reverbAmount * 0.5 * makeup;
+      const chain = createEffectChain(offlineContext, { listeningEq: false });
+      applyEffectOptions(chain, options, offlineContext, false);
+      sourceNode.connect(chain.input);
+      chain.output.connect(offlineContext.destination);
 
-      source.connect(dry);
-      source.connect(convolver);
-      convolver.connect(wet);
+      // Bake the Nightcore beat bed so the export matches what was auditioned. Scheduled
+      // straight into the offline destination (in parallel to the music), on the same
+      // sped-up grid the live scheduler uses. Best-effort: a sample load failure leaves
+      // the export untouched rather than aborting it.
+      await this.scheduleOfflineBeats(offlineContext, options);
 
-      const merger = offlineContext.createGain();
-      dry.connect(merger);
-      wet.connect(merger);
-
-      lastNode = merger;
-    }
-
-    // Apply bass boost if enabled
-    if (bassBoost && bassBoostIntensity !== undefined) {
-      const bassBoostNode = this.createBassBoostEffect(offlineContext, bassBoostIntensity, bassUnderwater ?? 0);
-      lastNode.connect(bassBoostNode.input);
-      lastNode = bassBoostNode.output;
-    }
-
-    // Apply 8D spatial audio effect if enabled
-    if (audio8D) {
-      const audio8DProcessor = this.create8DAudioEffect(offlineContext, this.audioBuffer, rotationSpeed || 0.5);
-      lastNode.connect(audio8DProcessor.input);
-      audio8DProcessor.output.connect(offlineContext.destination);
-    } else {
-      lastNode.connect(offlineContext.destination);
-    }
-
-    // Bake the Nightcore beat bed so the export matches what was auditioned. Scheduled
-    // straight into the offline destination (in parallel to the music), on the same
-    // sped-up grid the live scheduler uses. Best-effort: a sample load failure leaves
-    // the export untouched rather than aborting it.
-    await this.scheduleOfflineBeats(offlineContext, options);
-
-    source.start(0);
+      sourceNode.start(0);
 
       return await offlineContext.startRendering();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       throw new Error(`Failed to process audio: ${message}`);
     }
+  }
+
+  /** Forget the loaded track and invalidate any decode still in flight. */
+  clear(): void {
+    this.loadSeq++;
+    this.audioBuffer = null;
   }
 
   /**
@@ -205,112 +183,6 @@ export class AudioProcessor {
     beatOnsetTimes(bpm, beatOffsetSec, speed, outputDuration).forEach((when, index) => {
       for (const role of beatRoles(index, beatsPerBar)) fire(role, when);
     });
-  }
-
-  /** Offline 8D: a dry signal that orbits the head over a constant reverb bed. */
-  private create8DAudioEffect(
-    context: OfflineAudioContext,
-    sourceBuffer: AudioBuffer,
-    rotationSpeed: number
-  ): { input: GainNode; output: GainNode } {
-    const duration = sourceBuffer.duration;
-    const inputGain = context.createGain();
-    const outputGain = context.createGain();
-    const panner = context.createStereoPanner();
-
-    const convolver = context.createConvolver();
-    convolver.buffer = getEightDBedImpulse(context);
-    const dryGain = context.createGain();
-    const wetGain = context.createGain();
-    dryGain.gain.value = AUDIO_SIGNAL.EIGHT_D_MIX.DRY_GAIN;
-    wetGain.gain.value = AUDIO_SIGNAL.EIGHT_D_MIX.WET_GAIN;
-
-    // Only the DRY path is panned, so the music orbits the head. The reverb bed
-    // taps the UN-panned input so its tail stays in both ears; feeding it from the
-    // panner instead would rotate a pocket of silence opposite the music.
-    inputGain.connect(panner);
-    panner.connect(dryGain);
-    inputGain.connect(convolver);
-    convolver.connect(wetGain);
-    dryGain.connect(outputGain);
-    wetGain.connect(outputGain);
-
-    const cycleTime = 4 / rotationSpeed; // seconds per full rotation
-    const pointsPerSecond = AUDIO_EFFECTS.EIGHT_D.AUTOMATION_POINTS_PER_SECOND;
-    const totalPoints = Math.ceil(duration * pointsPerSecond);
-
-    panner.pan.setValueAtTime(0, 0);
-    for (let i = 1; i <= totalPoints; i++) {
-      const time = i / pointsPerSecond;
-      if (time > duration) break;
-      const angle = (time / cycleTime) * Math.PI * 2;
-      panner.pan.linearRampToValueAtTime(Math.sin(angle), time);
-    }
-
-    return { input: inputGain, output: outputGain };
-  }
-
-  /** Bass boost: highpass (cut rumble) → lowshelf (boost) → peaking (de-mud) →
-   *  optional underwater lowpass, with makeup gain. */
-  private createBassBoostEffect(
-    context: OfflineAudioContext,
-    intensity: number,
-    underwater: number
-  ): { input: GainNode; output: GainNode } {
-    const inputGain = context.createGain();
-    const outputGain = context.createGain();
-
-    const lowshelf = context.createBiquadFilter();
-    lowshelf.type = 'lowshelf';
-    lowshelf.frequency.value = AUDIO_EFFECTS.BASS_BOOST.LOWSHELF_FREQUENCY_HZ;
-    lowshelf.gain.value = intensity * 18; // up to +18 dB
-
-    const highpass = context.createBiquadFilter();
-    highpass.type = 'highpass';
-    highpass.frequency.value = AUDIO_EFFECTS.BASS_BOOST.HIGHPASS_FREQUENCY_HZ;
-    highpass.Q.value = 0.7;
-
-    const lowMidCut = context.createBiquadFilter();
-    lowMidCut.type = 'peaking';
-    lowMidCut.frequency.value = AUDIO_EFFECTS.BASS_BOOST.PEAKING_FREQUENCY_HZ;
-    lowMidCut.Q.value = 1.0;
-    lowMidCut.gain.value = Math.min(0, -intensity * 3);
-
-    // Trim output as the boost grows so the extra low end keeps headroom. The trim
-    // is quadratic (the shelf's loudness gain accelerates with intensity); see
-    // bassBoostTrimGain for how the 0.4 coefficient was measured.
-    outputGain.gain.value = bassBoostTrimGain(intensity);
-
-    inputGain.connect(highpass);
-    highpass.connect(lowshelf);
-    lowshelf.connect(lowMidCut);
-
-    // Underwater muffle: a lowpass that closes as the amount grows, its cutoff
-    // wobbling on a slow LFO so the sound breathes like it's submerged. Only wired
-    // when the amount is non-zero, otherwise the chain stays exactly as before.
-    let tail: AudioNode = lowMidCut;
-    if (underwater > 0) {
-      const cutoff = underwaterCutoffHz(underwater);
-      const lowpass = context.createBiquadFilter();
-      lowpass.type = 'lowpass';
-      lowpass.frequency.value = cutoff;
-      lowpass.Q.value = 0.7;
-
-      const lfo = context.createOscillator();
-      lfo.type = 'sine';
-      lfo.frequency.value = AUDIO_EFFECTS.BASS_BOOST.UNDERWATER_LFO_FREQUENCY_HZ;
-      const lfoDepth = context.createGain();
-      lfoDepth.gain.value = cutoff * AUDIO_EFFECTS.BASS_BOOST.UNDERWATER_LFO_DEPTH_RATIO * underwater;
-      lfo.connect(lfoDepth);
-      lfoDepth.connect(lowpass.frequency);
-      lfo.start(0);
-
-      lowMidCut.connect(lowpass);
-      tail = lowpass;
-    }
-    tail.connect(outputGain);
-
-    return { input: inputGain, output: outputGain };
   }
 
   /** Convert an AudioBuffer to a standard 16-bit PCM WAV file. */

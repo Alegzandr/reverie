@@ -1,5 +1,6 @@
 import { useCallback, useSyncExternalStore } from 'react';
 import { UI_REST } from '../constants';
+import { readStoredString, writeStored } from '../utils/storage';
 
 /**
  * The resting interface preference: in fullscreen, after a spell without input,
@@ -13,18 +14,15 @@ let enabled: boolean | null = null;
 
 function readEnabled(): boolean {
   if (enabled === null) {
-    enabled = typeof localStorage === 'undefined' || localStorage.getItem(UI_REST.STORAGE_KEY) !== 'false';
+    enabled = readStoredString(UI_REST.STORAGE_KEY) !== 'false';
   }
   return enabled;
 }
 
 export function toggleUiRest(): void {
   enabled = !readEnabled();
-  try {
-    localStorage.setItem(UI_REST.STORAGE_KEY, String(enabled));
-  } catch {
-    // Storage unavailable - the choice holds for this session.
-  }
+  // Storage unavailable - the choice still holds for this session.
+  writeStored(UI_REST.STORAGE_KEY, enabled);
   listeners.forEach((l) => l());
 }
 

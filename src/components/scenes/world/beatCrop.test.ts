@@ -76,4 +76,16 @@ describe('createBeatCrop', () => {
     expect(crop.nod).toBeLessThan(0.01);
     expect(createBeatCrop().update(DT, null, 1)).toBe(0);
   });
+
+  it('eases into a new timing source instead of jumping', () => {
+    const crop = playing();
+    expect(crop.update(DT, at(PERIOD), 1)).toBeCloseTo(1, 1);
+    crop.handoff();
+    // The new source places the playhead mid-beat (nod 0): the first frame barely moves.
+    const turn = PERIOD * SCENE_WORLD.BEAT_CROP.SETTLE_SHARE;
+    expect(crop.update(DT, at(PERIOD + turn), 1)).toBeGreaterThan(0.85);
+    let v = 1;
+    for (let t = 0; t < SCENE_WORLD.BEAT_CROP.SOURCE_HANDOFF_SECONDS; t += DT) v = crop.update(DT, at(PERIOD + turn), 1);
+    expect(v).toBeLessThan(0.01);
+  });
 });

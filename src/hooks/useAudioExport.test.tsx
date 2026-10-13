@@ -48,7 +48,7 @@ describe('useAudioExport', () => {
     });
 
     expect(mockGetExportStrategy).toHaveBeenCalledWith('mp3');
-    expect(mockEstimateBitrate).toHaveBeenCalledWith(expect.any(File), mockBuffer.duration);
+    expect(mockEstimateBitrate).toHaveBeenCalledWith(expect.any(File), mockBuffer.duration, undefined);
     expect(mockStrategyExport).toHaveBeenCalledWith({
       buffer: mockBuffer,
       originalFile: expect.any(File),
@@ -56,6 +56,19 @@ describe('useAudioExport', () => {
     });
     expect(mockDownload).toHaveBeenCalledWith(mockBlob, 'demo_processed FX ver. by Reverie.mp3');
     expect(result.current.state.isExporting).toBe(false);
+  });
+
+  it('estimates bitrate from the source track, not the speed-changed render', async () => {
+    const { result } = renderExportHook({
+      sourceDurationSeconds: 5,
+      metadata: { originalFormat: 'mp3', bitrate: 256 } as any,
+    });
+
+    await act(async () => {
+      await result.current.exportProcessedAudio();
+    });
+
+    expect(mockEstimateBitrate).toHaveBeenCalledWith(expect.any(File), 5, 256);
   });
 
   it('uses provided filename when supplied', async () => {

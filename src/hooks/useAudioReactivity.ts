@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { AUDIO_REACTIVITY } from '../constants';
+
+const A = AUDIO_REACTIVITY;
 import type { LoudnessProfile } from '../utils/audioLoudness';
-import { prefersReducedMotion } from '../components/scenes/motion';
+import { usePrefersReducedMotion } from './usePrefersReducedMotion';
 import { createFrameGate } from '../components/scenes/frameClock';
 
 interface UseAudioReactivityOptions {
@@ -41,10 +43,11 @@ export function useAudioReactivity({ getAnalyser, getLoudness, isPlaying, target
   // Smoothed, published energies - kept in a ref so a play/pause toggle eases
   // from the current value instead of jumping back to zero on effect re-run.
   const energy = useRef({ level: 0, bass: 0, mid: 0, treble: 0, pulse: 0, bassBaseline: 0 });
+  // Live, so switching reduced motion on mid-track flattens the interface at once.
+  const reduceMotion = usePrefersReducedMotion();
 
   useEffect(() => {
     const root = target ?? document.documentElement;
-    const reduceMotion = prefersReducedMotion();
 
     const e = energy.current;
 
@@ -136,52 +139,47 @@ export function useAudioReactivity({ getAnalyser, getLoudness, isPlaying, target
         // their range for more energy/amplitude, still clamped to 1 so it stays juste.
         const gain = norm * AUDIO_REACTIVITY.INTENSITY;
 
-        // RMS rarely exceeds ~0.45 on real music; lift it into a usable 0..1.
-        const targetLevel = Math.min(1, Math.sqrt(sumSq / time.length) * 2.2 * gain);
+        const targetLevel = Math.min(1, Math.sqrt(sumSq / time.length) * A.LEVEL_RMS_LIFT * gain);
 
-        // Three distinct bands so different surfaces can react to different parts
-        // of the music (not everything strobing on the kick): bass = low ~12%,
-        // mid = ~12–55%, treble = top ~40%.
-        const bassEnd = Math.max(1, Math.floor(bins * 0.12));
+        const bassEnd = Math.max(1, Math.floor(bins * A.BASS_END_SHARE));
         let bSum = 0;
         for (let i = 0; i < bassEnd; i++) bSum += freq[i];
         const targetBass = Math.min(1, (bSum / bassEnd / 255) * gain);
 
         const midStart = bassEnd;
-        const midEnd = Math.max(midStart + 1, Math.floor(bins * 0.55));
+        const midEnd = Math.max(midStart + 1, Math.floor(bins * A.MID_END_SHARE));
         let mSum = 0;
         for (let i = midStart; i < midEnd; i++) mSum += freq[i];
         const targetMid = Math.min(1, (mSum / (midEnd - midStart) / 255) * gain);
 
-        const trebleStart = Math.floor(bins * 0.6);
+        const trebleStart = Math.floor(bins * A.TREBLE_START_SHARE);
         let tSum = 0;
         for (let i = trebleStart; i < bins; i++) tSum += freq[i];
         const targetTreble = Math.min(1, (tSum / (bins - trebleStart) / 255) * gain);
 
-        // Fast attack, slower release - reads musical, not jittery.
-        e.level += (targetLevel - e.level) * (targetLevel > e.level ? 0.5 : 0.12);
-        e.bass += (targetBass - e.bass) * (targetBass > e.bass ? 0.5 : 0.15);
-        e.mid += (targetMid - e.mid) * (targetMid > e.mid ? 0.45 : 0.18);
-        e.treble += (targetTreble - e.treble) * 0.3;
+        e.level += (targetLevel - e.level) * (targetLevel > e.level ? A.LEVEL_ATTACK : A.LEVEL_RELEASE);
+        e.bass += (targetBass - e.bass) * (targetBass > e.bass ? A.BASS_ATTACK : A.BASS_RELEASE);
+        e.mid += (targetMid - e.mid) * (targetMid > e.mid ? A.MID_ATTACK : A.MID_RELEASE);
+        e.treble += (targetTreble - e.treble) * A.TREBLE_EASE;
 
         // Onset - bass punching above its own slow baseline fires a flash.
-        e.bassBaseline += (targetBass - e.bassBaseline) * 0.08;
-        if (targetBass > e.bassBaseline * 1.35 + 0.06) {
-          e.pulse = Math.min(1, Math.max(e.pulse, (targetBass - e.bassBaseline) * 3));
+        e.bassBaseline += (targetBass - e.bassBaseline) * A.PULSE_BASELINE_GAIN;
+        if (targetBass > e.bassBaseline * A.PULSE_RATIO + A.PULSE_OFFSET) {
+          e.pulse = Math.min(1, Math.max(e.pulse, (targetBass - e.bassBaseline) * A.PULSE_GAIN));
         }
-        e.pulse *= 0.86;
-        if (e.pulse < 0.005) e.pulse = 0;
+        e.pulse *= A.PULSE_DECAY;
+        if (e.pulse < A.PULSE_FLOOR) e.pulse = 0;
 
         publish();
         raf = requestAnimationFrame(frame);
       } else {
         // Stopped (or analyser gone) - ease everything down, then settle + clear.
-        e.level *= 0.85;
-        e.bass *= 0.85;
-        e.mid *= 0.85;
-        e.treble *= 0.85;
-        e.pulse *= 0.8;
-        if (e.level + e.bass + e.mid + e.treble + e.pulse > 0.01) {
+        e.level *= A.REST_DECAY;
+        e.bass *= A.REST_DECAY;
+        e.mid *= A.REST_DECAY;
+        e.treble *= A.REST_DECAY;
+        e.pulse *= A.REST_PULSE_DECAY;
+        if (e.level + e.bass + e.mid + e.treble + e.pulse > A.REST_EPSILON) {
           publish();
           raf = requestAnimationFrame(frame);
         } else {
@@ -193,5 +191,5 @@ export function useAudioReactivity({ getAnalyser, getLoudness, isPlaying, target
 
     raf = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(raf);
-  }, [getAnalyser, getLoudness, isPlaying, target]);
+  }, [getAnalyser, getLoudness, isPlaying, target, reduceMotion]);
 }
